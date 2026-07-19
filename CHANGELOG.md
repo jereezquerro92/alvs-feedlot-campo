@@ -1,5 +1,19 @@
 # Changelog
 
+## [Unreleased]
+
+- group: oidc-immutable-sub
+  priority: high
+  commit: pending
+  changes:
+    - fix(infra): gha-deploy-prod trust entry rewritten to GitHub's immutable OIDC subject format — the v1 history reset recreated the repo past the 2026-07-15 cutoff, so the name-only sub no longer matched and STS denied AssumeRoleWithWebIdentity
+    - fix(infra): BedrockGateNovaMicroInvoke statement added to gha-deploy-prod-policy — the bedrock-live gate invokes Nova Micro as the deploy role and the grant was missing since the gate landed
+    - docs: GH.md immutable-subject section (format, cutoff, live prefix lookup); INFRASTRUCTURE.md CI/CD line; INVENTORY.md shared-attachment mutations recorded
+    - docs(adr): new adr-23-oidc-immutable-subject-claim — additive to adr-08 rule 9 (adr-21/adr-22 pattern); immutable subject format mandatory for post-cutoff repos, trust entries re-derived on repo recreate/rename
+    - chore(harness): kdx-aws-iam skill documents the immutable subject format
+    - chore(gh): fixed label set recreated on the reborn repo; GitHub default labels outside the set removed
+    - Closes #1.
+
 ## [v1.0.0] - 2026-07-19
 The template goes public. First public release: the full working baseline — Astro 7 SSR + Svelte frontend, Django 6 + DRF backend, two-tier router, Cognito auth, M365 Graph capability, the vendored harness, and the complete docs vault. Git history starts here by design; the pre-v1 history is preserved in a private archive. Entries below record the work that led to this baseline; their PR/issue references (`#N`) point to the pre-v1 tracker and are kept as historical text.
 

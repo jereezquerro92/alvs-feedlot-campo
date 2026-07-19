@@ -41,7 +41,8 @@ Used priorities on the `:443` listener: **9, 10** (`kcbd-api.grupoalvs.com`), **
 
 ### Shared attachments this run will add and later remove (never the shared resource itself)
 
-- Repo entry `kodexArg/astro-drf-aws` scoped to `refs/heads/prod` in the `gha-deploy-prod` trust policy (B2.6 → removed in E).
+- Repo entry for this repo scoped to `refs/heads/prod` in the `gha-deploy-prod` trust policy (B2.6 → removed in E). **2026-07-19 mutation**: rewritten in place from the name-only form to the immutable subject `repo:kodexArg@47777332/astro-drf-aws@1305504992:ref:refs/heads/prod` — required after the v1 history reset recreated the repo past GitHub's immutable-subject cutoff ([[GH]], [[adr-23-oidc-immutable-subject-claim]], issue #1).
+- Statement `BedrockGateNovaMicroInvoke` in the `gha-deploy-prod` inline policy `gha-deploy-prod-policy` (2026-07-19 → removed in E): `bedrock:InvokeModel` on the same four Nova Micro resources as the backend task role's `kdx-router-bedrock-nova-micro` (issue #97), nothing wider. Required by the workflow's `bedrock-live` connectivity gate, which invokes Bedrock as the deploy role before every prod deploy; the grant was missing since the gate landed and no prod push had run green since, so the gap only surfaced on the post-reset deploy (issue #1).
 - Host rule + target groups on the shared ALB for `astro-drf-aws.grupoalvs.com` (B2.8 → removed in E).
 - Route 53 records under `grupoalvs.com` (B2.7 → removed in E).
 

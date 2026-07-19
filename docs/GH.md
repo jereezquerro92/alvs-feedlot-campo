@@ -90,5 +90,21 @@ One primary type label per issue/PR; add `blocked` only when stuck.
 - **prod** pipelines / OIDC trust: `refs/heads/prod` (and tags `v*` if used).
 - Detail for AWS roles: [[INFRASTRUCTURE]].
 
+### OIDC subject format — immutable IDs
+
+Ruled by [[adr-23-oidc-immutable-subject-claim]]. GitHub repos **created, renamed, or transferred after 2026-07-15** emit their Actions OIDC `sub` claim in the **immutable subject format**, which appends the owner and repository numeric IDs — permanent identifiers a delete-and-recreate cannot reuse. There is no opt-out for such repos ([changelog 2026-04-23](https://github.blog/changelog/2026-04-23-immutable-subject-claims-for-github-actions-oidc-tokens/)).
+
+| | `sub` format |
+|---|---|
+| Classic (pre-cutoff repos) | `repo:OWNER/REPO:ref:refs/heads/BRANCH` |
+| Immutable (post-cutoff repos) | `repo:OWNER@OWNER-ID/REPO@REPO-ID:ref:refs/heads/BRANCH` |
+
+Consequences that bind this template and every project spawned from it:
+
+- An AWS trust-policy `sub` entry for a post-cutoff repo MUST use the immutable format; a name-only entry never matches and STS denies `AssumeRoleWithWebIdentity` with `Not authorized to perform sts:AssumeRoleWithWebIdentity`.
+- Deleting and recreating a repo rotates its repo ID, so every trust entry for it must be re-derived — the name-only entry it had before is dead. This repo hit exactly that on its 2026-07-19 v1 history reset.
+- Read a repo's live prefix with `gh api repos/OWNER/REPO/actions/oidc/customization/sub` (`sub_claim_prefix`). This repo's: `repo:kodexArg@47777332/astro-drf-aws@1305504992`.
+- Repos born before the cutoff keep the classic format until they are recreated, renamed, or transferred — then they flip and their trust entries must follow.
+
 > [!note] Ephemeral reference run
 > For the template's own stage-3 run the `dev ← main` pipeline is **out of scope**: `main` is the local development line, `prod` is the only branch reaching AWS, and OIDC deploy trust exists for `refs/heads/prod` only. The `dev ← main` trust above stays doctrine for real projects. Ruled by [[adr-12-ephemeral-run]].

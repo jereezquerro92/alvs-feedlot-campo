@@ -59,6 +59,7 @@ Prefer condition `aws:SourceAccount` = `789650504128` when creating new roles.
 
 - Provider: `token.actions.githubusercontent.com`  
 - Trust scoped to **specific repos** + deploy refs: `refs/heads/main` (dev), `refs/heads/prod` (prod); optional `refs/tags/v*` for releases ([[GH]])
+- **Immutable subject format:** repos created/renamed/transferred after GitHub's 2026-07-15 cutoff emit `sub` as `repo:OWNER@OWNER-ID/REPO@REPO-ID:ref:…` — trust entries for them MUST use that form (name-only never matches). Read the live prefix: `gh api repos/OWNER/REPO/actions/oidc/customization/sub`. Format detail: [[GH]], [[adr-23-oidc-immutable-subject-claim]]
 - **No long-lived access keys** for CI  
 
 ## Permission doctrine
