@@ -1,0 +1,41 @@
+---
+/* LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+ * Governed by: [[adr-04-frontend-and-design-system]]
+ * Docs: [[FRONTEND]]
+ * LIVE-DOC:END */
+import "../styles/app.css";
+import { parseThemeConfig, computeThemeSSRAttrs } from "$lib/theme";
+import PageTitle from "$lib/components/primitives/titles/PageTitle.svelte";
+import CornerNavTriangle from "$lib/components/primitives/CornerNavTriangle.svelte";
+
+interface Props {
+  title?: string;
+}
+
+const { title = process.env.PUBLIC_PROJECT_SLUG ?? "astro-drf-aws" } = Astro.props;
+
+// SSR, no-flash theme apply (bdd-06 "Persistence across login — no flash";
+// [[DESIGN-SYSTEM]]): the `theme` cookie — set by the backend on login and
+// on a successful `PATCH /api/me/` ([[API]]) — is parsed and sanitized here,
+// server-side, before the first byte renders.
+const themeBlob = parseThemeConfig(Astro.cookies.get("theme")?.value);
+const { htmlClass, dataBgPreset, style } = computeThemeSSRAttrs(themeBlob);
+---
+
+<!doctype html>
+<html lang="en" class={htmlClass} data-bg-preset={dataBgPreset} style={style}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <PageTitle title={title} />
+  </head>
+  <body>
+    <slot />
+    <CornerNavTriangle pathname={Astro.url.pathname} />
+    <script>
+
+      import "htmx.org";
+    </script>
+  </body>
+</html>

@@ -1,0 +1,33 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Django 6 + DRF backend service"
+requires-python = "==3.14.*"
+dependencies = [
+    "django==6.0.7",
+    "djangorestframework==3.17.1",
+    "psycopg[binary]==3.3.4",
+    "uvicorn==0.51.0",
+    "drf-spectacular==0.30.0",
+    "django-cors-headers==4.9.0",
+    "pyjwt[crypto]==2.10.1",
+    "msal==1.37.0",
+    "httpx==0.28.1",
+    "whitenoise==6.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "pytest==9.1.1",
+    "pytest-django==4.12.0",
+    "factory-boy==3.3.3",
+    "boto3==1.40.15",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings"
+python_files = ["test_*.py", "*_test.py", "tests.py"]
+markers = [
+    "cognito_live: integration test needing a live Cognito pool (Phase B)",
+    "bedrock_live: blocking Bedrock connectivity gate — needs live AWS credentials; run explicitly by the deploy pipeline (#253)",
+]

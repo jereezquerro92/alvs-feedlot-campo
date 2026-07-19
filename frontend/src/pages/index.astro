@@ -1,0 +1,82 @@
+---
+/* LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+ * Governed by: [[adr-04-frontend-and-design-system]]
+ * Docs: [[FRONTEND]]
+ * LIVE-DOC:END */
+import Base from "../layouts/Base.astro";
+import { LobbyView } from "$lib/components/views";
+import SessionBadge from "$lib/components/auth/SessionBadge.svelte";
+import { hasRole } from "$lib/auth";
+import { DENIED_QUERY } from "$lib/authGate";
+import { t } from "../i18n";
+import type { Me } from "$lib/types/user";
+
+const backendApiUrl = process.env.BACKEND_API_URL ?? "http://localhost:8000";
+const publicBackendUrl = process.env.PUBLIC_BACKEND_URL ?? "http://localhost:8000";
+const publicProjectSlug = process.env.PUBLIC_PROJECT_SLUG ?? "astro-drf-aws";
+
+let me: Me | null = null;
+const cookie = Astro.request.headers.get("cookie");
+if (cookie) {
+  try {
+    const res = await fetch(`${backendApiUrl}/api/me/`, { headers: { cookie } });
+    if (res.ok) me = (await res.json()) as Me;
+  } catch (err) {
+    console.error("SSR /api/me/ failed:", err);
+  }
+}
+
+async function fetchWord(path: string): Promise<string> {
+  try {
+    const res = await fetch(`${backendApiUrl}${path}`);
+    const text = await res.text();
+    return res.ok ? text : String(res.status);
+  } catch {
+    return "error";
+  }
+}
+
+const hello = await fetchWord("/api/m365/hello/");
+const world = await fetchWord("/api/m365/world/");
+
+const pending = me !== null && !hasRole(me);
+// A role-less session bounced off a gated page arrives with `?denied=1`
+// (requireRole, $lib/authGate) — surface a visible reason, not a silent
+// redirect (Bug B; [[adr-20-authorization-lobby]]).
+const denied = Astro.url.searchParams.get(DENIED_QUERY) === "1";
+
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<Base title={publicProjectSlug}>
+  <LobbyView
+    projectSlug={publicProjectSlug}
+    denied={denied}
+    pending={pending}
+    authenticated={me !== null}
+    copy={{
+      title: t("control_hub"),
+      intro: t("control_hub_intro"),
+      deniedTitle: t("denied_title"),
+      deniedBody: t("denied_body"),
+      pendingTitle: t("pending_title"),
+      pendingBody: t("lobby_pending"),
+      navTitle: t("nav_title"),
+      navShowcase: t("nav_showcase"),
+      navChatui: t("nav_chatui"),
+      m365Title: t("m365_status"),
+    }}
+    hello={hello}
+    world={world}
+  >
+    <SessionBadge
+      client:load
+      me={me}
+      pending={pending}
+      publicBackendUrl={publicBackendUrl}
+      loginLabel={t("auth_login")}
+      logoutLabel={t("auth_logout")}
+      slot="session"
+    />
+  </LobbyView>
+</Base>

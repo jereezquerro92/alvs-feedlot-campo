@@ -1,0 +1,453 @@
+---
+/* LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+ * Governed by: [[adr-04-frontend-and-design-system]]
+ * Docs: [[FRONTEND]]
+ * LIVE-DOC:END */
+import Base from "../../layouts/Base.astro";
+import { ShowcaseGalleryView } from "$lib/components/views";
+import ThemeModeToggle from "$lib/components/theme/ThemeModeToggle.svelte";
+import {
+  DataTable,
+  ChipFilterBar,
+  type DataColumn,
+  type DataRow,
+  type ChipItem,
+} from "$lib/components/data";
+import {
+  MetricTileStrip,
+  type MetricTileData,
+  type EntityStat,
+  type SummaryItem,
+} from "$lib/components/dashboard";
+import { ChatUI } from "$lib/components/chat";
+import { AuthPanel } from "$lib/components/auth";
+import { Dialog, Accordion, type AccordionItemData } from "$lib/components/overlay";
+import {
+  Select,
+  Combobox,
+  Checkbox,
+  Switch,
+  DatePicker,
+  DateRangePicker,
+  type SelectOption,
+  type ComboboxOption,
+} from "$lib/components/form";
+import { Toast, Progress } from "$lib/components/feedback";
+import {
+  TabsDemo,
+  DropdownMenuDemo,
+  TooltipDemo,
+  PopoverDemo,
+  HoverCardDemo,
+  CollapsibleDemo,
+  TreeDemo,
+  ToastTriggerDemo,
+  PaginationDemo,
+  PinInputDemo,
+  TagsInputDemo,
+  ScrollAreaDemo,
+  CalendarDemo,
+  RangeCalendarDemo,
+  SliderDemo,
+  ToggleGroupDemo,
+  ContextMenuDemo,
+  MenubarDemo,
+  TableOfContentsDemo,
+  DrawerDemo,
+  HomeTriangleDemo,
+  CornerNavTriangleDemo,
+} from "$lib/components/showcase";
+import type {
+  TabItem,
+  DropdownMenuItem,
+  ContextMenuItem,
+  MenubarMenu,
+  TableOfContentsItem,
+} from "$lib/components/nav";
+import { requireRole } from "$lib/authGate";
+import { t } from "../../i18n";
+import type { Me } from "$lib/types/user";
+
+const backendApiUrl = process.env.BACKEND_API_URL ?? "http://localhost:8000";
+const publicBackendUrl = process.env.PUBLIC_BACKEND_URL ?? "http://localhost:8000";
+
+let me: Me | null = null;
+const cookie = Astro.request.headers.get("cookie");
+if (cookie) {
+  try {
+    const res = await fetch(`${backendApiUrl}/api/me/`, { headers: { cookie } });
+    if (res.ok) me = (await res.json()) as Me;
+  } catch (err) {
+    console.error("SSR /api/me/ failed:", err);
+  }
+}
+
+const redirect = requireRole(me);
+if (redirect) return Astro.redirect(redirect);
+
+Astro.response.headers.set("Cache-Control", "no-store");
+
+// Sample data — realistic enough to exercise sign-colored figures, status
+// enums, and expandable rows; none of it is fetched, this page only renders.
+const invoiceColumns: DataColumn[] = [
+  { key: "ref", label: t("demo_col_reference") },
+  { key: "account", label: t("demo_col_account") },
+  { key: "amount", label: t("demo_col_amount"), align: "right", numeric: true, currency: "USD", sortable: true },
+  { key: "date", label: t("demo_col_date"), sortable: true, date: true },
+];
+
+const invoiceRows: DataRow[] = [
+  { id: "INV-1042", ref: "INV-1042", account: "Acme Corp", amount: 128400, date: "2026-07-01", status: "paid" },
+  { id: "INV-1043", ref: "INV-1043", account: "Nimbus Ltd", amount: -5200, date: "2026-07-03", status: "overdue" },
+  { id: "INV-1044", ref: "INV-1044", account: "Solace Retail", amount: 76100, date: "2026-07-05", status: "pending" },
+  { id: "INV-1045", ref: "INV-1045", account: "Kestrel Freight", amount: 32950, date: "2026-07-08", status: "review" },
+  { id: "INV-1046", ref: "INV-1046", account: "Bramble & Co", amount: -1800, date: "2026-07-10", status: "rejected" },
+];
+
+const invoicePageCount = 5;
+
+const statusChips: ChipItem[] = [
+  { key: "paid", label: t("demo_chip_paid"), count: 18 },
+  { key: "pending", label: t("demo_chip_pending"), count: 6 },
+  { key: "overdue", label: t("demo_chip_overdue"), count: 3 },
+];
+
+const metricTiles: MetricTileData[] = [
+  { key: "revenue", label: t("demo_tile_revenue"), value: 128400, currency: "USD" },
+  { key: "expenses", label: t("demo_tile_expenses"), value: -52300, currency: "USD" },
+  { key: "accounts", label: t("demo_tile_accounts"), count: 214 },
+];
+
+const entities: { title: string; subtitle: string; stats: EntityStat[]; status: string }[] = [
+  {
+    title: "Acme Corp",
+    subtitle: t("demo_entity_enterprise"),
+    stats: [{ label: t("demo_stat_balance"), value: "USD $128,400" }, { label: t("demo_stat_invoices"), value: "12" }],
+    status: "paid",
+  },
+  {
+    title: "Nimbus Ltd",
+    subtitle: t("demo_entity_standard"),
+    stats: [{ label: t("demo_stat_balance"), value: "USD $-5,200" }, { label: t("demo_stat_invoices"), value: "4" }],
+    status: "overdue",
+  },
+  {
+    title: "Kestrel Freight",
+    subtitle: t("demo_entity_standard"),
+    stats: [{ label: t("demo_stat_balance"), value: "USD $32,950" }, { label: t("demo_stat_invoices"), value: "7" }],
+    status: "review",
+  },
+];
+
+const summaryItems: SummaryItem[] = [
+  { label: t("demo_summary_net"), value: "USD $76,100" },
+  { label: t("demo_summary_growth"), value: "+4.2%" },
+  { label: t("demo_summary_accounts"), value: "214" },
+  { label: t("demo_summary_flagged"), value: "3" },
+];
+
+const accordionItems: AccordionItemData[] = [
+  { id: "settlement", title: t("demo_accordion_settlement_title"), content: t("demo_accordion_settlement_body") },
+  { id: "audit", title: t("demo_accordion_audit_title"), content: t("demo_accordion_audit_body") },
+  { id: "contact", title: t("demo_accordion_contact_title"), content: t("demo_accordion_contact_body") },
+];
+
+const accountOptions: SelectOption[] = [
+  { value: "payable", label: t("demo_select_option_payable") },
+  { value: "receivable", label: t("demo_select_option_receivable") },
+  { value: "opex", label: t("demo_select_option_opex") },
+  { value: "payroll", label: t("demo_select_option_payroll") },
+  { value: "tax", label: t("demo_select_option_tax") },
+];
+
+const vendorOptions: ComboboxOption[] = [
+  { value: "acme", label: "Acme Corp" },
+  { value: "nimbus", label: "Nimbus Ltd" },
+  { value: "solace", label: "Solace Retail" },
+  { value: "kestrel", label: "Kestrel Freight" },
+  { value: "bramble", label: "Bramble & Co" },
+];
+
+const summaryTabs: TabItem[] = [
+  { value: "summary", label: t("demo_tabs_summary") },
+  { value: "activity", label: t("demo_tabs_activity") },
+  { value: "settings", label: t("demo_tabs_settings") },
+];
+
+const summaryTabsBody: Record<string, string> = {
+  summary: t("demo_tabs_summary_content"),
+  activity: t("demo_tabs_activity_content"),
+  settings: t("demo_tabs_settings_content"),
+};
+
+const dropdownMenuItems: DropdownMenuItem[] = [
+  { value: "edit", label: t("demo_dropdown_edit") },
+  { value: "duplicate", label: t("demo_dropdown_duplicate") },
+  { value: "archive", label: t("demo_dropdown_archive"), disabled: true },
+  { value: "delete", label: t("demo_dropdown_delete") },
+];
+
+const contextMenuItems: ContextMenuItem[] = [
+  { value: "copy", label: t("demo_context_menu_copy") },
+  { value: "paste", label: t("demo_context_menu_paste") },
+  { value: "delete", label: t("demo_context_menu_delete") },
+];
+
+const menubarMenus: MenubarMenu[] = [
+  {
+    value: "file",
+    label: t("demo_menubar_file"),
+    items: [
+      { value: "new", label: t("demo_menubar_new") },
+      { value: "open", label: t("demo_menubar_open") },
+    ],
+  },
+  {
+    value: "edit",
+    label: t("demo_menubar_edit"),
+    items: [
+      { value: "undo", label: t("demo_menubar_undo") },
+      { value: "redo", label: t("demo_menubar_redo"), disabled: true },
+    ],
+  },
+];
+
+const tocItems: TableOfContentsItem[] = [
+  { href: "#overview", label: t("demo_toc_overview") },
+  { href: "#details", label: t("demo_toc_details"), depth: 3 },
+  { href: "#summary", label: t("demo_toc_summary") },
+];
+---
+
+<Base title={t("gallery_title")}>
+  {/* @ts-expect-error Astro↔Svelte-5 named-slot typing limitation (@astrojs/svelte 9 / Svelte 5 legacy <slot name>): the generated TSX types the component's children as `undefined`, but the many slotted children render correctly at runtime — see the issue that gated this on a green `bun run check` */}
+  <ShowcaseGalleryView
+    entities={entities}
+    summaryItems={summaryItems}
+    copy={{
+      title: t("gallery_title"),
+      intro: t("gallery_intro"),
+      recoTitle: t("gallery_reco_title"),
+      recoBody: t("gallery_reco_body"),
+      typography: t("gallery_typography"),
+      typographyNote: t("gallery_typography_note"),
+      scaleH1: t("gallery_scale_h1"),
+      scaleH2: t("gallery_scale_h2"),
+      scaleH3: t("gallery_scale_h3"),
+      buttonsBadges: t("gallery_buttons_badges"),
+      data: t("gallery_data"),
+      dataTable: t("gallery_datatable"),
+      numericValue: t("gallery_numericvalue"),
+      chipFilterBar: t("gallery_chipfilterbar"),
+      pagination: t("gallery_pagination"),
+      collapsible: t("gallery_collapsible"),
+      tree: t("gallery_tree"),
+      dashboard: t("gallery_dashboard"),
+      metricTiles: t("gallery_metrictiles"),
+      entityGrid: t("gallery_entitygrid"),
+      summaryCard: t("gallery_summarycard"),
+      summaryTitle: t("demo_summary_title"),
+      chat: t("gallery_chat"),
+      chatNote: t("gallery_chat_note"),
+      form: t("gallery_form"),
+      select: t("gallery_select"),
+      combobox: t("gallery_combobox"),
+      checkbox: t("gallery_checkbox"),
+      switchTitle: t("gallery_switch"),
+      datePicker: t("gallery_datepicker"),
+      dateRangePicker: t("gallery_daterangepicker"),
+      pinInput: t("gallery_pin_input"),
+      tagsInput: t("gallery_tags_input"),
+      calendar: t("gallery_calendar"),
+      rangeCalendar: t("gallery_range_calendar"),
+      slider: t("gallery_slider"),
+      toggleGroup: t("gallery_toggle_group"),
+      navigation: t("gallery_navigation"),
+      tabs: t("gallery_tabs"),
+      dropdownMenu: t("gallery_dropdownmenu"),
+      contextMenu: t("gallery_contextmenu"),
+      menubar: t("gallery_menubar"),
+      tableOfContents: t("gallery_toc"),
+      overlay: t("gallery_overlay"),
+      accordion: t("gallery_accordion"),
+      tooltip: t("gallery_tooltip"),
+      popover: t("gallery_popover"),
+      hoverCard: t("gallery_hover_card"),
+      scrollArea: t("gallery_scroll_area"),
+      drawer: t("gallery_drawer"),
+      homeTriangle: t("gallery_home_triangle"),
+      cornerNavTriangle: t("gallery_corner_nav_triangle"),
+      feedback: t("gallery_feedback"),
+      progress: t("gallery_progress"),
+      toast: t("gallery_toast"),
+      auth: t("gallery_auth"),
+      theme: t("gallery_theme"),
+    }}
+  >
+    <DataTable columns={invoiceColumns} rows={invoiceRows} client:load slot="data-table">
+      <p slot="detail" class="text-sm text-muted-foreground">{t("gallery_datatable_detail")}</p>
+    </DataTable>
+    <ChipFilterBar chips={statusChips} client:load slot="chip-filter-bar" />
+    <PaginationDemo pageCount={invoicePageCount} client:load slot="pagination" />
+    <CollapsibleDemo
+      triggerLabel={t("demo_collapsible_trigger")}
+      body={t("demo_collapsible_body")}
+      client:visible
+      slot="collapsible"
+    />
+    <TreeDemo client:visible slot="tree" />
+    <MetricTileStrip tiles={metricTiles} client:visible slot="metric-tiles" />
+    <Select
+      options={accountOptions}
+      label={t("demo_select_label")}
+      placeholder={t("demo_select_placeholder")}
+      client:visible
+      slot="select"
+    />
+    <Combobox
+      options={vendorOptions}
+      label={t("demo_combobox_label")}
+      placeholder={t("demo_combobox_placeholder")}
+      emptyText={t("demo_combobox_empty")}
+      client:visible
+      slot="combobox"
+    />
+    <Checkbox label={t("demo_checkbox_label")} client:visible slot="checkbox" />
+    <Switch label={t("demo_switch_label")} client:visible slot="switch" />
+    <DatePicker
+      label={t("demo_datepicker_label")}
+      placeholder={t("demo_datepicker_placeholder")}
+      clearLabel={t("demo_datepicker_clear")}
+      client:visible
+      slot="date-picker"
+    />
+    <DateRangePicker
+      label={t("demo_daterange_label")}
+      fromLabel={t("demo_daterange_from")}
+      toLabel={t("demo_daterange_to")}
+      placeholder={t("demo_daterange_placeholder")}
+      clearLabel={t("demo_daterange_clear")}
+      client:visible
+      slot="date-range-picker"
+    />
+    <PinInputDemo client:visible slot="pin-input" />
+    <TagsInputDemo client:visible slot="tags-input" />
+    <CalendarDemo client:visible slot="calendar" />
+    <RangeCalendarDemo client:visible slot="range-calendar" />
+    <SliderDemo client:visible slot="slider" />
+    <ToggleGroupDemo client:visible slot="toggle-group" />
+    <TabsDemo items={summaryTabs} body={summaryTabsBody} client:visible slot="tabs" />
+    <DropdownMenuDemo
+      items={dropdownMenuItems}
+      triggerLabel={t("demo_dropdown_trigger")}
+      client:visible
+      slot="dropdown-menu"
+    />
+    <ContextMenuDemo
+      items={contextMenuItems}
+      regionLabel={t("demo_context_menu_region_label")}
+      client:visible
+      slot="context-menu"
+    />
+    <MenubarDemo menus={menubarMenus} client:visible slot="menubar" />
+    <TableOfContentsDemo
+      items={tocItems}
+      label={t("demo_toc_label")}
+      client:visible
+      slot="table-of-contents"
+    />
+    <ChatUI
+      client:visible
+      slot="chat"
+      publicBackendUrl={publicBackendUrl}
+      copy={{
+        title: t("chatui_router_title"),
+        emptyState: t("chatui_router_empty"),
+        composerPlaceholder: t("chatui_composer_placeholder"),
+        composerAriaLabel: t("chatui_composer_aria_label"),
+        composerSend: t("chatui_composer_send"),
+        messageGo: t("chatui_message_go"),
+        messageConfirm: t("chatui_message_confirm"),
+        outcomeCopy: {
+          router_outcome_escalate: t("router_outcome_escalate"),
+          router_outcome_no_match: t("router_outcome_no_match"),
+          router_outcome_disabled: t("router_outcome_disabled"),
+          router_outcome_hard_reject: t("router_outcome_hard_reject"),
+          router_outcome_throttled: t("router_outcome_throttled"),
+          router_outcome_network_error: t("router_outcome_network_error"),
+        },
+      }}
+    />
+    <Fragment slot="overlay-triggers">
+      <Dialog triggerLabel={t("demo_dialog_trigger")} title={t("demo_dialog_title")} description={t("demo_dialog_desc")} client:visible>
+        <p>{t("demo_dialog_body")}</p>
+      </Dialog>
+    </Fragment>
+    <Accordion items={accordionItems} client:visible slot="accordion" />
+    <TooltipDemo
+      triggerLabel={t("demo_tooltip_trigger")}
+      content={t("demo_tooltip_content")}
+      client:visible
+      slot="tooltip"
+    />
+    <PopoverDemo
+      triggerLabel={t("demo_popover_trigger")}
+      quote={t("demo_popover_quote")}
+      author={t("demo_popover_author")}
+      client:visible
+      slot="popover"
+    />
+    <HoverCardDemo
+      triggerLabel={t("demo_hover_card_trigger")}
+      name={t("demo_hover_card_name")}
+      detail={t("demo_hover_card_detail")}
+      client:visible
+      slot="hover-card"
+    />
+    <ScrollAreaDemo
+      items={[
+        t("demo_scroll_area_item_1"),
+        t("demo_scroll_area_item_2"),
+        t("demo_scroll_area_item_3"),
+        t("demo_scroll_area_item_4"),
+        t("demo_scroll_area_item_5"),
+        t("demo_scroll_area_item_6"),
+      ]}
+      client:visible
+      slot="scroll-area"
+    />
+    <DrawerDemo client:visible slot="drawer" />
+    <HomeTriangleDemo slot="home-triangle" />
+    <CornerNavTriangleDemo slot="corner-nav-triangle" />
+    <Progress
+      value={62}
+      max={100}
+      label={t("demo_progress_label")}
+      client:visible
+      slot="progress"
+    />
+    <ToastTriggerDemo
+      triggerLabel={t("demo_toast_trigger")}
+      title={t("demo_toast_title")}
+      description={t("demo_toast_desc")}
+      client:visible
+      slot="toast"
+    />
+    <AuthPanel
+      client:visible
+      me={me}
+      publicBackendUrl={publicBackendUrl}
+      copy={{
+        title: t("auth_panel_title"),
+        loggedInAs: t("auth_logged_in_as"),
+        noGroups: t("auth_no_groups"),
+        notSignedIn: t("auth_not_signed_in"),
+        login: t("auth_login"),
+        logout: t("auth_logout"),
+      }}
+      slot="auth"
+    />
+    <ThemeModeToggle client:visible slot="theme-toggle" />
+  </ShowcaseGalleryView>
+  <Toast client:idle />
+</Base>

@@ -1,0 +1,26 @@
+[
+  {
+    "model": "router.intent",
+    "pk": 1,
+    "fields": {
+      "phrase": "log me out",
+      "target": "/accounts/logout/",
+      "kind": "confirm",
+      "group": null,
+      "order": 1,
+      "is_active": true
+    }
+  },
+  {
+    "model": "router.intent",
+    "pk": 2,
+    "fields": {
+      "phrase": "go to the dashboard",
+      "target": "/dashboard/",
+      "kind": "navigate",
+      "group": null,
+      "order": 2,
+      "is_active": true
+    }
+  }
+]

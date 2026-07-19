@@ -1,0 +1,14 @@
+# Build-context hygiene for `COPY . .` (Dockerfile). Without this file the
+# host's .venv/ (uv sync creates it in backend/) lands in the image on top of
+# the freshly built /app/.venv, plus caches and any local .env secrets.
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+staticfiles/
+.env
+.env.*
+Dockerfile
+.dockerignore

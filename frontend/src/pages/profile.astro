@@ -1,0 +1,39 @@
+---
+/* LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+ * Governed by: [[adr-04-frontend-and-design-system]]
+ * Docs: [[FRONTEND]]
+ * LIVE-DOC:END */
+import Base from "../layouts/Base.astro";
+import { ProfileView } from "$lib/components/views";
+import ProfileForm from "$lib/components/auth/ProfileForm.svelte";
+import ThemeCard from "$lib/components/theme/ThemeCard.svelte";
+import { requireRole } from "$lib/authGate";
+import { t } from "../i18n";
+import type { Me } from "$lib/types/user";
+
+const backendApiUrl = process.env.BACKEND_API_URL ?? "http://localhost:8000";
+const publicBackendUrl = process.env.PUBLIC_BACKEND_URL ?? "http://localhost:8000";
+
+let me: Me | null = null;
+const cookie = Astro.request.headers.get("cookie");
+if (cookie) {
+  try {
+    const res = await fetch(`${backendApiUrl}/api/me/`, { headers: { cookie } });
+    if (res.ok) me = (await res.json()) as Me;
+  } catch (err) {
+    console.error("SSR /api/me/ failed:", err);
+  }
+}
+
+const redirect = requireRole(me);
+if (redirect) return Astro.redirect(redirect);
+
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<Base title={t("profile_title")}>
+  <ProfileView title={t("profile_title")} intro={t("profile_intro")}>
+    <ProfileForm client:load me={me} publicBackendUrl={publicBackendUrl} />
+    <ThemeCard client:load me={me} publicBackendUrl={publicBackendUrl} />
+  </ProfileView>
+</Base>

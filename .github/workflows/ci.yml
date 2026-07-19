@@ -1,0 +1,92 @@
+name: ci
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_NAME: app
+      DB_USER: app
+      DB_PASSWORD: app
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      SECRET_KEY: test-only-secret-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.14"
+      - name: Sync dependencies
+        working-directory: backend
+        run: uv sync
+      - name: Django system check
+        working-directory: backend
+        run: uv run manage.py check
+      - name: Run tests
+        working-directory: backend
+        run: uv run pytest -m "not cognito_live and not bedrock_live"
+
+  harness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run harness tests (auto-discovered)
+        run: |
+          set -uo pipefail
+          # test_aws_infra.py verifies LIVE AWS resources and needs boto3 +
+          # AWS credentials; adr-12-ephemeral-run forbids depending on those
+          # born-dead resources surviving, so it can never run in CI.
+          EXCLUDE="tests/test_aws_infra.py"
+          failed=0
+          for t in tests/test_*.py; do
+            if [ "$t" = "$EXCLUDE" ]; then
+              echo "::notice::skipping $t (live-AWS only; excluded per adr-12-ephemeral-run)"
+              continue
+            fi
+            echo "=== $t ==="
+            if ! python3 "$t"; then
+              failed=1
+            fi
+          done
+          exit $failed
+
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check frontend exists
+        id: exists
+        run: |
+          if [ -f frontend/package.json ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "frontend/ not present yet — skipping"
+          fi
+      - uses: oven-sh/setup-bun@v2
+        if: steps.exists.outputs.present == 'true'
+      - name: Install, check, build, and test
+        if: steps.exists.outputs.present == 'true'
+        working-directory: frontend
+        run: |
+          bun install --frozen-lockfile
+          bun run check
+          bun run build
+          bun run test

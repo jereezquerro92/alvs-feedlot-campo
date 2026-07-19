@@ -1,0 +1,395 @@
+name: deploy-prod
+
+on:
+  push:
+    branches: [prod]
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: false
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: us-east-1
+  AWS_ACCOUNT_ID: "789650504128"
+  DEPLOY_ROLE_ARN: arn:aws:iam::789650504128:role/gha-deploy-prod
+  PROJECT_SLUG: astro-drf-aws
+  ENV_NAME: prod
+  CLUSTER: alvs-prod
+  ECR_REGISTRY: 789650504128.dkr.ecr.us-east-1.amazonaws.com
+  PUBLIC_SUBNET_A: subnet-0367b5e29ffc0c525
+  PUBLIC_SUBNET_B: subnet-03e3ec09d37971485
+  TASK_SG_ID: sg-027b8d1f3fe41007a
+  # opaque AWS-assigned suffix — not a pure function of PROJECT_SLUG, stays literal (issue #129)
+  SECRET_DJANGO: arn:aws:secretsmanager:us-east-1:789650504128:secret:alvs/prod/astro-drf-aws/django-3aQ89E
+  # opaque AWS-assigned suffix — not a pure function of PROJECT_SLUG, stays literal (issue #129)
+  SECRET_DB: arn:aws:secretsmanager:us-east-1:789650504128:secret:alvs/prod/astro-drf-aws/db-57dPTf
+  # opaque AWS-assigned suffix — not a pure function of PROJECT_SLUG, stays literal (issue #129)
+  SECRET_COGNITO: arn:aws:secretsmanager:us-east-1:789650504128:secret:alvs/prod/astro-drf-aws/cognito-kZbof7
+  # opaque AWS-assigned suffix — not a pure function of PROJECT_SLUG, stays literal (issue #129)
+  SECRET_MSGRAPH: arn:aws:secretsmanager:us-east-1:789650504128:secret:alvs/prod/astro-drf-aws/msgraph-2vkmEp
+  CLOUDMAP_SERVICE: backend
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_DB: app
+          POSTGRES_USER: app
+          POSTGRES_PASSWORD: app
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U app"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      DB_NAME: app
+      DB_USER: app
+      DB_PASSWORD: app
+      DB_HOST: localhost
+      DB_PORT: "5432"
+      SECRET_KEY: test-only-secret-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.14"
+      - name: Sync dependencies
+        working-directory: backend
+        run: uv sync
+      - name: Django system check
+        working-directory: backend
+        run: uv run manage.py check
+      - name: Backend tests
+        working-directory: backend
+        run: uv run pytest -m "not cognito_live and not bedrock_live"
+      - name: Check frontend exists
+        id: fe
+        run: |
+          if [ -f frontend/package.json ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "frontend/ not present yet — skipping frontend tests"
+          fi
+      - uses: oven-sh/setup-bun@v2
+        if: steps.fe.outputs.present == 'true'
+      - name: Frontend tests
+        if: steps.fe.outputs.present == 'true'
+        working-directory: frontend
+        run: |
+          bun install --frozen-lockfile
+          bun run check
+          bun run build
+          bun run test
+
+  bedrock-gate:
+    # Blocking connectivity gate (#253): proves real Bedrock reachability
+    # (network + IAM + model access) with OIDC credentials before any image
+    # is built. Hard-fails the deploy; never runs at container boot.
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      SECRET_KEY: gate-only-secret-key
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.14"
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Sync dependencies
+        working-directory: backend
+        run: uv sync
+      - name: Bedrock connectivity gate
+        working-directory: backend
+        run: uv run pytest -m bedrock_live
+
+  build-push:
+    needs: [test, bedrock-gate]
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ steps.tag.outputs.image_tag }}
+      backend_repo: ${{ steps.names.outputs.backend_repo }}
+      frontend_repo: ${{ steps.names.outputs.frontend_repo }}
+      backend_exec_role: ${{ steps.names.outputs.backend_exec_role }}
+      backend_task_role: ${{ steps.names.outputs.backend_task_role }}
+      frontend_exec_role: ${{ steps.names.outputs.frontend_exec_role }}
+      frontend_task_role: ${{ steps.names.outputs.frontend_task_role }}
+      backend_log_group: ${{ steps.names.outputs.backend_log_group }}
+      frontend_log_group: ${{ steps.names.outputs.frontend_log_group }}
+      cloudmap_namespace: ${{ steps.names.outputs.cloudmap_namespace }}
+      project_host: ${{ steps.names.outputs.project_host }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Image tag (immutable)
+        id: tag
+        run: echo "image_tag=prod-${GITHUB_SHA}" >> "$GITHUB_OUTPUT"
+      - name: Derive PROJECT_SLUG-based resource names
+        id: names
+        run: |
+          echo "backend_repo=alvs/${PROJECT_SLUG}-backend" >> "$GITHUB_OUTPUT"
+          echo "frontend_repo=alvs/${PROJECT_SLUG}-frontend" >> "$GITHUB_OUTPUT"
+          echo "backend_exec_role=arn:aws:iam::${AWS_ACCOUNT_ID}:role/alvs-${ENV_NAME}-${PROJECT_SLUG}-backend-exec-role" >> "$GITHUB_OUTPUT"
+          echo "backend_task_role=arn:aws:iam::${AWS_ACCOUNT_ID}:role/alvs-${ENV_NAME}-${PROJECT_SLUG}-backend-task-role" >> "$GITHUB_OUTPUT"
+          echo "frontend_exec_role=arn:aws:iam::${AWS_ACCOUNT_ID}:role/alvs-${ENV_NAME}-${PROJECT_SLUG}-frontend-exec-role" >> "$GITHUB_OUTPUT"
+          echo "frontend_task_role=arn:aws:iam::${AWS_ACCOUNT_ID}:role/alvs-${ENV_NAME}-${PROJECT_SLUG}-frontend-task-role" >> "$GITHUB_OUTPUT"
+          echo "backend_log_group=/alvs/${PROJECT_SLUG}/backend-${ENV_NAME}" >> "$GITHUB_OUTPUT"
+          echo "frontend_log_group=/alvs/${PROJECT_SLUG}/frontend-${ENV_NAME}" >> "$GITHUB_OUTPUT"
+          echo "cloudmap_namespace=${PROJECT_SLUG}-${ENV_NAME}.local" >> "$GITHUB_OUTPUT"
+          echo "project_host=${PROJECT_SLUG}.grupoalvs.com" >> "$GITHUB_OUTPUT"
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - uses: aws-actions/amazon-ecr-login@v2
+      - uses: docker/setup-buildx-action@v3
+      - name: Build & push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: backend
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.ECR_REGISTRY }}/${{ steps.names.outputs.backend_repo }}:${{ steps.tag.outputs.image_tag }}
+      - name: Build & push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: frontend
+          platforms: linux/amd64
+          push: true
+          tags: ${{ env.ECR_REGISTRY }}/${{ steps.names.outputs.frontend_repo }}:${{ steps.tag.outputs.image_tag }}
+
+  migrate:
+    needs: build-push
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: ${{ needs.build-push.outputs.image_tag }}
+      BACKEND_REPO: ${{ needs.build-push.outputs.backend_repo }}
+      BACKEND_EXEC_ROLE: ${{ needs.build-push.outputs.backend_exec_role }}
+      BACKEND_TASK_ROLE: ${{ needs.build-push.outputs.backend_task_role }}
+      BACKEND_LOG_GROUP: ${{ needs.build-push.outputs.backend_log_group }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Resolve task security group
+        id: sg
+        run: |
+          echo "sg_id=${TASK_SG_ID}" >> "$GITHUB_OUTPUT"
+      - name: Register migrate task definition
+        run: |
+          IMAGE="${ECR_REGISTRY}/${BACKEND_REPO}:${IMAGE_TAG}"
+          cat > migrate-taskdef.json <<JSON
+          {
+            "family": "${PROJECT_SLUG}-migrate-${ENV_NAME}",
+            "networkMode": "awsvpc",
+            "requiresCompatibilities": ["FARGATE"],
+            "cpu": "256",
+            "memory": "512",
+            "executionRoleArn": "${BACKEND_EXEC_ROLE}",
+            "taskRoleArn": "${BACKEND_TASK_ROLE}",
+            "containerDefinitions": [
+              {
+                "name": "${PROJECT_SLUG}-migrate",
+                "image": "${IMAGE}",
+                "essential": true,
+                "command": ["sh", "-c", "uv run python manage.py migrate --noinput && uv run python manage.py createcachetable"],
+                "environment": [
+                  {"name": "PROJECT_SLUG", "value": "${PROJECT_SLUG}"},
+                  {"name": "BASE_DOMAIN", "value": "grupoalvs.com"},
+                  {"name": "USE_X_FORWARDED_PROTO", "value": "true"}
+                ],
+                "secrets": [
+                  {"name": "SECRET_KEY", "valueFrom": "${SECRET_DJANGO}:SECRET_KEY::"},
+                  {"name": "ALLOWED_HOSTS", "valueFrom": "${SECRET_DJANGO}:ALLOWED_HOSTS::"},
+                  {"name": "DEBUG", "valueFrom": "${SECRET_DJANGO}:DEBUG::"},
+                  {"name": "CORS_ALLOWED_ORIGINS", "valueFrom": "${SECRET_DJANGO}:CORS_ALLOWED_ORIGINS::"},
+                  {"name": "CSRF_TRUSTED_ORIGINS", "valueFrom": "${SECRET_DJANGO}:CSRF_TRUSTED_ORIGINS::"},
+                  {"name": "DB_HOST", "valueFrom": "${SECRET_DB}:host::"},
+                  {"name": "DB_PORT", "valueFrom": "${SECRET_DB}:port::"},
+                  {"name": "DB_NAME", "valueFrom": "${SECRET_DB}:dbname::"},
+                  {"name": "DB_USER", "valueFrom": "${SECRET_DB}:username::"},
+                  {"name": "DB_PASSWORD", "valueFrom": "${SECRET_DB}:password::"},
+                  {"name": "COGNITO_USER_POOL_ID", "valueFrom": "${SECRET_COGNITO}:COGNITO_USER_POOL_ID::"},
+                  {"name": "COGNITO_CLIENT_ID", "valueFrom": "${SECRET_COGNITO}:COGNITO_CLIENT_ID::"},
+                  {"name": "COGNITO_CLIENT_SECRET", "valueFrom": "${SECRET_COGNITO}:COGNITO_CLIENT_SECRET::"},
+                  {"name": "COGNITO_DOMAIN", "valueFrom": "${SECRET_COGNITO}:COGNITO_DOMAIN::"},
+                  {"name": "COGNITO_REGION", "valueFrom": "${SECRET_COGNITO}:COGNITO_REGION::"}
+                ],
+                "logConfiguration": {
+                  "logDriver": "awslogs",
+                  "options": {
+                    "awslogs-group": "${BACKEND_LOG_GROUP}",
+                    "awslogs-region": "${AWS_REGION}",
+                    "awslogs-stream-prefix": "migrate"
+                  }
+                }
+              }
+            ]
+          }
+          JSON
+          aws ecs register-task-definition --cli-input-json file://migrate-taskdef.json
+      - name: Run migrate task and wait for exit 0
+        env:
+          SG_ID: ${{ steps.sg.outputs.sg_id }}
+        run: |
+          NETCFG="awsvpcConfiguration={subnets=[${PUBLIC_SUBNET_A},${PUBLIC_SUBNET_B}],securityGroups=[${SG_ID}],assignPublicIp=ENABLED}"
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "${CLUSTER}" \
+            --launch-type FARGATE \
+            --task-definition ${PROJECT_SLUG}-migrate-${ENV_NAME} \
+            --network-configuration "$NETCFG" \
+            --started-by "gha-${GITHUB_SHA}" \
+            --query 'tasks[0].taskArn' --output text)
+          echo "Migrate task: $TASK_ARN"
+          aws ecs wait tasks-stopped --cluster "${CLUSTER}" --tasks "$TASK_ARN"
+          EXIT_CODE=$(aws ecs describe-tasks --cluster "${CLUSTER}" --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+          echo "Migrate container exit code: $EXIT_CODE"
+          if [ "$EXIT_CODE" != "0" ]; then
+            echo "::error::Migrate task did not exit 0 (got '$EXIT_CODE')."
+            exit 1
+          fi
+
+  deploy:
+    needs: [build-push, migrate]
+    runs-on: ubuntu-latest
+    env:
+      IMAGE_TAG: ${{ needs.build-push.outputs.image_tag }}
+      BACKEND_REPO: ${{ needs.build-push.outputs.backend_repo }}
+      FRONTEND_REPO: ${{ needs.build-push.outputs.frontend_repo }}
+      BACKEND_EXEC_ROLE: ${{ needs.build-push.outputs.backend_exec_role }}
+      BACKEND_TASK_ROLE: ${{ needs.build-push.outputs.backend_task_role }}
+      FRONTEND_EXEC_ROLE: ${{ needs.build-push.outputs.frontend_exec_role }}
+      FRONTEND_TASK_ROLE: ${{ needs.build-push.outputs.frontend_task_role }}
+      BACKEND_LOG_GROUP: ${{ needs.build-push.outputs.backend_log_group }}
+      FRONTEND_LOG_GROUP: ${{ needs.build-push.outputs.frontend_log_group }}
+      CLOUDMAP_NAMESPACE: ${{ needs.build-push.outputs.cloudmap_namespace }}
+      PROJECT_HOST: ${{ needs.build-push.outputs.project_host }}
+    steps:
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+      - name: Register backend task definition
+        run: |
+          IMAGE="${ECR_REGISTRY}/${BACKEND_REPO}:${IMAGE_TAG}"
+          cat > backend-taskdef.json <<JSON
+          {
+            "family": "${PROJECT_SLUG}-backend-${ENV_NAME}",
+            "networkMode": "awsvpc",
+            "requiresCompatibilities": ["FARGATE"],
+            "cpu": "256",
+            "memory": "512",
+            "executionRoleArn": "${BACKEND_EXEC_ROLE}",
+            "taskRoleArn": "${BACKEND_TASK_ROLE}",
+            "containerDefinitions": [
+              {
+                "name": "${PROJECT_SLUG}-backend",
+                "image": "${IMAGE}",
+                "essential": true,
+                "portMappings": [{"containerPort": 8000, "protocol": "tcp"}],
+                "environment": [
+                  {"name": "PROJECT_SLUG", "value": "${PROJECT_SLUG}"},
+                  {"name": "BASE_DOMAIN", "value": "grupoalvs.com"},
+                  {"name": "USE_X_FORWARDED_PROTO", "value": "true"}
+                ],
+                "secrets": [
+                  {"name": "SECRET_KEY", "valueFrom": "${SECRET_DJANGO}:SECRET_KEY::"},
+                  {"name": "ALLOWED_HOSTS", "valueFrom": "${SECRET_DJANGO}:ALLOWED_HOSTS::"},
+                  {"name": "DEBUG", "valueFrom": "${SECRET_DJANGO}:DEBUG::"},
+                  {"name": "CORS_ALLOWED_ORIGINS", "valueFrom": "${SECRET_DJANGO}:CORS_ALLOWED_ORIGINS::"},
+                  {"name": "CSRF_TRUSTED_ORIGINS", "valueFrom": "${SECRET_DJANGO}:CSRF_TRUSTED_ORIGINS::"},
+                  {"name": "DB_HOST", "valueFrom": "${SECRET_DB}:host::"},
+                  {"name": "DB_PORT", "valueFrom": "${SECRET_DB}:port::"},
+                  {"name": "DB_NAME", "valueFrom": "${SECRET_DB}:dbname::"},
+                  {"name": "DB_USER", "valueFrom": "${SECRET_DB}:username::"},
+                  {"name": "DB_PASSWORD", "valueFrom": "${SECRET_DB}:password::"},
+                  {"name": "COGNITO_USER_POOL_ID", "valueFrom": "${SECRET_COGNITO}:COGNITO_USER_POOL_ID::"},
+                  {"name": "COGNITO_CLIENT_ID", "valueFrom": "${SECRET_COGNITO}:COGNITO_CLIENT_ID::"},
+                  {"name": "COGNITO_CLIENT_SECRET", "valueFrom": "${SECRET_COGNITO}:COGNITO_CLIENT_SECRET::"},
+                  {"name": "COGNITO_DOMAIN", "valueFrom": "${SECRET_COGNITO}:COGNITO_DOMAIN::"},
+                  {"name": "COGNITO_REGION", "valueFrom": "${SECRET_COGNITO}:COGNITO_REGION::"},
+                  {"name": "MSGRAPH_TENANT_ID", "valueFrom": "${SECRET_MSGRAPH}:tenant_id::"},
+                  {"name": "MSGRAPH_CLIENT_ID", "valueFrom": "${SECRET_MSGRAPH}:client_id::"},
+                  {"name": "MSGRAPH_CLIENT_SECRET", "valueFrom": "${SECRET_MSGRAPH}:client_secret::"}
+                ],
+                "logConfiguration": {
+                  "logDriver": "awslogs",
+                  "options": {
+                    "awslogs-group": "${BACKEND_LOG_GROUP}",
+                    "awslogs-region": "${AWS_REGION}",
+                    "awslogs-stream-prefix": "backend"
+                  }
+                }
+              }
+            ]
+          }
+          JSON
+          aws ecs register-task-definition --cli-input-json file://backend-taskdef.json
+
+      - name: Register frontend task definition
+        run: |
+          IMAGE="${ECR_REGISTRY}/${FRONTEND_REPO}:${IMAGE_TAG}"
+          cat > frontend-taskdef.json <<JSON
+          {
+            "family": "${PROJECT_SLUG}-frontend-${ENV_NAME}",
+            "networkMode": "awsvpc",
+            "requiresCompatibilities": ["FARGATE"],
+            "cpu": "256",
+            "memory": "512",
+            "executionRoleArn": "${FRONTEND_EXEC_ROLE}",
+            "taskRoleArn": "${FRONTEND_TASK_ROLE}",
+            "containerDefinitions": [
+              {
+                "name": "${PROJECT_SLUG}-frontend",
+                "image": "${IMAGE}",
+                "essential": true,
+                "portMappings": [{"containerPort": 4321, "protocol": "tcp"}],
+                "environment": [
+                  {"name": "PORT", "value": "4321"},
+                  {"name": "HOST", "value": "0.0.0.0"},
+                  {"name": "NODE_ENV", "value": "production"},
+                  {"name": "PUBLIC_SITE_URL", "value": "https://${PROJECT_HOST}"},
+                  {"name": "PUBLIC_API_URL", "value": "https://${PROJECT_HOST}/api"},
+                  {"name": "PUBLIC_BACKEND_URL", "value": "https://${PROJECT_HOST}"},
+                  {"name": "BACKEND_API_URL", "value": "http://${CLOUDMAP_SERVICE}.${CLOUDMAP_NAMESPACE}:8000"},
+                  {"name": "PUBLIC_PROJECT_SLUG", "value": "${PROJECT_SLUG}"}
+                ],
+                "logConfiguration": {
+                  "logDriver": "awslogs",
+                  "options": {
+                    "awslogs-group": "${FRONTEND_LOG_GROUP}",
+                    "awslogs-region": "${AWS_REGION}",
+                    "awslogs-stream-prefix": "frontend"
+                  }
+                }
+              }
+            ]
+          }
+          JSON
+          aws ecs register-task-definition --cli-input-json file://frontend-taskdef.json
+
+      - name: Update ECS services (force new deployment)
+        run: |
+          for name in ${PROJECT_SLUG}-backend ${PROJECT_SLUG}-frontend; do
+            taskdef="${name}-prod"
+            echo "Updating service $name → $taskdef"
+            aws ecs update-service --cluster "${CLUSTER}" --service "$name" \
+              --task-definition "$taskdef" --force-new-deployment
+          done
+
+          echo "Waiting for services to stabilize..."
+          aws ecs wait services-stable --cluster "${CLUSTER}" \
+            --services ${PROJECT_SLUG}-backend ${PROJECT_SLUG}-frontend

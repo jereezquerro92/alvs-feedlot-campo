@@ -1,0 +1,115 @@
+# LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+# Governed by: [[adr-09-docker-compose]]
+# Docs: [[DOCKER]]
+# LIVE-DOC:END
+
+name: ${PROJECT_SLUG:-astro-drf-aws}
+
+services:
+  db:
+    image: postgres:17.9-bookworm
+    profiles: ["db", "backend", "full"]
+    environment:
+      POSTGRES_DB: ${DB_NAME:-app}
+      POSTGRES_USER: ${DB_USER:-app}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-app}
+    ports:
+      - "${DB_PUBLISH_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-app} -d ${DB_NAME:-app}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - local
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    profiles: ["backend", "full"]
+    ports:
+      - "${BACKEND_PUBLISH_PORT:-8000}:8000"
+    environment:
+      DEBUG: ${DEBUG:-true}
+      SECRET_KEY: ${SECRET_KEY:-dev-insecure-not-for-cloud}
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_NAME: ${DB_NAME:-app}
+      DB_USER: ${DB_USER:-app}
+      DB_PASSWORD: ${DB_PASSWORD:-app}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1,backend}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost:4321}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:4321}
+      AUTH_DEV_MODE: ${AUTH_DEV_MODE:-true}
+      AUTH_BOOTSTRAP_ALLOWLIST: ${AUTH_BOOTSTRAP_ALLOWLIST:-dev@example.com:admins}
+      LOGIN_REDIRECT_URL: ${LOGIN_REDIRECT_URL:-http://localhost:4321/}
+      LOGOUT_REDIRECT_URL: ${LOGOUT_REDIRECT_URL:-http://localhost:4321/}
+      DJANGO_SUPERUSER_EMAIL: ${DJANGO_SUPERUSER_EMAIL:-}
+      DJANGO_SUPERUSER_PASSWORD: ${DJANGO_SUPERUSER_PASSWORD:-}
+      COGNITO_USER_POOL_ID: ${COGNITO_USER_POOL_ID:-}
+      COGNITO_CLIENT_ID: ${COGNITO_CLIENT_ID:-}
+      COGNITO_CLIENT_SECRET: ${COGNITO_CLIENT_SECRET:-}
+      COGNITO_DOMAIN: ${COGNITO_DOMAIN:-}
+      COGNITO_REGION: ${COGNITO_REGION:-us-east-1}
+      MSGRAPH_TENANT_ID: ${MSGRAPH_TENANT_ID:-}
+      MSGRAPH_CLIENT_ID: ${MSGRAPH_CLIENT_ID:-}
+      MSGRAPH_CLIENT_SECRET: ${MSGRAPH_CLIENT_SECRET:-}
+    command: >
+      sh -c "uv run python manage.py migrate --noinput &&
+             uv run python manage.py bootstrap_admin &&
+             uv run python manage.py seed_demo_operator &&
+             uv run python manage.py createcachetable &&
+             uv run --with watchfiles==1.2.0 uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --reload"
+    volumes:
+      - ./backend:/app
+      - /app/.venv  # anon volume: keep the image's venv, don't let the host mask it
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", ".venv/bin/python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health/')\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    networks:
+      - local
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    profiles: ["frontend", "full"]
+    ports:
+      - "${FRONTEND_PUBLISH_PORT:-4321}:4321"
+    environment:
+      HOST: 0.0.0.0
+      PORT: "4321"
+      NODE_ENV: ${NODE_ENV:-development}
+      BACKEND_API_URL: ${BACKEND_API_URL:-http://backend:8000}
+      PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8000}
+      PUBLIC_BACKEND_URL: ${PUBLIC_BACKEND_URL:-http://localhost:8000}
+      PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost:4321}
+      PUBLIC_PROJECT_SLUG: ${PROJECT_SLUG:-astro-drf-aws}
+    command: ["bun", "run", "dev", "--host", "0.0.0.0"]
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules  # anon volume: keep the image's install, don't let the host mask it
+    healthcheck:
+      test: ["CMD-SHELL", "bun -e \"fetch('http://127.0.0.1:4321/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    networks:
+      - local
+
+networks:
+  local:
+    driver: bridge
+
+volumes:
+  pgdata:

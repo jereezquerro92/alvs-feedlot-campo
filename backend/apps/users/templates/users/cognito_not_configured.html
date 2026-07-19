@@ -1,0 +1,72 @@
+{# LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+   Governed by: [[adr-05-htmx]]
+   Docs: [[HTMX]]
+   API: [[API]]
+   LIVE-DOC:END #}
+
+<!--
+  Named exception, cross-service (see [[DESIGN-SYSTEM]] "The Melt preset";
+  [[adr-04-frontend-and-design-system]] rule 5). This is a Django template in
+  the backend service — it CANNOT import frontend/src/styles/app.css (no
+  shared build pipeline between the two Fargate services). Every color below
+  is a LITERAL value, hand-matched to the frontend's dark-mode melt tokens
+  (app.css `.dark` + `.dark[data-bg-preset="melt"]`) instead of a CSS custom
+  property, because none can travel here. This is the one place in the
+  project where "every visual value is a token" structurally cannot hold —
+  do not treat this file as a precedent for hardcoding anywhere else.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Login unavailable</title>
+  <style>
+    /* Literal values below mirror frontend/src/styles/app.css's dark-mode
+       melt preset (--canvas, --card, --foreground, --melt-dots-color) —
+       matched by eye, not shared at build time. See the comment above. */
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: rgb(250 250 250);
+      /* dark canvas + amber dotted grid, matching app.css's melt construction */
+      background:
+        radial-gradient(circle at 1px 1px, rgb(150 69 22 / .25) 2px, transparent 0)
+          .5rem center / 1.5rem 1.5rem,
+        rgb(15 15 15);
+    }
+    .card {
+      max-width: 32rem;
+      margin: 1.5rem;
+      padding: 2rem;
+      border-radius: 0.75rem;
+      background: rgb(38 38 38);
+      border: 1px solid rgb(255 255 255 / .1);
+      box-shadow: 0 10px 30px rgb(0 0 0 / .4);
+    }
+    h1 {
+      margin: 0 0 0.75rem;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    p {
+      margin: 0;
+      color: rgb(163 163 163);
+      line-height: 1.5;
+    }
+    code {
+      color: rgb(250 250 250);
+    }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Login is not configured</h1>
+    <p>Missing environment variable(s): <code>{{ missing|join:", " }}</code>. See docs/VARIABLES.md.</p>
+  </main>
+</body>
+</html>

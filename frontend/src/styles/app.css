@@ -1,0 +1,216 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Every bare `border` follows the theme token, never `currentColor` (issue
+   #169 convention, enforced here) — without this Tailwind v4 paints an
+   unset border in the near-white foreground, the "white border" defect.
+   Explicit colors (border-primary, border-primary/40) still win as utilities. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border);
+  }
+}
+
+button,
+[role="button"],
+a[data-variant],
+[data-pressable] {
+  user-select: none;
+}
+
+button,
+[role="button"] {
+  cursor: pointer;
+}
+
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+
+/* Native <dialog>, form controls, and scrollbars follow the theme
+   (issue #174) — without this the UA paints them light in dark mode. */
+:root {
+  color-scheme: light;
+}
+
+.dark {
+  color-scheme: dark;
+}
+
+:root {
+  --radius: 0.625rem;
+  /* One tunable hairline for every 1-device-pixel-ish rule (issue #190) —
+     rem over px, everywhere. */
+  --hairline: 0.0625rem;
+  --background: oklch(0.985 0.004 60);
+  --foreground: oklch(0.18 0.015 50);
+  --card: oklch(0.995 0.002 60);
+  --card-foreground: oklch(0.18 0.015 50);
+  --popover: oklch(0.995 0.002 60);
+  --popover-foreground: oklch(0.18 0.015 50);
+  --primary: oklch(0.64 0.19 45);
+  --primary-foreground: oklch(0.99 0.010 60);
+  --secondary: oklch(0.96 0.010 55);
+  --secondary-foreground: oklch(0.30 0.020 50);
+  --muted: oklch(0.96 0.010 55);
+  --muted-foreground: oklch(0.52 0.020 50);
+  --accent: oklch(0.93 0.030 55);
+  --accent-foreground: oklch(0.30 0.020 50);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.90 0.010 55);
+  --input: oklch(0.90 0.010 55);
+  --ring: oklch(0.64 0.150 45);
+  --canvas: oklch(0.94 0.006 55);
+  --spotlight-highlight: oklch(0.975 0.012 95);
+  --spotlight-shadow: oklch(0.8 0 0);
+  --success: oklch(0.60 0.140 150);
+  --success-foreground: oklch(0.99 0.010 150);
+  --warning: oklch(0.75 0.150 85);
+  --warning-foreground: oklch(0.25 0.030 85);
+  --negative: oklch(0.577 0.245 27.325);
+  --negative-foreground: oklch(0.99 0 0);
+  /* CornerNavTriangle (bdd-11): a fixed near-black glyph color, intentionally
+     NOT --primary-foreground (that pair is tuned near-white in light mode,
+     the wrong contrast direction for a black icon on the orange --primary
+     fill). Same near-black value in both themes — the orange fill is what
+     changes per mode, not the icon. */
+  --corner-nav-icon: oklch(0.12 0.01 50);
+}
+
+/* --primary alternates (swap the H, keep the L/C pairing pattern above):
+   Alt 1 — burnt terracotta:  oklch(0.60 0.17 35)  / dark oklch(0.68 0.15 35)
+   Alt 2 — golden amber:      oklch(0.70 0.16 60)  / dark oklch(0.76 0.14 60)
+   Alt 3 — coral-red-orange:  oklch(0.62 0.20 30)  / dark oklch(0.70 0.17 30)
+*/
+
+.dark {
+  --background: oklch(0.16 0.010 50);
+  /* Warm off-white, not #FFFFFF — softens the harsh text/contrast in dark
+     mode (issue: dark-mode readability iteration) while the orange H1 keeps
+     its pop. Reading text (foreground/card/popover) all move together. */
+  --foreground: oklch(0.91 0.008 60);
+  --card: oklch(0.21 0.012 50);
+  --card-foreground: oklch(0.91 0.008 60);
+  --popover: oklch(0.21 0.012 50);
+  --popover-foreground: oklch(0.91 0.008 60);
+  --primary: oklch(0.72 0.16 45);
+  --primary-foreground: oklch(0.18 0.020 45);
+  --secondary: oklch(0.28 0.015 50);
+  --secondary-foreground: oklch(0.95 0.006 60);
+  --muted: oklch(0.28 0.015 50);
+  --muted-foreground: oklch(0.68 0.015 55);
+  --accent: oklch(0.30 0.030 55);
+  --accent-foreground: oklch(0.95 0.006 60);
+  --destructive: oklch(0.704 0.191 22.216);
+  /* Warm, opaque border system (issue #169) — never translucent white.
+     Convention: default surface -> border-border; emphasis card ->
+     border-primary/40 (SummaryCard's treatment); active/selected ->
+     border-primary (MetricTile's treatment). */
+  --border: oklch(0.32 0.015 55);
+  --input: oklch(0.36 0.015 55);
+  --ring: oklch(0.72 0.140 45);
+  --canvas: oklch(0.12 0.008 50);
+  --spotlight-highlight: oklch(0.30 0.02 50);
+  --spotlight-shadow: oklch(0.05 0 0);
+  --success: oklch(0.72 0.130 150);
+  --success-foreground: oklch(0.16 0.020 150);
+  --warning: oklch(0.80 0.140 85);
+  --warning-foreground: oklch(0.20 0.020 85);
+  --negative: oklch(0.704 0.191 22.216);
+  --negative-foreground: oklch(0.16 0 0);
+  --corner-nav-icon: oklch(0.12 0.01 50);
+}
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 0.25rem);
+  --radius-md: calc(var(--radius) - 0.125rem);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 0.25rem);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-canvas: var(--canvas);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-negative: var(--negative);
+  --color-negative-foreground: var(--negative-foreground);
+  --color-corner-nav-icon: var(--corner-nav-icon);
+}
+
+/* Readability scrim for data-dense components on the dotted canvas
+   (issue #167): ~50% page-background wash + slight blur + feathered edge —
+   reads as "invisible", not as a card; the dots stay faintly present.
+   Opacity/blur are the visual dials. */
+:root {
+  --scrim-bg: color-mix(in oklch, var(--background) 50%, transparent);
+  --scrim-blur: 2px;
+}
+
+.scrim {
+  background: var(--scrim-bg);
+  backdrop-filter: blur(var(--scrim-blur));
+  border-radius: var(--radius);
+  box-shadow: 0 0 1.5rem 0.75rem var(--scrim-bg);
+}
+
+body {
+  min-height: 100vh;
+  /* Relaxed line-height for calmer, easier reading (dark-mode readability
+     iteration) — the "stretched text" ask; per-component leading utilities
+     still override. */
+  line-height: 1.65;
+  background-color: var(--canvas);
+  background-image:
+    radial-gradient(ellipse 110% 65% at 50% 12%, var(--spotlight-highlight) 0%, transparent 62%),
+    linear-gradient(to bottom, transparent 0%, transparent 58%, var(--spotlight-shadow) 100%);
+  background-attachment: fixed;
+  color: var(--foreground);
+}
+
+[data-bg-preset="melt"] {
+  --melt-dots-size: 2rem;
+  --melt-dots-color: oklch(0.90 0.05 75);
+  /* light: subtle top DARKENING on scroll — the inverse of dark mode's
+     lightening haze (issue #177); alpha is the visual dial. */
+  --melt-fade-color: oklch(0.20 0.02 50 / 0.06);
+}
+
+[data-bg-preset="melt"] body {
+  background:
+    linear-gradient(to bottom, var(--melt-fade-color) 0%, transparent 25%),
+    radial-gradient(circle at 0.0625rem 0.0625rem, var(--melt-dots-color) 0.125rem, transparent 0) 0.5rem 0 / var(--melt-dots-size) var(--melt-dots-size),
+    var(--canvas);
+  /* The `background` shorthand above resets `background-attachment` to its
+     initial value (scroll), overriding the default preset's fixed
+     attachment set on `body` — anchor the dots to the viewport again
+     (issue #369, kodex: dots must not move on scroll). */
+  background-attachment: fixed;
+}
+
+.dark[data-bg-preset="melt"] {
+  --melt-dots-color: oklch(0.48 0.13 45 / 0.25);
+  --melt-fade-color: oklch(0.98 0 0 / 0.06);
+}

@@ -1,0 +1,62 @@
+---
+/* LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+ * Governed by: [[adr-04-frontend-and-design-system]] · [[adr-15-chatbot-two-tier]]
+ * Docs: [[FRONTEND]] · [[CHATBOT]]
+ * LIVE-DOC:END */
+import Base from "../layouts/Base.astro";
+import { ChatView } from "$lib/components/views";
+import ChatUI from "$lib/components/chat/ChatUI.svelte";
+import { requireRole } from "$lib/authGate";
+import { t } from "../i18n";
+import type { Me } from "$lib/types/user";
+
+const backendApiUrl = process.env.BACKEND_API_URL ?? "http://localhost:8000";
+const publicBackendUrl = process.env.PUBLIC_BACKEND_URL ?? "http://localhost:8000";
+
+let me: Me | null = null;
+const cookie = Astro.request.headers.get("cookie");
+if (cookie) {
+  try {
+    const res = await fetch(`${backendApiUrl}/api/me/`, { headers: { cookie } });
+    if (res.ok) me = (await res.json()) as Me;
+  } catch (err) {
+    console.error("SSR /api/me/ failed:", err);
+  }
+}
+
+const redirect = requireRole(me);
+if (redirect) return Astro.redirect(redirect);
+
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<Base title={t("nav_chatui")}>
+  <ChatView>
+    <ChatUI
+      client:load
+      publicBackendUrl={publicBackendUrl}
+      copy={{
+        title: t("chatui_router_title"),
+        emptyState: t("chatui_router_empty"),
+        composerPlaceholder: t("chatui_composer_placeholder"),
+        composerAriaLabel: t("chatui_composer_aria_label"),
+        composerSend: t("chatui_composer_send"),
+        composerPlaceholderExamples: [
+          t("chatui_composer_placeholder_example_1"),
+          t("chatui_composer_placeholder_example_2"),
+          t("chatui_composer_placeholder_example_3"),
+        ],
+        messageGo: t("chatui_message_go"),
+        messageConfirm: t("chatui_message_confirm"),
+        outcomeCopy: {
+          router_outcome_escalate: t("router_outcome_escalate"),
+          router_outcome_no_match: t("router_outcome_no_match"),
+          router_outcome_disabled: t("router_outcome_disabled"),
+          router_outcome_hard_reject: t("router_outcome_hard_reject"),
+          router_outcome_throttled: t("router_outcome_throttled"),
+          router_outcome_network_error: t("router_outcome_network_error"),
+        },
+      }}
+    />
+  </ChatView>
+</Base>
