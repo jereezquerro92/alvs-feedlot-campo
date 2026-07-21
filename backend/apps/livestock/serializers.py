@@ -69,3 +69,106 @@ class IntakeSerializer(serializers.Serializer):
 
     def to_representation(self, instance):
         return instance
+
+
+# --- Phase 2: lifecycle ------------------------------------------------------
+
+from apps.livestock.models import Death, Exit, Weighing
+from apps.livestock.services import register_death, register_exit, register_weighing
+
+
+class _TargetMixin(serializers.Serializer):
+    """Animal XOR lot, validated before the service is reached."""
+
+    animal = serializers.PrimaryKeyRelatedField(
+        queryset=Animal.objects.all(), required=False, allow_null=True
+    )
+    lot = serializers.PrimaryKeyRelatedField(
+        queryset=Lot.objects.all(), required=False, allow_null=True
+    )
+
+    def validate(self, attrs):
+        if bool(attrs.get("animal")) == bool(attrs.get("lot")):
+            raise serializers.ValidationError("Indicar exactamente uno: `animal` o `lot`.")
+        return attrs
+
+
+class WeighingSerializer(serializers.ModelSerializer):
+    weight_per_head = serializers.DecimalField(max_digits=12, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = Weighing
+        fields = [
+            "id", "animal", "lot", "date", "weight", "head_count",
+            "method", "notes", "weight_per_head", "created_at",
+        ]
+        read_only_fields = ["id", "weight_per_head", "created_at"]
+
+
+class WeighingWriteSerializer(_TargetMixin):
+    date = serializers.DateField()
+    weight = serializers.DecimalField(max_digits=12, decimal_places=2)
+    head_count = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    method = serializers.ChoiceField(choices=Weighing.Method.choices, required=False)
+    notes = serializers.CharField(max_length=255, required=False, allow_blank=True)
+
+    def create(self, validated):
+        return WeighingSerializer(register_weighing(**validated)).data
+
+    def to_representation(self, instance):
+        return instance
+
+
+class DeathSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Death
+        fields = [
+            "id", "animal", "lot", "date", "cause", "cause_detail",
+            "head_count", "weight", "created_at",
+        ]
+        read_only_fields = ["id", "created_at"]
+
+
+class DeathWriteSerializer(_TargetMixin):
+    date = serializers.DateField()
+    cause = serializers.ChoiceField(choices=Death.Cause.choices, required=False)
+    cause_detail = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    head_count = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    weight = serializers.DecimalField(
+        max_digits=12, decimal_places=2, required=False, allow_null=True
+    )
+
+    def create(self, validated):
+        return DeathSerializer(register_death(**validated)).data
+
+    def to_representation(self, instance):
+        return instance
+
+
+class ExitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Exit
+        fields = [
+            "id", "animal", "lot", "date", "kind", "destination",
+            "head_count", "weight", "sale_price_per_kg", "created_at",
+        ]
+        read_only_fields = ["id", "created_at"]
+
+
+class ExitWriteSerializer(_TargetMixin):
+    date = serializers.DateField()
+    kind = serializers.ChoiceField(choices=Exit.Kind.choices, required=False)
+    destination = serializers.CharField(max_length=120, required=False, allow_blank=True)
+    head_count = serializers.IntegerField(required=False, allow_null=True, min_value=1)
+    weight = serializers.DecimalField(
+        max_digits=12, decimal_places=2, required=False, allow_null=True
+    )
+    sale_price_per_kg = serializers.DecimalField(
+        max_digits=14, decimal_places=4, required=False, allow_null=True
+    )
+
+    def create(self, validated):
+        return ExitSerializer(register_exit(**validated)).data
+
+    def to_representation(self, instance):
+        return instance

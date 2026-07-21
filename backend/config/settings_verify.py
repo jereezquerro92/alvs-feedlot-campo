@@ -24,6 +24,7 @@ INSTALLED_APPS = [
     "apps.ledger",
     "apps.livestock",
     "apps.feed",
+    "apps.sanitary",
 ]
 
 MIDDLEWARE = [

@@ -7,6 +7,7 @@ are maintained by events, never hand-edited.
 
 from decimal import Decimal
 
+from django.conf import settings
 from django.db import models
 
 
@@ -99,3 +100,129 @@ class Intake(models.Model):
 
     def __str__(self):
         return f"Intake {self.date} ({self.mode})"
+
+
+class LifecycleEvent(models.Model):
+    """Shared shape for events that target one Animal XOR one Lot (adr-26 rule 3).
+
+    Abstract on purpose: Weighing, Death and Exit each own their table, but the
+    target pair and its constraint are identical and must not drift apart.
+    """
+
+    animal = models.ForeignKey(
+        Animal, on_delete=models.PROTECT, null=True, blank=True, related_name="%(class)ss"
+    )
+    lot = models.ForeignKey(
+        Lot, on_delete=models.PROTECT, null=True, blank=True, related_name="%(class)ss"
+    )
+    date = models.DateField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    class Meta:
+        abstract = True
+        ordering = ["-date", "-id"]
+
+    @property
+    def target(self):
+        return self.animal or self.lot
+
+
+class Weighing(LifecycleEvent):
+    """A weight reading. For lots, `weight` is the TOTAL kg of `head_count` head."""
+
+    class Method(models.TextChoices):
+        SCALE = "scale", "Báscula"
+        ESTIMATED = "estimated", "Estimado"
+
+    weight = models.DecimalField(max_digits=12, decimal_places=2)
+    head_count = models.PositiveIntegerField(null=True, blank=True)
+    method = models.CharField(max_length=10, choices=Method.choices, default=Method.SCALE)
+    notes = models.CharField(max_length=255, blank=True)
+
+    class Meta(LifecycleEvent.Meta):
+        abstract = False
+        ordering = ["date", "id"]
+        constraints = [
+            models.CheckConstraint(
+                name="weighing_target_animal_xor_lot",
+                condition=(
+                    models.Q(animal__isnull=False, lot__isnull=True)
+                    | models.Q(animal__isnull=True, lot__isnull=False)
+                ),
+            )
+        ]
+
+    @property
+    def weight_per_head(self):
+        """Lot readings are only comparable per head (see docs/feedlot/11-plan-de-fases.md)."""
+        if self.lot_id and self.head_count:
+            return self.weight / Decimal(self.head_count)
+        return self.weight
+
+    def __str__(self):
+        return f"Weighing {self.date} {self.weight}"
+
+
+class Death(LifecycleEvent):
+    """A death. Never touches the ledger: feed already consumed stays billed."""
+
+    class Cause(models.TextChoices):
+        DISEASE = "disease", "Enfermedad"
+        ACCIDENT = "accident", "Accidente"
+        UNKNOWN = "unknown", "Desconocida"
+        OTHER = "other", "Otra"
+
+    cause = models.CharField(max_length=10, choices=Cause.choices, default=Cause.UNKNOWN)
+    cause_detail = models.CharField(max_length=255, blank=True)
+    head_count = models.PositiveIntegerField(null=True, blank=True)
+    weight = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+
+    class Meta(LifecycleEvent.Meta):
+        abstract = False
+        constraints = [
+            models.CheckConstraint(
+                name="death_target_animal_xor_lot",
+                condition=(
+                    models.Q(animal__isnull=False, lot__isnull=True)
+                    | models.Q(animal__isnull=True, lot__isnull=False)
+                ),
+            )
+        ]
+
+    def __str__(self):
+        return f"Death {self.date} ({self.cause})"
+
+
+class Exit(LifecycleEvent):
+    """An exit: sale, transfer back to the client, or other. Informational price only."""
+
+    class Kind(models.TextChoices):
+        SALE = "sale", "Venta"
+        TRANSFER = "transfer", "Retiro"
+        OTHER = "other", "Otro"
+
+    kind = models.CharField(max_length=10, choices=Kind.choices, default=Kind.SALE)
+    destination = models.CharField(max_length=120, blank=True)
+    head_count = models.PositiveIntegerField(null=True, blank=True)
+    weight = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    sale_price_per_kg = models.DecimalField(
+        max_digits=14, decimal_places=4, null=True, blank=True
+    )
+
+    class Meta(LifecycleEvent.Meta):
+        abstract = False
+        constraints = [
+            models.CheckConstraint(
+                name="exit_target_animal_xor_lot",
+                condition=(
+                    models.Q(animal__isnull=False, lot__isnull=True)
+                    | models.Q(animal__isnull=True, lot__isnull=False)
+                ),
+            )
+        ]
+
+    def __str__(self):
+        return f"Exit {self.date} ({self.kind})"
