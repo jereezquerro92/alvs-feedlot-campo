@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     "apps.livestock",
     "apps.feed",
     "apps.sanitary",
+    "apps.metrics",
 ]
 
 MIDDLEWARE = [

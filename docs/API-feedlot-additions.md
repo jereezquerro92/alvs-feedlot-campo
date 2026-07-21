@@ -29,6 +29,12 @@ Proposed rows (Phase 1–2 core; refine per endpoint as TDD entries are written)
 | GET | `/api/feed-stock/` | `FeedStockView` | `FeedStockSerializer` | session | Derived stock balances by (`owner_kind`, client, feed type). |
 | GET | `/api/animals/{id}/growth/` | `AnimalViewSet.growth` | — | session | Weighing series + ADG between consecutive readings. |
 | GET | `/api/lots/{id}/growth/` | `LotViewSet.growth` | — | session | Idem on weight **per head**; `adg=null` + `not_calculable` when the head count changed (adr-28). |
+| GET | `/api/clients/{id}/metrics/summary/` | `SummaryView` | — | session | Dashboard header: herd, balance, cost, conversion, mortality, inconsistencies. `?start=&end=`. |
+| GET | `/api/clients/{id}/metrics/daily-cost/` | `DailyCostView` | — | session | Daily charges broken down by concept. |
+| GET | `/api/clients/{id}/metrics/growth/` | `GrowthView` | — | session | Kilos gained + how many segments were measured vs skipped. |
+| GET | `/api/clients/{id}/metrics/conversion/` | `ConversionView` | — | session | Feed conversion. `null` + `not_calculable` when there is no honest divisor (adr-29). |
+| GET | `/api/clients/{id}/metrics/mortality/` | `MortalityView` | — | session | Dead head / head entered in the period. |
+| GET | `/api/clients/{id}/metrics/account/` | `AccountEvolutionView` | — | session | Running balance with opening and closing. |
 | GET/POST | `/api/health-products/` | `HealthProductViewSet` | `HealthProductSerializer` | session | Health catalogue (vaccines, treatments). Editable; price changes never rewrite past applications. |
 | GET/POST | `/api/health-events/` | `HealthEventViewSet` | `HealthEventSerializer` | session | Record an application on an animal or lot. **Always** emits a `debit` `LedgerEntry` (`concept=health`). |
 | POST | `/api/feedings/` | `FeedingEventViewSet` | `FeedingEventSerializer` | session | Record a ration: feed type, kg, `unit_price`, `origin`. Emits an `out` stock movement and, when `origin=own_stock`, a `debit` `LedgerEntry`. Contract below. |
