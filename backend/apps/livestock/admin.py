@@ -21,3 +21,24 @@ class AnimalAdmin(admin.ModelAdmin):
 class IntakeAdmin(admin.ModelAdmin):
     list_display = ("id", "client", "date", "mode", "head_count", "total_weight")
     list_filter = ("mode",)
+
+
+from apps.livestock.models import Death, Exit, Weighing
+
+
+@admin.register(Weighing)
+class WeighingAdmin(admin.ModelAdmin):
+    list_display = ("id", "date", "animal", "lot", "weight", "head_count", "method")
+    list_filter = ("date", "method")
+
+
+@admin.register(Death)
+class DeathAdmin(admin.ModelAdmin):
+    list_display = ("id", "date", "animal", "lot", "cause", "head_count")
+    list_filter = ("date", "cause")
+
+
+@admin.register(Exit)
+class ExitAdmin(admin.ModelAdmin):
+    list_display = ("id", "date", "animal", "lot", "kind", "head_count", "destination")
+    list_filter = ("date", "kind")

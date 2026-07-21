@@ -27,6 +27,10 @@ Proposed rows (Phase 1–2 core; refine per endpoint as TDD entries are written)
 | GET/POST | `/api/feed-types/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | Feed catalog. |
 | POST | `/api/feed-deliveries/` | `FeedDeliveryViewSet` | `FeedDeliverySerializer` | session | Client-provided feed → `in` stock movement to the client's stock. |
 | GET | `/api/feed-stock/` | `FeedStockView` | `FeedStockSerializer` | session | Derived stock balances by (`owner_kind`, client, feed type). |
+| GET | `/api/animals/{id}/growth/` | `AnimalViewSet.growth` | — | session | Weighing series + ADG between consecutive readings. |
+| GET | `/api/lots/{id}/growth/` | `LotViewSet.growth` | — | session | Idem on weight **per head**; `adg=null` + `not_calculable` when the head count changed (adr-28). |
+| GET/POST | `/api/health-products/` | `HealthProductViewSet` | `HealthProductSerializer` | session | Health catalogue (vaccines, treatments). Editable; price changes never rewrite past applications. |
+| GET/POST | `/api/health-events/` | `HealthEventViewSet` | `HealthEventSerializer` | session | Record an application on an animal or lot. **Always** emits a `debit` `LedgerEntry` (`concept=health`). |
 | POST | `/api/feedings/` | `FeedingEventViewSet` | `FeedingEventSerializer` | session | Record a ration: feed type, kg, `unit_price`, `origin`. Emits an `out` stock movement and, when `origin=own_stock`, a `debit` `LedgerEntry`. Contract below. |
 | GET/POST | `/api/health-products/` | `HealthProductViewSet` | `HealthProductSerializer` | session | Vaccine/treatment catalog. |
 | POST | `/api/health-events/` | `HealthEventViewSet` | `HealthEventSerializer` | session | Apply a vaccine/treatment → `debit` `LedgerEntry`. |
