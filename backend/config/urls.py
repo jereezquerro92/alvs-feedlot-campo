@@ -14,4 +14,9 @@ urlpatterns = [
     path("accounts/", include("apps.users.urls")),
     path("api/", include("apps.m365.urls")),
     path("api/", include("apps.router.urls")),
+    # Feedlot domain (Phase 1) — docs/FEEDLOT.md, docs/API.md
+    path("api/", include("apps.clients.urls")),
+    path("api/", include("apps.ledger.urls")),
+    path("api/", include("apps.livestock.urls")),
+    path("api/", include("apps.feed.urls")),
 ]

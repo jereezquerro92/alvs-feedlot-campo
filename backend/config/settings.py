@@ -106,6 +106,11 @@ INSTALLED_APPS = [
     "apps.users",
     "apps.m365",
     "apps.router",
+    # Feedlot domain (Phase 1) — docs/FEEDLOT.md
+    "apps.clients",
+    "apps.ledger",
+    "apps.livestock",
+    "apps.feed",
 ]
 
 MIDDLEWARE = [
