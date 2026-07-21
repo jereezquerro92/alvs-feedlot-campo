@@ -58,7 +58,7 @@ Un **pesaje** registra el peso de un animal o los kilos totales de un lote en un
 
 - **Ganancia diaria de peso (GDP / ADG):** (peso actual − peso anterior) / días transcurridos.
 - **Peso promedio del lote:** kilos totales / cabezas.
-- **Conversión alimenticia:** kg de alimento consumido / kg ganado en el mismo período. Es el cruce estrella entre el módulo de alimentación y el de pesaje (ver [dashboard](feedlot/04-dashboard-metricas.md)).
+- **Conversión alimenticia:** kg de alimento consumido / kg ganado en el mismo período. Es el cruce estrella entre el módulo de alimentación y el de pesaje (ver [dashboard](04-dashboard-metricas.md)).
 
 ## 4. Muertes y salidas
 

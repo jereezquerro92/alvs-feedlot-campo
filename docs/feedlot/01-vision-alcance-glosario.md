@@ -12,7 +12,7 @@ Tres pilares:
 
 ## Alcance por fases (resumen)
 
-El detalle del plan está en [07 · Arquitectura escalable y roadmap](feedlot/07-arquitectura-escalable-y-roadmap.md). En una línea:
+El detalle del plan está en [07 · Arquitectura escalable y roadmap](07-arquitectura-escalable-y-roadmap.md). En una línea:
 
 - **Fase 1 — Núcleo operativo:** clientes y cuenta corriente, ingreso de animales (individual y lote), catálogo y stock de alimento, carga de raciones con costeo, pagos.
 - **Fase 2 — Ciclo del animal:** pesajes y crecimiento, muertes, salidas, sanidad.

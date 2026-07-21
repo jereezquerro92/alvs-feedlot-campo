@@ -57,7 +57,7 @@ Los perfiles son **editables**: se ajustan tildando/destildando permisos, sin to
 
 ## Perfiles sugeridos por los asesores
 
-Pediste que los perfiles los puedan armar los asesores para cada persona que interviene. El **asesor administrativo** ([05 · Asesores IA](feedlot/05-asesores-ia.md)) puede **proponer** la composición de un perfil según la función de la persona ("esta persona es peón de corral → debería tener `feeding:create`, `weighing:create`, `intake:create`, y nada de plata"). El flujo:
+Pediste que los perfiles los puedan armar los asesores para cada persona que interviene. El **asesor administrativo** ([05 · Asesores IA](05-asesores-ia.md)) puede **proponer** la composición de un perfil según la función de la persona ("esta persona es peón de corral → debería tener `feeding:create`, `weighing:create`, `intake:create`, y nada de plata"). El flujo:
 
 ```
 1. Se describe la función de la persona (o se elige de una lista).

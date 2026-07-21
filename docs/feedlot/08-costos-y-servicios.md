@@ -31,11 +31,11 @@ Se agrega una app de dominio `services` (columna vertebral, reutilizable por otr
 ## Regla de asignación (DECIDIDO)
 
 - **Carga manual y directa por cliente.** Cada costo se imputa a mano al cliente (y opcionalmente al lote/animal) que corresponde. **No hay prorrateo automático** de costos generales entre clientes. Si un gasto es de varios, el operador lo carga dividido como prefiera, pero el sistema no reparte solo.
-- **Sin cálculo de rentabilidad.** El sistema registra y cobra costos; **no** calcula márgenes ni rentabilidad. Los precios de hacienda ([06](feedlot/06-precios-hacienda.md)) quedan solo como referencia informativa, no para estimar ganancias.
+- **Sin cálculo de rentabilidad.** El sistema registra y cobra costos; **no** calcula márgenes ni rentabilidad. Los precios de hacienda ([06](06-precios-hacienda.md)) quedan solo como referencia informativa, no para estimar ganancias.
 
 ## Impacto en el dashboard
 
-El [dashboard](feedlot/04-dashboard-metricas.md) suma un **desglose de costos por tipo**: alimentación, sanidad, mano de obra, maquinaria, combustible, fletes y otros. Muestra en qué se compone el costo del cliente, sin interpretarlo como margen.
+El [dashboard](04-dashboard-metricas.md) suma un **desglose de costos por tipo**: alimentación, sanidad, mano de obra, maquinaria, combustible, fletes y otros. Muestra en qué se compone el costo del cliente, sin interpretarlo como margen.
 
 ## Reglas
 

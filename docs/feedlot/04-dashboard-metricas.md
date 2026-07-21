@@ -28,7 +28,7 @@ Vista rápida del estado de un cliente:
 
 ## El cruce que importa
 
-El valor del feedlot está en **cruzar consumo contra crecimiento**: cuánto comió el lote (y cuánto costó, propio o del cliente) contra cuánto engordó en el mismo período. De ahí sale la **conversión alimenticia** y, contra el **precio de hacienda** de referencia, una lectura de rentabilidad: cuánto cuesta poner un kilo encima vs. cuánto vale ese kilo en el mercado. Ese cruce es también el insumo principal de los [asesores](feedlot/05-asesores-ia.md).
+El valor del feedlot está en **cruzar consumo contra crecimiento**: cuánto comió el lote (y cuánto costó, propio o del cliente) contra cuánto engordó en el mismo período. De ahí sale la **conversión alimenticia** y, contra el **precio de hacienda** de referencia, una lectura de rentabilidad: cuánto cuesta poner un kilo encima vs. cuánto vale ese kilo en el mercado. Ese cruce es también el insumo principal de los [asesores](05-asesores-ia.md).
 
 ## Cómo se calcula (rendimiento)
 
