@@ -271,3 +271,12 @@ Estas tres conviene cerrarlas antes de escribir código, porque cambian el dise�
 3. **Stock de sanidad:** ¿se lleva en esta fase? *(propuesta: no)*
 
 Las demás decisiones abiertas del proyecto siguen listadas en [README](README.md).
+
+---
+
+## Estado de implementación
+
+- **Fase 1** — en `main` (commit d3e5aa9).
+- **Fase 2** — en `main` (ciclo del animal + `sanitary`).
+- **Fase 3** — en `main` (métricas derivadas, `metrics`).
+- **Fase 4** — app `market` construida (conector Cañuelas completo + framework + carga manual + comando de ingesta). Dos puntos de integración quedan para validar contra el sitio vivo desde Claude Code: el formulario de fechas de Cañuelas y el endpoint AJAX de IPCVA. Ver ADR-30.
