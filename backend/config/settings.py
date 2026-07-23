@@ -114,6 +114,7 @@ INSTALLED_APPS = [
     "apps.sanitary",
     "apps.metrics",
     "apps.market",
+    "apps.advisors",
 ]
 
 MIDDLEWARE = [
