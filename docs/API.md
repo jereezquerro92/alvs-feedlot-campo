@@ -60,6 +60,93 @@ Routes that return HTML fragments ([[HTMX]]) are endpoints like any other and MU
 | POST | `/api/router/route/` | `RouteView` | `RouteRequestSerializer` | session; `CanUseRouter` (`admins` or `ai_operators` Django group) | Chatbot **choosing tier**, async ([[adr-16-async-mandatory]]): takes a user utterance, returns one of the four closed outcomes only — never free text ([[adr-15-chatbot-two-tier]]). RBAC gate: authenticated AND member of `admins` or `ai_operators` — `ai_operators` is router-only, never added to any other permission class. Per-user cooldown (`THROTTLE_COOLDOWN_SECONDS`, default `2`) plus a silent, async rate-abuse block (`ROUTER_RATE_*`, [[VARIABLES]]) — both return `429`, indistinguishable to the caller. Contract below. |
 | GET | `/admin/` | `admin.site.urls` (mount) | — | session; `is_staff` (Django admin's own gate) | Django admin site — the whole `django.contrib.admin` sub-tree mounted at the `/admin/` prefix (owner decision 2026-07-14, issue #83). One row for the mount; its internal routes are Django's own, not per-row API surface. Anonymous requests redirect to `/admin/login/`. That login form authenticates exactly one account: the bootstrap superuser ([[adr-10-auth]] rule 8 named exception) — every other user has an unusable password and enters only via the Cognito session flow. Authenticated admin responses are `no-store` ([[CACHE]]). |
 
+## Feedlot domain endpoints (Phases 1–5)
+
+The feedlot is built as domain apps on the template spine ([[adr-24-feedlot-domain]] rule 1): the shared spine `clients` + `ledger` + `market` + `advisors`, the cattle domain `livestock` + `feed` + `sanitary`, and the read-only `metrics`. All rows below share one auth policy — the DRF default `SessionAuthentication` + `IsAuthenticated` (`config/settings.py`), so **`session`** — and every authenticated response is `no-store` ([[CACHE]] rule 4). DRF list endpoints return a plain JSON array (no pagination wrapper). Method surface follows the app's posture: **catalogs** (`FeedType`, `HealthProduct`, `MarketSource`, `Client`) are full-CRUD `ModelViewSet`s — the only editable tables ([[adr-24-feedlot-domain]] rule 3); **operational events** expose only `list`/`retrieve`/`create` and deliberately no `update`/`destroy`, because a fact is corrected by a new fact, never mutated ([[adr-24-feedlot-domain]] rule 3, [[adr-28-animal-lifecycle-and-sanitary]]); **metrics** are read-only `GET` derivations ([[adr-29-metrics-derivation]]).
+
+> [!note] Documentation debt closed here
+> The Phase 1–5 route surface below existed in code (`apps/{clients,ledger,livestock,feed,sanitary,market,metrics,advisors}/urls.py`) before it was declared in this file — an [[adr-03-api-and-backend]] rule 1 gap accrued across those phases. This section records the surface as-built; it introduces no new route.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/clients/` | `ClientViewSet` | `ClientSerializer` | session | List clients (feedlot account holders). |
+| POST | `/api/clients/` | `ClientViewSet` | `ClientSerializer` | session | Create a client; its `Account` is auto-created by a `post_save` signal ([[adr-25-account-ledger]]). |
+| GET | `/api/clients/{id}/` | `ClientViewSet` | `ClientSerializer` | session | Retrieve one client, including `balance` derived from the ledger. |
+| PUT | `/api/clients/{id}/` | `ClientViewSet` | `ClientSerializer` | session | Replace a client's editable fields (catalog-like row, [[adr-24-feedlot-domain]] rule 3). |
+| PATCH | `/api/clients/{id}/` | `ClientViewSet` | `ClientSerializer` | session | Partial update of a client's editable fields. |
+| DELETE | `/api/clients/{id}/` | `ClientViewSet` | `ClientSerializer` | session | Delete a client. |
+| GET | `/api/clients/{id}/account/` | `ClientViewSet.account` | — | session | Detail action: the client's current-account summary (balance = Σ debits − Σ credits, [[adr-25-account-ledger]] rule 2). |
+| GET | `/api/clients/{id}/ledger/` | `ClientViewSet.ledger` | — | session | Detail action: the client's immutable `LedgerEntry` rows ([[adr-25-account-ledger]] rule 1). |
+| GET | `/api/clients/{id}/metrics/summary/` | `SummaryView` | — | session | Derived summary for a client + period (balance, herd, cost, conversion, mortality, inconsistencies). Null-contract, [[metrics-null-contract]]. |
+| GET | `/api/clients/{id}/metrics/daily-cost/` | `DailyCostView` | — | session | Derived daily cost series over the period. Null-contract. |
+| GET | `/api/clients/{id}/metrics/growth/` | `GrowthView` | — | session | Derived growth (kilos gained, skipped non-measurable segments, [[adr-29-metrics-derivation]] rule 3). Null-contract. |
+| GET | `/api/clients/{id}/metrics/conversion/` | `ConversionView` | — | session | Derived feed conversion. Returns `null` + reason when not computable ([[adr-29-metrics-derivation]] rule 2). |
+| GET | `/api/clients/{id}/metrics/mortality/` | `MortalityView` | — | session | Derived mortality rate (0..1) + entered head. Null-contract. |
+| GET | `/api/clients/{id}/metrics/account/` | `AccountEvolutionView` | — | session | Derived account-balance evolution series (points of date + balance). Null-contract. |
+| GET | `/api/ledger-entries/` | `LedgerEntryViewSet` | `LedgerEntrySerializer` | session | List immutable ledger entries (filter `?client=`); read-only — entries are never edited ([[adr-25-account-ledger]] rule 1). |
+| GET | `/api/ledger-entries/{id}/` | `LedgerEntryViewSet` | `LedgerEntrySerializer` | session | Retrieve one ledger entry. |
+| GET | `/api/payments/` | `PaymentViewSet` | `PaymentSerializer` | session | List payments (each posts a `credit` entry, [[adr-25-account-ledger]] rule 7). |
+| POST | `/api/payments/` | `PaymentViewSet` | `PaymentSerializer` | session | Register a payment; posts a `credit` `LedgerEntry` reducing the balance. |
+| GET | `/api/payments/{id}/` | `PaymentViewSet` | `PaymentSerializer` | session | Retrieve one payment. |
+| GET | `/api/animals/` | `AnimalViewSet` | `AnimalSerializer` | session | List individual animals (filter `?client=`). |
+| POST | `/api/animals/` | `AnimalViewSet` | `AnimalSerializer` | session | Create an animal ([[adr-26-livestock-individual-and-lot]]). |
+| GET | `/api/animals/{id}/` | `AnimalViewSet` | `AnimalSerializer` | session | Retrieve one animal; `current_weight` derived from latest weighing (rule 5). |
+| PUT | `/api/animals/{id}/` | `AnimalViewSet` | `AnimalSerializer` | session | Replace an animal's fields. See [[feedlot-mutation-caveat]]. |
+| PATCH | `/api/animals/{id}/` | `AnimalViewSet` | `AnimalSerializer` | session | Partial update of an animal. See [[feedlot-mutation-caveat]]. |
+| DELETE | `/api/animals/{id}/` | `AnimalViewSet` | `AnimalSerializer` | session | Delete an animal. See [[feedlot-mutation-caveat]]. |
+| GET | `/api/animals/{id}/growth/` | `AnimalViewSet.growth` | — | session | Detail action: derived per-head growth across successive weighings ([[adr-26-livestock-individual-and-lot]] rule 5). |
+| GET | `/api/lots/` | `LotViewSet` | `LotSerializer` | session | List lots (filter `?client=`); counters `head_count`/`total_weight` are event-maintained (rule 4). |
+| POST | `/api/lots/` | `LotViewSet` | `LotSerializer` | session | Create a lot ([[adr-26-livestock-individual-and-lot]]). |
+| GET | `/api/lots/{id}/` | `LotViewSet` | `LotSerializer` | session | Retrieve one lot. |
+| PUT | `/api/lots/{id}/` | `LotViewSet` | `LotSerializer` | session | Replace a lot's fields. See [[feedlot-mutation-caveat]]. |
+| PATCH | `/api/lots/{id}/` | `LotViewSet` | `LotSerializer` | session | Partial update of a lot. See [[feedlot-mutation-caveat]]. |
+| DELETE | `/api/lots/{id}/` | `LotViewSet` | `LotSerializer` | session | Delete a lot. See [[feedlot-mutation-caveat]]. |
+| GET | `/api/lots/{id}/growth/` | `LotViewSet.growth` | — | session | Detail action: derived lot growth per head; `null` + reason when head count changed between weighings ([[adr-28-animal-lifecycle-and-sanitary]] decision 2). |
+| POST | `/api/intakes/` | `IntakeViewSet` | `IntakeSerializer` | session | Register a cattle intake, `mode` ∈ {`individual`, `lot`}; creates `Animal`s or a `Lot` through the service ([[adr-26-livestock-individual-and-lot]] rule 1). Create-only. |
+| GET | `/api/weighings/` | `WeighingViewSet` | `WeighingSerializer` | session | List weighings (immutable lifecycle event). |
+| GET | `/api/weighings/{id}/` | `WeighingViewSet` | `WeighingSerializer` | session | Retrieve one weighing. |
+| POST | `/api/weighings/` | `WeighingViewSet` | `WeighingWriteSerializer` | session | Register a weighing for exactly one `animal` XOR `lot` ([[adr-26-livestock-individual-and-lot]] rule 3); routes to `register_weighing`. No update/destroy ([[adr-28-animal-lifecycle-and-sanitary]]). |
+| GET | `/api/deaths/` | `DeathViewSet` | `DeathSerializer` | session | List deaths (immutable lifecycle event). |
+| GET | `/api/deaths/{id}/` | `DeathViewSet` | `DeathSerializer` | session | Retrieve one death. |
+| POST | `/api/deaths/` | `DeathViewSet` | `DeathWriteSerializer` | session | Register a death for one `animal` XOR `lot`; posts no ledger entry ([[adr-28-animal-lifecycle-and-sanitary]] decision 3). |
+| GET | `/api/exits/` | `ExitViewSet` | `ExitSerializer` | session | List exits (immutable lifecycle event). |
+| GET | `/api/exits/{id}/` | `ExitViewSet` | `ExitSerializer` | session | Retrieve one exit. |
+| POST | `/api/exits/` | `ExitViewSet` | `ExitWriteSerializer` | session | Register an exit for one `animal` XOR `lot`; `sale_price_per_kg` is informative, posts no ledger entry in the initial phases ([[adr-25-account-ledger]] rule 6, [[adr-28-animal-lifecycle-and-sanitary]] decision 3). |
+| GET | `/api/feed-types/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | List feed-type catalog rows (editable, [[adr-24-feedlot-domain]] rule 3). |
+| POST | `/api/feed-types/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | Create a feed type. |
+| GET | `/api/feed-types/{id}/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | Retrieve one feed type. |
+| PUT | `/api/feed-types/{id}/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | Replace a feed type (catalog edit). |
+| PATCH | `/api/feed-types/{id}/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | Partial update of a feed type. |
+| DELETE | `/api/feed-types/{id}/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | Delete a feed type. |
+| GET | `/api/feed-deliveries/` | `FeedDeliveryViewSet` | `FeedDeliverySerializer` | session | List feed deliveries into own stock. |
+| POST | `/api/feed-deliveries/` | `FeedDeliveryViewSet` | `FeedDeliverySerializer` | session | Register a feed delivery (an `in` stock movement); routes to `register_delivery`. Create-only. |
+| GET | `/api/feedings/` | `FeedingEventViewSet` | `FeedingEventSerializer` | session | List feeding events (filter `?client=`). |
+| POST | `/api/feedings/` | `FeedingEventViewSet` | `FeedingEventSerializer` | session | Register a feeding for one `animal` XOR `lot`; `origin=own_stock` posts a debit + `out` movement, `origin=client_stock` posts only the `out` movement (no charge) — [[adr-25-account-ledger]] rule 4. Routes to `register_feeding`. Create-only. |
+| GET | `/api/feed-stock/` | `feed_stock` | — | session (`IsAuthenticated`) | Derived feed-stock balances by `(owner_kind, client, feed_type)` (filter `?client=`); function view, no model serializer. |
+| GET | `/api/health-products/` | `HealthProductViewSet` | `HealthProductSerializer` | session | List health-product catalog rows (editable, [[adr-24-feedlot-domain]] rule 3). The `sanitary` app is named to avoid the `/api/health/` liveness collision ([[adr-28-animal-lifecycle-and-sanitary]] decision 4). |
+| POST | `/api/health-products/` | `HealthProductViewSet` | `HealthProductSerializer` | session | Create a health product. |
+| GET | `/api/health-products/{id}/` | `HealthProductViewSet` | `HealthProductSerializer` | session | Retrieve one health product. |
+| PUT | `/api/health-products/{id}/` | `HealthProductViewSet` | `HealthProductSerializer` | session | Replace a health product (catalog edit). |
+| PATCH | `/api/health-products/{id}/` | `HealthProductViewSet` | `HealthProductSerializer` | session | Partial update of a health product. |
+| DELETE | `/api/health-products/{id}/` | `HealthProductViewSet` | `HealthProductSerializer` | session | Delete a health product. |
+| GET | `/api/health-events/` | `HealthEventViewSet` | `HealthEventSerializer` | session | List health events (immutable). |
+| GET | `/api/health-events/{id}/` | `HealthEventViewSet` | `HealthEventSerializer` | session | Retrieve one health event. |
+| POST | `/api/health-events/` | `HealthEventViewSet` | `HealthEventSerializer` | session | Register a health application; always posts a `debit` — sanitary inputs are always the feedlot's ([[adr-28-animal-lifecycle-and-sanitary]] decision 5). Create-only. |
+| GET | `/api/market-sources/` | `MarketSourceViewSet` | `MarketSourceSerializer` | session | List reference-price source catalog rows (editable). |
+| POST | `/api/market-sources/` | `MarketSourceViewSet` | `MarketSourceSerializer` | session | Create a market source. |
+| GET | `/api/market-sources/{id}/` | `MarketSourceViewSet` | `MarketSourceSerializer` | session | Retrieve one market source. |
+| PUT | `/api/market-sources/{id}/` | `MarketSourceViewSet` | `MarketSourceSerializer` | session | Replace a market source. |
+| PATCH | `/api/market-sources/{id}/` | `MarketSourceViewSet` | `MarketSourceSerializer` | session | Partial update of a market source. |
+| DELETE | `/api/market-sources/{id}/` | `MarketSourceViewSet` | `MarketSourceSerializer` | session | Delete a market source. |
+| GET | `/api/market-prices/` | `MarketPriceViewSet` | `MarketPriceSerializer` | session | List reference prices (filter `?source=`, `?category=`, `?date=`); idempotent per `(source, category, date)` ([[adr-30-market-prices-connectors]] rule 6). |
+| GET | `/api/market-prices/{id}/` | `MarketPriceViewSet` | `MarketPriceSerializer` | session | Retrieve one market price. |
+| POST | `/api/market-prices/` | `MarketPriceViewSet` | `MarketPriceSerializer` | session | Create/ingest a market price row. |
+| GET | `/api/advisors/` | `AdvisorViewSet` | `AdvisorSerializer` | session | List advisor catalog rows (`livestock`, `finance`, `admin`) — read-only ([[adr-27-advisors-generative]]). |
+| GET | `/api/advisors/{id}/` | `AdvisorViewSet` | `AdvisorSerializer` | session | Retrieve one advisor. |
+| GET | `/api/advisor-reports/` | `AdvisorReportViewSet` | `AdvisorReportSerializer` | session | List persisted advisor reports (filter `?client=`) — each is the auditable record of one generation ([[adr-27-advisors-generative]] rule 3). |
+| GET | `/api/advisor-reports/{id}/` | `AdvisorReportViewSet` | `AdvisorReportSerializer` | session | Retrieve one advisor report (reading does not re-infer, [[adr-31-advisors-implementation]] decision 5). |
+| POST | `/api/advisor-reports/` | `AdvisorReportViewSet` | `AdvisorReportSerializer` | session | Generate an advisor report over a backend-assembled per-client snapshot ([[adr-31-advisors-implementation]] decisions 1–2); async Bedrock inference ([[adr-16-async-mandatory]]). |
+
 ## Contracts
 
 All rows below are authentication/identity surface; every response carries an explicit `Cache-Control` and is **`no-store`** — the `/accounts/` routes mutate or read the session, and `/api/me/` and `/api/restricted/` are authenticated ([[CACHE]], authenticated → `no-store`). Full flow and guards live in [[AUTH]]; these entries state only the endpoint contracts.
@@ -117,6 +204,14 @@ No prose beyond the registry-authored `label` ever ships (rule 5). Error shape: 
 **Silent rate-abuse block (#371):** at the end of a successful handler pass, an async evaluation ([[adr-16-async-mandatory]]) checks the requesting user's recent message rate against `ROUTER_RATE_THRESHOLD_PER_MINUTE` (default `20`/min) — but only when there has been router activity from that user within the last `ROUTER_RATE_IDLE_SKIP_SECONDS` (default `20`s); the common idle case evaluates nothing. Crossing the threshold marks the user blocked for `ROUTER_RATE_BLOCK_SECONDS` (default `300`s); every request from a blocked user returns a bare `429` with an empty body — no `detail`, no reason, deliberately indistinguishable from the `CooldownThrottle` reject above (audited, `choice="rate_blocked"`). This is enforcement only: it reads and writes no Group membership and narrows no permission ([[adr-15-chatbot-two-tier]] rule 3). State lives in the shared `DatabaseCache` ([[CACHE]]) — no Redis ([[adr-06-cache]]).
 
 This supersedes the prior `{ "action": "<enum member>", "slots": {...} }` shape recorded when the row was first added — no code ever shipped that contract.
+
+### metrics-null-contract
+
+The six `GET /api/clients/{id}/metrics/*` views return a **derived** JSON payload, not a model serialization (hence `—`). They obey the null-contract of [[adr-29-metrics-derivation]] rule 2: a metric that cannot be computed from the available events returns `null` for that value plus a `not_calculable` field naming the cause (e.g. `no_measured_growth`, `no_weight_gain`, `no_intake_in_period`, `head_count_changed`) — **never** a filled zero, an average, or an estimate. A consumer of these endpoints MUST handle `null` ([[adr-29-metrics-derivation]] consequences); a frontend that assumes a number will break, and it is correct that it breaks in development. `growth`/`conversion` additionally report how many non-measurable segments were skipped ([[adr-29-metrics-derivation]] rule 3), and `summary` surfaces data inconsistencies (e.g. a fact dated after the animal's death) as flags to display, never as a load-time block ([[adr-29-metrics-derivation]] rule 5). All are read-only `GET`; the generation is the event data, computed on read, never persisted as an editable field ([[adr-24-feedlot-domain]] rule 3). `no-store`.
+
+### feedlot-mutation-caveat
+
+`AnimalViewSet` and `LotViewSet` are declared as full `ModelViewSet`s, so `PUT`/`PATCH`/`DELETE` resolve on `/api/animals/{id}/` and `/api/lots/{id}/`. These rows record the route surface as-built ([[adr-03-api-and-backend]] rule 1). Note, however, that the event-sourced posture treats lot counters (`head_count`, `total_weight`) and `Animal.current_weight` as **event-maintained / derived**, never hand-edited ([[adr-26-livestock-individual-and-lot]] rules 4–5, [[adr-24-feedlot-domain]] rule 3): the sanctioned way to change herd state is an `Intake`/`Weighing`/`Death`/`Exit` event, not a direct write to these rows. Whether the write verbs on these two viewsets should be narrowed to match the events' `list`/`retrieve`/`create`-only shape is a doctrine question for the ADR/API guardians, flagged here and not resolved by this documentation pass. `no-store`.
 
 ## Change protocol
 

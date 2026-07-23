@@ -306,4 +306,88 @@ export const es = {
   demo_toast_trigger: "Confirmar liquidación",
   demo_toast_title: "Liquidación confirmada",
   demo_toast_desc: "INV-1042 fue marcada como pagada.",
+
+  // feedlot — navegación
+  nav_feedlot: "Feedlot",
+
+  // feedlot — lista de clientes
+  feedlot_clients_title: "Clientes del feedlot",
+  feedlot_clients_intro:
+    "Cada cliente con hacienda en el feedlot y el saldo de su cuenta corriente. Entrá a un cliente para ver su panel.",
+  feedlot_col_client: "Cliente",
+  feedlot_col_kind: "Tipo",
+  feedlot_col_taxid: "CUIT",
+  feedlot_col_balance: "Saldo (ARS)",
+  feedlot_view_dashboard: "Ver panel",
+  feedlot_empty_clients: "Todavía no hay clientes cargados. Corré el seed de demo para verlo con datos.",
+  feedlot_back_home: "← Inicio",
+
+  // feedlot — panel del cliente
+  feedlot_dash_fallback: "Cliente del feedlot",
+  feedlot_dash_intro:
+    "Métricas derivadas de los eventos operativos. Un valor que no se puede calcular se muestra como «—» con su motivo, nunca como cero.",
+  feedlot_metric_balance: "Saldo cuenta",
+  feedlot_metric_head: "Cabezas",
+  feedlot_unit_head: "cab.",
+  feedlot_metric_avg_weight: "Peso promedio",
+  feedlot_metric_cost: "Costo total",
+  feedlot_metric_conversion: "Conversión",
+  feedlot_metric_conversion_hint: "kg consumidos / kg ganados",
+  feedlot_metric_kilos_gained: "Kilos ganados",
+  feedlot_metric_mortality: "Mortalidad",
+  feedlot_metric_head_entered: "Cabezas ingresadas",
+  feedlot_inconsistencies: "Inconsistencias detectadas para revisar",
+  feedlot_chart_account: "Evolución de la cuenta",
+  feedlot_chart_account_desc: "Saldo acumulado por asiento (ARS)",
+  feedlot_chart_prices: "Precio de referencia",
+  feedlot_chart_prices_desc: "Promedio diario (Cañuelas)",
+  feedlot_no_chart: "Sin datos para graficar",
+  feedlot_herd_title: "Rodeo",
+  feedlot_herd_lots: "Lotes",
+  feedlot_herd_animals: "Animales",
+  feedlot_col_code: "Código",
+  feedlot_col_headcount: "Cabezas",
+  feedlot_col_total_weight: "Peso total (kg)",
+  feedlot_col_status: "Estado",
+  feedlot_col_eartag: "Caravana",
+  feedlot_col_category: "Categoría",
+  feedlot_col_current_weight: "Peso actual (kg)",
+  feedlot_empty_lots: "Sin lotes.",
+  feedlot_empty_animals: "Sin animales individuales.",
+  feedlot_back_clients: "← Clientes",
+
+  // Data-entry (bdd-13)
+  feedlot_load_cta: "Cargar datos",
+  feedlot_load_title: "Cargar datos",
+  feedlot_load_intro:
+    "Registrá una ración o un pesaje. Cada carga es un hecho inmutable: se corrige con un hecho nuevo, nunca editando el anterior.",
+  feedlot_load_view_panel: "Ver panel actualizado →",
+  feedlot_form_feeding_title: "Ración",
+  feedlot_form_feeding_desc:
+    "Alimento entregado a un animal o lote. El origen decide si se cobra.",
+  feedlot_form_weighing_title: "Pesaje",
+  feedlot_form_weighing_desc: "Peso medido de un animal o lote en una fecha.",
+  feedlot_form_target: "Destino",
+  feedlot_form_target_placeholder: "Elegí un animal o lote…",
+  feedlot_form_lot: "Lote",
+  feedlot_form_feed_type: "Tipo de alimento",
+  feedlot_form_feed_type_placeholder: "Elegí un alimento…",
+  feedlot_form_quantity: "Cantidad",
+  feedlot_form_unit_price: "Precio unitario (ARS)",
+  feedlot_form_origin: "Origen",
+  feedlot_form_origin_own: "Stock propio (se cobra)",
+  feedlot_form_origin_client: "Stock del cliente (no se cobra)",
+  feedlot_form_origin_own_hint:
+    "El alimento lo pone el feedlot: genera un débito en la cuenta.",
+  feedlot_form_origin_client_hint:
+    "El alimento lo trajo el cliente: descuenta su stock, sin cargo.",
+  feedlot_form_weight: "Peso (kg)",
+  feedlot_form_date: "Fecha",
+  feedlot_form_head_count: "Cabezas pesadas",
+  feedlot_form_head_count_hint:
+    "Opcional. Para lotes: cuántas cabezas cubre este peso total.",
+  feedlot_form_save_feeding: "Registrar ración",
+  feedlot_form_save_weighing: "Registrar pesaje",
+  feedlot_form_saved: "Guardado ✓",
+  feedlot_form_error: "No se pudo guardar. Revisá los datos.",
 } as const;
