@@ -10,9 +10,13 @@ network. `get_advisor_client` gates it exactly like the router does: a non-DEBUG
 process can only ever construct the real client — no setting forces the mock into
 a deploy.
 
-INTEGRATION POINT (Claude Code, against live AWS): confirm BEDROCK model id and
-region settings, IAM, and the async wrapping (adr-16) before relying on the real
-client in production.
+Wired end to end (adr-31 pending point resolved): the model id is
+`ADVISOR_BEDROCK_MODEL_ID` and the region `BEDROCK_REGION` (docs/VARIABLES.md);
+the async wrap is `services.agenerate_report` (adr-16 rule 4, `sync_to_async`);
+and the blocking connectivity gate is `manage.py check_advisor_bedrock_connectivity`
+(mirrored as the `bedrock_live` pytest gate). What remains is purely operational
+and cannot be exercised without live credentials: the deploy pipeline runs the gate
+under OIDC to prove IAM grant + model access before the real client is trusted.
 """
 
 import json

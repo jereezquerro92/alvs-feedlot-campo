@@ -23,4 +23,7 @@ urlpatterns = [
     path("api/", include("apps.metrics.urls")),
     path("api/", include("apps.market.urls")),
     path("api/", include("apps.advisors.urls")),
+    # Feedlot multi-rubro (Phase 6) — docs/adrs/adr-32-multi-rubro-assets.md, docs/API.md
+    path("api/", include("apps.crops.urls")),
+    path("api/", include("apps.machinery.urls")),
 ]

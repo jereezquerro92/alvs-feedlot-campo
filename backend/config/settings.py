@@ -115,6 +115,10 @@ INSTALLED_APPS = [
     "apps.metrics",
     "apps.market",
     "apps.advisors",
+    # Feedlot multi-rubro (Phase 6) — docs/adrs/adr-32-multi-rubro-assets.md
+    "apps.assets",
+    "apps.crops",
+    "apps.machinery",
 ]
 
 MIDDLEWARE = [
@@ -236,6 +240,12 @@ ROUTER_ENABLED = _env_bool("ROUTER_ENABLED", True)
 # (us.amazon.nova-micro-v1:0) — the bare ID is not on-demand invokable.
 BEDROCK_REGION = _env("BEDROCK_REGION", "us-east-1")
 ROUTER_BEDROCK_MODEL_ID = _env("ROUTER_BEDROCK_MODEL_ID", "us.amazon.nova-micro-v1:0")
+
+# Bedrock inference for the advisors' generative tier ([[VARIABLES]], adr-27/adr-31).
+# Distinct from the router: this tier GENERATES prose, so a more capable model than
+# Nova Micro is warranted. Same inference-profile-form requirement (us.* prefix) and
+# same BEDROCK_REGION — no duplicate region variable.
+ADVISOR_BEDROCK_MODEL_ID = _env("ADVISOR_BEDROCK_MODEL_ID", "us.amazon.nova-lite-v1:0")
 
 MSGRAPH_TENANT_ID = _env("MSGRAPH_TENANT_ID", "")
 MSGRAPH_CLIENT_ID = _env("MSGRAPH_CLIENT_ID", "")

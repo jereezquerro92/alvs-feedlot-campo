@@ -6,6 +6,7 @@ a caller can never smuggle in another client's data — the per-client scope is 
 hard boundary (adr-27 rule 2).
 """
 
+from asgiref.sync import sync_to_async
 from django.db import transaction
 
 from apps.advisors.inference import get_advisor_client
@@ -39,3 +40,11 @@ def generate_report(*, advisor: Advisor, client, start=None, end=None, created_b
         latency_ms=latency_ms,
         created_by=created_by,
     )
+
+
+# Async entrypoint for event-loop callers (adr-16 rule 4): the Bedrock inference
+# inside `generate_report` is a blocking boto3 `converse`, so an `async def` view
+# — a future streaming/SSE advisor endpoint — awaits it through `sync_to_async`,
+# never `aiobotocore`. The sync view keeps calling `generate_report` directly:
+# a plain `def` view is the unchanged default (adr-16 rule 1).
+agenerate_report = sync_to_async(generate_report)
