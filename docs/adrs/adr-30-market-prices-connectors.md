@@ -1,3 +1,11 @@
+---
+title: adr-30-market-prices-connectors
+type: adr
+status: active
+created: 2026-07-23
+tags: [adr, feedlot, market, prices, connectors]
+---
+
 # ADR-30 — Precios de referencia y conectores de fuentes
 
 **Estado:** propuesto (Fase 4)
@@ -67,18 +75,26 @@ con distinto rezago. Van a diferir. El sistema guarda ambas con su `source` y de
 que el dashboard o el asesor elijan según el uso. Promediarlas fabricaría un número
 que no publica ninguna fuente.
 
-## Puntos de integración pendientes (para Claude Code, contra el sitio vivo)
+## Puntos de integración — resueltos contra el sitio vivo
 
-Dos cosas no se pueden cerrar sin el sitio real y quedan marcadas en el código:
+Los dos que quedaban abiertos se cerraron verificando el sitio real (2026-07):
 
-1. **Cañuelas — formulario de fechas.** El `fetch` actual trae la vista por
-   defecto; el rango por fecha puede exigir POST. Confirmar los parámetros con el
-   inspector de red y completar `fetch`. El fixture de test debe reemplazarse por
-   una página real de un día cerrado.
-2. **IPCVA — endpoint de datos.** "Precios en Pie" es un armador de gráficos; los
-   números llegan por una llamada AJAX. Capturar esa llamada, y completar `fetch` y
-   `parse` de `IpcvaConnector` (hoy lanzan `ConnectorError` a propósito, para no
-   inventar un formato no verificado).
+1. **Cañuelas — formulario de fechas.** Confirmado: el reporte lo maneja un POST
+   a la misma URL (`hacienda1.dll/haciinfo000502`) con `txtFechaIni`/`txtFechaFin`
+   en `DD/MM/YYYY` más campos ocultos. Un GET pelado devuelve el día en curso, aún
+   provisorio. El `fetch` postea el día cerrado; el POST se aísla en `build_form`
+   (puro, testeado) porque `fetch` es red. Verificado en vivo: 22/07 → 18 filas,
+   21/07 → 19 filas, un día sin operaciones → 0 filas.
+2. **IPCVA — endpoint de datos.** Corregido: "Precios en Pie" NO es un armador de
+   gráficos — es `vista_precios.php?id=1`, una tabla HTML renderizada en servidor
+   (la ruta previa `vista_precios2.php` era la vista internacional distinta). El
+   `fetch` postea un rango (`mes_desde`/`ano_desde`/`mes_hasta`/`ano_hasta` +
+   `categorias[]`/`paises[]`) y `parse` lee la tabla, mapeando columnas por su
+   encabezado (regla 4). **Salvedad de unidad:** esta serie es el índice Novillos
+   **internacional en USD/kg**, no ARS como Cañuelas — distinta por diseño, separada
+   por `source` y nunca promediada con Cañuelas (regla 8). Cada fila registra
+   `currency: "USD"` en `raw`. El test corre contra `fixture_ipcva.html`, una página
+   real de la serie Novillos/Argentina (ene–jun 2025).
 
 ## Consecuencias
 

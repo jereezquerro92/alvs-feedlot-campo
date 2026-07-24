@@ -6,9 +6,11 @@ Three things this site does that will bite a naive scraper, all handled here:
 2. **Same-day data is provisional**: the page shows "PRECIOS PROVISORIOS" with an
    empty table until the day closes. We refuse to parse a provisional page and we
    run with a one-day lag by default.
-3. **The date form drives the report.** The exact POST/GET contract must be
-   confirmed against the live site (do this in Claude Code, network tab); the URL
-   and params below are the integration point, isolated in `fetch`.
+3. **The date form drives the report.** Confirmed against the live site: the report
+   is driven by an HTML form (`frmPrincipal`) posted back to the same URL with
+   `txtFechaIni` / `txtFechaFin` (format `DD/MM/YYYY`) plus a set of hidden fields.
+   A bare GET returns the current, still-provisional day; the POST with a closed
+   date returns "PRECIOS DEFINITIVOS". The contract is isolated in `fetch`.
 
 The parser reads the header row to map columns, so a column re-order upstream does
 not silently shift values into the wrong field.
@@ -32,8 +34,19 @@ _COLUMN_ALIASES = {
 
 _PROVISIONAL = "PROVISORIO"
 
-# Integration point — confirm against the live site in Claude Code.
 BASE_URL = "https://www.mercadoagroganadero.com.ar/dll/hacienda1.dll/haciinfo000502"
+
+# The report form (`frmPrincipal`) posts back to BASE_URL. Only the two date
+# fields carry meaning for us; the rest are hidden fields the DLL expects to see.
+_FORM_STATIC = {
+    "USUARIO": "SIN IDENTIFICAR",
+    "ID": "",
+    "CP": "",
+    "FLASH": "",
+    "OPCIONMENU": "",
+    "OPCIONSUBMENU": "",
+}
+_USER_AGENT = "Mozilla/5.0 (compatible; alvs-feedlot/1.0)"
 
 
 def _norm(text: str) -> str:
@@ -63,12 +76,27 @@ class CanuelasConnector(BaseConnector):
         """One-day lag: yesterday's data is final, today's is provisional."""
         return today - timedelta(days=1)
 
+    def build_form(self, target_date: date) -> dict:
+        """The POST body for one closed day. Pure — testable without the network."""
+        day = target_date.strftime("%d/%m/%Y")
+        return {**_FORM_STATIC, "txtFechaIni": day, "txtFechaFin": day}
+
     def fetch(self, *, target_date: date) -> bytes:  # pragma: no cover - network
+        import urllib.parse
         import urllib.request
 
-        # NOTE: the date range form may require POST. Confirm the exact params
-        # against the live site before relying on this in production.
-        req = urllib.request.Request(BASE_URL, headers={"User-Agent": "alvs-feedlot/1.0"})
+        # POST the date form back to the same URL so the DLL renders the report for
+        # `target_date` (a closed day → "PRECIOS DEFINITIVOS"). A bare GET would only
+        # ever return the current, provisional day, which `parse` discards.
+        data = urllib.parse.urlencode(self.build_form(target_date)).encode("ascii")
+        req = urllib.request.Request(
+            BASE_URL,
+            data=data,
+            headers={
+                "User-Agent": _USER_AGENT,
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+        )
         with urllib.request.urlopen(req, timeout=30) as resp:
             return resp.read()
 

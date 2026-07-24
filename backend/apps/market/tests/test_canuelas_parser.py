@@ -73,3 +73,13 @@ def test_unrecognisable_html_raises_connector_error():
 def test_raw_payload_is_kept_for_audit():
     prices = CanuelasConnector().parse(_read("fixture_canuelas.html"), target_date=date(2026, 7, 23))
     assert "cells" in prices[0].raw
+
+
+def test_build_form_posts_the_closed_day_in_dd_mm_yyyy():
+    # `fetch` is network-excluded, so the POST body it sends is covered here instead.
+    form = CanuelasConnector().build_form(date(2026, 7, 21))
+    assert form["txtFechaIni"] == "21/07/2026"
+    assert form["txtFechaFin"] == "21/07/2026"
+    # The hidden fields the DLL expects must ride along unchanged.
+    assert form["USUARIO"] == "SIN IDENTIFICAR"
+    assert "OPCIONMENU" in form

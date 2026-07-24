@@ -5,7 +5,7 @@ from decimal import Decimal
 
 import pytest
 
-from apps.market.connectors.base import ConnectorError, ParsedPrice
+from apps.market.connectors.base import ParsedPrice
 from apps.market.models import MarketPrice, MarketSource
 from apps.market.services import (
     ingest_source,
@@ -83,7 +83,19 @@ def test_latest_price_respects_on_or_before():
     assert older.date == date(2026, 7, 20)
 
 
-def test_ipcva_source_raises_until_wired():
+def test_ipcva_connector_is_wired_and_persists():
+    # IPCVA is now wired (parse verified against a real fixture in test_ipcva_parser).
+    # Here we prove its parsed output persists like any other source, no network.
+    from pathlib import Path
+
+    from apps.market.connectors.ipcva import IpcvaConnector
+
+    payload = (Path(__file__).parent / "fixture_ipcva.html").read_bytes()
+    prices = IpcvaConnector().parse(payload, target_date=date(2025, 6, 30))
     source = _source("ipcva")
-    with pytest.raises(ConnectorError):
-        ingest_source(source=source, target_date=date(2026, 7, 23))
+    result = persist(source=source, prices=prices)
+    assert result.created == len(prices) > 0
+    # Idempotent: re-persisting the same parse updates, never duplicates.
+    again = persist(source=source, prices=prices)
+    assert again.updated == len(prices)
+    assert MarketPrice.objects.filter(source=source).count() == len(prices)
