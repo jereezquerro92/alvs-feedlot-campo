@@ -44,3 +44,19 @@ Merge these rows into the table in [[GLOSSARY]]; the format is
 | model field (advisor slug) | `slug` — `livestock` \| `finance` \| `admin` | advisor role key ([[adr-27-advisors-generative]]) | `role`, `type`, Spanish values |
 | model (advisor report) | `AdvisorReport` | a generated per-client analysis ([[adr-27-advisors-generative]]) | `Report`, `Analysis`, `Informe` |
 | currency posture (account) | ARS, historical unit price snapshot per entry | `ledger` valuation ([[adr-25-account-ledger]]) | storing only a total without `unit_price`/`quantity`; recomputing past entries at today's price |
+| Django app (assets) | `assets` | shared asset/task/maintenance abstractions app (Fase 6, [[adr-32-multi-rubro-assets]]) | `equipment`, `resources`, `activos` |
+| Django app (crops) | `crops` | alfalfa/pivot crop domain app (Fase 6, [[adr-32-multi-rubro-assets]]) | `alfalfa`, `agriculture`, `fields`, `cultivos` |
+| Django app (machinery) | `machinery` | machinery & maintenance domain app (Fase 6, [[adr-32-multi-rubro-assets]]) | `machines`, `equipment`, `maquinaria`, `taller` |
+| model (asset base) | `AssetBase` (abstract) | shared lifecycle base for a `Pivot`/`Machine` ([[adr-32-multi-rubro-assets]]) | `Asset` (concrete), `Resource`, `Activo` |
+| model (costed event base) | `CostedEvent` (abstract) | shared base for an event that snapshots `unit_price`×`quantity` and posts a `service` debit ([[adr-32-multi-rubro-assets]]) | `Chargeable`, `Billable`, `CostEvent` |
+| model (pivot) | `Pivot` | a center-pivot irrigation circle (círculo) ([[adr-32-multi-rubro-assets]]) | `Circle`, `Circulo`, `IrrigationUnit`, `Field` |
+| model (crop) | `Crop` | a planting standing on a `Pivot` ([[adr-32-multi-rubro-assets]]) | `Planting`, `Cultivo`, `Plantation` |
+| model field (crop species) | `species` — `alfalfa` \| `other` | crop species ([[adr-32-multi-rubro-assets]]) | `type`, `kind`, `plant`, Spanish values |
+| model (cutting) | `Cutting` | a harvest event on a crop (corte); posts NO ledger entry ([[adr-32-multi-rubro-assets]]) | `Harvest`, `Corte`, `Mowing`, `Cut` |
+| model (field task) | `FieldTask` | labor on a `Pivot` (tarea); posts a `service` debit ([[adr-32-multi-rubro-assets]]) | `Task` (bare — collides), `Labor`, `Tarea`, `WorkOrder` |
+| model field (field task category) | `category` — `sowing`\|`fertilizing`\|`irrigation`\|`weeding`\|`other` | field-task category ([[adr-32-multi-rubro-assets]]) | `type`, `kind`, Spanish values |
+| model (machine) | `Machine` | a piece of machinery (maquinaria) ([[adr-32-multi-rubro-assets]]) | `Equipment`, `Maquina`, `Vehicle`, `Tractor` |
+| model field (machine category) | `category` — `tractor`\|`harvester`\|`mixer`\|`truck`\|`other` | machine category ([[adr-32-multi-rubro-assets]]) | `type`, `kind`, Spanish values |
+| model (maintenance event) | `MaintenanceEvent` | a service/repair on a `Machine` (mantenimiento); posts a `service` debit ([[adr-32-multi-rubro-assets]]) | `Maintenance`, `Service`, `Repair`, `Mantenimiento` |
+| model field (maintenance kind) | `kind` — `preventive`\|`corrective`\|`other` | maintenance-event kind ([[adr-32-multi-rubro-assets]]) | `type`, `category`, Spanish values |
+| ledger origin ref values (Fase 6) | `source_kind` ∈ `field_task`, `maintenance_event` | generic `LedgerEntry` back-links for the two charge-bearing Fase 6 events ([[adr-32-multi-rubro-assets]], [[adr-25-account-ledger]]) | a per-domain FK; new `Concept` values (both reuse `service`) |

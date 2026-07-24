@@ -115,6 +115,10 @@ INSTALLED_APPS = [
     "apps.metrics",
     "apps.market",
     "apps.advisors",
+    # Feedlot multi-rubro (Phase 6) — docs/adrs/adr-32-multi-rubro-assets.md
+    "apps.assets",
+    "apps.crops",
+    "apps.machinery",
 ]
 
 MIDDLEWARE = [

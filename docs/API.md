@@ -147,6 +147,40 @@ The feedlot is built as domain apps on the template spine ([[adr-24-feedlot-doma
 | GET | `/api/advisor-reports/{id}/` | `AdvisorReportViewSet` | `AdvisorReportSerializer` | session | Retrieve one advisor report (reading does not re-infer, [[adr-31-advisors-implementation]] decision 5). |
 | POST | `/api/advisor-reports/` | `AdvisorReportViewSet` | `AdvisorReportSerializer` | session | Generate an advisor report over a backend-assembled per-client snapshot ([[adr-31-advisors-implementation]] decisions 1–2); async Bedrock inference ([[adr-16-async-mandatory]]). |
 
+## Feedlot domain endpoints (Phase 6 — multi-rubro)
+
+Fase 6 adds two rubros on the same spine ([[adr-32-multi-rubro-assets]]): `crops` (alfalfa on pivots) and `machinery`. Same policy as the Phase 1–5 surface — DRF default `session` auth, every response `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. **Catalogs** `Pivot`/`Crop`/`Machine` are full-CRUD `ModelViewSet`s (editable master data — "cargar círculos" is creating pivots, [[adr-32-multi-rubro-assets]] decision 6); **operational events** `Cutting`/`FieldTask`/`MaintenanceEvent` expose only `list`/`retrieve`/`create`, no `update`/`destroy` (a fact is corrected by a new fact, [[adr-24-feedlot-domain]] rule 3). `FieldTask` and `MaintenanceEvent` post a `service` `debit` through the generic `(source_kind, source_id)` seam ([[adr-32-multi-rubro-assets]] decisions 3, 5); `Cutting` posts no ledger entry (decision 4). The shared `assets` app contributes abstract bases only ([[adr-32-multi-rubro-assets]] decision 1) and exposes no endpoints.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/pivots/` | `PivotViewSet` | `PivotSerializer` | session | List center-pivot circles (editable catalog, [[adr-32-multi-rubro-assets]] decision 6). |
+| POST | `/api/pivots/` | `PivotViewSet` | `PivotSerializer` | session | Create a pivot ("cargar círculo"). |
+| GET | `/api/pivots/{id}/` | `PivotViewSet` | `PivotSerializer` | session | Retrieve one pivot. |
+| PUT | `/api/pivots/{id}/` | `PivotViewSet` | `PivotSerializer` | session | Replace a pivot. |
+| PATCH | `/api/pivots/{id}/` | `PivotViewSet` | `PivotSerializer` | session | Partial update of a pivot (e.g. `status=retired`). |
+| DELETE | `/api/pivots/{id}/` | `PivotViewSet` | `PivotSerializer` | session | Delete a pivot. |
+| GET | `/api/crops/` | `CropViewSet` | `CropSerializer` | session | List crops/plantings (filter `?pivot=`). Editable catalog. |
+| POST | `/api/crops/` | `CropViewSet` | `CropSerializer` | session | Create a crop on a pivot (`species` ∈ `alfalfa`\|`other`). |
+| GET | `/api/crops/{id}/` | `CropViewSet` | `CropSerializer` | session | Retrieve one crop. |
+| PUT | `/api/crops/{id}/` | `CropViewSet` | `CropSerializer` | session | Replace a crop. |
+| PATCH | `/api/crops/{id}/` | `CropViewSet` | `CropSerializer` | session | Partial update of a crop. |
+| DELETE | `/api/crops/{id}/` | `CropViewSet` | `CropSerializer` | session | Delete a crop. |
+| GET | `/api/cuttings/` | `CuttingViewSet` | `CuttingSerializer` | session | List cutting (harvest) events (filter `?crop=`). |
+| GET | `/api/cuttings/{id}/` | `CuttingViewSet` | `CuttingSerializer` | session | Retrieve one cutting. |
+| POST | `/api/cuttings/` | `CuttingViewSet` | `CuttingWriteSerializer` | session | Register a cutting/harvest on a crop; posts no ledger entry ([[adr-32-multi-rubro-assets]] decision 4). Create-only. |
+| GET | `/api/field-tasks/` | `FieldTaskViewSet` | `FieldTaskSerializer` | session | List field tasks (filter `?pivot=`, `?client=`). |
+| GET | `/api/field-tasks/{id}/` | `FieldTaskViewSet` | `FieldTaskSerializer` | session | Retrieve one field task. |
+| POST | `/api/field-tasks/` | `FieldTaskViewSet` | `FieldTaskWriteSerializer` | session | Register a field task (tarea) on a pivot; posts a `service` `debit` via `register_field_task` ([[adr-32-multi-rubro-assets]] decisions 3, 5). Create-only. |
+| GET | `/api/machines/` | `MachineViewSet` | `MachineSerializer` | session | List machines (editable catalog). |
+| POST | `/api/machines/` | `MachineViewSet` | `MachineSerializer` | session | Create a machine. |
+| GET | `/api/machines/{id}/` | `MachineViewSet` | `MachineSerializer` | session | Retrieve one machine. |
+| PUT | `/api/machines/{id}/` | `MachineViewSet` | `MachineSerializer` | session | Replace a machine. |
+| PATCH | `/api/machines/{id}/` | `MachineViewSet` | `MachineSerializer` | session | Partial update of a machine (e.g. `status=retired`). |
+| DELETE | `/api/machines/{id}/` | `MachineViewSet` | `MachineSerializer` | session | Delete a machine. |
+| GET | `/api/maintenance-events/` | `MaintenanceEventViewSet` | `MaintenanceEventSerializer` | session | List maintenance events (filter `?machine=`, `?client=`). |
+| GET | `/api/maintenance-events/{id}/` | `MaintenanceEventViewSet` | `MaintenanceEventSerializer` | session | Retrieve one maintenance event. |
+| POST | `/api/maintenance-events/` | `MaintenanceEventViewSet` | `MaintenanceEventWriteSerializer` | session | Register a maintenance event (mantenimiento) on a machine; posts a `service` `debit` via `register_maintenance` ([[adr-32-multi-rubro-assets]] decisions 3, 5). Create-only. |
+
 ## Contracts
 
 All rows below are authentication/identity surface; every response carries an explicit `Cache-Control` and is **`no-store`** — the `/accounts/` routes mutate or read the session, and `/api/me/` and `/api/restricted/` are authenticated ([[CACHE]], authenticated → `no-store`). Full flow and guards live in [[AUTH]]; these entries state only the endpoint contracts.

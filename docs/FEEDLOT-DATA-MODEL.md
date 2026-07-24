@@ -111,9 +111,41 @@ standard everywhere and omitted.
 - **AdvisorReport** — `advisor`, `client`, `period_start`, `period_end`,
   `input_snapshot`, `output`, `model_id`, `tokens`, `latency`.
 
+### `assets` (Phase 6 — abstract only)
+
+No tables. Two abstract bases the crops/machinery models inherit ([[adr-32-multi-rubro-assets]] decision 1):
+
+- **AssetBase** (abstract) — `name`, `code`, `status` (`active` | `retired`),
+  `acquired_date?`, `notes`. Lifecycle base for a concrete asset.
+- **CostedEvent** (abstract) — `client`, `date`, `unit_price`, `quantity`,
+  `description`, `created_by` + `total_cost` property. Base for an event that
+  snapshots price×quantity and (via its domain service) posts a `service` debit.
+
+### `crops` (Phase 6)
+
+- **Pivot** (`AssetBase`) — `client`, `area_ha`. A center-pivot circle (círculo). Editable catalog.
+- **Crop** — `pivot`, `species` (`alfalfa` | `other`), `sown_date`, `status`
+  (`active` | `terminated`), `notes`. Editable catalog.
+- **Cutting** — `crop`, `date`, `kg_harvested`, `bales?`, `quality`, `notes`. A harvest
+  event (corte). Immutable; posts **no** ledger entry ([[adr-32-multi-rubro-assets]] decision 4).
+- **FieldTask** (`CostedEvent`) — `pivot`, `title`, `category`
+  (`sowing`|`fertilizing`|`irrigation`|`weeding`|`other`). Labor (tarea); posts a
+  `service` debit via `register_field_task` (`source_kind="field_task"`).
+
+### `machinery` (Phase 6)
+
+- **Machine** (`AssetBase`) — `client`, `category`
+  (`tractor`|`harvester`|`mixer`|`truck`|`other`). A machine (maquinaria). Editable catalog.
+- **MaintenanceEvent** (`CostedEvent`) — `machine`, `kind`
+  (`preventive`|`corrective`|`other`), `title`, `hours?`. A service/repair
+  (mantenimiento); posts a `service` debit via `register_maintenance`
+  (`source_kind="maintenance_event"`).
+
 ## Generic costing (scalability)
 
 `LedgerEntry` references its origin by `(source_kind, source_id)`, not by a per-domain
-FK. Any future domain (equines, crops, machinery) posts charges through the same door
-without changing `ledger`. This is the pivot that makes multi-domain costing additive
-([[adr-24-feedlot-domain]]).
+FK. This is the pivot that makes multi-domain costing additive ([[adr-24-feedlot-domain]]).
+Phase 6 is the first proof: `crops` (`source_kind="field_task"`) and `machinery`
+(`source_kind="maintenance_event"`) both post `service` debits through this same door,
+and `ledger` gained no model, concept, or FK ([[adr-32-multi-rubro-assets]] decision 3).
+Any next domain (e.g. equines) enters the same way.
