@@ -1,0 +1,64 @@
+---
+/* LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+ * Governed by: [[adr-04-frontend-and-design-system]]
+ * Docs: [[FRONTEND]]
+ * LIVE-DOC:END */
+import Base from "../../layouts/Base.astro";
+import { FeedlotClientsView } from "$lib/components/views";
+import SessionBadge from "$lib/components/auth/SessionBadge.svelte";
+import { hasRole } from "$lib/auth";
+import { requireRole } from "$lib/authGate";
+import { t } from "../../i18n";
+import type { Me } from "$lib/types/user";
+
+const backendApiUrl = process.env.BACKEND_API_URL ?? "http://localhost:8000";
+const publicBackendUrl = process.env.PUBLIC_BACKEND_URL ?? "http://localhost:8000";
+const publicProjectSlug = process.env.PUBLIC_PROJECT_SLUG ?? "astro-drf-aws";
+
+const cookie = Astro.request.headers.get("cookie");
+const headers: Record<string, string> = cookie ? { cookie } : {};
+
+let me: Me | null = null;
+if (cookie) {
+  try {
+    const res = await fetch(`${backendApiUrl}/api/me/`, { headers });
+    if (res.ok) me = (await res.json()) as Me;
+  } catch (err) {
+    console.error("SSR /api/me/ failed:", err);
+  }
+}
+
+// The lobby gate ([[adr-20-authorization-lobby]] rule 1): a role-less session is
+// bounced to `/` with a reason, never shown the gated surface.
+const redirect = requireRole(me);
+if (redirect) return Astro.redirect(redirect);
+
+let clients: any[] = [];
+try {
+  const res = await fetch(`${backendApiUrl}/api/clients/`, { headers });
+  if (res.ok) {
+    const data = await res.json();
+    clients = Array.isArray(data) ? data : (data.results ?? []);
+  }
+} catch (err) {
+  console.error("SSR /api/clients/ failed:", err);
+}
+
+const pending = me !== null && !hasRole(me);
+
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<Base title={t("feedlot_clients_title")}>
+  <FeedlotClientsView projectSlug={publicProjectSlug} clients={clients}>
+    <SessionBadge
+      client:load
+      me={me}
+      pending={pending}
+      publicBackendUrl={publicBackendUrl}
+      loginLabel={t("auth_login")}
+      logoutLabel={t("auth_logout")}
+      slot="session"
+    />
+  </FeedlotClientsView>
+</Base>

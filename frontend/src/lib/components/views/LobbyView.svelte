@@ -19,6 +19,7 @@
     pendingTitle: string;
     pendingBody: string;
     navTitle: string;
+    navFeedlot: string;
     navShowcase: string;
     navChatui: string;
     m365Title: string;
@@ -77,7 +78,8 @@
           <Card.Title>{copy.navTitle}</Card.Title>
         </Card.Header>
         <Card.Content class="flex flex-col gap-3">
-          <Button href="/showcase/components/" class="w-full">{copy.navShowcase}</Button>
+          <Button href="/feedlot/" class="w-full">{copy.navFeedlot}</Button>
+          <Button href="/showcase/components/" variant="secondary" class="w-full">{copy.navShowcase}</Button>
           <Button href="/chatui/" variant="secondary" class="w-full">{copy.navChatui}</Button>
         </Card.Content>
       </Card.Root>

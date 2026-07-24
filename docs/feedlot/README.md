@@ -21,6 +21,12 @@ Esta carpeta es la fuente de verdad del **negocio y el diseño**. El código se 
 | 07 | [Arquitectura escalable y roadmap](07-arquitectura-escalable-y-roadmap.md) | Cómo se suman rubros nuevos (caballos, alfalfa, taller, maquinaria) sin romper lo hecho, y el plan por fases. |
 | 08 | [Costos y servicios](08-costos-y-servicios.md) | Mano de obra, maquinaria, combustible, fletes y servicios: cómo se cargan a la cuenta del cliente. |
 | 09 | [Usuarios y permisos](09-usuarios-y-permisos.md) | Multiusuario con permisos granulares y escalables; perfiles propuestos por los asesores. |
+| 11 | [Plan de fases](11-plan-de-fases.md) | Diseño detallado de cada fase: entidades, servicios, endpoints y criterios de aceptación. |
+| 12 | [Especificación de frontend](12-frontend-spec.md) | Plan de las vistas (dashboard, precios, asesores) sobre el design system del template. |
+| 13 | [Runbook de integración](13-integracion-servicios-vivos.md) | Los tres cabos contra servicios vivos: Cañuelas, IPCVA, Bedrock. |
+| 14 | [Preparación Fase 6](14-preparacion-fase6.md) | Qué mirar cuando aparezca el segundo rubro (multi-rubro). |
+| 06b | [Verificación de fuentes](06b-verificacion-fuentes-precios.md) | Chequeo real de las fuentes de precios (jul 2026). |
+| 06c | [Segunda fuente automática](06c-segunda-fuente-automatica.md) | Evaluación IPCVA vs ROSGAN. |
 
 ## Resumen ejecutivo
 

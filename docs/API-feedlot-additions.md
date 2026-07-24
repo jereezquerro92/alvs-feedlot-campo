@@ -35,6 +35,12 @@ Proposed rows (Phase 1–2 core; refine per endpoint as TDD entries are written)
 | GET | `/api/clients/{id}/metrics/conversion/` | `ConversionView` | — | session | Feed conversion. `null` + `not_calculable` when there is no honest divisor (adr-29). |
 | GET | `/api/clients/{id}/metrics/mortality/` | `MortalityView` | — | session | Dead head / head entered in the period. |
 | GET | `/api/clients/{id}/metrics/account/` | `AccountEvolutionView` | — | session | Running balance with opening and closing. |
+| GET | `/api/advisors/` | `AdvisorViewSet` | `AdvisorSerializer` | session | Catálogo de asesores (livestock, finance, admin). Read-only. |
+| GET | `/api/advisor-reports/` | `AdvisorReportViewSet` | `AdvisorReportSerializer` | session | Reportes generados. Filtra por `?client=&advisor=`. Leer no re-infiere. |
+| POST | `/api/advisor-reports/` | `AdvisorReportViewSet` | `GenerateReportSerializer` | session | Genera un reporte para un cliente/período. Snapshot armado en backend, scope por cliente. |
+| GET/POST | `/api/market-sources/` | `MarketSourceViewSet` | `MarketSourceSerializer` | session | Catálogo de fuentes de precios (canuelas, ipcva, rosgan, manual). |
+| GET | `/api/market-prices/` | `MarketPriceViewSet` | `MarketPriceSerializer` | session | Precios de referencia. Filtra por `?source=&category=&date=`. |
+| POST | `/api/market-prices/` | `MarketPriceViewSet` | `ManualPriceSerializer` | session | Carga manual de un precio (respaldo). Idempotente por (fuente, categoría, fecha). |
 | GET/POST | `/api/health-products/` | `HealthProductViewSet` | `HealthProductSerializer` | session | Health catalogue (vaccines, treatments). Editable; price changes never rewrite past applications. |
 | GET/POST | `/api/health-events/` | `HealthEventViewSet` | `HealthEventSerializer` | session | Record an application on an animal or lot. **Always** emits a `debit` `LedgerEntry` (`concept=health`). |
 | POST | `/api/feedings/` | `FeedingEventViewSet` | `FeedingEventSerializer` | session | Record a ration: feed type, kg, `unit_price`, `origin`. Emits an `out` stock movement and, when `origin=own_stock`, a `debit` `LedgerEntry`. Contract below. |

@@ -26,6 +26,8 @@ INSTALLED_APPS = [
     "apps.feed",
     "apps.sanitary",
     "apps.metrics",
+    "apps.market",
+    "apps.advisors",
 ]
 
 MIDDLEWARE = [

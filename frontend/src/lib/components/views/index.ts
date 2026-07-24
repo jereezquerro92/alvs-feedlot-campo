@@ -8,3 +8,6 @@ export { default as ProfileView } from "./ProfileView.svelte";
 export { default as ShowcaseView } from "./ShowcaseView.svelte";
 export { default as ShowcaseGalleryView } from "./ShowcaseGalleryView.svelte";
 export { default as ChatView } from "./ChatView.svelte";
+export { default as FeedlotClientsView } from "./FeedlotClientsView.svelte";
+export { default as FeedlotDashboardView } from "./FeedlotDashboardView.svelte";
+export { default as FeedlotLoadView } from "./FeedlotLoadView.svelte";
