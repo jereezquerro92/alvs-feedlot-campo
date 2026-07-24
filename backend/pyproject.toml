@@ -27,6 +27,11 @@ dev = [
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings"
 python_files = ["test_*.py", "*_test.py", "tests.py"]
+# The live gates need real AWS/Cognito credentials, so they are excluded from the
+# default suite (their own docstrings already assume this exclusion) and run only
+# when the deploy pipeline opts back in with an explicit `-m bedrock_live` /
+# `-m cognito_live`, which overrides this default.
+addopts = "-m 'not bedrock_live and not cognito_live'"
 markers = [
     "cognito_live: integration test needing a live Cognito pool (Phase B)",
     "bedrock_live: blocking Bedrock connectivity gate — needs live AWS credentials; run explicitly by the deploy pipeline (#253)",
