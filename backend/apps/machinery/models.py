@@ -1,3 +1,9 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-03-api-and-backend]]
+Docs: [[BACKEND]]
+API: [[API]]
+LIVE-DOC:END"""
+
 """Machinery rubro: machines and their maintenance (adr-32-multi-rubro-assets).
 
 `Machine` is a concrete `AssetBase`. `MaintenanceEvent` is a chargeable

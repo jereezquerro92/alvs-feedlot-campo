@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Crops services (adr-32-multi-rubro-assets).
 
 `register_cutting` records a harvest and posts NO ledger entry (decision 4).

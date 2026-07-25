@@ -1,3 +1,9 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-03-api-and-backend]]
+Docs: [[BACKEND]]
+API: [[API]]
+LIVE-DOC:END"""
+
 from rest_framework import serializers
 
 from apps.feed.models import FeedDelivery, FeedingEvent, FeedStockMovement, FeedType
@@ -43,7 +49,7 @@ class FeedingEventSerializer(serializers.ModelSerializer):
     class Meta:
         model = FeedingEvent
         fields = [
-            "id", "client", "animal", "lot", "feed_type", "quantity",
+            "id", "client", "animal", "lot", "pen", "feed_type", "quantity",
             "unit_price", "origin", "date", "total_cost", "created_at",
         ]
         read_only_fields = ["id", "total_cost", "created_at"]

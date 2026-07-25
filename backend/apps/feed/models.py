@@ -1,3 +1,9 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-03-api-and-backend]]
+Docs: [[BACKEND]]
+API: [[API]]
+LIVE-DOC:END"""
+
 """Feed: catalog, stock (as movements) and rations (docs/FEEDLOT-DATA-MODEL.md).
 
 Stock is never a stored editable number — it is the sum of FeedStockMovement
@@ -81,6 +87,12 @@ class FeedingEvent(models.Model):
     )
     lot = models.ForeignKey(
         "livestock.Lot", on_delete=models.PROTECT, null=True, blank=True, related_name="feedings"
+    )
+    # Optional pen grouping (adr-33 decision 3) — additive, never required. The
+    # executed ration that actually charges can be grouped by corral for the
+    # cost-side pen summary; nothing about feeding becomes conditional on it.
+    pen = models.ForeignKey(
+        "feedyard.Pen", on_delete=models.PROTECT, null=True, blank=True, related_name="feedings"
     )
     feed_type = models.ForeignKey(FeedType, on_delete=models.PROTECT)
     quantity = models.DecimalField(max_digits=12, decimal_places=2)

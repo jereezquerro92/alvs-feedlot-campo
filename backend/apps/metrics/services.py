@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Derived metrics for the client dashboard (Phase 3).
 
 No models: every number here is computed from the operational events. This app
@@ -234,6 +238,85 @@ def account_evolution(*, client, start=None, end=None):
     return {"opening_balance": opening, "closing_balance": running, "points": points}
 
 
+# --- pen cost summary (Phase 7) ----------------------------------------------
+
+def pen_cost_summary(*, client, start=None, end=None):
+    """Cost-side pen closeout (adr-33 decision 7): kilos served and feed cost per
+    pen over the period, read from `FeedingEvent.pen`.
+
+    Only the cost side — the gain side (kg produced, conversion per pen) needs
+    animal/lot → pen placement and is deferred to Phase 7b. Feed cost counts own
+    stock only, matching billing (adr-25 rule 4): client-stock feed is served but
+    not charged, so its cost is `0` while its kilos still count.
+    """
+    lo, hi = _bounds(start, end)
+    rows = (
+        FeedingEvent.objects.filter(
+            client=client, pen__isnull=False, date__gte=lo, date__lte=hi
+        )
+        .values("pen", "pen__code")
+        .annotate(kilos_fed=Sum("quantity"))
+        .order_by("pen__code")
+    )
+
+    pens = []
+    for row in rows:
+        events = FeedingEvent.objects.filter(
+            client=client, pen_id=row["pen"], date__gte=lo, date__lte=hi,
+            origin=FeedingEvent.Origin.OWN_STOCK,
+        )
+        feed_cost = sum((e.total_cost for e in events), ZERO)
+        pens.append(
+            {
+                "pen": row["pen"],
+                "code": row["pen__code"],
+                "kilos_fed": row["kilos_fed"] or ZERO,
+                "feed_cost": feed_cost,
+            }
+        )
+    return pens
+
+
+# --- pen occupancy (Phase 7b) ------------------------------------------------
+
+def pen_occupancy_report(*, pen, start=None, end=None):
+    """Pen-level monitoring (adr-34 decision 5): current occupancy, head moved in
+    the period, and kilos fed to the pen.
+
+    This is the honest half of the pen closeout — occupancy is derivable from the
+    placement events (adr-34 decision 1). Per-pen feed conversion stays deferred:
+    it needs attributing weighings to a pen stay, which a placed-head count does
+    not give (adr-29 rule 2 — no fabricated number)."""
+    from apps.feedyard.models import PenPlacement
+    from apps.feedyard.services import pen_occupancy
+
+    lo, hi = _bounds(start, end)
+
+    moved_in = moved_out = 0
+    for placement in PenPlacement.objects.filter(pen=pen, date__gte=lo, date__lte=hi):
+        head = placement.head or 0
+        if placement.direction == PenPlacement.Direction.IN:
+            moved_in += head
+        else:
+            moved_out += head
+
+    kilos_fed_to_pen = (
+        FeedingEvent.objects.filter(pen=pen, date__gte=lo, date__lte=hi).aggregate(
+            t=Sum("quantity")
+        )["t"]
+        or ZERO
+    )
+
+    return {
+        "pen": pen.id,
+        "code": pen.code,
+        "current_head": pen_occupancy(pen=pen, as_of=(end or None)),
+        "head_moved_in": moved_in,
+        "head_moved_out": moved_out,
+        "kilos_fed": kilos_fed_to_pen,
+    }
+
+
 # --- consistency -------------------------------------------------------------
 
 def inconsistencies(*, client):
@@ -277,3 +360,150 @@ def summary(*, client, start=None, end=None):
         "mortality": mortality(client=client, start=start, end=end),
         "inconsistencies": inconsistencies(client=client),
     }
+
+
+# --- inventory & weather (Phase 10) ------------------------------------------
+
+
+def input_stock_report(*, owner_kind=None, client=None):
+    """Current derived stock per active input type (adr-37 decision 1).
+
+    Reads `inventory` movements; stock is Σin − Σout, never a stored field. When
+    `owner_kind`/`client` are given the report is scoped to that owner.
+    """
+    from apps.inventory.models import InputStockMovement, InputType, OwnerKind
+    from apps.inventory.services import current_stock
+
+    owner_kind = owner_kind or OwnerKind.OWN
+    rows = []
+    for input_type in InputType.objects.filter(is_active=True):
+        rows.append({
+            "input_type": input_type.id,
+            "name": input_type.name,
+            "unit": input_type.unit,
+            "stock": current_stock(
+                input_type=input_type, owner_kind=owner_kind, client=client
+            ),
+        })
+    return {"owner_kind": owner_kind, "client": client.id if client else None, "rows": rows}
+
+
+def rainfall_summary(*, start=None, end=None, site=None):
+    """Rainfall over the period: total mm, rainy days, days logged (adr-37 decision 5)."""
+    from apps.weather.models import WeatherLog
+
+    lo, hi = _bounds(start, end)
+    logs = WeatherLog.objects.filter(date__gte=lo, date__lte=hi)
+    if site is not None:
+        logs = logs.filter(site=site)
+
+    total = logs.aggregate(t=Sum("rainfall_mm"))["t"] or ZERO
+    rainy = logs.filter(rainfall_mm__gt=ZERO).count()
+    return {
+        "period": {"start": start, "end": end},
+        "site": site,
+        "total_mm": total,
+        "rainy_days": rainy,
+        "days_logged": logs.count(),
+    }
+
+
+# --- traceability (Phase 11) -------------------------------------------------
+
+
+def caravana_coverage(*, client):
+    """Share of a client's ACTIVE head that carry an official caravana (adr-38 decision 5).
+
+    Returns `ratio=None` with a `not_calculable` reason when the client has no active
+    head — never a filled 0 (adr-29 rule 2). Coverage is counted over individual animals
+    only; anonymous lots have no per-head identity to caravana.
+    """
+    from apps.livestock.models import Animal
+    from apps.traceability.models import Caravana
+
+    active = Animal.objects.filter(client=client, status=Animal.Status.ACTIVE)
+    total = active.count()
+    if total == 0:
+        return {
+            "client": client.id,
+            "active_head": 0,
+            "caravanned": 0,
+            "ratio": None,
+            "not_calculable": "no_active_head",
+        }
+
+    caravanned = (
+        Caravana.objects.filter(animal__in=active)
+        .values("animal_id")
+        .distinct()
+        .count()
+    )
+    return {
+        "client": client.id,
+        "active_head": total,
+        "caravanned": caravanned,
+        "ratio": Decimal(caravanned) / Decimal(total),
+        "not_calculable": None,
+    }
+
+
+# --- gross margin & reference FX (Phase 12) ----------------------------------
+
+
+def gross_margin(
+    *, client, start=None, end=None, price_source, category,
+    price_avg_field="price_avg", currency=None, fx_source=None,
+):
+    """Reference gross margin: income (kg produced × market price) − period cost (adr-39).
+
+    Income is a REFERENCE value (kilos_gained × the latest market price for `category`
+    from `price_source`), not money collected — it posts no ledger entry (decision 5).
+    Cost is `cost_breakdown` total (debits only, adr-29 rule 4). Returns `null` with a
+    reason when any input is missing (decision 4); when `currency` is given the ARS margin
+    always comes back and only its conversion is `null` if there is no `FxRate`.
+    """
+    from apps.fx.services import convert_ars
+    from apps.market.services import latest_price
+
+    _, hi = _bounds(start, end)
+    growth = kilos_gained(client=client, start=start, end=end)
+    gained = growth["kilos_gained"]
+    cost = cost_breakdown(client=client, start=start, end=end)["total"]
+
+    base = {
+        "client": client.id,
+        "period": {"start": start, "end": end},
+        "kilos_gained": gained,
+        "cost": cost,
+        **_seg(growth),
+    }
+
+    if growth["segments_measured"] == 0:
+        return {**base, "reference_price": None, "income": None, "margin": None,
+                "currency": None, "margin_currency": None, "not_calculable": "no_measured_growth"}
+    if gained <= ZERO:
+        return {**base, "reference_price": None, "income": None, "margin": None,
+                "currency": None, "margin_currency": None, "not_calculable": "no_weight_gain"}
+
+    price = latest_price(source_slug=price_source, category=category, on_or_before=hi)
+    price_value = getattr(price, price_avg_field, None) if price is not None else None
+    if price_value is None:
+        return {**base, "reference_price": None, "income": None, "margin": None,
+                "currency": None, "margin_currency": None, "not_calculable": "no_reference_price"}
+
+    income = gained * price_value
+    margin = income - cost
+    result = {**base, "reference_price": price_value, "income": income, "margin": margin,
+              "currency": None, "margin_currency": None, "not_calculable": ""}
+
+    if currency is not None:
+        converted, row = convert_ars(
+            amount_ars=margin, currency=currency, on_or_before=hi, source=fx_source
+        )
+        result["currency"] = currency
+        result["margin_currency"] = converted
+        result["fx_rate"] = row.rate if row is not None else None
+        if converted is None:
+            result["not_calculable"] = "no_fx_rate"
+
+    return result

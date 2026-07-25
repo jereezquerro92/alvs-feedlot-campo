@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Mercado Agroganadero (Cañuelas) — primary daily source (docs/feedlot/06b).
 
 Three things this site does that will bite a naive scraper, all handled here:

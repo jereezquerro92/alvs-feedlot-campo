@@ -1,3 +1,9 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-03-api-and-backend]]
+Docs: [[BACKEND]]
+API: [[API]]
+LIVE-DOC:END"""
+
 """Client and Account models (docs/FEEDLOT.md, docs/FEEDLOT-DATA-MODEL.md).
 
 A Client owns cattle — either a boarding third party or the feedlot's own

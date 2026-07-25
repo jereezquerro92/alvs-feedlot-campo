@@ -26,4 +26,15 @@ urlpatterns = [
     # Feedlot multi-rubro (Phase 6) — docs/adrs/adr-32-multi-rubro-assets.md, docs/API.md
     path("api/", include("apps.crops.urls")),
     path("api/", include("apps.machinery.urls")),
+    # Feedlot pen operating loop (Phase 7) — docs/adrs/adr-33-feedyard-operating-loop.md, docs/API.md
+    path("api/", include("apps.feedyard.urls")),
+    # Conversational assistant (Phase 8) — docs/adrs/adr-35-conversational-assistant.md, docs/API.md
+    path("api/", include("apps.assistant.urls")),
+    path("api/", include("apps.notifications.urls")),
+    path("api/", include("apps.inventory.urls")),
+    path("api/", include("apps.weather.urls")),
+    # SENASA traceability (Phase 11) — docs/adrs/adr-38-senasa-traceability.md, docs/API.md
+    path("api/", include("apps.traceability.urls")),
+    # Gross margin & reference FX (Phase 12) — docs/adrs/adr-39-gross-margin-and-fx.md, docs/API.md
+    path("api/", include("apps.fx.urls")),
 ]

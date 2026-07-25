@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Advisor inference clients (adr-27 rule 4), mirroring apps.router.inference.
 
 `AdvisorBedrockClient` is the real generative client: a Bedrock `converse` call

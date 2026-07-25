@@ -1,3 +1,8 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-02-initial-stack]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Standalone settings to verify the feedlot Phase 1 apps in isolation.
 
 NOT part of the deploy. The container runs Python 3.11, so the repo's Django 6

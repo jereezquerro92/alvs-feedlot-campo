@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Ledger posting service — the ONLY sanctioned way to write the account.
 
 Entries are immutable (adr-25 rule 1): callers post new entries, they never

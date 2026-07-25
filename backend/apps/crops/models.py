@@ -1,3 +1,9 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-03-api-and-backend]]
+Docs: [[BACKEND]]
+API: [[API]]
+LIVE-DOC:END"""
+
 """Crops rubro: pivots, plantings, cuttings, field tasks (adr-32-multi-rubro-assets).
 
 `Pivot` is a concrete `AssetBase` (a center-pivot circle). `Crop` is a planting on

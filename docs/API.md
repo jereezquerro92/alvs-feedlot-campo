@@ -181,6 +181,112 @@ Fase 6 adds two rubros on the same spine ([[adr-32-multi-rubro-assets]]): `crops
 | GET | `/api/maintenance-events/{id}/` | `MaintenanceEventViewSet` | `MaintenanceEventSerializer` | session | Retrieve one maintenance event. |
 | POST | `/api/maintenance-events/` | `MaintenanceEventViewSet` | `MaintenanceEventWriteSerializer` | session | Register a maintenance event (mantenimiento) on a machine; posts a `service` `debit` via `register_maintenance` ([[adr-32-multi-rubro-assets]] decisions 3, 5). Create-only. |
 
+## Feedlot domain endpoints (Phase 7 — feedyard operating loop)
+
+Fase 7 adds the daily pen operating loop ([[adr-33-feedyard-operating-loop]]): the app `feedyard` owns pens, rations and the plan/monitor events. Same policy as the Phase 1–6 surface — DRF default `session` auth, every response `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. **Catalogs** `Pen`/`Ration` are full-CRUD `ModelViewSet`s (editable master data, [[adr-33-feedyard-operating-loop]] decision 5); ration lines are edited nested under their `Ration`. **Operational events** `LoadingOrder`/`BunkScore` expose only `list`/`retrieve`/`create` — a fact is corrected by a new fact ([[adr-24-feedlot-domain]] rule 3). No `feedyard` endpoint posts a ledger entry ([[adr-33-feedyard-operating-loop]] decision 1): the plan (`LoadingOrder`) is distinct from the executed, billed `FeedingEvent` (decision 2). The `FeedingEvent` row already declared in Phases 1–5 gains an optional `pen` field, additively (decision 3) — no new endpoint.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/pens/` | `PenViewSet` | `PenSerializer` | session | List pens/corrales (filter `?status=`). Editable catalog ([[adr-33-feedyard-operating-loop]] decision 5). |
+| POST | `/api/pens/` | `PenViewSet` | `PenSerializer` | session | Create a pen (corral). |
+| GET | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | session | Retrieve one pen. |
+| PUT | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | session | Replace a pen. |
+| PATCH | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | session | Partial update of a pen (e.g. `status=inactive`). |
+| DELETE | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | session | Delete a pen. |
+| GET | `/api/rations/` | `RationViewSet` | `RationSerializer` | session | List rations/diets with their nested lines. Editable catalog. |
+| POST | `/api/rations/` | `RationViewSet` | `RationSerializer` | session | Create a ration with its `lines` (each `feed_type`, `proportion`, `dry_matter_pct`). |
+| GET | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | session | Retrieve one ration and its lines. |
+| PUT | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | session | Replace a ration and its lines. |
+| PATCH | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | session | Partial update of a ration (e.g. `is_active=false`). |
+| DELETE | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | session | Delete a ration. |
+| GET | `/api/loading-orders/` | `LoadingOrderViewSet` | `LoadingOrderSerializer` | session | List loading orders (filter `?pen=`, `?ration=`). Planned mixer loads. |
+| GET | `/api/loading-orders/{id}/` | `LoadingOrderViewSet` | `LoadingOrderSerializer` | session | Retrieve one loading order. |
+| POST | `/api/loading-orders/` | `LoadingOrderViewSet` | `LoadingOrderWriteSerializer` | session | Register a loading order (plan) for a pen+ration via `register_loading_order`; posts no ledger entry ([[adr-33-feedyard-operating-loop]] decisions 1, 2). Create-only. |
+| GET | `/api/bunk-scores/` | `BunkScoreViewSet` | `BunkScoreSerializer` | session | List bunk (feed-trough) readings (filter `?pen=`). |
+| GET | `/api/bunk-scores/{id}/` | `BunkScoreViewSet` | `BunkScoreSerializer` | session | Retrieve one bunk score. |
+| POST | `/api/bunk-scores/` | `BunkScoreViewSet` | `BunkScoreWriteSerializer` | session | Register a daily bunk score (0–4) for a pen via `register_bunk_score`; posts no ledger entry. Create-only. |
+
+## Feedlot domain endpoints (Phase 7b — pen placement)
+
+Fase 7b adds **where the cattle are** ([[adr-34-pen-placement]]): `feedyard.PenPlacement` is an immutable event moving an `Animal` or `Lot` into/out of a `Pen`, so pen occupancy is derivable and the pen closeout of [[adr-33-feedyard-operating-loop]] decision 7 gets its missing input. Same surface policy as Phases 1–7 — `session` auth, `no-store`, JSON arrays. It is an **operational event**: `list`/`retrieve`/`create` only ([[adr-24-feedlot-domain]] rule 3), and it posts **no ledger entry** ([[adr-34-pen-placement]] decision 3). The write path goes through `register_placement`, which rejects an inactive pen or a non-active animal in the service (decision 4).
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/pen-placements/` | `PenPlacementViewSet` | `PenPlacementSerializer` | session | List placements (filter `?pen=`, `?animal=`, `?lot=`). Cattle-in-pen movements. |
+| GET | `/api/pen-placements/{id}/` | `PenPlacementViewSet` | `PenPlacementSerializer` | session | Retrieve one placement. |
+| POST | `/api/pen-placements/` | `PenPlacementViewSet` | `PenPlacementWriteSerializer` | session | Register a placement (`direction` in/out, animal XOR lot) via `register_placement`; posts no ledger entry ([[adr-34-pen-placement]] decisions 3, 4). Create-only. |
+
+## Feedlot domain endpoints (Phase 8 — conversational assistant)
+
+Fase 8 activates the **generating tier** seam of [[adr-15-chatbot-two-tier]] rule 9 as a bounded generative capability ([[adr-35-conversational-assistant]]), the multi-turn counterpart of the advisors. The `assistant` app is **READ-ONLY forever**: it produces free analytical text over ONE client's snapshot and never acts, never posts a ledger entry, never flips a switch (adr-15 rule 1, adr-35 decision 1). Same surface policy as Phases 1–7 — `session` auth, `no-store`, JSON arrays. A `Conversation` is a per-client thread and a `Message` is a turn: `list`/`retrieve`/`create`, no `update`/`destroy` — a turn is corrected by another turn ([[adr-35-conversational-assistant]] decision 6). Each `assistant` turn is generated over a backend-assembled per-client snapshot ([[adr-35-conversational-assistant]] decisions 2, 4), reusing the advisors' `build_snapshot` so the assistant and the dashboard read the same numbers (decision 3); async Bedrock inference gated by DEBUG ([[adr-16-async-mandatory]], [[adr-35-conversational-assistant]] decision 5).
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/conversations/` | `ConversationViewSet` | `ConversationSerializer` | session | List conversations (filter `?client=`). Per-client Q&A threads ([[adr-35-conversational-assistant]] decision 2). |
+| GET | `/api/conversations/{id}/` | `ConversationViewSet` | `ConversationSerializer` | session | Retrieve one conversation with its turns. |
+| POST | `/api/conversations/` | `ConversationViewSet` | `ConversationSerializer` | session | Open a new per-client conversation. Create-only. |
+| GET | `/api/conversations/{id}/messages/` | `ConversationViewSet` | `MessageSerializer` | session | List the thread's turns (reading does not re-infer, [[adr-35-conversational-assistant]] decision 4). |
+| POST | `/api/conversations/{id}/messages/` | `ConversationViewSet` | `SendMessageSerializer` | session | Send a user turn; generates and returns the assistant's grounded answer over a backend-built snapshot ([[adr-35-conversational-assistant]] decisions 2, 4). |
+
+## Feedlot domain endpoints (Phase 9 — notifications)
+
+Fase 9 adds the **outbound** layer ([[adr-36-notifications-digest]]): a per-client weekly digest rendered from `apps.metrics.summary` (decision 1 — no new metric) and delivered through a channel abstraction gated by DEBUG (decision 2, `MockSender` in DEBUG/tests, `WhatsAppSender` in deploy). A `Notification` is an **immutable delivery record** with `status` ∈ `pending`/`sent`/`failed` — `list`/`retrieve`/`create`, no `update`/`destroy`; a retry is a new notification (decision 3). `notifications` is read-only over domain data and posts **no** ledger entry (decision 4). Same surface policy — `session` auth, `no-store`, JSON arrays. Building/sending a digest through `POST` reuses the metrics summary; the `send_weekly_digests` management command fans the same service over every client, isolating per-client failures.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/notifications/` | `NotificationViewSet` | `NotificationSerializer` | session | List delivery records (filter `?client=`, `?status=`). Immutable send log ([[adr-36-notifications-digest]] decision 3). |
+| GET | `/api/notifications/{id}/` | `NotificationViewSet` | `NotificationSerializer` | session | Retrieve one delivery record. |
+| POST | `/api/notifications/` | `NotificationViewSet` | `SendNotificationSerializer` | session | Build a client's weekly digest and send it over a channel; creates one immutable record and returns its outcome ([[adr-36-notifications-digest]] decisions 1–3). |
+
+## Feedlot domain endpoints (Phase 10 — inventory & weather)
+
+Fase 10 generalises the feed-stock pattern ([[adr-37-inventory-and-weather]]): `InputType` is an editable catalog of non-feed inputs (diesel, posts, wire, field sanitary) and `InputStockMovement` is an **immutable** in/out event whose sum is the derived stock (decision 1) — CRUD for the catalog, `list`/`retrieve`/`create` for movements (decision 2). Inventory posts **no** ledger entry; a movement's `unit_price` is informational, never a charge (decision 3). `WeatherLog` is an immutable per-date rainfall/weather record, independent of the ledger and the domain (decision 5). Same surface policy — `session` auth, `no-store`, JSON arrays. Movements and logs are created through their services, which gate an inactive catalog item and non-positive quantities (decision 4).
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/input-types/` | `InputTypeViewSet` | `InputTypeSerializer` | session | List general input catalog items ([[adr-37-inventory-and-weather]] decision 2). |
+| POST | `/api/input-types/` | `InputTypeViewSet` | `InputTypeSerializer` | session | Create a catalog input type. |
+| GET | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | session | Retrieve one input type. |
+| PUT | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | session | Replace an input type (editable catalog). |
+| PATCH | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | session | Update an input type (e.g. deactivate). |
+| DELETE | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | session | Delete an input type. |
+| GET | `/api/input-movements/` | `InputStockMovementViewSet` | `InputStockMovementSerializer` | session | List stock movements (filter `?input_type=`, `?owner_kind=`, `?client=`). Immutable ([[adr-37-inventory-and-weather]] decision 2). |
+| GET | `/api/input-movements/{id}/` | `InputStockMovementViewSet` | `InputStockMovementSerializer` | session | Retrieve one movement. |
+| POST | `/api/input-movements/` | `InputStockMovementViewSet` | `InputStockMovementWriteSerializer` | session | Register an in/out movement through the service; gates an inactive input type (decision 4). Posts no ledger entry (decision 3). |
+| GET | `/api/weather-logs/` | `WeatherLogViewSet` | `WeatherLogSerializer` | session | List weather logs (filter `?site=`). Immutable per-date records ([[adr-37-inventory-and-weather]] decision 5). |
+| GET | `/api/weather-logs/{id}/` | `WeatherLogViewSet` | `WeatherLogSerializer` | session | Retrieve one weather log. |
+| POST | `/api/weather-logs/` | `WeatherLogViewSet` | `WeatherLogWriteSerializer` | session | Register a per-date rainfall/weather record through the service. Posts no ledger entry (decision 5). |
+
+## Feedlot domain endpoints (Phase 11 — SENASA traceability)
+
+Fase 11 adds the `traceability` app ([[adr-38-senasa-traceability]]): `Establishment` is an editable RENSPA catalog (CRUD, decision 1); `TransitDocument` (the DT-e) and `Caravana` are **immutable** events — `list`/`retrieve`/`create` (decision 1). The DT-e links an origin RENSPA to a destination RENSPA and posts **no** ledger entry (decision 2); its service gates inactive establishments, a self-transit, a non-positive head count and a duplicate `dte_number` (decision 3). A `Caravana` binds a unique `official_number` to an active `Animal` (decision 4). Same surface policy — `session` auth, `no-store`, JSON arrays. No new env vars; no SENASA integration in this cut.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/establishments/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | List RENSPA establishments ([[adr-38-senasa-traceability]] decision 1). |
+| POST | `/api/establishments/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | Create a catalog establishment. |
+| GET | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | Retrieve one establishment. |
+| PUT | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | Replace an establishment (editable catalog). |
+| PATCH | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | Update an establishment (e.g. deactivate). |
+| DELETE | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | Delete an establishment. |
+| GET | `/api/transit-documents/` | `TransitDocumentViewSet` | `TransitDocumentSerializer` | session | List DT-e transit documents (filter `?origin=`, `?destination=`). Immutable ([[adr-38-senasa-traceability]] decision 1). |
+| GET | `/api/transit-documents/{id}/` | `TransitDocumentViewSet` | `TransitDocumentSerializer` | session | Retrieve one transit document. |
+| POST | `/api/transit-documents/` | `TransitDocumentViewSet` | `TransitDocumentWriteSerializer` | session | Register a DT-e through the service; gates inactive/equal establishments, non-positive head count, duplicate `dte_number` (decision 3). Posts no ledger entry (decision 2). |
+| GET | `/api/caravanas/` | `CaravanaViewSet` | `CaravanaSerializer` | session | List caravanas (filter `?animal=`). Immutable ([[adr-38-senasa-traceability]] decision 4). |
+| GET | `/api/caravanas/{id}/` | `CaravanaViewSet` | `CaravanaSerializer` | session | Retrieve one caravana. |
+| POST | `/api/caravanas/` | `CaravanaViewSet` | `CaravanaWriteSerializer` | session | Bind a unique official caravan number to an active animal through the service (decision 4). Posts no ledger entry. |
+
+## Feedlot domain endpoints (Phase 12 — gross margin & reference FX)
+
+Fase 12 closes the roadmap ([[adr-39-gross-margin-and-fx]]). `FxRate` is a reference exchange-rate series (ARS per one unit of `currency`), idempotent by `(currency, date, source)` — it never redenominates the ARS ledger (decision 1). `gross_margin` is a **derived** metric in `apps.metrics`, not a model: reference income (`kilos_gained` × market price) − period cost (`cost_breakdown` debits), `null`+`not_calculable` when any input is missing (decision 4), optionally expressed in another currency via `FxRate`. Same surface policy — `session` auth, `no-store`, JSON. No new env vars; FX load is manual in this cut.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/fx-rates/` | `FxRateViewSet` | `FxRateSerializer` | session | List reference FX rates (filter `?currency=`, `?source=`, `?date=`). Idempotent series ([[adr-39-gross-margin-and-fx]] decision 2). |
+| GET | `/api/fx-rates/{id}/` | `FxRateViewSet` | `FxRateSerializer` | session | Retrieve one FX rate. |
+| POST | `/api/fx-rates/` | `FxRateViewSet` | `FxRateWriteSerializer` | session | Upsert a manual FX rate through the service; rejects a non-positive rate (decision 2). Posts no ledger entry. |
+| GET | `/api/clients/{pk}/metrics/gross-margin/` | `GrossMarginView` | — (JSON) | session | Gross margin for the client and period. Query: `?start=&end=&price_source=&category=&currency=`. Returns `null`+`not_calculable` on missing growth/price/rate (decision 4). Posts no ledger entry (decision 5). |
+
 ## Contracts
 
 All rows below are authentication/identity surface; every response carries an explicit `Cache-Control` and is **`no-store`** — the `/accounts/` routes mutate or read the session, and `/api/me/` and `/api/restricted/` are authenticated ([[CACHE]], authenticated → `no-store`). Full flow and guards live in [[AUTH]]; these entries state only the endpoint contracts.

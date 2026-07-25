@@ -1,3 +1,9 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-03-api-and-backend]]
+Docs: [[BACKEND]]
+API: [[API]]
+LIVE-DOC:END"""
+
 """Shared abstractions for asset-bearing rubros (adr-32-multi-rubro-assets).
 
 `assets` contributes NO concrete tables: it exposes two abstract bases that the

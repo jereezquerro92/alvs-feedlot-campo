@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Market ingest — the only sanctioned way to persist prices.
 
 Idempotent by (source, category, date): re-running an ingest updates the row's

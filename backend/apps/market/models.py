@@ -1,3 +1,9 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-03-api-and-backend]]
+Docs: [[BACKEND]]
+API: [[API]]
+LIVE-DOC:END"""
+
 """Reference cattle prices (Phase 4, docs/feedlot/06-precios-hacienda.md).
 
 These are **reference** values for metrics and the financial advisor — never the

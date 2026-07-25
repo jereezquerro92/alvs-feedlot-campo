@@ -141,6 +141,137 @@ No tables. Two abstract bases the crops/machinery models inherit ([[adr-32-multi
   (mantenimiento); posts a `service` debit via `register_maintenance`
   (`source_kind="maintenance_event"`).
 
+### `feedyard` (Phase 7 — pen operating loop)
+
+The daily corral loop ([[adr-33-feedyard-operating-loop]]). Catalogs are editable;
+`LoadingOrder`/`BunkScore` are immutable events. **Nothing here posts a ledger
+entry** (decision 1) — billing stays in `feed`.
+
+- **Pen** — `code`, `name`, `capacity_head?`, `status` (`active` | `inactive`),
+  `notes`. A physical corral. Editable catalog.
+- **Ration** — `name`, `description`, `is_active`. A named diet/recipe. Editable.
+- **RationLine** — `ration`, `feed_type`, `proportion` (percent, as-fed),
+  `dry_matter_pct`. One share of a `Ration`; edited nested under it.
+- **LoadingOrder** — `pen`, `ration`, `date`, `planned_as_fed_kg`, `notes`,
+  `created_by`. The **planned** mixer load (orden de carga); immutable; posts no
+  ledger entry. Distinct from the executed `FeedingEvent` (decision 2).
+- **BunkScore** — `pen`, `date`, `score` (`0`–`4`), `notes`, `created_by`. A daily
+  bunk (feed-trough) reading; immutable; posts no ledger entry.
+
+`feed.FeedingEvent` gains an optional `pen` FK (nullable, additive — decision 3): the
+executed ration that actually charges (adr-25 rule 4) can now be grouped by corral,
+which is what the Phase 7 cost-side pen summary in `apps.metrics` reads (decision 7).
+
+### `feedyard` (Phase 7b — pen placement)
+
+Where the cattle are ([[adr-34-pen-placement]]). Immutable event; posts **no** ledger
+entry. Occupancy is derived, never stored.
+
+- **PenPlacement** — `pen`, `animal?`/`lot?` (exactly one; XOR CHECK, same shape as
+  adr-26), `date`, `direction` (`in` | `out`), `head_count?` (head for a partial lot
+  move; `1`/`null` for an individual), `notes`, `created_by`. Moves hacienda into or
+  out of a pen; `register_placement` rejects an inactive pen or a non-active animal
+  (decision 4). Pen occupancy = Σ head(`in`) − Σ head(`out`), derived (decision 1).
+
+## assistant (Phase 8 — conversational assistant)
+
+The generating tier of adr-15, bounded ([[adr-35-conversational-assistant]]). Read-only
+forever; posts **no** ledger entry and never acts. Multi-turn counterpart of the advisors.
+
+- **Conversation** — `client` (PROTECT), `title`, `created_by`, `created_at`. A per-client
+  Q&A thread; the scope is a hard boundary (decision 2).
+- **Message** — `conversation` (CASCADE), `role` (`user` | `assistant`), `text`, and — for
+  `assistant` turns — the inference audit `input_snapshot`, `model_id`, `tokens`,
+  `latency_ms` (decision 4). Immutable once written; a turn is corrected by another turn
+  (decision 6). The snapshot reuses the advisors' `build_snapshot`, so the assistant and the
+  dashboard read the same numbers (decision 3).
+
+## notifications (Phase 9 — outbound digest)
+
+The outbound layer ([[adr-36-notifications-digest]]). Read-only over domain data; posts
+**no** ledger entry and never acts. Renders a per-client weekly digest from
+`apps.metrics.summary` (one definition of each number, decision 1) and delivers it through a
+channel abstraction gated by DEBUG (`MockSender` in DEBUG/tests, `WhatsAppSender` in deploy,
+decision 2).
+
+- **Notification** — `client` (PROTECT), `channel` (`whatsapp` | `email`), `to_address`,
+  `subject`, `body`, `status` (`pending` | `sent` | `failed`), `error`,
+  `provider_message_id`, `created_by`, `created_at`, `sent_at`. An immutable record of one
+  send attempt; a retry is a new record, never an edit (decision 3). Written only by
+  `send_notification`, the sole sanctioned write path.
+
+## inventory (Phase 10 — general input stock)
+
+Generalises the feed-stock pattern to non-feed inputs ([[adr-37-inventory-and-weather]]).
+Stock is derived Σin − Σout, never stored; posts **no** ledger entry (decision 3).
+
+- **InputType** — `name` (unique), `unit`, `category`, `is_active`. Editable catalog of a
+  general input (diesel, posts, wire, sanitary); full CRUD (decision 2).
+- **InputStockMovement** — `owner_kind` (`own` | `client`), `client` (nullable, PROTECT),
+  `input_type` (PROTECT), `direction` (`in` | `out`), `quantity`, `unit_price` (nullable,
+  **informational** — no charge), `date`, `note`, `(source_kind, source_id)` generic seam,
+  `created_by`, `created_at`. Immutable in/out event; `list`/`retrieve`/`create` (decision 2).
+  Written only by `register_input_movement`, which gates an inactive type and a non-positive
+  quantity (decision 4). A negative-driving out is accepted, surfaced later, not blocked.
+
+## weather (Phase 10 — rainfall/weather log)
+
+An immutable per-date environmental record ([[adr-37-inventory-and-weather]] decision 5),
+independent of the ledger and the domain.
+
+- **WeatherLog** — `site`, `date`, `rainfall_mm`, `temp_min` (nullable), `temp_max`
+  (nullable), `note`, `created_by`, `created_at`. Immutable; `list`/`retrieve`/`create`.
+  Written only by `register_weather_log`, which enforces non-negative rainfall and a
+  coherent temperature range. `apps.metrics.rainfall_summary` aggregates a period.
+
+## traceability (Phase 11 — SENASA: RENSPA, DT-e, caravana)
+
+SENASA traceability as a new app on the spine ([[adr-38-senasa-traceability]]), touching
+neither `livestock` nor the ledger. The RENSPA is an editable catalog; the DT-e and the
+caravana are immutable events.
+
+- **Establishment** — `renspa` (unique), `name`, `holder`, `location`, `is_active`.
+  Editable catalog; full CRUD (decision 1).
+- **TransitDocument** (DT-e) — `dte_number` (unique), `origin`/`destination` (FK
+  `Establishment`, PROTECT), `date`, `category`, `head_count`, `total_weight` (nullable),
+  `lot` (nullable FK `livestock.Lot`), `note`, `created_by`, `created_at`. Immutable;
+  `list`/`retrieve`/`create`. Written only by `register_transit`, which rejects an
+  inactive origin/destination, a self-transit, a non-positive head count and a duplicate
+  `dte_number` (decision 3). Posts **no** ledger entry (decision 2).
+- **Caravana** — `official_number` (unique), `animal` (FK `livestock.Animal`, PROTECT),
+  `assigned_date`, `note`, `created_by`, `created_at`. Immutable; `list`/`retrieve`/`create`.
+  Written only by `register_caravana`, which rejects a non-active animal and a duplicate
+  official number (decision 4). `apps.metrics.caravana_coverage` derives the share of a
+  client's active head that carry a caravana, `null` when there is no active head (decision 5).
+
+## fx (Phase 12 — reference exchange rates)
+
+Reference FX as a new app mirroring `market`: an external value series, **never** the
+ledger's currency ([[adr-39-gross-margin-and-fx]]). The account stays in ARS with the
+historical price per movement ([[adr-25-account-ledger]] rule 3); an FX rate only lets a
+derived metric be *expressed* in another currency, and posts no ledger entry.
+
+- **FxRate** — `currency` (e.g. `"USD"`), `date`, `rate` (ARS per one unit of `currency`,
+  `max_digits=18`, `decimal_places=6`), `source` (default `"manual"`), `created_at`,
+  `updated_at`. Idempotent by `(currency, date, source)` — reingesting a day updates the
+  row, never duplicates it (decision 2). Editable via `list`/`retrieve`/`create`; written
+  through `register_fx_rate`, which rejects a non-positive rate.
+  - `latest_rate(currency, on_or_before=None, source=None)` — most recent row on or before
+    a date, or `None`.
+  - `convert_ars(amount_ars, currency, on_or_before=None, source=None)` — `amount_ars ÷ rate`
+    with the row used, or `(None, None)` when there is no rate.
+
+## gross_margin (Phase 12 — derived reference margin)
+
+A pure function in `apps.metrics` (no model — one definition, [[adr-29-metrics-derivation]]
+rule 1): `income − cost` for one client and period, where income is a **reference** value
+(`kilos_gained × latest market price` for the category) and cost is `cost_breakdown` total
+(debits only). Income posts no ledger entry (decision 5). Returns `null` + a
+`not_calculable` reason for each missing input — `no_measured_growth`, `no_weight_gain`,
+`no_reference_price` — never a filled zero (decision 4). When `currency` is given, the ARS
+margin always comes back and only `margin_currency` is `null` (`no_fx_rate`) if there is no
+`FxRate`. Exposed read-only at `GET /api/clients/{id}/metrics/gross-margin/`.
+
 ## Generic costing (scalability)
 
 `LedgerEntry` references its origin by `(source_kind, source_id)`, not by a per-domain
