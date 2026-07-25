@@ -200,6 +200,30 @@ decision 2).
   send attempt; a retry is a new record, never an edit (decision 3). Written only by
   `send_notification`, the sole sanctioned write path.
 
+## inventory (Phase 10 — general input stock)
+
+Generalises the feed-stock pattern to non-feed inputs ([[adr-37-inventory-and-weather]]).
+Stock is derived Σin − Σout, never stored; posts **no** ledger entry (decision 3).
+
+- **InputType** — `name` (unique), `unit`, `category`, `is_active`. Editable catalog of a
+  general input (diesel, posts, wire, sanitary); full CRUD (decision 2).
+- **InputStockMovement** — `owner_kind` (`own` | `client`), `client` (nullable, PROTECT),
+  `input_type` (PROTECT), `direction` (`in` | `out`), `quantity`, `unit_price` (nullable,
+  **informational** — no charge), `date`, `note`, `(source_kind, source_id)` generic seam,
+  `created_by`, `created_at`. Immutable in/out event; `list`/`retrieve`/`create` (decision 2).
+  Written only by `register_input_movement`, which gates an inactive type and a non-positive
+  quantity (decision 4). A negative-driving out is accepted, surfaced later, not blocked.
+
+## weather (Phase 10 — rainfall/weather log)
+
+An immutable per-date environmental record ([[adr-37-inventory-and-weather]] decision 5),
+independent of the ledger and the domain.
+
+- **WeatherLog** — `site`, `date`, `rainfall_mm`, `temp_min` (nullable), `temp_max`
+  (nullable), `note`, `created_by`, `created_at`. Immutable; `list`/`retrieve`/`create`.
+  Written only by `register_weather_log`, which enforces non-negative rainfall and a
+  coherent temperature range. `apps.metrics.rainfall_summary` aggregates a period.
+
 ## Generic costing (scalability)
 
 `LedgerEntry` references its origin by `(source_kind, source_id)`, not by a per-domain

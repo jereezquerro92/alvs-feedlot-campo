@@ -238,6 +238,25 @@ Fase 9 adds the **outbound** layer ([[adr-36-notifications-digest]]): a per-clie
 | GET | `/api/notifications/{id}/` | `NotificationViewSet` | `NotificationSerializer` | session | Retrieve one delivery record. |
 | POST | `/api/notifications/` | `NotificationViewSet` | `SendNotificationSerializer` | session | Build a client's weekly digest and send it over a channel; creates one immutable record and returns its outcome ([[adr-36-notifications-digest]] decisions 1–3). |
 
+## Feedlot domain endpoints (Phase 10 — inventory & weather)
+
+Fase 10 generalises the feed-stock pattern ([[adr-37-inventory-and-weather]]): `InputType` is an editable catalog of non-feed inputs (diesel, posts, wire, field sanitary) and `InputStockMovement` is an **immutable** in/out event whose sum is the derived stock (decision 1) — CRUD for the catalog, `list`/`retrieve`/`create` for movements (decision 2). Inventory posts **no** ledger entry; a movement's `unit_price` is informational, never a charge (decision 3). `WeatherLog` is an immutable per-date rainfall/weather record, independent of the ledger and the domain (decision 5). Same surface policy — `session` auth, `no-store`, JSON arrays. Movements and logs are created through their services, which gate an inactive catalog item and non-positive quantities (decision 4).
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/input-types/` | `InputTypeViewSet` | `InputTypeSerializer` | session | List general input catalog items ([[adr-37-inventory-and-weather]] decision 2). |
+| POST | `/api/input-types/` | `InputTypeViewSet` | `InputTypeSerializer` | session | Create a catalog input type. |
+| GET | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | session | Retrieve one input type. |
+| PUT | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | session | Replace an input type (editable catalog). |
+| PATCH | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | session | Update an input type (e.g. deactivate). |
+| DELETE | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | session | Delete an input type. |
+| GET | `/api/input-movements/` | `InputStockMovementViewSet` | `InputStockMovementSerializer` | session | List stock movements (filter `?input_type=`, `?owner_kind=`, `?client=`). Immutable ([[adr-37-inventory-and-weather]] decision 2). |
+| GET | `/api/input-movements/{id}/` | `InputStockMovementViewSet` | `InputStockMovementSerializer` | session | Retrieve one movement. |
+| POST | `/api/input-movements/` | `InputStockMovementViewSet` | `InputStockMovementWriteSerializer` | session | Register an in/out movement through the service; gates an inactive input type (decision 4). Posts no ledger entry (decision 3). |
+| GET | `/api/weather-logs/` | `WeatherLogViewSet` | `WeatherLogSerializer` | session | List weather logs (filter `?site=`). Immutable per-date records ([[adr-37-inventory-and-weather]] decision 5). |
+| GET | `/api/weather-logs/{id}/` | `WeatherLogViewSet` | `WeatherLogSerializer` | session | Retrieve one weather log. |
+| POST | `/api/weather-logs/` | `WeatherLogViewSet` | `WeatherLogWriteSerializer` | session | Register a per-date rainfall/weather record through the service. Posts no ledger entry (decision 5). |
+
 ## Contracts
 
 All rows below are authentication/identity surface; every response carries an explicit `Cache-Control` and is **`no-store`** — the `/accounts/` routes mutate or read the session, and `/api/me/` and `/api/restricted/` are authenticated ([[CACHE]], authenticated → `no-store`). Full flow and guards live in [[AUTH]]; these entries state only the endpoint contracts.

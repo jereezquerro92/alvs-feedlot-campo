@@ -31,4 +31,6 @@ urlpatterns = [
     # Conversational assistant (Phase 8) — docs/adrs/adr-35-conversational-assistant.md, docs/API.md
     path("api/", include("apps.assistant.urls")),
     path("api/", include("apps.notifications.urls")),
+    path("api/", include("apps.inventory.urls")),
+    path("api/", include("apps.weather.urls")),
 ]

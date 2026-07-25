@@ -123,6 +123,8 @@ INSTALLED_APPS = [
     "apps.feedyard",
     "apps.assistant",
     "apps.notifications",
+    "apps.inventory",
+    "apps.weather",
 ]
 
 MIDDLEWARE = [

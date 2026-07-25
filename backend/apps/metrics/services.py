@@ -356,3 +356,49 @@ def summary(*, client, start=None, end=None):
         "mortality": mortality(client=client, start=start, end=end),
         "inconsistencies": inconsistencies(client=client),
     }
+
+
+# --- inventory & weather (Phase 10) ------------------------------------------
+
+
+def input_stock_report(*, owner_kind=None, client=None):
+    """Current derived stock per active input type (adr-37 decision 1).
+
+    Reads `inventory` movements; stock is Σin − Σout, never a stored field. When
+    `owner_kind`/`client` are given the report is scoped to that owner.
+    """
+    from apps.inventory.models import InputStockMovement, InputType, OwnerKind
+    from apps.inventory.services import current_stock
+
+    owner_kind = owner_kind or OwnerKind.OWN
+    rows = []
+    for input_type in InputType.objects.filter(is_active=True):
+        rows.append({
+            "input_type": input_type.id,
+            "name": input_type.name,
+            "unit": input_type.unit,
+            "stock": current_stock(
+                input_type=input_type, owner_kind=owner_kind, client=client
+            ),
+        })
+    return {"owner_kind": owner_kind, "client": client.id if client else None, "rows": rows}
+
+
+def rainfall_summary(*, start=None, end=None, site=None):
+    """Rainfall over the period: total mm, rainy days, days logged (adr-37 decision 5)."""
+    from apps.weather.models import WeatherLog
+
+    lo, hi = _bounds(start, end)
+    logs = WeatherLog.objects.filter(date__gte=lo, date__lte=hi)
+    if site is not None:
+        logs = logs.filter(site=site)
+
+    total = logs.aggregate(t=Sum("rainfall_mm"))["t"] or ZERO
+    rainy = logs.filter(rainfall_mm__gt=ZERO).count()
+    return {
+        "period": {"start": start, "end": end},
+        "site": site,
+        "total_mm": total,
+        "rainy_days": rainy,
+        "days_logged": logs.count(),
+    }
