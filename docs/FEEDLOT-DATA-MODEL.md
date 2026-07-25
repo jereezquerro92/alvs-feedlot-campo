@@ -173,6 +173,19 @@ entry. Occupancy is derived, never stored.
   out of a pen; `register_placement` rejects an inactive pen or a non-active animal
   (decision 4). Pen occupancy = Σ head(`in`) − Σ head(`out`), derived (decision 1).
 
+## assistant (Phase 8 — conversational assistant)
+
+The generating tier of adr-15, bounded ([[adr-35-conversational-assistant]]). Read-only
+forever; posts **no** ledger entry and never acts. Multi-turn counterpart of the advisors.
+
+- **Conversation** — `client` (PROTECT), `title`, `created_by`, `created_at`. A per-client
+  Q&A thread; the scope is a hard boundary (decision 2).
+- **Message** — `conversation` (CASCADE), `role` (`user` | `assistant`), `text`, and — for
+  `assistant` turns — the inference audit `input_snapshot`, `model_id`, `tokens`,
+  `latency_ms` (decision 4). Immutable once written; a turn is corrected by another turn
+  (decision 6). The snapshot reuses the advisors' `build_snapshot`, so the assistant and the
+  dashboard read the same numbers (decision 3).
+
 ## Generic costing (scalability)
 
 `LedgerEntry` references its origin by `(source_kind, source_id)`, not by a per-domain

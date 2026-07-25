@@ -28,4 +28,6 @@ urlpatterns = [
     path("api/", include("apps.machinery.urls")),
     # Feedlot pen operating loop (Phase 7) — docs/adrs/adr-33-feedyard-operating-loop.md, docs/API.md
     path("api/", include("apps.feedyard.urls")),
+    # Conversational assistant (Phase 8) — docs/adrs/adr-35-conversational-assistant.md, docs/API.md
+    path("api/", include("apps.assistant.urls")),
 ]

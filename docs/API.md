@@ -216,6 +216,18 @@ Fase 7b adds **where the cattle are** ([[adr-34-pen-placement]]): `feedyard.PenP
 | GET | `/api/pen-placements/{id}/` | `PenPlacementViewSet` | `PenPlacementSerializer` | session | Retrieve one placement. |
 | POST | `/api/pen-placements/` | `PenPlacementViewSet` | `PenPlacementWriteSerializer` | session | Register a placement (`direction` in/out, animal XOR lot) via `register_placement`; posts no ledger entry ([[adr-34-pen-placement]] decisions 3, 4). Create-only. |
 
+## Feedlot domain endpoints (Phase 8 — conversational assistant)
+
+Fase 8 activates the **generating tier** seam of [[adr-15-chatbot-two-tier]] rule 9 as a bounded generative capability ([[adr-35-conversational-assistant]]), the multi-turn counterpart of the advisors. The `assistant` app is **READ-ONLY forever**: it produces free analytical text over ONE client's snapshot and never acts, never posts a ledger entry, never flips a switch (adr-15 rule 1, adr-35 decision 1). Same surface policy as Phases 1–7 — `session` auth, `no-store`, JSON arrays. A `Conversation` is a per-client thread and a `Message` is a turn: `list`/`retrieve`/`create`, no `update`/`destroy` — a turn is corrected by another turn ([[adr-35-conversational-assistant]] decision 6). Each `assistant` turn is generated over a backend-assembled per-client snapshot ([[adr-35-conversational-assistant]] decisions 2, 4), reusing the advisors' `build_snapshot` so the assistant and the dashboard read the same numbers (decision 3); async Bedrock inference gated by DEBUG ([[adr-16-async-mandatory]], [[adr-35-conversational-assistant]] decision 5).
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/conversations/` | `ConversationViewSet` | `ConversationSerializer` | session | List conversations (filter `?client=`). Per-client Q&A threads ([[adr-35-conversational-assistant]] decision 2). |
+| GET | `/api/conversations/{id}/` | `ConversationViewSet` | `ConversationSerializer` | session | Retrieve one conversation with its turns. |
+| POST | `/api/conversations/` | `ConversationViewSet` | `ConversationSerializer` | session | Open a new per-client conversation. Create-only. |
+| GET | `/api/conversations/{id}/messages/` | `ConversationViewSet` | `MessageSerializer` | session | List the thread's turns (reading does not re-infer, [[adr-35-conversational-assistant]] decision 4). |
+| POST | `/api/conversations/{id}/messages/` | `ConversationViewSet` | `SendMessageSerializer` | session | Send a user turn; generates and returns the assistant's grounded answer over a backend-built snapshot ([[adr-35-conversational-assistant]] decisions 2, 4). |
+
 ## Contracts
 
 All rows below are authentication/identity surface; every response carries an explicit `Cache-Control` and is **`no-store`** — the `/accounts/` routes mutate or read the session, and `/api/me/` and `/api/restricted/` are authenticated ([[CACHE]], authenticated → `no-store`). Full flow and guards live in [[AUTH]]; these entries state only the endpoint contracts.

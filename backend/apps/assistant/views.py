@@ -1,0 +1,50 @@
+from rest_framework import mixins, viewsets
+from rest_framework.decorators import action
+from rest_framework.response import Response
+
+from apps.assistant.models import Conversation, Message
+from apps.assistant.serializers import (
+    ConversationSerializer,
+    MessageSerializer,
+    SendMessageSerializer,
+)
+
+
+class ConversationViewSet(
+    mixins.ListModelMixin, mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin, viewsets.GenericViewSet,
+):
+    """Per-client Q&A threads. list/retrieve/create; no update/destroy — a turn is
+    corrected by another turn, never edited (adr-35 decision 6)."""
+
+    serializer_class = ConversationSerializer
+
+    def get_queryset(self):
+        qs = Conversation.objects.prefetch_related("messages").select_related("client")
+        client_id = self.request.query_params.get("client")
+        if client_id:
+            qs = qs.filter(client_id=client_id)
+        return qs
+
+    def perform_create(self, serializer):
+        user = getattr(self.request, "user", None)
+        if user is not None and not user.is_authenticated:
+            user = None
+        serializer.save(created_by=user)
+
+    @action(detail=True, methods=["get", "post"])
+    def messages(self, request, pk=None):
+        """GET lists the thread's turns; POST sends a user turn and returns the
+        assistant's grounded answer, generated over a backend-built snapshot
+        (adr-35 decisions 2, 4)."""
+        conversation = self.get_object()
+        if request.method == "GET":
+            data = MessageSerializer(conversation.messages.all(), many=True).data
+            return Response(data)
+
+        serializer = SendMessageSerializer(
+            data=request.data,
+            context={"conversation": conversation, "request": request},
+        )
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.save(), status=201)

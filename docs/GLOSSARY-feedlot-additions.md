@@ -75,3 +75,7 @@ Merge these rows into the table in [[GLOSSARY]]; the format is
 | model field (placement direction) | `direction` — `in` \| `out` | whether cattle enter or leave the pen ([[adr-34-pen-placement]]) | `way`, `type`, `entry`/`exit` as values, Spanish values |
 | model field (placement head count) | `head_count` (nullable) | head moved for a partial lot placement; `null`/`1` for an individual animal ([[adr-34-pen-placement]]) | `heads`, `qty`, `count` |
 | derived metric (pen occupancy) | `pen_occupancy` | current head in a pen = Σ head(in) − Σ head(out); never a stored number ([[adr-34-pen-placement]]) | `occupancy` as a stored field, `Pen.head_count` |
+| Django app (assistant) | `assistant` | conversational read-only generating tier — asistente (Fase 8, [[adr-35-conversational-assistant]]) | `chatbot` (that is the `router` app), `chat`, `copilot`, `asistente`, `bot` |
+| model (conversation) | `Conversation` | a per-client Q&A thread — conversación (Fase 8, [[adr-35-conversational-assistant]]) | `Thread`, `Chat`, `Session`, `Conversacion` |
+| model (message) | `Message` | one turn in a conversation (Fase 8, [[adr-35-conversational-assistant]]) | `Turn`, `Utterance`, `Mensaje`, `ChatMessage` |
+| model field (message role) | `role` — `user` \| `assistant` | who authored the turn ([[adr-35-conversational-assistant]]) | `sender`, `author`, `from`, Spanish values |
