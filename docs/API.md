@@ -257,6 +257,25 @@ Fase 10 generalises the feed-stock pattern ([[adr-37-inventory-and-weather]]): `
 | GET | `/api/weather-logs/{id}/` | `WeatherLogViewSet` | `WeatherLogSerializer` | session | Retrieve one weather log. |
 | POST | `/api/weather-logs/` | `WeatherLogViewSet` | `WeatherLogWriteSerializer` | session | Register a per-date rainfall/weather record through the service. Posts no ledger entry (decision 5). |
 
+## Feedlot domain endpoints (Phase 11 — SENASA traceability)
+
+Fase 11 adds the `traceability` app ([[adr-38-senasa-traceability]]): `Establishment` is an editable RENSPA catalog (CRUD, decision 1); `TransitDocument` (the DT-e) and `Caravana` are **immutable** events — `list`/`retrieve`/`create` (decision 1). The DT-e links an origin RENSPA to a destination RENSPA and posts **no** ledger entry (decision 2); its service gates inactive establishments, a self-transit, a non-positive head count and a duplicate `dte_number` (decision 3). A `Caravana` binds a unique `official_number` to an active `Animal` (decision 4). Same surface policy — `session` auth, `no-store`, JSON arrays. No new env vars; no SENASA integration in this cut.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/establishments/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | List RENSPA establishments ([[adr-38-senasa-traceability]] decision 1). |
+| POST | `/api/establishments/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | Create a catalog establishment. |
+| GET | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | Retrieve one establishment. |
+| PUT | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | Replace an establishment (editable catalog). |
+| PATCH | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | Update an establishment (e.g. deactivate). |
+| DELETE | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | Delete an establishment. |
+| GET | `/api/transit-documents/` | `TransitDocumentViewSet` | `TransitDocumentSerializer` | session | List DT-e transit documents (filter `?origin=`, `?destination=`). Immutable ([[adr-38-senasa-traceability]] decision 1). |
+| GET | `/api/transit-documents/{id}/` | `TransitDocumentViewSet` | `TransitDocumentSerializer` | session | Retrieve one transit document. |
+| POST | `/api/transit-documents/` | `TransitDocumentViewSet` | `TransitDocumentWriteSerializer` | session | Register a DT-e through the service; gates inactive/equal establishments, non-positive head count, duplicate `dte_number` (decision 3). Posts no ledger entry (decision 2). |
+| GET | `/api/caravanas/` | `CaravanaViewSet` | `CaravanaSerializer` | session | List caravanas (filter `?animal=`). Immutable ([[adr-38-senasa-traceability]] decision 4). |
+| GET | `/api/caravanas/{id}/` | `CaravanaViewSet` | `CaravanaSerializer` | session | Retrieve one caravana. |
+| POST | `/api/caravanas/` | `CaravanaViewSet` | `CaravanaWriteSerializer` | session | Bind a unique official caravan number to an active animal through the service (decision 4). Posts no ledger entry. |
+
 ## Contracts
 
 All rows below are authentication/identity surface; every response carries an explicit `Cache-Control` and is **`no-store`** — the `/accounts/` routes mutate or read the session, and `/api/me/` and `/api/restricted/` are authenticated ([[CACHE]], authenticated → `no-store`). Full flow and guards live in [[AUTH]]; these entries state only the endpoint contracts.

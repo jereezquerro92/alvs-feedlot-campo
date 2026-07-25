@@ -125,6 +125,7 @@ INSTALLED_APPS = [
     "apps.notifications",
     "apps.inventory",
     "apps.weather",
+    "apps.traceability",
 ]
 
 MIDDLEWARE = [

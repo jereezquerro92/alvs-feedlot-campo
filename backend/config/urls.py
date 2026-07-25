@@ -33,4 +33,6 @@ urlpatterns = [
     path("api/", include("apps.notifications.urls")),
     path("api/", include("apps.inventory.urls")),
     path("api/", include("apps.weather.urls")),
+    # SENASA traceability (Phase 11) — docs/adrs/adr-38-senasa-traceability.md, docs/API.md
+    path("api/", include("apps.traceability.urls")),
 ]

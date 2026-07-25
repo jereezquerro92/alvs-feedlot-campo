@@ -91,3 +91,11 @@ Merge these rows into the table in [[GLOSSARY]]; the format is
 | Django app (weather) | `weather` | rainfall/weather log app — registro de clima (Fase 10, [[adr-37-inventory-and-weather]]) | `climate`, `rain`, `clima`, `meteo` |
 | model (weather log) | `WeatherLog` | an immutable per-date weather record — registro de clima (Fase 10, [[adr-37-inventory-and-weather]]) | `Weather`, `RainLog`, `Climate`, `RegistroClima` |
 | model field (rainfall) | `rainfall_mm` | millimetres of rain logged for a date ([[adr-37-inventory-and-weather]]) | `rain`, `mm`, `precipitation`, `lluvia`, Spanish values |
+| Django app (traceability) | `traceability` | SENASA traceability app — RENSPA/DT-e/caravana (Fase 11, [[adr-38-senasa-traceability]]) | `senasa`, `renspa` (that is a field), `dte`, `tracing`, `trazabilidad` |
+| model (establishment) | `Establishment` | an editable RENSPA-registered establishment — establecimiento (Fase 11, [[adr-38-senasa-traceability]]) | `Farm`, `Site`, `Renspa`, `Establecimiento`, `Ranch` |
+| model field (renspa) | `renspa` | the SENASA RENSPA registry number of an `Establishment` ([[adr-38-senasa-traceability]]) | `registry`, `code`, `senasa_id`, Spanish values |
+| model (transit document) | `TransitDocument` | an immutable DT-e linking an origin RENSPA to a destination RENSPA — documento de tránsito (Fase 11, [[adr-38-senasa-traceability]]) | `DTe`, `Transit`, `Movement`, `Guia`, `TransitoDocumento` |
+| model field (dte number) | `dte_number` | the official DT-e number of a `TransitDocument` ([[adr-38-senasa-traceability]]) | `number`, `dte`, `document_number`, Spanish values |
+| model (caravana) | `Caravana` | the official individual ear-caravan identifier linked to an `Animal` — caravana oficial (Fase 11, [[adr-38-senasa-traceability]]) | `Tag`, `EarTag` (that is the internal `ear_tag`), `Rfid`, `OfficialTag` |
+| model field (official number) | `official_number` | the unique SENASA caravan number of a `Caravana` ([[adr-38-senasa-traceability]]) | `number`, `caravana`, `tag_number`, Spanish values |
+| derived metric (caravana coverage) | `caravana_coverage` | share of a client's active head that carry an official caravana; `null` when there is no active head ([[adr-38-senasa-traceability]], [[adr-29-metrics-derivation]]) | `coverage` as a stored field, a filled `0` when there is no head |

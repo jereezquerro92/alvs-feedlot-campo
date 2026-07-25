@@ -224,6 +224,26 @@ independent of the ledger and the domain.
   Written only by `register_weather_log`, which enforces non-negative rainfall and a
   coherent temperature range. `apps.metrics.rainfall_summary` aggregates a period.
 
+## traceability (Phase 11 — SENASA: RENSPA, DT-e, caravana)
+
+SENASA traceability as a new app on the spine ([[adr-38-senasa-traceability]]), touching
+neither `livestock` nor the ledger. The RENSPA is an editable catalog; the DT-e and the
+caravana are immutable events.
+
+- **Establishment** — `renspa` (unique), `name`, `holder`, `location`, `is_active`.
+  Editable catalog; full CRUD (decision 1).
+- **TransitDocument** (DT-e) — `dte_number` (unique), `origin`/`destination` (FK
+  `Establishment`, PROTECT), `date`, `category`, `head_count`, `total_weight` (nullable),
+  `lot` (nullable FK `livestock.Lot`), `note`, `created_by`, `created_at`. Immutable;
+  `list`/`retrieve`/`create`. Written only by `register_transit`, which rejects an
+  inactive origin/destination, a self-transit, a non-positive head count and a duplicate
+  `dte_number` (decision 3). Posts **no** ledger entry (decision 2).
+- **Caravana** — `official_number` (unique), `animal` (FK `livestock.Animal`, PROTECT),
+  `assigned_date`, `note`, `created_by`, `created_at`. Immutable; `list`/`retrieve`/`create`.
+  Written only by `register_caravana`, which rejects a non-active animal and a duplicate
+  official number (decision 4). `apps.metrics.caravana_coverage` derives the share of a
+  client's active head that carry a caravana, `null` when there is no active head (decision 5).
+
 ## Generic costing (scalability)
 
 `LedgerEntry` references its origin by `(source_kind, source_id)`, not by a per-domain

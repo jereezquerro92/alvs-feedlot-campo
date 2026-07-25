@@ -402,3 +402,42 @@ def rainfall_summary(*, start=None, end=None, site=None):
         "rainy_days": rainy,
         "days_logged": logs.count(),
     }
+
+
+# --- traceability (Phase 11) -------------------------------------------------
+
+
+def caravana_coverage(*, client):
+    """Share of a client's ACTIVE head that carry an official caravana (adr-38 decision 5).
+
+    Returns `ratio=None` with a `not_calculable` reason when the client has no active
+    head — never a filled 0 (adr-29 rule 2). Coverage is counted over individual animals
+    only; anonymous lots have no per-head identity to caravana.
+    """
+    from apps.livestock.models import Animal
+    from apps.traceability.models import Caravana
+
+    active = Animal.objects.filter(client=client, status=Animal.Status.ACTIVE)
+    total = active.count()
+    if total == 0:
+        return {
+            "client": client.id,
+            "active_head": 0,
+            "caravanned": 0,
+            "ratio": None,
+            "not_calculable": "no_active_head",
+        }
+
+    caravanned = (
+        Caravana.objects.filter(animal__in=active)
+        .values("animal_id")
+        .distinct()
+        .count()
+    )
+    return {
+        "client": client.id,
+        "active_head": total,
+        "caravanned": caravanned,
+        "ratio": Decimal(caravanned) / Decimal(total),
+        "not_calculable": None,
+    }
