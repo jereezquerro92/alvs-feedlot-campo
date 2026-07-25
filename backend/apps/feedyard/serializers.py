@@ -1,7 +1,19 @@
 from rest_framework import serializers
 
-from apps.feedyard.models import BunkScore, LoadingOrder, Pen, Ration, RationLine
-from apps.feedyard.services import register_bunk_score, register_loading_order
+from apps.feedyard.models import (
+    BunkScore,
+    LoadingOrder,
+    Pen,
+    PenPlacement,
+    Ration,
+    RationLine,
+)
+from apps.feedyard.services import (
+    register_bunk_score,
+    register_loading_order,
+    register_placement,
+)
+from apps.livestock.models import Animal, Lot
 
 
 def _created_by(context):
@@ -99,6 +111,49 @@ class BunkScoreWriteSerializer(serializers.Serializer):
     def create(self, validated):
         score = register_bunk_score(created_by=_created_by(self.context), **validated)
         return BunkScoreSerializer(score).data
+
+    def to_representation(self, instance):
+        return instance
+
+
+class PenPlacementSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PenPlacement
+        fields = [
+            "id", "pen", "animal", "lot", "date", "direction",
+            "head_count", "notes", "created_at",
+        ]
+        read_only_fields = ["id", "created_at"]
+
+
+class PenPlacementWriteSerializer(serializers.Serializer):
+    """Write path goes through the service (rejects inactive pen / non-active animal;
+    enforces the animal-XOR-lot target). Posts no ledger entry."""
+
+    pen = serializers.PrimaryKeyRelatedField(queryset=Pen.objects.all())
+    animal = serializers.PrimaryKeyRelatedField(
+        queryset=Animal.objects.all(), required=False, allow_null=True
+    )
+    lot = serializers.PrimaryKeyRelatedField(
+        queryset=Lot.objects.all(), required=False, allow_null=True
+    )
+    date = serializers.DateField()
+    direction = serializers.ChoiceField(choices=PenPlacement.Direction.choices)
+    head_count = serializers.IntegerField(
+        required=False, allow_null=True, min_value=0
+    )
+    notes = serializers.CharField(max_length=255, required=False, allow_blank=True)
+
+    def validate(self, attrs):
+        if bool(attrs.get("animal")) == bool(attrs.get("lot")):
+            raise serializers.ValidationError("Set exactly one of `animal` or `lot`.")
+        return attrs
+
+    def create(self, validated):
+        placement = register_placement(
+            created_by=_created_by(self.context), **validated
+        )
+        return PenPlacementSerializer(placement).data
 
     def to_representation(self, instance):
         return instance

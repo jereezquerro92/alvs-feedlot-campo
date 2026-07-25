@@ -206,6 +206,16 @@ Fase 7 adds the daily pen operating loop ([[adr-33-feedyard-operating-loop]]): t
 | GET | `/api/bunk-scores/{id}/` | `BunkScoreViewSet` | `BunkScoreSerializer` | session | Retrieve one bunk score. |
 | POST | `/api/bunk-scores/` | `BunkScoreViewSet` | `BunkScoreWriteSerializer` | session | Register a daily bunk score (0–4) for a pen via `register_bunk_score`; posts no ledger entry. Create-only. |
 
+## Feedlot domain endpoints (Phase 7b — pen placement)
+
+Fase 7b adds **where the cattle are** ([[adr-34-pen-placement]]): `feedyard.PenPlacement` is an immutable event moving an `Animal` or `Lot` into/out of a `Pen`, so pen occupancy is derivable and the pen closeout of [[adr-33-feedyard-operating-loop]] decision 7 gets its missing input. Same surface policy as Phases 1–7 — `session` auth, `no-store`, JSON arrays. It is an **operational event**: `list`/`retrieve`/`create` only ([[adr-24-feedlot-domain]] rule 3), and it posts **no ledger entry** ([[adr-34-pen-placement]] decision 3). The write path goes through `register_placement`, which rejects an inactive pen or a non-active animal in the service (decision 4).
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/pen-placements/` | `PenPlacementViewSet` | `PenPlacementSerializer` | session | List placements (filter `?pen=`, `?animal=`, `?lot=`). Cattle-in-pen movements. |
+| GET | `/api/pen-placements/{id}/` | `PenPlacementViewSet` | `PenPlacementSerializer` | session | Retrieve one placement. |
+| POST | `/api/pen-placements/` | `PenPlacementViewSet` | `PenPlacementWriteSerializer` | session | Register a placement (`direction` in/out, animal XOR lot) via `register_placement`; posts no ledger entry ([[adr-34-pen-placement]] decisions 3, 4). Create-only. |
+
 ## Contracts
 
 All rows below are authentication/identity surface; every response carries an explicit `Cache-Control` and is **`no-store`** — the `/accounts/` routes mutate or read the session, and `/api/me/` and `/api/restricted/` are authenticated ([[CACHE]], authenticated → `no-store`). Full flow and guards live in [[AUTH]]; these entries state only the endpoint contracts.

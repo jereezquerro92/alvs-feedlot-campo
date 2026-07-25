@@ -99,6 +99,62 @@ class LoadingOrder(models.Model):
         return f"LoadingOrder {self.date} pen={self.pen_id} {self.planned_as_fed_kg}kg"
 
 
+class PenPlacement(models.Model):
+    """An immutable event moving an Animal or Lot into/out of a Pen (adr-34).
+
+    Pen occupancy is DERIVED from these events (decision 1); it is never a stored
+    field. Exactly one of animal/lot is set (decision 2, XOR CHECK). Posts NO
+    ledger entry (decision 3)."""
+
+    class Direction(models.TextChoices):
+        IN = "in", "Ingreso a corral"
+        OUT = "out", "Egreso de corral"
+
+    pen = models.ForeignKey(Pen, on_delete=models.PROTECT, related_name="placements")
+    animal = models.ForeignKey(
+        "livestock.Animal", on_delete=models.PROTECT, null=True, blank=True,
+        related_name="pen_placements",
+    )
+    lot = models.ForeignKey(
+        "livestock.Lot", on_delete=models.PROTECT, null=True, blank=True,
+        related_name="pen_placements",
+    )
+    date = models.DateField()
+    direction = models.CharField(max_length=3, choices=Direction.choices)
+    head_count = models.PositiveIntegerField(null=True, blank=True)
+    notes = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    class Meta:
+        ordering = ["-date", "-id"]
+        indexes = [
+            models.Index(fields=["pen", "date"]),
+            models.Index(fields=["animal", "date"]),
+            models.Index(fields=["lot", "date"]),
+        ]
+        constraints = [
+            # An animal XOR a lot — exactly one target (adr-26 rule 3, adr-34 decision 2).
+            models.CheckConstraint(
+                name="penplacement_target_animal_xor_lot",
+                condition=(
+                    models.Q(animal__isnull=False, lot__isnull=True)
+                    | models.Q(animal__isnull=True, lot__isnull=False)
+                ),
+            )
+        ]
+
+    @property
+    def head(self):
+        """Head moved by this event: `head_count` for a lot, 1 for an animal."""
+        return self.head_count if self.lot_id else 1
+
+    def __str__(self):
+        return f"PenPlacement {self.date} {self.direction} pen={self.pen_id}"
+
+
 class BunkScore(models.Model):
     """A daily bunk (feed-trough) reading for a pen (adr-33). Score 0–4 is the
     industry bunk-reading scale. Immutable; posts NO ledger entry."""

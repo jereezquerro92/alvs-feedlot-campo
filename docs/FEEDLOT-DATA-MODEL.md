@@ -162,6 +162,17 @@ entry** (decision 1) — billing stays in `feed`.
 executed ration that actually charges (adr-25 rule 4) can now be grouped by corral,
 which is what the Phase 7 cost-side pen summary in `apps.metrics` reads (decision 7).
 
+### `feedyard` (Phase 7b — pen placement)
+
+Where the cattle are ([[adr-34-pen-placement]]). Immutable event; posts **no** ledger
+entry. Occupancy is derived, never stored.
+
+- **PenPlacement** — `pen`, `animal?`/`lot?` (exactly one; XOR CHECK, same shape as
+  adr-26), `date`, `direction` (`in` | `out`), `head_count?` (head for a partial lot
+  move; `1`/`null` for an individual), `notes`, `created_by`. Moves hacienda into or
+  out of a pen; `register_placement` rejects an inactive pen or a non-active animal
+  (decision 4). Pen occupancy = Σ head(`in`) − Σ head(`out`), derived (decision 1).
+
 ## Generic costing (scalability)
 
 `LedgerEntry` references its origin by `(source_kind, source_id)`, not by a per-domain

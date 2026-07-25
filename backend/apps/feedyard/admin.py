@@ -1,6 +1,13 @@
 from django.contrib import admin
 
-from apps.feedyard.models import BunkScore, LoadingOrder, Pen, Ration, RationLine
+from apps.feedyard.models import (
+    BunkScore,
+    LoadingOrder,
+    Pen,
+    PenPlacement,
+    Ration,
+    RationLine,
+)
 
 
 class RationLineInline(admin.TabularInline):
@@ -34,4 +41,11 @@ class LoadingOrderAdmin(admin.ModelAdmin):
 class BunkScoreAdmin(admin.ModelAdmin):
     list_display = ("id", "date", "pen", "score")
     list_filter = ("date", "pen", "score")
+    readonly_fields = ("created_at",)
+
+
+@admin.register(PenPlacement)
+class PenPlacementAdmin(admin.ModelAdmin):
+    list_display = ("id", "date", "pen", "direction", "animal", "lot", "head_count")
+    list_filter = ("date", "pen", "direction")
     readonly_fields = ("created_at",)

@@ -7,5 +7,6 @@ router.register("pens", views.PenViewSet, basename="pen")
 router.register("rations", views.RationViewSet, basename="ration")
 router.register("loading-orders", views.LoadingOrderViewSet, basename="loading-order")
 router.register("bunk-scores", views.BunkScoreViewSet, basename="bunk-score")
+router.register("pen-placements", views.PenPlacementViewSet, basename="pen-placement")
 
 urlpatterns = router.urls

@@ -273,6 +273,46 @@ def pen_cost_summary(*, client, start=None, end=None):
     return pens
 
 
+# --- pen occupancy (Phase 7b) ------------------------------------------------
+
+def pen_occupancy_report(*, pen, start=None, end=None):
+    """Pen-level monitoring (adr-34 decision 5): current occupancy, head moved in
+    the period, and kilos fed to the pen.
+
+    This is the honest half of the pen closeout — occupancy is derivable from the
+    placement events (adr-34 decision 1). Per-pen feed conversion stays deferred:
+    it needs attributing weighings to a pen stay, which a placed-head count does
+    not give (adr-29 rule 2 — no fabricated number)."""
+    from apps.feedyard.models import PenPlacement
+    from apps.feedyard.services import pen_occupancy
+
+    lo, hi = _bounds(start, end)
+
+    moved_in = moved_out = 0
+    for placement in PenPlacement.objects.filter(pen=pen, date__gte=lo, date__lte=hi):
+        head = placement.head or 0
+        if placement.direction == PenPlacement.Direction.IN:
+            moved_in += head
+        else:
+            moved_out += head
+
+    kilos_fed_to_pen = (
+        FeedingEvent.objects.filter(pen=pen, date__gte=lo, date__lte=hi).aggregate(
+            t=Sum("quantity")
+        )["t"]
+        or ZERO
+    )
+
+    return {
+        "pen": pen.id,
+        "code": pen.code,
+        "current_head": pen_occupancy(pen=pen, as_of=(end or None)),
+        "head_moved_in": moved_in,
+        "head_moved_out": moved_out,
+        "kilos_fed": kilos_fed_to_pen,
+    }
+
+
 # --- consistency -------------------------------------------------------------
 
 def inconsistencies(*, client):

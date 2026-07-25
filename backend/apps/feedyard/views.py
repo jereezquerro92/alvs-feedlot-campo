@@ -1,12 +1,14 @@
 from rest_framework import mixins, viewsets
 from rest_framework.response import Response
 
-from apps.feedyard.models import BunkScore, LoadingOrder, Pen, Ration
+from apps.feedyard.models import BunkScore, LoadingOrder, Pen, PenPlacement, Ration
 from apps.feedyard.serializers import (
     BunkScoreSerializer,
     BunkScoreWriteSerializer,
     LoadingOrderSerializer,
     LoadingOrderWriteSerializer,
+    PenPlacementSerializer,
+    PenPlacementWriteSerializer,
     PenSerializer,
     RationSerializer,
 )
@@ -68,6 +70,28 @@ class BunkScoreViewSet(
 
     def create(self, request, *args, **kwargs):
         serializer = BunkScoreWriteSerializer(
+            data=request.data, context={"request": request}
+        )
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.save(), status=201)
+
+
+class PenPlacementViewSet(
+    mixins.ListModelMixin, mixins.RetrieveModelMixin,
+    mixins.CreateModelMixin, viewsets.GenericViewSet,
+):
+    serializer_class = PenPlacementSerializer
+
+    def get_queryset(self):
+        qs = PenPlacement.objects.all()
+        for field in ("pen", "animal", "lot"):
+            value = self.request.query_params.get(field)
+            if value:
+                qs = qs.filter(**{f"{field}_id": value})
+        return qs
+
+    def create(self, request, *args, **kwargs):
+        serializer = PenPlacementWriteSerializer(
             data=request.data, context={"request": request}
         )
         serializer.is_valid(raise_exception=True)

@@ -71,3 +71,7 @@ Merge these rows into the table in [[GLOSSARY]]; the format is
 | model (bunk score) | `BunkScore` | a daily bunk (feed-trough) reading per pen — lectura de comedero; posts NO ledger entry (Fase 7, [[adr-33-feedyard-operating-loop]]) | `Reading`, `Comedero`, `TroughScore`, `FeedScore` |
 | model field (bunk score value) | `score` — `0`\|`1`\|`2`\|`3`\|`4` | standard 0–4 bunk score ([[adr-33-feedyard-operating-loop]]) | `rating`, `level`, `grade` |
 | model field (feeding pen link) | `pen` (nullable FK on `FeedingEvent`) | the pen a served ration belongs to — additive, backward-compatible (Fase 7, [[adr-33-feedyard-operating-loop]]) | making it required; a second parallel feeding table per pen |
+| model (pen placement) | `PenPlacement` | an immutable event that moves an `Animal` or `Lot` into or out of a `Pen` — ubicación en corral (Fase 7b, [[adr-34-pen-placement]]) | `Placement`, `PenAssignment`, `Location`, `Move`, `Ubicacion` |
+| model field (placement direction) | `direction` — `in` \| `out` | whether cattle enter or leave the pen ([[adr-34-pen-placement]]) | `way`, `type`, `entry`/`exit` as values, Spanish values |
+| model field (placement head count) | `head_count` (nullable) | head moved for a partial lot placement; `null`/`1` for an individual animal ([[adr-34-pen-placement]]) | `heads`, `qty`, `count` |
+| derived metric (pen occupancy) | `pen_occupancy` | current head in a pen = Σ head(in) − Σ head(out); never a stored number ([[adr-34-pen-placement]]) | `occupancy` as a stored field, `Pen.head_count` |
