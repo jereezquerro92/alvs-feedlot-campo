@@ -234,6 +234,45 @@ def account_evolution(*, client, start=None, end=None):
     return {"opening_balance": opening, "closing_balance": running, "points": points}
 
 
+# --- pen cost summary (Phase 7) ----------------------------------------------
+
+def pen_cost_summary(*, client, start=None, end=None):
+    """Cost-side pen closeout (adr-33 decision 7): kilos served and feed cost per
+    pen over the period, read from `FeedingEvent.pen`.
+
+    Only the cost side — the gain side (kg produced, conversion per pen) needs
+    animal/lot → pen placement and is deferred to Phase 7b. Feed cost counts own
+    stock only, matching billing (adr-25 rule 4): client-stock feed is served but
+    not charged, so its cost is `0` while its kilos still count.
+    """
+    lo, hi = _bounds(start, end)
+    rows = (
+        FeedingEvent.objects.filter(
+            client=client, pen__isnull=False, date__gte=lo, date__lte=hi
+        )
+        .values("pen", "pen__code")
+        .annotate(kilos_fed=Sum("quantity"))
+        .order_by("pen__code")
+    )
+
+    pens = []
+    for row in rows:
+        events = FeedingEvent.objects.filter(
+            client=client, pen_id=row["pen"], date__gte=lo, date__lte=hi,
+            origin=FeedingEvent.Origin.OWN_STOCK,
+        )
+        feed_cost = sum((e.total_cost for e in events), ZERO)
+        pens.append(
+            {
+                "pen": row["pen"],
+                "code": row["pen__code"],
+                "kilos_fed": row["kilos_fed"] or ZERO,
+                "feed_cost": feed_cost,
+            }
+        )
+    return pens
+
+
 # --- consistency -------------------------------------------------------------
 
 def inconsistencies(*, client):

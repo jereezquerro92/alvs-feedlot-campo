@@ -181,6 +181,31 @@ Fase 6 adds two rubros on the same spine ([[adr-32-multi-rubro-assets]]): `crops
 | GET | `/api/maintenance-events/{id}/` | `MaintenanceEventViewSet` | `MaintenanceEventSerializer` | session | Retrieve one maintenance event. |
 | POST | `/api/maintenance-events/` | `MaintenanceEventViewSet` | `MaintenanceEventWriteSerializer` | session | Register a maintenance event (mantenimiento) on a machine; posts a `service` `debit` via `register_maintenance` ([[adr-32-multi-rubro-assets]] decisions 3, 5). Create-only. |
 
+## Feedlot domain endpoints (Phase 7 — feedyard operating loop)
+
+Fase 7 adds the daily pen operating loop ([[adr-33-feedyard-operating-loop]]): the app `feedyard` owns pens, rations and the plan/monitor events. Same policy as the Phase 1–6 surface — DRF default `session` auth, every response `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. **Catalogs** `Pen`/`Ration` are full-CRUD `ModelViewSet`s (editable master data, [[adr-33-feedyard-operating-loop]] decision 5); ration lines are edited nested under their `Ration`. **Operational events** `LoadingOrder`/`BunkScore` expose only `list`/`retrieve`/`create` — a fact is corrected by a new fact ([[adr-24-feedlot-domain]] rule 3). No `feedyard` endpoint posts a ledger entry ([[adr-33-feedyard-operating-loop]] decision 1): the plan (`LoadingOrder`) is distinct from the executed, billed `FeedingEvent` (decision 2). The `FeedingEvent` row already declared in Phases 1–5 gains an optional `pen` field, additively (decision 3) — no new endpoint.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/pens/` | `PenViewSet` | `PenSerializer` | session | List pens/corrales (filter `?status=`). Editable catalog ([[adr-33-feedyard-operating-loop]] decision 5). |
+| POST | `/api/pens/` | `PenViewSet` | `PenSerializer` | session | Create a pen (corral). |
+| GET | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | session | Retrieve one pen. |
+| PUT | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | session | Replace a pen. |
+| PATCH | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | session | Partial update of a pen (e.g. `status=inactive`). |
+| DELETE | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | session | Delete a pen. |
+| GET | `/api/rations/` | `RationViewSet` | `RationSerializer` | session | List rations/diets with their nested lines. Editable catalog. |
+| POST | `/api/rations/` | `RationViewSet` | `RationSerializer` | session | Create a ration with its `lines` (each `feed_type`, `proportion`, `dry_matter_pct`). |
+| GET | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | session | Retrieve one ration and its lines. |
+| PUT | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | session | Replace a ration and its lines. |
+| PATCH | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | session | Partial update of a ration (e.g. `is_active=false`). |
+| DELETE | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | session | Delete a ration. |
+| GET | `/api/loading-orders/` | `LoadingOrderViewSet` | `LoadingOrderSerializer` | session | List loading orders (filter `?pen=`, `?ration=`). Planned mixer loads. |
+| GET | `/api/loading-orders/{id}/` | `LoadingOrderViewSet` | `LoadingOrderSerializer` | session | Retrieve one loading order. |
+| POST | `/api/loading-orders/` | `LoadingOrderViewSet` | `LoadingOrderWriteSerializer` | session | Register a loading order (plan) for a pen+ration via `register_loading_order`; posts no ledger entry ([[adr-33-feedyard-operating-loop]] decisions 1, 2). Create-only. |
+| GET | `/api/bunk-scores/` | `BunkScoreViewSet` | `BunkScoreSerializer` | session | List bunk (feed-trough) readings (filter `?pen=`). |
+| GET | `/api/bunk-scores/{id}/` | `BunkScoreViewSet` | `BunkScoreSerializer` | session | Retrieve one bunk score. |
+| POST | `/api/bunk-scores/` | `BunkScoreViewSet` | `BunkScoreWriteSerializer` | session | Register a daily bunk score (0–4) for a pen via `register_bunk_score`; posts no ledger entry. Create-only. |
+
 ## Contracts
 
 All rows below are authentication/identity surface; every response carries an explicit `Cache-Control` and is **`no-store`** — the `/accounts/` routes mutate or read the session, and `/api/me/` and `/api/restricted/` are authenticated ([[CACHE]], authenticated → `no-store`). Full flow and guards live in [[AUTH]]; these entries state only the endpoint contracts.

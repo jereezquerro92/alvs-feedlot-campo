@@ -119,6 +119,8 @@ INSTALLED_APPS = [
     "apps.assets",
     "apps.crops",
     "apps.machinery",
+    # Feedlot pen operating loop (Phase 7) — docs/adrs/adr-33-feedyard-operating-loop.md
+    "apps.feedyard",
 ]
 
 MIDDLEWARE = [

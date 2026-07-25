@@ -51,14 +51,19 @@ def register_delivery(*, client, feed_type, quantity, date, created_by=None):
 
 
 @transaction.atomic
-def register_feeding(*, client, feed_type, quantity, unit_price, origin, date, animal=None, lot=None, created_by=None):
-    """Record a ration and apply the costing rule (adr-25 rule 4)."""
+def register_feeding(*, client, feed_type, quantity, unit_price, origin, date, animal=None, lot=None, pen=None, created_by=None):
+    """Record a ration and apply the costing rule (adr-25 rule 4).
+
+    `pen` is an optional grouping (adr-33 decision 3): additive, never required,
+    and it changes nothing about the costing — the charge still follows `origin`.
+    """
     quantity = Decimal(quantity)
     unit_price = Decimal(unit_price)
     feeding = FeedingEvent.objects.create(
         client=client,
         animal=animal,
         lot=lot,
+        pen=pen,
         feed_type=feed_type,
         quantity=quantity,
         unit_price=unit_price,

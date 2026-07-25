@@ -26,4 +26,6 @@ urlpatterns = [
     # Feedlot multi-rubro (Phase 6) — docs/adrs/adr-32-multi-rubro-assets.md, docs/API.md
     path("api/", include("apps.crops.urls")),
     path("api/", include("apps.machinery.urls")),
+    # Feedlot pen operating loop (Phase 7) — docs/adrs/adr-33-feedyard-operating-loop.md, docs/API.md
+    path("api/", include("apps.feedyard.urls")),
 ]

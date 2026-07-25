@@ -43,7 +43,7 @@ class FeedingEventSerializer(serializers.ModelSerializer):
     class Meta:
         model = FeedingEvent
         fields = [
-            "id", "client", "animal", "lot", "feed_type", "quantity",
+            "id", "client", "animal", "lot", "pen", "feed_type", "quantity",
             "unit_price", "origin", "date", "total_cost", "created_at",
         ]
         read_only_fields = ["id", "total_cost", "created_at"]

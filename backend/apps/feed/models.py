@@ -82,6 +82,12 @@ class FeedingEvent(models.Model):
     lot = models.ForeignKey(
         "livestock.Lot", on_delete=models.PROTECT, null=True, blank=True, related_name="feedings"
     )
+    # Optional pen grouping (adr-33 decision 3) — additive, never required. The
+    # executed ration that actually charges can be grouped by corral for the
+    # cost-side pen summary; nothing about feeding becomes conditional on it.
+    pen = models.ForeignKey(
+        "feedyard.Pen", on_delete=models.PROTECT, null=True, blank=True, related_name="feedings"
+    )
     feed_type = models.ForeignKey(FeedType, on_delete=models.PROTECT)
     quantity = models.DecimalField(max_digits=12, decimal_places=2)
     unit_price = models.DecimalField(max_digits=14, decimal_places=4)

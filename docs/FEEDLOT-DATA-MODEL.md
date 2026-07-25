@@ -141,6 +141,27 @@ No tables. Two abstract bases the crops/machinery models inherit ([[adr-32-multi
   (mantenimiento); posts a `service` debit via `register_maintenance`
   (`source_kind="maintenance_event"`).
 
+### `feedyard` (Phase 7 — pen operating loop)
+
+The daily corral loop ([[adr-33-feedyard-operating-loop]]). Catalogs are editable;
+`LoadingOrder`/`BunkScore` are immutable events. **Nothing here posts a ledger
+entry** (decision 1) — billing stays in `feed`.
+
+- **Pen** — `code`, `name`, `capacity_head?`, `status` (`active` | `inactive`),
+  `notes`. A physical corral. Editable catalog.
+- **Ration** — `name`, `description`, `is_active`. A named diet/recipe. Editable.
+- **RationLine** — `ration`, `feed_type`, `proportion` (percent, as-fed),
+  `dry_matter_pct`. One share of a `Ration`; edited nested under it.
+- **LoadingOrder** — `pen`, `ration`, `date`, `planned_as_fed_kg`, `notes`,
+  `created_by`. The **planned** mixer load (orden de carga); immutable; posts no
+  ledger entry. Distinct from the executed `FeedingEvent` (decision 2).
+- **BunkScore** — `pen`, `date`, `score` (`0`–`4`), `notes`, `created_by`. A daily
+  bunk (feed-trough) reading; immutable; posts no ledger entry.
+
+`feed.FeedingEvent` gains an optional `pen` FK (nullable, additive — decision 3): the
+executed ration that actually charges (adr-25 rule 4) can now be grouped by corral,
+which is what the Phase 7 cost-side pen summary in `apps.metrics` reads (decision 7).
+
 ## Generic costing (scalability)
 
 `LedgerEntry` references its origin by `(source_kind, source_id)`, not by a per-domain
