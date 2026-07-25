@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Build and send the weekly digest to every active client — per-client isolation.
 
 A failure for one client (missing contact, sender error) is logged and never stops

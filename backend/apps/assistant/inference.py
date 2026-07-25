@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Assistant inference clients (adr-35 decision 5), mirroring the advisors' pair.
 
 `AssistantBedrockClient` is the real generative client: a Bedrock `converse` call

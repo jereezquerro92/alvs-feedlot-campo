@@ -2,6 +2,8 @@
   "_comment": "Glob -> live-doc wikilinks. A file's link set is the ordered union of every matching rule. Governed by [[adr-17-live-doc-backlinks]]; this manifest owns the mapping (an ADR states rules, never information, per adr-00). Edit here, then re-run link.py to re-sync every block and CODEMAP.md.",
   "roots": ["backend", "frontend", "compose.yaml"],
   "exclude_dirs": [".venv", "node_modules", ".astro", "__pycache__", "dist", ".git", "migrations", "kdx-live-doc"],
+  "_exclude_globs_comment": "Files matched by a rule glob that must NEVER be stamped: captured production-HTML test fixtures are external DATA, not Django templates, and stamping a comment into one corrupts the very response the parser test locks against. The backend/**/*.html rule targets HTMX fragment templates, not fixtures.",
+  "exclude_globs": ["*/tests/fixture_*.html", "*/tests/fixture_*"],
   "rules": [
     { "glob": "backend/**/*.py", "links": ["BACKEND"] },
     { "glob": "backend/config/settings.py", "links": ["adr-02-initial-stack", "adr-06-cache", "adr-16-async-mandatory", "VARIABLES"] },

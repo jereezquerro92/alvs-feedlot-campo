@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Notification services — the only sanctioned write path for a Notification.
 
 `build_weekly_digest` renders a client's own metrics to text (adr-36 decision 1);

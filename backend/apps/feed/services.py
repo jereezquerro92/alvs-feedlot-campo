@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Feed services — deliveries, stock balance, and the ration costing rule.
 
 The costing rule (adr-25 rule 4) is the heart of the system:

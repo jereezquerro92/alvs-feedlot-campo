@@ -1,3 +1,9 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-03-api-and-backend]]
+Docs: [[BACKEND]]
+API: [[API]]
+LIVE-DOC:END"""
+
 """Cattle: animals, lots and intake (docs/adrs/adr-26-livestock-individual-and-lot.md).
 
 Cattle enter individually (one Animal per ear tag) or as a lot (head count +

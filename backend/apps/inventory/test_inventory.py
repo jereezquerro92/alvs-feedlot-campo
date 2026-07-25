@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Phase 10 (inventory): general input stock as movements (adr-37).
 
 Stock is derived Σin − Σout, never stored. Nothing posts a ledger entry. An inactive

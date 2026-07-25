@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Phase 7 (feedyard): the pen operating loop plans and measures but NEVER charges
 (adr-33). Billing stays in `feed`. The executed ration groups by pen additively,
 which the cost-side pen summary reads (adr-33 decisions 1, 3, 7)."""

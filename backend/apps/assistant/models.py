@@ -1,3 +1,9 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-03-api-and-backend]]
+Docs: [[BACKEND]]
+API: [[API]]
+LIVE-DOC:END"""
+
 """Conversational assistant — the generating tier of adr-15, bounded (adr-35).
 
 The assistant produces free analytical text over ONE client's metrics and is

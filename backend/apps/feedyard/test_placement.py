@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Phase 7b (feedyard): cattle placement into pens is an immutable event; occupancy
 is derived, never stored (adr-34). Posts no ledger entry."""
 

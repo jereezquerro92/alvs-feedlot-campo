@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Connector framework: one class per automated source.
 
 A connector turns raw source bytes into a list of ParsedPrice rows. It does NOT

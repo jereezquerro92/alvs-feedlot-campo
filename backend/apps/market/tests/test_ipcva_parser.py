@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """The IPCVA parser, against a REAL page captured from the live site.
 
 fixture_ipcva.html is the actual "Precios en Pie" (vista_precios.php?id=1) data

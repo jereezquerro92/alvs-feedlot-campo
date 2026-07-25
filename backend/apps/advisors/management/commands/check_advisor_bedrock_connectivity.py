@@ -1,6 +1,5 @@
 """LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
-Governed by: [[adr-16-async-mandatory]] · [[adr-27-advisors-generative]]
-Docs: [[BACKEND]] · [[FEEDLOT]]
+Docs: [[BACKEND]]
 LIVE-DOC:END"""
 
 """`manage.py check_advisor_bedrock_connectivity` — the blocking advisor gate.

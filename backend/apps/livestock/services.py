@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Intake services — create cattle individually or as a lot (adr-26 rule 1)."""
 
 from decimal import Decimal

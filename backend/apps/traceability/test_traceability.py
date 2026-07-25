@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Phase 11 (traceability): RENSPA, DT-e and caravana (adr-38).
 
 Establishment is an editable catalog; TransitDocument and Caravana are immutable events

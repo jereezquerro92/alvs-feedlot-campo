@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """FX services — the only sanctioned write path for a reference rate.
 
 `register_fx_rate` upserts idempotently by `(currency, date, source)` and rejects a

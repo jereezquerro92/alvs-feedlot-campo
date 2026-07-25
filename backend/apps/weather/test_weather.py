@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Phase 10 (weather): the immutable per-date weather log (adr-37 decision 5).
 
 Independent of the ledger and the domain. Non-negative rainfall and a coherent

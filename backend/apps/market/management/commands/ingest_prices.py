@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Scheduled price ingest. Run daily (Cañuelas) / monthly (IPCVA) via cron/beat.
 
 Per-source isolation is the whole point: if one source is down or changed its

@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """The costing rule is the heart of Phase 1 (adr-25 rule 4)."""
 
 from decimal import Decimal

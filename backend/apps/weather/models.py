@@ -1,3 +1,9 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-03-api-and-backend]]
+Docs: [[BACKEND]]
+API: [[API]]
+LIVE-DOC:END"""
+
 """Weather log (adr-37 decision 5): an immutable per-date rainfall/weather record.
 
 Independent of the ledger and the domain — an environmental fact the metrics read,

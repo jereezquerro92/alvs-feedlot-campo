@@ -1,3 +1,9 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-03-api-and-backend]]
+Docs: [[BACKEND]]
+API: [[API]]
+LIVE-DOC:END"""
+
 """Reference exchange rates (adr-39): ARS per one unit of a foreign currency.
 
 An `FxRate` is a **reference** value for expressing metrics in another currency — never

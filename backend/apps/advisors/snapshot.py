@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Assemble the input_snapshot an advisor reasons over (adr-27 rule 2).
 
 The advisor never touches the database: this module is the *only* thing that

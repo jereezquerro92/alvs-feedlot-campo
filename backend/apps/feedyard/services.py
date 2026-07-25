@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Feedyard services (adr-33-feedyard-operating-loop).
 
 Neither service posts a ledger entry — feedyard plans and measures, it does not

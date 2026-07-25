@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Assistant conversation flow (adr-35).
 
 `send_message` is the whole turn: persist the user's message, assemble the

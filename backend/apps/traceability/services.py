@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Traceability services — the only sanctioned write path for a DT-e or a caravana.
 
 `register_transit` gates inactive/equal establishments, a non-positive head count and a

@@ -1,3 +1,9 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-03-api-and-backend]]
+Docs: [[BACKEND]]
+API: [[API]]
+LIVE-DOC:END"""
+
 """Animal health — catalogue and applications (Phase 2).
 
 Named `sanitary`, not `health`: the template already owns an app called `health`

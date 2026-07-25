@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Delivery senders (adr-36 decision 2), mirroring the inference clients' gate.
 
 `get_sender(channel)` is the one selection point: DEBUG → `MockSender` (network-free,

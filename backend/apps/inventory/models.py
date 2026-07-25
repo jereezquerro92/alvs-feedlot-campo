@@ -1,3 +1,9 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-03-api-and-backend]]
+Docs: [[BACKEND]]
+API: [[API]]
+LIVE-DOC:END"""
+
 """General input inventory (adr-37): non-feed supplies as stock movements.
 
 Generalises the feed-stock pattern (adr-25 rule 4) to inputs that are not feed —

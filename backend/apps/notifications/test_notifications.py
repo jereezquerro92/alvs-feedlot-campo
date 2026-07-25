@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Phase 9 (notifications): the outbound weekly digest and its delivery record (adr-36).
 
 Read-only over domain data — sending posts no ledger entry and never mutates the

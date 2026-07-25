@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Machinery services (adr-32-multi-rubro-assets).
 
 `register_maintenance` records a service/repair and always posts a `service` debit

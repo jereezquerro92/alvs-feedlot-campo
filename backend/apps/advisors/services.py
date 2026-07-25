@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Advisor report generation (adr-27).
 
 `generate_report` is the whole flow: assemble the client-scoped snapshot, run

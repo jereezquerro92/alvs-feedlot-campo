@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """IPCVA — second automated source (docs/feedlot/06c).
 
 Chosen over ROSGAN because its stat pages are server-rendered rather than built

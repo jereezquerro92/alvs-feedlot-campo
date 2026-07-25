@@ -134,7 +134,10 @@ def apply(path: Path, rel: str) -> bool:
     if not links:
         return False
     body = grouped_lines(links)
-    text = path.read_text()
+    try:
+        text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError:
+        return False  # not UTF-8 source (e.g. a raw scraped HTML fixture) — never stamp it
     suffix = path.suffix
     if suffix == ".py":
         new = insert_py(text, body)
@@ -154,13 +157,14 @@ def apply(path: Path, rel: str) -> bool:
     else:
         return False
     if new != text:
-        path.write_text(new)
+        path.write_text(new, encoding="utf-8")
         return True
     return False
 
 
 def iter_files():
     excl = set(MANIFEST["exclude_dirs"])
+    excl_globs = MANIFEST.get("exclude_globs", [])
     for root in MANIFEST["roots"]:
         p = REPO / root
         if p.is_file():
@@ -176,6 +180,8 @@ def iter_files():
             if f.name.endswith(".d.ts"):  # triple-slash directive must stay line 1
                 continue
             rel = f.relative_to(REPO).as_posix()
+            if any(fnmatch(rel, g) for g in excl_globs):
+                continue  # matched a rule but excluded (e.g. a captured HTML fixture)
             if link_set(rel):
                 yield f, rel
 
@@ -199,7 +205,7 @@ def write_codemap(index: dict[str, list[str]]):
         for rel in sorted(index[doc]):
             lines.append(f"- `{rel}`")
         lines.append("")
-    (REPO / "docs" / "CODEMAP.md").write_text("\n".join(lines))
+    (REPO / "docs" / "CODEMAP.md").write_text("\n".join(lines), encoding="utf-8")
 
 
 def main():
@@ -211,10 +217,13 @@ def main():
         for lk in link_set(rel):
             index.setdefault(lk, []).append(rel)
         if check:
-            before = f.read_text()
+            try:
+                before = f.read_text(encoding="utf-8")
+            except UnicodeDecodeError:
+                continue  # non-UTF-8 file (raw fixture) — never stamped
             if apply(f, rel):
                 changed.append(rel)
-                f.write_text(before)  # revert in check mode
+                f.write_text(before, encoding="utf-8")  # revert in check mode
         else:
             if apply(f, rel):
                 changed.append(rel)

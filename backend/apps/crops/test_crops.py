@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Phase 6 (crops): field tasks bill the client through the ledger's generic seam;
 cuttings are production and post nothing (adr-32-multi-rubro-assets)."""
 

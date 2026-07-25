@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Inventory services — the only sanctioned write path for a stock movement.
 
 `register_input_movement` gates an inactive input type and a non-positive quantity

@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Phase 12 (fx + gross margin): reference exchange rates and derived margin (adr-39).
 
 FxRate is idempotent by (currency, date, source) and never redenominates the ledger.

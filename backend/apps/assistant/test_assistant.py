@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Phase 8 (assistant): the conversational generating tier (adr-35).
 
 Read-only over domain data — a turn writes only its own Message rows, never a

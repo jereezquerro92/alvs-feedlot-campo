@@ -1,3 +1,7 @@
+"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+Docs: [[BACKEND]]
+LIVE-DOC:END"""
+
 """Health application service — always posts a debit (Phase 2).
 
 Unlike feeding, there is no origin split: health products are always supplied by
