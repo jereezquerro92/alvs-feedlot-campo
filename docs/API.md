@@ -228,6 +228,16 @@ Fase 8 activates the **generating tier** seam of [[adr-15-chatbot-two-tier]] rul
 | GET | `/api/conversations/{id}/messages/` | `ConversationViewSet` | `MessageSerializer` | session | List the thread's turns (reading does not re-infer, [[adr-35-conversational-assistant]] decision 4). |
 | POST | `/api/conversations/{id}/messages/` | `ConversationViewSet` | `SendMessageSerializer` | session | Send a user turn; generates and returns the assistant's grounded answer over a backend-built snapshot ([[adr-35-conversational-assistant]] decisions 2, 4). |
 
+## Feedlot domain endpoints (Phase 9 — notifications)
+
+Fase 9 adds the **outbound** layer ([[adr-36-notifications-digest]]): a per-client weekly digest rendered from `apps.metrics.summary` (decision 1 — no new metric) and delivered through a channel abstraction gated by DEBUG (decision 2, `MockSender` in DEBUG/tests, `WhatsAppSender` in deploy). A `Notification` is an **immutable delivery record** with `status` ∈ `pending`/`sent`/`failed` — `list`/`retrieve`/`create`, no `update`/`destroy`; a retry is a new notification (decision 3). `notifications` is read-only over domain data and posts **no** ledger entry (decision 4). Same surface policy — `session` auth, `no-store`, JSON arrays. Building/sending a digest through `POST` reuses the metrics summary; the `send_weekly_digests` management command fans the same service over every client, isolating per-client failures.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/notifications/` | `NotificationViewSet` | `NotificationSerializer` | session | List delivery records (filter `?client=`, `?status=`). Immutable send log ([[adr-36-notifications-digest]] decision 3). |
+| GET | `/api/notifications/{id}/` | `NotificationViewSet` | `NotificationSerializer` | session | Retrieve one delivery record. |
+| POST | `/api/notifications/` | `NotificationViewSet` | `SendNotificationSerializer` | session | Build a client's weekly digest and send it over a channel; creates one immutable record and returns its outcome ([[adr-36-notifications-digest]] decisions 1–3). |
+
 ## Contracts
 
 All rows below are authentication/identity surface; every response carries an explicit `Cache-Control` and is **`no-store`** — the `/accounts/` routes mutate or read the session, and `/api/me/` and `/api/restricted/` are authenticated ([[CACHE]], authenticated → `no-store`). Full flow and guards live in [[AUTH]]; these entries state only the endpoint contracts.

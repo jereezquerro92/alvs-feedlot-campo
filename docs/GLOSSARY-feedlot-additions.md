@@ -79,3 +79,7 @@ Merge these rows into the table in [[GLOSSARY]]; the format is
 | model (conversation) | `Conversation` | a per-client Q&A thread — conversación (Fase 8, [[adr-35-conversational-assistant]]) | `Thread`, `Chat`, `Session`, `Conversacion` |
 | model (message) | `Message` | one turn in a conversation (Fase 8, [[adr-35-conversational-assistant]]) | `Turn`, `Utterance`, `Mensaje`, `ChatMessage` |
 | model field (message role) | `role` — `user` \| `assistant` | who authored the turn ([[adr-35-conversational-assistant]]) | `sender`, `author`, `from`, Spanish values |
+| Django app (notifications) | `notifications` | outbound weekly-digest + delivery-record app (Fase 9, [[adr-36-notifications-digest]]) | `notify`, `alerts`, `messaging`, `notificaciones`, `push` |
+| model (notification) | `Notification` | an immutable record of one send attempt — notificación (Fase 9, [[adr-36-notifications-digest]]) | `Message` (that is an assistant turn), `Alert`, `Notificacion`, `Digest` |
+| model field (notification channel) | `channel` — `whatsapp` \| `email` | the delivery channel of a notification ([[adr-36-notifications-digest]]) | `medium`, `via`, `transport`, Spanish values |
+| model field (notification status) | `status` — `pending` \| `sent` \| `failed` | the outcome of a send attempt ([[adr-36-notifications-digest]]) | `state`, `delivered`, `ok`/`error` as values, Spanish values |

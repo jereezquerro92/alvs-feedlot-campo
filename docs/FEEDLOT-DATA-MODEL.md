@@ -186,6 +186,20 @@ forever; posts **no** ledger entry and never acts. Multi-turn counterpart of the
   (decision 6). The snapshot reuses the advisors' `build_snapshot`, so the assistant and the
   dashboard read the same numbers (decision 3).
 
+## notifications (Phase 9 — outbound digest)
+
+The outbound layer ([[adr-36-notifications-digest]]). Read-only over domain data; posts
+**no** ledger entry and never acts. Renders a per-client weekly digest from
+`apps.metrics.summary` (one definition of each number, decision 1) and delivers it through a
+channel abstraction gated by DEBUG (`MockSender` in DEBUG/tests, `WhatsAppSender` in deploy,
+decision 2).
+
+- **Notification** — `client` (PROTECT), `channel` (`whatsapp` | `email`), `to_address`,
+  `subject`, `body`, `status` (`pending` | `sent` | `failed`), `error`,
+  `provider_message_id`, `created_by`, `created_at`, `sent_at`. An immutable record of one
+  send attempt; a retry is a new record, never an edit (decision 3). Written only by
+  `send_notification`, the sole sanctioned write path.
+
 ## Generic costing (scalability)
 
 `LedgerEntry` references its origin by `(source_kind, source_id)`, not by a per-domain

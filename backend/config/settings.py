@@ -122,6 +122,7 @@ INSTALLED_APPS = [
     # Feedlot pen operating loop (Phase 7) — docs/adrs/adr-33-feedyard-operating-loop.md
     "apps.feedyard",
     "apps.assistant",
+    "apps.notifications",
 ]
 
 MIDDLEWARE = [
@@ -252,6 +253,10 @@ ADVISOR_BEDROCK_MODEL_ID = _env("ADVISOR_BEDROCK_MODEL_ID", "us.amazon.nova-lite
 # assistant (Fase 8) — the conversational generative tier reuses the same region;
 # distinct model id from advisors so each tier can be tuned independently (adr-35).
 ASSISTANT_BEDROCK_MODEL_ID = _env("ASSISTANT_BEDROCK_MODEL_ID", "us.amazon.nova-lite-v1:0")
+
+# WhatsApp Cloud API — read only by WhatsAppSender outside DEBUG ([[adr-36-notifications-digest]])
+WHATSAPP_TOKEN = _env("WHATSAPP_TOKEN", "")
+WHATSAPP_PHONE_NUMBER_ID = _env("WHATSAPP_PHONE_NUMBER_ID", "")
 
 MSGRAPH_TENANT_ID = _env("MSGRAPH_TENANT_ID", "")
 MSGRAPH_CLIENT_ID = _env("MSGRAPH_CLIENT_ID", "")

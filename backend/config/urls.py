@@ -30,4 +30,5 @@ urlpatterns = [
     path("api/", include("apps.feedyard.urls")),
     # Conversational assistant (Phase 8) — docs/adrs/adr-35-conversational-assistant.md, docs/API.md
     path("api/", include("apps.assistant.urls")),
+    path("api/", include("apps.notifications.urls")),
 ]
