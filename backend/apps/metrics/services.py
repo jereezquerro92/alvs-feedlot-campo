@@ -441,3 +441,65 @@ def caravana_coverage(*, client):
         "ratio": Decimal(caravanned) / Decimal(total),
         "not_calculable": None,
     }
+
+
+# --- gross margin & reference FX (Phase 12) ----------------------------------
+
+
+def gross_margin(
+    *, client, start=None, end=None, price_source, category,
+    price_avg_field="price_avg", currency=None, fx_source=None,
+):
+    """Reference gross margin: income (kg produced × market price) − period cost (adr-39).
+
+    Income is a REFERENCE value (kilos_gained × the latest market price for `category`
+    from `price_source`), not money collected — it posts no ledger entry (decision 5).
+    Cost is `cost_breakdown` total (debits only, adr-29 rule 4). Returns `null` with a
+    reason when any input is missing (decision 4); when `currency` is given the ARS margin
+    always comes back and only its conversion is `null` if there is no `FxRate`.
+    """
+    from apps.fx.services import convert_ars
+    from apps.market.services import latest_price
+
+    _, hi = _bounds(start, end)
+    growth = kilos_gained(client=client, start=start, end=end)
+    gained = growth["kilos_gained"]
+    cost = cost_breakdown(client=client, start=start, end=end)["total"]
+
+    base = {
+        "client": client.id,
+        "period": {"start": start, "end": end},
+        "kilos_gained": gained,
+        "cost": cost,
+        **_seg(growth),
+    }
+
+    if growth["segments_measured"] == 0:
+        return {**base, "reference_price": None, "income": None, "margin": None,
+                "currency": None, "margin_currency": None, "not_calculable": "no_measured_growth"}
+    if gained <= ZERO:
+        return {**base, "reference_price": None, "income": None, "margin": None,
+                "currency": None, "margin_currency": None, "not_calculable": "no_weight_gain"}
+
+    price = latest_price(source_slug=price_source, category=category, on_or_before=hi)
+    price_value = getattr(price, price_avg_field, None) if price is not None else None
+    if price_value is None:
+        return {**base, "reference_price": None, "income": None, "margin": None,
+                "currency": None, "margin_currency": None, "not_calculable": "no_reference_price"}
+
+    income = gained * price_value
+    margin = income - cost
+    result = {**base, "reference_price": price_value, "income": income, "margin": margin,
+              "currency": None, "margin_currency": None, "not_calculable": ""}
+
+    if currency is not None:
+        converted, row = convert_ars(
+            amount_ars=margin, currency=currency, on_or_before=hi, source=fx_source
+        )
+        result["currency"] = currency
+        result["margin_currency"] = converted
+        result["fx_rate"] = row.rate if row is not None else None
+        if converted is None:
+            result["not_calculable"] = "no_fx_rate"
+
+    return result

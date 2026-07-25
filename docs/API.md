@@ -276,6 +276,17 @@ Fase 11 adds the `traceability` app ([[adr-38-senasa-traceability]]): `Establish
 | GET | `/api/caravanas/{id}/` | `CaravanaViewSet` | `CaravanaSerializer` | session | Retrieve one caravana. |
 | POST | `/api/caravanas/` | `CaravanaViewSet` | `CaravanaWriteSerializer` | session | Bind a unique official caravan number to an active animal through the service (decision 4). Posts no ledger entry. |
 
+## Feedlot domain endpoints (Phase 12 — gross margin & reference FX)
+
+Fase 12 closes the roadmap ([[adr-39-gross-margin-and-fx]]). `FxRate` is a reference exchange-rate series (ARS per one unit of `currency`), idempotent by `(currency, date, source)` — it never redenominates the ARS ledger (decision 1). `gross_margin` is a **derived** metric in `apps.metrics`, not a model: reference income (`kilos_gained` × market price) − period cost (`cost_breakdown` debits), `null`+`not_calculable` when any input is missing (decision 4), optionally expressed in another currency via `FxRate`. Same surface policy — `session` auth, `no-store`, JSON. No new env vars; FX load is manual in this cut.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/fx-rates/` | `FxRateViewSet` | `FxRateSerializer` | session | List reference FX rates (filter `?currency=`, `?source=`, `?date=`). Idempotent series ([[adr-39-gross-margin-and-fx]] decision 2). |
+| GET | `/api/fx-rates/{id}/` | `FxRateViewSet` | `FxRateSerializer` | session | Retrieve one FX rate. |
+| POST | `/api/fx-rates/` | `FxRateViewSet` | `FxRateWriteSerializer` | session | Upsert a manual FX rate through the service; rejects a non-positive rate (decision 2). Posts no ledger entry. |
+| GET | `/api/clients/{pk}/metrics/gross-margin/` | `GrossMarginView` | — (JSON) | session | Gross margin for the client and period. Query: `?start=&end=&price_source=&category=&currency=`. Returns `null`+`not_calculable` on missing growth/price/rate (decision 4). Posts no ledger entry (decision 5). |
+
 ## Contracts
 
 All rows below are authentication/identity surface; every response carries an explicit `Cache-Control` and is **`no-store`** — the `/accounts/` routes mutate or read the session, and `/api/me/` and `/api/restricted/` are authenticated ([[CACHE]], authenticated → `no-store`). Full flow and guards live in [[AUTH]]; these entries state only the endpoint contracts.

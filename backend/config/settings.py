@@ -126,6 +126,7 @@ INSTALLED_APPS = [
     "apps.inventory",
     "apps.weather",
     "apps.traceability",
+    "apps.fx",
 ]
 
 MIDDLEWARE = [

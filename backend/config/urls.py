@@ -35,4 +35,6 @@ urlpatterns = [
     path("api/", include("apps.weather.urls")),
     # SENASA traceability (Phase 11) — docs/adrs/adr-38-senasa-traceability.md, docs/API.md
     path("api/", include("apps.traceability.urls")),
+    # Gross margin & reference FX (Phase 12) — docs/adrs/adr-39-gross-margin-and-fx.md, docs/API.md
+    path("api/", include("apps.fx.urls")),
 ]

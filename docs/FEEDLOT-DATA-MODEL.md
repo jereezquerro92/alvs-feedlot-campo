@@ -244,6 +244,34 @@ caravana are immutable events.
   official number (decision 4). `apps.metrics.caravana_coverage` derives the share of a
   client's active head that carry a caravana, `null` when there is no active head (decision 5).
 
+## fx (Phase 12 — reference exchange rates)
+
+Reference FX as a new app mirroring `market`: an external value series, **never** the
+ledger's currency ([[adr-39-gross-margin-and-fx]]). The account stays in ARS with the
+historical price per movement ([[adr-25-account-ledger]] rule 3); an FX rate only lets a
+derived metric be *expressed* in another currency, and posts no ledger entry.
+
+- **FxRate** — `currency` (e.g. `"USD"`), `date`, `rate` (ARS per one unit of `currency`,
+  `max_digits=18`, `decimal_places=6`), `source` (default `"manual"`), `created_at`,
+  `updated_at`. Idempotent by `(currency, date, source)` — reingesting a day updates the
+  row, never duplicates it (decision 2). Editable via `list`/`retrieve`/`create`; written
+  through `register_fx_rate`, which rejects a non-positive rate.
+  - `latest_rate(currency, on_or_before=None, source=None)` — most recent row on or before
+    a date, or `None`.
+  - `convert_ars(amount_ars, currency, on_or_before=None, source=None)` — `amount_ars ÷ rate`
+    with the row used, or `(None, None)` when there is no rate.
+
+## gross_margin (Phase 12 — derived reference margin)
+
+A pure function in `apps.metrics` (no model — one definition, [[adr-29-metrics-derivation]]
+rule 1): `income − cost` for one client and period, where income is a **reference** value
+(`kilos_gained × latest market price` for the category) and cost is `cost_breakdown` total
+(debits only). Income posts no ledger entry (decision 5). Returns `null` + a
+`not_calculable` reason for each missing input — `no_measured_growth`, `no_weight_gain`,
+`no_reference_price` — never a filled zero (decision 4). When `currency` is given, the ARS
+margin always comes back and only `margin_currency` is `null` (`no_fx_rate`) if there is no
+`FxRate`. Exposed read-only at `GET /api/clients/{id}/metrics/gross-margin/`.
+
 ## Generic costing (scalability)
 
 `LedgerEntry` references its origin by `(source_kind, source_id)`, not by a per-domain

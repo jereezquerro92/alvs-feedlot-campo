@@ -59,3 +59,25 @@ class MortalityView(_ClientMetricView):
 class AccountEvolutionView(_ClientMetricView):
     def compute(self, *, client, start, end):
         return services.account_evolution(client=client, start=start, end=end)
+
+
+class GrossMarginView(APIView):
+    """Reference gross margin for one client (Phase 12, adr-39).
+
+    Query: `?start=&end=&price_source=&category=&currency=`. `price_source` and
+    `category` are required to price the produced kilos; `currency` is optional.
+    """
+
+    def get(self, request, pk):
+        client = get_object_or_404(Client, pk=pk)
+        start, end = _period(request)
+        params = request.query_params
+        return Response(
+            services.gross_margin(
+                client=client, start=start, end=end,
+                price_source=params.get("price_source"),
+                category=params.get("category"),
+                currency=params.get("currency") or None,
+                fx_source=params.get("fx_source") or None,
+            )
+        )
