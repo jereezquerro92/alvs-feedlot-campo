@@ -658,6 +658,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/metrics/apps.py`
 - `backend/apps/metrics/services.py`
 - `backend/apps/metrics/test_metrics.py`
+- `backend/apps/metrics/test_pen_conversion.py`
 - `backend/apps/metrics/urls.py`
 - `backend/apps/metrics/views.py`
 - `backend/apps/notifications/admin.py`
