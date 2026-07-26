@@ -27,6 +27,7 @@ Esta carpeta es la fuente de verdad del **negocio y el diseño**. El código se 
 | 14 | [Preparación Fase 6](14-preparacion-fase6.md) | Qué mirar cuando aparezca el segundo rubro (multi-rubro). |
 | 06b | [Verificación de fuentes](06b-verificacion-fuentes-precios.md) | Chequeo real de las fuentes de precios (jul 2026). |
 | 06c | [Segunda fuente automática](06c-segunda-fuente-automatica.md) | Evaluación IPCVA vs ROSGAN. |
+| 15 | [Liquidación de venta — propuesta diferida](15-liquidacion-de-venta-propuesta.md) | Fase 4c: por qué la liquidación de venta se difiere al dueño (decisión comercial + ADR propio). |
 
 ## Resumen ejecutivo
 
