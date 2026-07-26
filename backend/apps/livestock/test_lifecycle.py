@@ -172,7 +172,10 @@ def test_full_lot_exit_closes_the_lot():
     assert lot.status == Lot.Status.CLOSED
 
 
-def test_exit_does_not_touch_the_ledger():
+def test_boarding_sale_without_commission_posts_nothing():
+    # A boarding sale with a price but no commission percent has no honest input
+    # to charge on, so the settlement posts nothing (adr-43 honest cut). Full
+    # settlement behaviour is covered in test_exit_settlement.py.
     client = _client()
     animal = _animal(client)
     register_exit(animal=animal, date="2026-06-01", sale_price_per_kg="2400")

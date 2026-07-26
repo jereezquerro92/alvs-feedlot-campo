@@ -491,10 +491,13 @@ export const es = {
 
   // --- Exit (retiro / venta) ---
   feedlot_form_exit_title: "Retiro / salida",
-  feedlot_form_exit_desc: "Retiro, venta o transferencia de hacienda. El precio de venta es informativo.",
+  feedlot_form_exit_desc: "Retiro, venta o transferencia de hacienda. Una venta se liquida en la cuenta según el tipo de cliente.",
   feedlot_form_exit_kind: "Tipo de salida",
   feedlot_form_destination: "Destino",
-  feedlot_form_sale_price: "Precio de venta por kg (ARS, informativo)",
+  feedlot_form_sale_price: "Precio de venta por kg (ARS)",
+  feedlot_form_commission_pct: "Comisión de engorde (% sobre kg ganados)",
+  feedlot_form_commission_hint: "El cliente vende su hacienda; el feedlot cobra este % sobre los kilos ganados como cargo en la cuenta.",
+  feedlot_form_own_sale_note: "Hacienda propia: la venta se registra como crédito en la cuenta propia (precio × kilos). No lleva comisión.",
   feedlot_form_save_exit: "Registrar salida",
 
   // --- Feed delivery (stock del cliente) ---

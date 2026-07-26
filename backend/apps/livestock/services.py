@@ -189,7 +189,8 @@ def register_death(
 @transaction.atomic
 def register_exit(
     *, animal=None, lot=None, date, kind=Exit.Kind.SALE, destination="",
-    head_count=None, weight=None, sale_price_per_kg=None, created_by=None,
+    head_count=None, weight=None, sale_price_per_kg=None, commission_pct=None,
+    created_by=None,
 ):
     target = _resolve_target(animal, lot)
     _assert_active(target)
@@ -205,6 +206,9 @@ def register_exit(
         animal=animal, lot=lot, date=date, kind=kind, destination=destination,
         head_count=head_count, weight=Decimal(weight) if weight is not None else None,
         sale_price_per_kg=Decimal(sale_price_per_kg) if sale_price_per_kg is not None else None,
+        engorde_commission_pct=(
+            Decimal(commission_pct) if commission_pct is not None else None
+        ),
         created_by=created_by,
     )
 
@@ -214,7 +218,89 @@ def register_exit(
     else:
         _reduce_lot(lot, head_count, weight)
 
+    _settle_sale(exit_event, animal=animal, lot=lot, created_by=created_by)
+
     return exit_event
+
+
+def _settle_sale(exit_event, *, animal, lot, created_by):
+    """Post the sale settlement for a `kind=sale` exit (adr-43).
+
+    Boarding cattle (`Client.kind=boarding`): the client sells; the feedlot charges
+    an engorde commission, a `service` DEBIT of
+    `(pct/100) × kilos_gained × sale_price_per_kg`. Own cattle (`Client.kind=own`):
+    the sale is the feedlot's; a `sale` CREDIT of `weight × sale_price_per_kg` on the
+    own account, offsetting the accumulated costs so the net reads as margin.
+
+    Honest cut (adr-29 rule 2): when an input is missing — no price, no measurable
+    gain (boarding), no commission percent (boarding), or no weight (own) — nothing
+    is posted. A fabricated ledger entry is worse than a fabricated metric: it moves
+    a real balance. Deaths and non-sale exits never reach here (adr-28 decision 3).
+
+    Lazy imports break the livestock↔metrics / livestock↔ledger cycles.
+    """
+    if exit_event.kind != Exit.Kind.SALE:
+        return None
+
+    from apps.clients.models import Client
+    from apps.ledger.models import Concept, Direction
+    from apps.ledger.services import post_entry
+
+    price = exit_event.sale_price_per_kg
+    if price is None or price <= 0:
+        return None
+
+    target = animal or lot
+    client = target.client
+    account = client.account
+
+    if client.kind == Client.Kind.OWN:
+        weight = exit_event.weight
+        if weight is None or weight <= 0:
+            return None
+        produced = weight * price
+        return post_entry(
+            account=account,
+            direction=Direction.CREDIT,
+            amount=produced,
+            concept=Concept.SALE,
+            date=exit_event.date,
+            source_kind="exit",
+            source_id=exit_event.id,
+            unit_price=price,
+            quantity=weight,
+            description="Venta hacienda propia",
+            created_by=created_by,
+        )
+
+    # Boarding: engorde commission on measured kilos gained.
+    pct = exit_event.engorde_commission_pct
+    if pct is None or pct <= 0:
+        return None
+
+    from apps.metrics.services import target_kilos_gained
+
+    gained_info = target_kilos_gained(animal=animal, lot=lot)
+    if gained_info["segments_measured"] == 0:
+        return None
+    gained = gained_info["kilos_gained"]
+    if gained <= 0:
+        return None
+
+    commission = (pct / Decimal("100")) * gained * price
+    return post_entry(
+        account=account,
+        direction=Direction.DEBIT,
+        amount=commission,
+        concept=Concept.SERVICE,
+        date=exit_event.date,
+        source_kind="exit",
+        source_id=exit_event.id,
+        unit_price=price,
+        quantity=gained,
+        description=f"Comisión de engorde {pct}% s/{gained} kg",
+        created_by=created_by,
+    )
 
 
 def _reduce_lot(lot, head_count, weight):

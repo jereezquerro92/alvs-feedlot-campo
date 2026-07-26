@@ -156,7 +156,8 @@ class ExitSerializer(serializers.ModelSerializer):
         model = Exit
         fields = [
             "id", "animal", "lot", "date", "kind", "destination",
-            "head_count", "weight", "sale_price_per_kg", "created_at",
+            "head_count", "weight", "sale_price_per_kg",
+            "engorde_commission_pct", "created_at",
         ]
         read_only_fields = ["id", "created_at"]
 
@@ -171,6 +172,10 @@ class ExitWriteSerializer(_TargetMixin):
     )
     sale_price_per_kg = serializers.DecimalField(
         max_digits=14, decimal_places=4, required=False, allow_null=True
+    )
+    # Boarding-only engorde commission percent (adr-43); own cattle ignore it.
+    commission_pct = serializers.DecimalField(
+        max_digits=6, decimal_places=3, required=False, allow_null=True
     )
 
     def create(self, validated):

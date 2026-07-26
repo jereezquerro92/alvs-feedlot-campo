@@ -47,7 +47,7 @@
     pending = false,
   }: {
     projectSlug?: string;
-    client?: { id: number; name: string } | null;
+    client?: { id: number; name: string; kind?: string } | null;
     animals?: Array<Record<string, any>>;
     lots?: Array<Record<string, any>>;
     feedTypes?: Array<Record<string, any>>;
@@ -138,7 +138,14 @@
             <Card.Description>{t("feedlot_form_exit_desc")}</Card.Description>
           </Card.Header>
           <Card.Content>
-            <ExitForm {animals} {lots} {today} {publicBackendUrl} onsaved={reload} />
+            <ExitForm
+              {animals}
+              {lots}
+              clientKind={client?.kind ?? ""}
+              {today}
+              {publicBackendUrl}
+              onsaved={reload}
+            />
           </Card.Content>
         </Card.Root>
       </div>

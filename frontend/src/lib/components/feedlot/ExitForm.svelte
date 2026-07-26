@@ -7,10 +7,14 @@
   Register an exit (sale/transfer/other) for one animal OR one lot
   ([[adr-26-livestock-individual-and-lot]] rule 3 — exactly one target). Writes
   only through the declared endpoint `POST /api/exits/`, which routes to the domain
-  service. An exit posts NO ledger entry and `sale_price_per_kg` is informative —
-  the sale is the client's, not the feedlot's ([[adr-28-animal-lifecycle-and-sanitary]]
-  rule 3). A bare mount performs NO request ([[adr-22-showcase-ready-components]]
-  rule 2), mounts with zero props and never throws (rule 1). CSRF per [[AUTH]].
+  service. A `kind=sale` exit settles through the ledger, differentiated by the
+  client's kind ([[adr-43-sale-settlement]]): a BOARDING client sells its own cattle
+  and the feedlot charges an engorde commission (a `service` debit) — this form shows
+  the commission-% field; an OWN client's sale is the feedlot's and posts a `sale`
+  credit (no commission). Deaths and non-sale exits post nothing
+  ([[adr-28-animal-lifecycle-and-sanitary]] rule 3). A bare mount performs NO request
+  ([[adr-22-showcase-ready-components]] rule 2), mounts with zero props and never
+  throws (rule 1). CSRF per [[AUTH]].
 -->
 <script lang="ts">
   import { Input } from "$lib/components/ui/input";
@@ -22,12 +26,14 @@
   let {
     animals = [],
     lots = [],
+    clientKind = "",
     today = "",
     publicBackendUrl = "",
     onsaved = undefined,
   }: {
     animals?: Array<Record<string, any>>;
     lots?: Array<Record<string, any>>;
+    clientKind?: string;
     today?: string;
     publicBackendUrl?: string;
     onsaved?: (() => void) | undefined;
@@ -54,12 +60,18 @@
   let headCount = $state("");
   let weight = $state("");
   let salePrice = $state("");
+  let commission = $state("");
   let date = $state(today);
   let saving = $state(false);
   let error = $state("");
   let ok = $state(false);
 
   const isLot = $derived(target.startsWith("lot:"));
+  // Own-cattle sales post a credit and never carry a commission (adr-43); the
+  // commission-% field is shown only for a boarding-client sale. An unknown kind
+  // ("") falls to the boarding side, the common case.
+  const isOwn = $derived(clientKind === "own");
+  const isSale = $derived(kind === "sale");
   const valid = $derived(target !== "" && date !== "");
 
   const inputClass =
@@ -82,6 +94,8 @@
     if (isLot && headCount !== "") body.head_count = Number(headCount);
     if (weight !== "") body.weight = Number(weight);
     if (salePrice !== "") body.sale_price_per_kg = Number(salePrice);
+    // Only a boarding sale carries an engorde commission; own sales ignore it (adr-43).
+    if (isSale && !isOwn && commission !== "") body.commission_pct = Number(commission);
     try {
       const res = await fetch(`${publicBackendUrl}/api/exits/`, {
         method: "POST",
@@ -101,6 +115,7 @@
       headCount = "";
       weight = "";
       salePrice = "";
+      commission = "";
       onsaved?.();
     } catch {
       error = t("feedlot_form_error");
@@ -163,11 +178,20 @@
     </div>
   </div>
 
-  {#if kind === "sale"}
+  {#if isSale}
     <div class="flex flex-col gap-1.5">
       <Label for="x-price">{t("feedlot_form_sale_price")}</Label>
       <Input id="x-price" type="number" min="0" step="0.0001" bind:value={salePrice} disabled={saving} />
     </div>
+    {#if isOwn}
+      <p class="text-sm text-muted-foreground">{t("feedlot_form_own_sale_note")}</p>
+    {:else}
+      <div class="flex flex-col gap-1.5">
+        <Label for="x-commission">{t("feedlot_form_commission_pct")}</Label>
+        <Input id="x-commission" type="number" min="0" step="0.001" bind:value={commission} disabled={saving} />
+        <p class="text-xs text-muted-foreground">{t("feedlot_form_commission_hint")}</p>
+      </div>
+    {/if}
   {/if}
 
   <div class="flex items-center gap-3">

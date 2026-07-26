@@ -619,6 +619,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/livestock/models.py`
 - `backend/apps/livestock/serializers.py`
 - `backend/apps/livestock/services.py`
+- `backend/apps/livestock/test_exit_settlement.py`
 - `backend/apps/livestock/test_intake.py`
 - `backend/apps/livestock/test_lifecycle.py`
 - `backend/apps/livestock/test_urls_phase2.py`
