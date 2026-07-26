@@ -362,6 +362,8 @@ export const es = {
   feedlot_load_intro:
     "Registrá una ración o un pesaje. Cada carga es un hecho inmutable: se corrige con un hecho nuevo, nunca editando el anterior.",
   feedlot_load_view_panel: "Ver panel actualizado →",
+  feedlot_load_section_herd: "Hacienda",
+  feedlot_load_section_feed: "Alimento y sanidad",
   feedlot_form_feeding_title: "Ración",
   feedlot_form_feeding_desc:
     "Alimento entregado a un animal o lote. El origen decide si se cobra.",
@@ -390,4 +392,76 @@ export const es = {
   feedlot_form_save_weighing: "Registrar pesaje",
   feedlot_form_saved: "Guardado ✓",
   feedlot_form_error: "No se pudo guardar. Revisá los datos.",
+
+  // --- Intake (alta de hacienda) ---
+  feedlot_form_intake_title: "Ingreso de hacienda",
+  feedlot_form_intake_desc: "Dar de alta animales individuales o un lote por cabezas y peso total.",
+  feedlot_form_intake_mode: "Modo de ingreso",
+  feedlot_form_intake_mode_individual: "Individual (una caravana por animal)",
+  feedlot_form_intake_mode_lot: "Lote (cabezas + peso total, sin identidad)",
+  feedlot_form_ear_tag: "Caravana",
+  feedlot_form_category: "Categoría",
+  feedlot_form_category_placeholder: "Elegí una categoría…",
+  feedlot_form_sex: "Sexo",
+  feedlot_form_entry_weight: "Peso de ingreso (kg)",
+  feedlot_form_add_animal: "+ Agregar animal",
+  feedlot_form_remove: "Quitar",
+  feedlot_form_lot_code: "Código de lote",
+  feedlot_form_total_weight: "Peso total (kg)",
+  feedlot_form_lot_head_count: "Cantidad de cabezas",
+  feedlot_form_save_intake: "Registrar ingreso",
+
+  // --- Death (muerte) ---
+  feedlot_form_death_title: "Muerte",
+  feedlot_form_death_desc: "Registrar la baja de un animal o parte de un lote. No genera asiento en la cuenta.",
+  feedlot_form_cause: "Causa",
+  feedlot_form_cause_detail: "Detalle de la causa",
+  feedlot_form_save_death: "Registrar muerte",
+
+  // --- Exit (retiro / venta) ---
+  feedlot_form_exit_title: "Retiro / salida",
+  feedlot_form_exit_desc: "Retiro, venta o transferencia de hacienda. El precio de venta es informativo.",
+  feedlot_form_exit_kind: "Tipo de salida",
+  feedlot_form_destination: "Destino",
+  feedlot_form_sale_price: "Precio de venta por kg (ARS, informativo)",
+  feedlot_form_save_exit: "Registrar salida",
+
+  // --- Feed delivery (stock del cliente) ---
+  feedlot_form_delivery_title: "Ingreso de alimento del cliente",
+  feedlot_form_delivery_desc: "Alimento provisto por el cliente. Suma al stock del cliente y no genera cargo.",
+  feedlot_form_save_delivery: "Registrar ingreso de alimento",
+
+  // --- Health event (sanidad / vacuna) ---
+  feedlot_form_health_title: "Sanidad",
+  feedlot_form_health_desc: "Aplicación de vacuna o tratamiento a un animal o lote. Siempre se cobra.",
+  feedlot_form_health_product: "Producto sanitario",
+  feedlot_form_health_product_placeholder: "Elegí un producto…",
+  feedlot_form_applied_by: "Aplicado por",
+  feedlot_form_notes: "Notas",
+  feedlot_form_save_health: "Registrar sanidad",
+
+  // --- Loading order (dieta / mixer) ---
+  feedlot_form_order_title: "Orden de carga (mixer)",
+  feedlot_form_order_desc: "Plan de lo que el mixer debe llevar a un corral para una ración. No cobra: el cargo lo hace la ración servida.",
+  feedlot_form_pen: "Corral",
+  feedlot_form_pen_placeholder: "Elegí un corral…",
+  feedlot_form_ration: "Ración (dieta)",
+  feedlot_form_ration_placeholder: "Elegí una ración…",
+  feedlot_form_planned_kg: "Kg planificados (como servido)",
+  feedlot_form_save_order: "Registrar orden de carga",
+
+  // --- Client creation (alta de cliente) ---
+  feedlot_form_client_title: "Nuevo cliente",
+  feedlot_form_client_desc: "Dar de alta un cliente del feedlot.",
+  feedlot_form_client_name: "Nombre",
+  feedlot_form_client_kind: "Tipo",
+  feedlot_form_client_tax_id: "CUIT / identificación",
+  feedlot_form_client_contact: "Contacto",
+  feedlot_form_save_client: "Crear cliente",
+  feedlot_form_new_client_cta: "+ Nuevo cliente",
+
+  // --- shared field labels for new selects ---
+  feedlot_form_target_animal: "Animal",
+  feedlot_form_head_count_generic: "Cabezas",
+  feedlot_form_head_count_generic_hint: "Para lotes: cuántas cabezas cubre esta operación (opcional).",
 } as const;

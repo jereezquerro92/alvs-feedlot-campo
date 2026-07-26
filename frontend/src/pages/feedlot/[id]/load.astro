@@ -47,11 +47,15 @@ const client = await getJson(`/api/clients/${id}/`);
 // An unknown client id bounces back to the clients list, not a broken form.
 if (!client) return Astro.redirect("/feedlot/");
 
-const [animalsData, lotsData, feedTypesData] = await Promise.all([
-  getJson(`/api/animals/?client=${id}`),
-  getJson(`/api/lots/?client=${id}`),
-  getJson(`/api/feed-types/`),
-]);
+const [animalsData, lotsData, feedTypesData, healthProductsData, pensData, rationsData] =
+  await Promise.all([
+    getJson(`/api/animals/?client=${id}`),
+    getJson(`/api/lots/?client=${id}`),
+    getJson(`/api/feed-types/`),
+    getJson(`/api/health-products/`),
+    getJson(`/api/pens/`),
+    getJson(`/api/rations/`),
+  ]);
 
 const asArray = (d: unknown): any[] =>
   Array.isArray(d) ? d : ((d as any)?.results ?? []);
@@ -59,6 +63,9 @@ const asArray = (d: unknown): any[] =>
 const animals = asArray(animalsData);
 const lots = asArray(lotsData);
 const feedTypes = asArray(feedTypesData);
+const healthProducts = asArray(healthProductsData);
+const pens = asArray(pensData);
+const rations = asArray(rationsData);
 
 // The date default is server-supplied so the field is pre-filled without a
 // client clock ([[adr-22-showcase-ready-components]] — the caller owns "today").
@@ -77,6 +84,9 @@ Astro.response.headers.set("Cache-Control", "no-store");
     animals={animals}
     lots={lots}
     feedTypes={feedTypes}
+    healthProducts={healthProducts}
+    pens={pens}
+    rations={rations}
     today={today}
     publicBackendUrl={publicBackendUrl}
     me={me}
