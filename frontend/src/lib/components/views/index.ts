@@ -11,3 +11,4 @@ export { default as ChatView } from "./ChatView.svelte";
 export { default as FeedlotClientsView } from "./FeedlotClientsView.svelte";
 export { default as FeedlotDashboardView } from "./FeedlotDashboardView.svelte";
 export { default as FeedlotLoadView } from "./FeedlotLoadView.svelte";
+export { default as FeedlotLedgerView } from "./FeedlotLedgerView.svelte";

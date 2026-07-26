@@ -113,8 +113,11 @@
       </div>
       <p class="max-w-2xl text-sm text-muted-foreground">{t("feedlot_dash_intro")}</p>
       {#if client?.id}
-        <div>
+        <div class="flex flex-wrap gap-2">
           <Button href={`/feedlot/${client.id}/load/`} size="sm">{t("feedlot_load_cta")}</Button>
+          <Button href={`/feedlot/${client.id}/ledger/`} variant="secondary" size="sm">
+            {t("feedlot_ledger_cta")}
+          </Button>
         </div>
       {/if}
     </div>

@@ -356,6 +356,25 @@ export const es = {
   feedlot_empty_animals: "Sin animales individuales.",
   feedlot_back_clients: "← Clientes",
 
+  // Current account / ledger (adr-25)
+  feedlot_ledger_cta: "Cuenta corriente",
+  feedlot_ledger_title: "Cuenta corriente",
+  feedlot_ledger_intro:
+    "El extracto de la cuenta: cada movimiento es un asiento inmutable. Un error se corrige con un asiento nuevo, nunca editando el anterior. El saldo es Σ débitos − Σ créditos; positivo significa que el cliente debe.",
+  feedlot_ledger_balance: "Saldo",
+  feedlot_ledger_balance_hint: "positivo = el cliente debe",
+  feedlot_ledger_total_debit: "Total débitos",
+  feedlot_ledger_total_credit: "Total créditos",
+  feedlot_ledger_movements: "Movimientos",
+  feedlot_ledger_movements_desc: "Del más reciente al más antiguo, con saldo acumulado.",
+  feedlot_ledger_empty: "La cuenta no tiene movimientos.",
+  feedlot_ledger_col_date: "Fecha",
+  feedlot_ledger_col_concept: "Concepto",
+  feedlot_ledger_col_description: "Detalle",
+  feedlot_ledger_col_debit: "Débito (ARS)",
+  feedlot_ledger_col_credit: "Crédito (ARS)",
+  feedlot_ledger_col_balance: "Saldo (ARS)",
+
   // Data-entry (bdd-13)
   feedlot_load_cta: "Cargar datos",
   feedlot_load_title: "Cargar datos",

@@ -156,6 +156,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/HealthEventForm.svelte`
 - `frontend/src/lib/components/feedlot/HerdTable.svelte`
 - `frontend/src/lib/components/feedlot/IntakeForm.svelte`
+- `frontend/src/lib/components/feedlot/LedgerTable.svelte`
 - `frontend/src/lib/components/feedlot/LoadingOrderForm.svelte`
 - `frontend/src/lib/components/feedlot/MetricCard.svelte`
 - `frontend/src/lib/components/feedlot/TrendChart.svelte`
@@ -270,6 +271,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/views/ChatView.svelte`
 - `frontend/src/lib/components/views/FeedlotClientsView.svelte`
 - `frontend/src/lib/components/views/FeedlotDashboardView.svelte`
+- `frontend/src/lib/components/views/FeedlotLedgerView.svelte`
 - `frontend/src/lib/components/views/FeedlotLoadView.svelte`
 - `frontend/src/lib/components/views/LobbyView.svelte`
 - `frontend/src/lib/components/views/ProfileView.svelte`
@@ -288,6 +290,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/utils.ts`
 - `frontend/src/pages/chatui.astro`
 - `frontend/src/pages/feedlot/[id].astro`
+- `frontend/src/pages/feedlot/[id]/ledger.astro`
 - `frontend/src/pages/feedlot/[id]/load.astro`
 - `frontend/src/pages/feedlot/index.astro`
 - `frontend/src/pages/healthz.ts`
@@ -803,6 +806,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/HealthEventForm.svelte`
 - `frontend/src/lib/components/feedlot/HerdTable.svelte`
 - `frontend/src/lib/components/feedlot/IntakeForm.svelte`
+- `frontend/src/lib/components/feedlot/LedgerTable.svelte`
 - `frontend/src/lib/components/feedlot/LoadingOrderForm.svelte`
 - `frontend/src/lib/components/feedlot/MetricCard.svelte`
 - `frontend/src/lib/components/feedlot/TrendChart.svelte`
@@ -909,6 +913,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/views/ChatView.svelte`
 - `frontend/src/lib/components/views/FeedlotClientsView.svelte`
 - `frontend/src/lib/components/views/FeedlotDashboardView.svelte`
+- `frontend/src/lib/components/views/FeedlotLedgerView.svelte`
 - `frontend/src/lib/components/views/FeedlotLoadView.svelte`
 - `frontend/src/lib/components/views/LobbyView.svelte`
 - `frontend/src/lib/components/views/ProfileView.svelte`
@@ -963,6 +968,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/HealthEventForm.svelte`
 - `frontend/src/lib/components/feedlot/HerdTable.svelte`
 - `frontend/src/lib/components/feedlot/IntakeForm.svelte`
+- `frontend/src/lib/components/feedlot/LedgerTable.svelte`
 - `frontend/src/lib/components/feedlot/LoadingOrderForm.svelte`
 - `frontend/src/lib/components/feedlot/MetricCard.svelte`
 - `frontend/src/lib/components/feedlot/TrendChart.svelte`
@@ -1077,6 +1083,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/views/ChatView.svelte`
 - `frontend/src/lib/components/views/FeedlotClientsView.svelte`
 - `frontend/src/lib/components/views/FeedlotDashboardView.svelte`
+- `frontend/src/lib/components/views/FeedlotLedgerView.svelte`
 - `frontend/src/lib/components/views/FeedlotLoadView.svelte`
 - `frontend/src/lib/components/views/LobbyView.svelte`
 - `frontend/src/lib/components/views/ProfileView.svelte`
@@ -1095,6 +1102,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/utils.ts`
 - `frontend/src/pages/chatui.astro`
 - `frontend/src/pages/feedlot/[id].astro`
+- `frontend/src/pages/feedlot/[id]/ledger.astro`
 - `frontend/src/pages/feedlot/[id]/load.astro`
 - `frontend/src/pages/feedlot/index.astro`
 - `frontend/src/pages/healthz.ts`
