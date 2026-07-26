@@ -85,7 +85,7 @@ The feedlot is built as domain apps on the template spine ([[adr-24-feedlot-doma
 | GET | `/api/clients/{id}/metrics/account/` | `AccountEvolutionView` | — | session | Derived account-balance evolution series (points of date + balance). Null-contract. |
 | GET | `/api/ledger-entries/` | `LedgerEntryViewSet` | `LedgerEntrySerializer` | session | List immutable ledger entries (filter `?client=`); read-only — entries are never edited ([[adr-25-account-ledger]] rule 1). |
 | GET | `/api/ledger-entries/{id}/` | `LedgerEntryViewSet` | `LedgerEntrySerializer` | session | Retrieve one ledger entry. |
-| GET | `/api/payments/` | `PaymentViewSet` | `PaymentSerializer` | session | List payments (each posts a `credit` entry, [[adr-25-account-ledger]] rule 7). |
+| GET | `/api/payments/` | `PaymentViewSet` | `PaymentSerializer` | session | List payments (filter `?client=`; each posts a `credit` entry, [[adr-25-account-ledger]] rule 7). |
 | POST | `/api/payments/` | `PaymentViewSet` | `PaymentSerializer` | session | Register a payment; posts a `credit` `LedgerEntry` reducing the balance. |
 | GET | `/api/payments/{id}/` | `PaymentViewSet` | `PaymentSerializer` | session | Retrieve one payment. |
 | GET | `/api/animals/` | `AnimalViewSet` | `AnimalSerializer` | session | List individual animals (filter `?client=`). |
@@ -309,6 +309,17 @@ Fase 13 adds the sanitary plan on the `sanitary` app ([[adr-40-sanitary-plan-sch
 | GET | `/api/plan-enrollments/{id}/` | `PlanEnrollmentViewSet` | `PlanEnrollmentSerializer` | session | Retrieve one enrollment. |
 | POST | `/api/plan-enrollments/` | `PlanEnrollmentViewSet` | `PlanEnrollmentWriteSerializer` | session | Enroll one `animal` XOR `lot` into a plan with a `start_date`; validates in the service (active plan, target owned by client, active target, XOR) ([[adr-40-sanitary-plan-schedule]] decisions 5–6). Posts no ledger entry (decision 4). Create-only. |
 | GET | `/api/plan-enrollments/schedule/` | `PlanEnrollmentViewSet.schedule` | — (JSON) | session | Derived sanitary calendar for a client (`?client=` required, optional `?as_of=YYYY-MM-DD`). Each dose reports `applied`/`pending`/`upcoming` by crossing the schedule against existing `HealthEvent`s (decision 3); computed on read, never stored. No enrollments → empty list, never a filled state. `no-store`. |
+
+## Feedlot domain endpoints (Phase 4a — payment-to-charge imputation)
+
+Fase 4a implements the item [[adr-25-account-ledger]] rule 7 deferred: explicit imputation of a payment against specific debit charges, with its own model, never mutating an entry ([[adr-41-payment-allocation]]). A `PaymentAllocation` links a `Payment` to a debit `LedgerEntry` with an `amount`; it posts **no** ledger entry and moves **no** balance — the total balance already moved when the payment posted its credit (decision 1). It is an **operational event**: `list`/`retrieve`/`create` only, no `update`/`destroy` — a wrong imputation is corrected by another allocation (decision 5). The write path goes through `impute_payment`, which validates in the service (debit of the same account, positive amount, no over-allocation of payment or debit) and, when no explicit lines are given, auto-imputes FIFO oldest-charge-first (decisions 2–3). The `outstanding` detail-action on `ClientViewSet` derives per-debit allocated/outstanding on read, never a stored field (decision 4). Same surface policy — `session` auth, `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. No new env vars.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/payment-allocations/` | `PaymentAllocationViewSet` | `PaymentAllocationSerializer` | session | List payment→charge allocations (immutable; filter `?client=` or `?payment=`). Read-only rows ([[adr-41-payment-allocation]] decision 5). |
+| POST | `/api/payment-allocations/` | `PaymentAllocationViewSet` | `PaymentAllocationWriteSerializer` | session | Impute a payment against charges via `impute_payment`: pass explicit `allocations` `[{entry, amount}]`, or omit them and set `auto=true` for FIFO oldest-first (decisions 2–3). Posts no ledger entry, moves no balance (decision 1). Create-only. |
+| GET | `/api/payment-allocations/{id}/` | `PaymentAllocationViewSet` | `PaymentAllocationSerializer` | session | Retrieve one allocation. |
+| GET | `/api/clients/{id}/outstanding/` | `ClientViewSet.outstanding` | — (JSON) | session | Derived per-charge outstanding for the client: each debit with `amount`, `allocated` (Σ allocations) and `outstanding` (`amount` − allocated), computed on read ([[adr-41-payment-allocation]] decision 4). `no-store`. |
 
 ## Contracts
 

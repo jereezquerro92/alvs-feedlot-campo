@@ -6,8 +6,8 @@ LIVE-DOC:END"""
 
 from rest_framework import serializers
 
-from apps.ledger.models import LedgerEntry, Payment
-from apps.ledger.services import register_payment
+from apps.ledger.models import LedgerEntry, Payment, PaymentAllocation
+from apps.ledger.services import impute_payment, register_payment
 
 
 class LedgerEntrySerializer(serializers.ModelSerializer):
@@ -40,3 +40,44 @@ class PaymentSerializer(serializers.ModelSerializer):
             reference=validated_data.get("reference", ""),
             created_by=created_by,
         )
+
+
+class PaymentAllocationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentAllocation
+        fields = ["id", "payment", "entry", "amount", "created_at"]
+        read_only_fields = fields
+
+
+class _AllocationLineSerializer(serializers.Serializer):
+    entry = serializers.IntegerField()
+    amount = serializers.DecimalField(max_digits=14, decimal_places=2)
+
+
+class PaymentAllocationWriteSerializer(serializers.Serializer):
+    """Impute a payment against charges (adr-41). Either pass explicit
+    `allocations` `[{entry, amount}]`, or omit them and set `auto=true` for
+    FIFO oldest-first. Service validation surfaces as HTTP 400."""
+
+    payment = serializers.PrimaryKeyRelatedField(queryset=Payment.objects.all())
+    allocations = _AllocationLineSerializer(many=True, required=False)
+    auto = serializers.BooleanField(required=False, default=False)
+
+    def create(self, validated_data):
+        request = self.context.get("request")
+        created_by = getattr(request, "user", None)
+        if created_by is not None and not created_by.is_authenticated:
+            created_by = None
+        try:
+            allocations = impute_payment(
+                payment=validated_data["payment"],
+                allocations=validated_data.get("allocations") or None,
+                auto=validated_data.get("auto", False),
+                created_by=created_by,
+            )
+        except ValueError as exc:
+            raise serializers.ValidationError(str(exc))
+        return PaymentAllocationSerializer(allocations, many=True).data
+
+    def to_representation(self, instance):
+        return instance

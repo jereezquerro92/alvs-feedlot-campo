@@ -88,3 +88,36 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Payment {self.date} {self.amount}"
+
+
+class PaymentAllocation(models.Model):
+    """Imputation of a payment against a specific debit charge (adr-41).
+
+    An immutable annotation linking a Payment to a debit LedgerEntry with an
+    amount. It is NOT a LedgerEntry: it posts nothing to the ledger and moves no
+    balance — the total balance already moved when the payment posted its credit
+    (adr-25 rule 7, adr-41 decision 1). No LedgerEntry is ever mutated.
+    """
+
+    payment = models.ForeignKey(
+        Payment, on_delete=models.PROTECT, related_name="allocations"
+    )
+    # The debit entry this payment portion settles.
+    entry = models.ForeignKey(
+        LedgerEntry, on_delete=models.PROTECT, related_name="allocations"
+    )
+    amount = models.DecimalField(max_digits=14, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    class Meta:
+        ordering = ["-id"]
+        indexes = [
+            models.Index(fields=["payment"]),
+            models.Index(fields=["entry"]),
+        ]
+
+    def __str__(self):
+        return f"Alloc payment={self.payment_id} entry={self.entry_id} {self.amount}"

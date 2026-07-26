@@ -128,6 +128,9 @@
         <Button href={`/feedlot/${client.id}/`} variant="secondary" size="sm">
           {t("feedlot_load_view_panel")}
         </Button>
+        <Button href={`/feedlot/${client.id}/outstanding/`} variant="secondary" size="sm">
+          {t("feedlot_impute_cta")}
+        </Button>
       {/if}
       <Button href="/feedlot/" variant="secondary" size="sm">{t("feedlot_back_clients")}</Button>
     </div>

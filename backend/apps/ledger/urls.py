@@ -11,5 +11,8 @@ from apps.ledger import views
 router = DefaultRouter()
 router.register("ledger-entries", views.LedgerEntryViewSet, basename="ledgerentry")
 router.register("payments", views.PaymentViewSet, basename="payment")
+router.register(
+    "payment-allocations", views.PaymentAllocationViewSet, basename="paymentallocation"
+)
 
 urlpatterns = router.urls

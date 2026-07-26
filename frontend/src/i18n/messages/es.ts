@@ -375,6 +375,32 @@ export const es = {
   feedlot_ledger_col_credit: "Crédito (ARS)",
   feedlot_ledger_col_balance: "Saldo (ARS)",
 
+  // Payment-to-charge imputation (adr-41)
+  feedlot_impute_cta: "Imputar pagos",
+  feedlot_impute_title: "Imputación de pagos",
+  feedlot_impute_intro:
+    "Vinculá un pago con los cargos que cancela. Imputar no mueve el saldo — el saldo ya se movió cuando el pago registró su crédito; esto sólo deja registrado qué cargo responde cada pago. La imputación es un asiento propio, nunca edita un cargo.",
+  feedlot_impute_total_outstanding: "Cargos pendientes",
+  feedlot_impute_total_outstanding_hint: "sin imputar contra ningún pago",
+  feedlot_impute_form_title: "Imputar un pago",
+  feedlot_impute_form_desc:
+    "Elegí un pago y dejá que se impute automáticamente (del cargo más viejo al más nuevo) o asignalo a un cargo puntual.",
+  feedlot_impute_payment: "Pago",
+  feedlot_impute_payment_placeholder: "Elegí un pago con saldo sin imputar",
+  feedlot_impute_no_payments: "No hay pagos con saldo pendiente de imputar.",
+  feedlot_impute_auto: "Imputar automáticamente (del más viejo al más nuevo)",
+  feedlot_impute_charge: "Cargo",
+  feedlot_impute_charge_placeholder: "Elegí un cargo pendiente",
+  feedlot_impute_amount: "Monto (ARS)",
+  feedlot_impute_save: "Imputar",
+  feedlot_impute_charges: "Cargos y su estado",
+  feedlot_impute_charges_desc:
+    "Cada cargo con cuánto tiene imputado y cuánto queda pendiente. Se deriva al leer; no se guarda.",
+  feedlot_impute_col_amount: "Cargo (ARS)",
+  feedlot_impute_col_allocated: "Imputado (ARS)",
+  feedlot_impute_col_outstanding: "Pendiente (ARS)",
+  feedlot_impute_empty: "La cuenta no tiene cargos.",
+
   // Sanitary plan / vaccination schedule (adr-40)
   feedlot_schedule_cta: "Plan sanitario",
   feedlot_schedule_title: "Plan sanitario",

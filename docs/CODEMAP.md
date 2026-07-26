@@ -160,6 +160,8 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/LedgerTable.svelte`
 - `frontend/src/lib/components/feedlot/LoadingOrderForm.svelte`
 - `frontend/src/lib/components/feedlot/MetricCard.svelte`
+- `frontend/src/lib/components/feedlot/OutstandingTable.svelte`
+- `frontend/src/lib/components/feedlot/PaymentImputationForm.svelte`
 - `frontend/src/lib/components/feedlot/SanitaryScheduleTable.svelte`
 - `frontend/src/lib/components/feedlot/TrendChart.svelte`
 - `frontend/src/lib/components/feedlot/WeighingForm.svelte`
@@ -275,6 +277,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/views/FeedlotDashboardView.svelte`
 - `frontend/src/lib/components/views/FeedlotLedgerView.svelte`
 - `frontend/src/lib/components/views/FeedlotLoadView.svelte`
+- `frontend/src/lib/components/views/FeedlotOutstandingView.svelte`
 - `frontend/src/lib/components/views/FeedlotScheduleView.svelte`
 - `frontend/src/lib/components/views/LobbyView.svelte`
 - `frontend/src/lib/components/views/ProfileView.svelte`
@@ -295,6 +298,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/pages/feedlot/[id].astro`
 - `frontend/src/pages/feedlot/[id]/ledger.astro`
 - `frontend/src/pages/feedlot/[id]/load.astro`
+- `frontend/src/pages/feedlot/[id]/outstanding.astro`
 - `frontend/src/pages/feedlot/[id]/schedule.astro`
 - `frontend/src/pages/feedlot/index.astro`
 - `frontend/src/pages/healthz.ts`
@@ -607,6 +611,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/ledger/serializers.py`
 - `backend/apps/ledger/services.py`
 - `backend/apps/ledger/test_ledger.py`
+- `backend/apps/ledger/test_payment_allocation.py`
 - `backend/apps/ledger/urls.py`
 - `backend/apps/ledger/views.py`
 - `backend/apps/livestock/admin.py`
@@ -815,6 +820,8 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/LedgerTable.svelte`
 - `frontend/src/lib/components/feedlot/LoadingOrderForm.svelte`
 - `frontend/src/lib/components/feedlot/MetricCard.svelte`
+- `frontend/src/lib/components/feedlot/OutstandingTable.svelte`
+- `frontend/src/lib/components/feedlot/PaymentImputationForm.svelte`
 - `frontend/src/lib/components/feedlot/SanitaryScheduleTable.svelte`
 - `frontend/src/lib/components/feedlot/TrendChart.svelte`
 - `frontend/src/lib/components/feedlot/WeighingForm.svelte`
@@ -922,6 +929,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/views/FeedlotDashboardView.svelte`
 - `frontend/src/lib/components/views/FeedlotLedgerView.svelte`
 - `frontend/src/lib/components/views/FeedlotLoadView.svelte`
+- `frontend/src/lib/components/views/FeedlotOutstandingView.svelte`
 - `frontend/src/lib/components/views/FeedlotScheduleView.svelte`
 - `frontend/src/lib/components/views/LobbyView.svelte`
 - `frontend/src/lib/components/views/ProfileView.svelte`
@@ -980,6 +988,8 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/LedgerTable.svelte`
 - `frontend/src/lib/components/feedlot/LoadingOrderForm.svelte`
 - `frontend/src/lib/components/feedlot/MetricCard.svelte`
+- `frontend/src/lib/components/feedlot/OutstandingTable.svelte`
+- `frontend/src/lib/components/feedlot/PaymentImputationForm.svelte`
 - `frontend/src/lib/components/feedlot/SanitaryScheduleTable.svelte`
 - `frontend/src/lib/components/feedlot/TrendChart.svelte`
 - `frontend/src/lib/components/feedlot/WeighingForm.svelte`
@@ -1095,6 +1105,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/views/FeedlotDashboardView.svelte`
 - `frontend/src/lib/components/views/FeedlotLedgerView.svelte`
 - `frontend/src/lib/components/views/FeedlotLoadView.svelte`
+- `frontend/src/lib/components/views/FeedlotOutstandingView.svelte`
 - `frontend/src/lib/components/views/FeedlotScheduleView.svelte`
 - `frontend/src/lib/components/views/LobbyView.svelte`
 - `frontend/src/lib/components/views/ProfileView.svelte`
@@ -1115,6 +1126,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/pages/feedlot/[id].astro`
 - `frontend/src/pages/feedlot/[id]/ledger.astro`
 - `frontend/src/pages/feedlot/[id]/load.astro`
+- `frontend/src/pages/feedlot/[id]/outstanding.astro`
 - `frontend/src/pages/feedlot/[id]/schedule.astro`
 - `frontend/src/pages/feedlot/index.astro`
 - `frontend/src/pages/healthz.ts`
