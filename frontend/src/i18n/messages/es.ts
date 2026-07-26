@@ -375,6 +375,32 @@ export const es = {
   feedlot_ledger_col_credit: "Crédito (ARS)",
   feedlot_ledger_col_balance: "Saldo (ARS)",
 
+  // Sanitary plan / vaccination schedule (adr-40)
+  feedlot_schedule_cta: "Plan sanitario",
+  feedlot_schedule_title: "Plan sanitario",
+  feedlot_schedule_intro:
+    "El calendario sanitario: cada dosis planificada con su vencimiento y su estado. Un plan es una intención, no un insumo aplicado — inscribir no genera cargo; la sanidad se cobra cuando efectivamente se aplica. El estado se deriva cruzando el plan contra las aplicaciones reales; no se guarda.",
+  feedlot_schedule_pending: "Dosis pendientes",
+  feedlot_schedule_pending_hint: "vencidas y sin aplicar",
+  feedlot_schedule_total: "Dosis planificadas",
+  feedlot_schedule_unit_doses: "dosis",
+  feedlot_schedule_calendar: "Calendario",
+  feedlot_schedule_calendar_desc:
+    "Cada dosis de cada plan asignado, ordenada por vencimiento.",
+  feedlot_schedule_col_plan: "Plan",
+  feedlot_schedule_col_target: "Destino",
+  feedlot_schedule_col_product: "Producto",
+  feedlot_schedule_col_due: "Vence",
+  feedlot_schedule_col_dose: "Dosis",
+  feedlot_schedule_col_status: "Estado",
+  feedlot_schedule_status_applied: "Aplicada",
+  feedlot_schedule_status_pending: "Pendiente",
+  feedlot_schedule_status_upcoming: "Próxima",
+  feedlot_schedule_empty: "No hay planes sanitarios asignados.",
+  feedlot_schedule_enroll_title: "Asignar un plan",
+  feedlot_schedule_enroll_desc:
+    "Inscribí un animal o lote en un plan a partir de una fecha. No genera cargo.",
+
   // Data-entry (bdd-13)
   feedlot_load_cta: "Cargar datos",
   feedlot_load_title: "Cargar datos",
@@ -458,6 +484,12 @@ export const es = {
   feedlot_form_applied_by: "Aplicado por",
   feedlot_form_notes: "Notas",
   feedlot_form_save_health: "Registrar sanidad",
+
+  // --- Enrollment (plan sanitario, adr-40) ---
+  feedlot_form_plan: "Plan sanitario",
+  feedlot_form_plan_placeholder: "Elegí un plan…",
+  feedlot_form_start_date: "Fecha de inicio",
+  feedlot_form_save_enrollment: "Asignar plan",
 
   // --- Loading order (dieta / mixer) ---
   feedlot_form_order_title: "Orden de carga (mixer)",

@@ -11,5 +11,10 @@ from apps.sanitary import views
 router = DefaultRouter()
 router.register("health-products", views.HealthProductViewSet, basename="health-product")
 router.register("health-events", views.HealthEventViewSet, basename="health-event")
+router.register("sanitary-plans", views.SanitaryPlanViewSet, basename="sanitary-plan")
+router.register(
+    "sanitary-plan-items", views.SanitaryPlanItemViewSet, basename="sanitary-plan-item"
+)
+router.register("plan-enrollments", views.PlanEnrollmentViewSet, basename="plan-enrollment")
 
 urlpatterns = router.urls

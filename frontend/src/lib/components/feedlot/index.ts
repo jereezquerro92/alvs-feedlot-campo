@@ -8,6 +8,8 @@ export { default as TrendChart } from "./TrendChart.svelte";
 export { default as ClientsTable } from "./ClientsTable.svelte";
 export { default as HerdTable } from "./HerdTable.svelte";
 export { default as LedgerTable } from "./LedgerTable.svelte";
+export { default as SanitaryScheduleTable } from "./SanitaryScheduleTable.svelte";
+export { default as EnrollmentForm } from "./EnrollmentForm.svelte";
 export { default as WeighingForm } from "./WeighingForm.svelte";
 export { default as FeedingForm } from "./FeedingForm.svelte";
 export { default as IntakeForm } from "./IntakeForm.svelte";

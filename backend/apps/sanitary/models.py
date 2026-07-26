@@ -88,3 +88,80 @@ class HealthEvent(models.Model):
 
     def __str__(self):
         return f"Health {self.date} {self.product_id} x{self.quantity}"
+
+
+class SanitaryPlan(models.Model):
+    """A reusable, editable template of scheduled sanitary applications (adr-40
+    decision 1). Holds no dates itself — its items are relative day offsets."""
+
+    name = models.CharField(max_length=120)
+    description = models.CharField(max_length=255, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        return self.name
+
+
+class SanitaryPlanItem(models.Model):
+    """One scheduled dose within a plan: a product due `day_offset` days after the
+    enrollment's start date (adr-40 decision 2). Editable catalog line."""
+
+    plan = models.ForeignKey(SanitaryPlan, on_delete=models.CASCADE, related_name="items")
+    product = models.ForeignKey(
+        HealthProduct, on_delete=models.PROTECT, related_name="plan_items"
+    )
+    day_offset = models.PositiveIntegerField(default=0)
+    dose = models.DecimalField(max_digits=12, decimal_places=3, default=Decimal("1"))
+    notes = models.CharField(max_length=120, blank=True)
+
+    class Meta:
+        ordering = ["day_offset", "id"]
+
+    def __str__(self):
+        return f"{self.plan_id} +{self.day_offset}d {self.product_id}"
+
+
+class PlanEnrollment(models.Model):
+    """An immutable event: a target (animal XOR lot) starts a plan on a date (adr-40
+    decision 1). Posts no ledger entry — billing stays with HealthEvent (decision 4)."""
+
+    plan = models.ForeignKey(
+        SanitaryPlan, on_delete=models.PROTECT, related_name="enrollments"
+    )
+    client = models.ForeignKey(
+        "clients.Client", on_delete=models.PROTECT, related_name="plan_enrollments"
+    )
+    animal = models.ForeignKey(
+        "livestock.Animal", on_delete=models.PROTECT, null=True, blank=True,
+        related_name="plan_enrollments",
+    )
+    lot = models.ForeignKey(
+        "livestock.Lot", on_delete=models.PROTECT, null=True, blank=True,
+        related_name="plan_enrollments",
+    )
+    start_date = models.DateField()
+    notes = models.CharField(max_length=255, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True
+    )
+
+    class Meta:
+        ordering = ["-start_date", "-id"]
+        indexes = [models.Index(fields=["client", "start_date"])]
+        constraints = [
+            models.CheckConstraint(
+                name="plan_enrollment_target_animal_xor_lot",
+                condition=(
+                    models.Q(animal__isnull=False, lot__isnull=True)
+                    | models.Q(animal__isnull=True, lot__isnull=False)
+                ),
+            )
+        ]
+
+    def __str__(self):
+        return f"Enrollment {self.plan_id} {self.start_date}"

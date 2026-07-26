@@ -118,6 +118,9 @@
           <Button href={`/feedlot/${client.id}/ledger/`} variant="secondary" size="sm">
             {t("feedlot_ledger_cta")}
           </Button>
+          <Button href={`/feedlot/${client.id}/schedule/`} variant="secondary" size="sm">
+            {t("feedlot_schedule_cta")}
+          </Button>
         </div>
       {/if}
     </div>

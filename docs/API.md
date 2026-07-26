@@ -287,6 +287,29 @@ Fase 12 closes the roadmap ([[adr-39-gross-margin-and-fx]]). `FxRate` is a refer
 | POST | `/api/fx-rates/` | `FxRateViewSet` | `FxRateWriteSerializer` | session | Upsert a manual FX rate through the service; rejects a non-positive rate (decision 2). Posts no ledger entry. |
 | GET | `/api/clients/{pk}/metrics/gross-margin/` | `GrossMarginView` | — (JSON) | session | Gross margin for the client and period. Query: `?start=&end=&price_source=&category=&currency=`. Returns `null`+`not_calculable` on missing growth/price/rate (decision 4). Posts no ledger entry (decision 5). |
 
+## Feedlot domain endpoints (Phase 13 — sanitary plan / vaccination schedule)
+
+Fase 13 adds the sanitary plan on the `sanitary` app ([[adr-40-sanitary-plan-schedule]]). A `SanitaryPlan` + its `SanitaryPlanItem` rows are a reusable editable **catalog** (full-CRUD `ModelViewSet`s — a plan is master data, [[adr-24-feedlot-domain]] rule 3): each item names a `HealthProduct` at a relative `day_offset` (days after enrollment start, decision 2). A `PlanEnrollment` binds a plan to one `animal` XOR `lot` with a `start_date` and is an **operational event** — `list`/`retrieve`/`create` only, no `update`/`destroy` ([[adr-40-sanitary-plan-schedule]] decision 1). The `schedule` detail-action is a **derived** read: it crosses each enrollment's calendar (`start_date + day_offset`) against existing `HealthEvent`s to report each dose as `applied`/`pending`/`upcoming`, computed on read and never stored (decision 3). Neither the plan nor the enrollment posts a ledger entry — billing stays with `HealthEvent` ([[adr-28-animal-lifecycle-and-sanitary]] decision 5, [[adr-40-sanitary-plan-schedule]] decision 4). Same surface policy — `session` auth, `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. No new env vars.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/sanitary-plans/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | List sanitary plans (catalog, editable). Each includes its nested `items` ([[adr-40-sanitary-plan-schedule]] decision 1). |
+| POST | `/api/sanitary-plans/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | Create a sanitary plan. |
+| GET | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | Retrieve one plan with its items. |
+| PUT | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | Replace a plan (catalog edit). |
+| PATCH | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | Partial update of a plan. |
+| DELETE | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | Delete a plan. |
+| GET | `/api/sanitary-plan-items/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | List plan items (filter `?plan=`). Catalog line, editable. |
+| POST | `/api/sanitary-plan-items/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | Add a scheduled dose (`product` + `day_offset` + `dose`) to a plan. |
+| GET | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | Retrieve one plan item. |
+| PUT | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | Replace a plan item. |
+| PATCH | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | Partial update of a plan item. |
+| DELETE | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | Delete a plan item. |
+| GET | `/api/plan-enrollments/` | `PlanEnrollmentViewSet` | `PlanEnrollmentSerializer` | session | List plan enrollments (immutable; filter `?client=`). |
+| GET | `/api/plan-enrollments/{id}/` | `PlanEnrollmentViewSet` | `PlanEnrollmentSerializer` | session | Retrieve one enrollment. |
+| POST | `/api/plan-enrollments/` | `PlanEnrollmentViewSet` | `PlanEnrollmentWriteSerializer` | session | Enroll one `animal` XOR `lot` into a plan with a `start_date`; validates in the service (active plan, target owned by client, active target, XOR) ([[adr-40-sanitary-plan-schedule]] decisions 5–6). Posts no ledger entry (decision 4). Create-only. |
+| GET | `/api/plan-enrollments/schedule/` | `PlanEnrollmentViewSet.schedule` | — (JSON) | session | Derived sanitary calendar for a client (`?client=` required, optional `?as_of=YYYY-MM-DD`). Each dose reports `applied`/`pending`/`upcoming` by crossing the schedule against existing `HealthEvent`s (decision 3); computed on read, never stored. No enrollments → empty list, never a filled state. `no-store`. |
+
 ## Contracts
 
 All rows below are authentication/identity surface; every response carries an explicit `Cache-Control` and is **`no-store`** — the `/accounts/` routes mutate or read the session, and `/api/me/` and `/api/restricted/` are authenticated ([[CACHE]], authenticated → `no-store`). Full flow and guards live in [[AUTH]]; these entries state only the endpoint contracts.

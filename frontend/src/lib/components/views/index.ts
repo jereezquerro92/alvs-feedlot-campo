@@ -12,3 +12,4 @@ export { default as FeedlotClientsView } from "./FeedlotClientsView.svelte";
 export { default as FeedlotDashboardView } from "./FeedlotDashboardView.svelte";
 export { default as FeedlotLoadView } from "./FeedlotLoadView.svelte";
 export { default as FeedlotLedgerView } from "./FeedlotLedgerView.svelte";
+export { default as FeedlotScheduleView } from "./FeedlotScheduleView.svelte";
