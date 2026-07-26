@@ -85,7 +85,7 @@ The feedlot is built as domain apps on the template spine ([[adr-24-feedlot-doma
 | GET | `/api/clients/{id}/metrics/account/` | `AccountEvolutionView` | — | session | Derived account-balance evolution series (points of date + balance). Null-contract. |
 | GET | `/api/ledger-entries/` | `LedgerEntryViewSet` | `LedgerEntrySerializer` | session | List immutable ledger entries (filter `?client=`); read-only — entries are never edited ([[adr-25-account-ledger]] rule 1). |
 | GET | `/api/ledger-entries/{id}/` | `LedgerEntryViewSet` | `LedgerEntrySerializer` | session | Retrieve one ledger entry. |
-| GET | `/api/payments/` | `PaymentViewSet` | `PaymentSerializer` | session | List payments (each posts a `credit` entry, [[adr-25-account-ledger]] rule 7). |
+| GET | `/api/payments/` | `PaymentViewSet` | `PaymentSerializer` | session | List payments (filter `?client=`; each posts a `credit` entry, [[adr-25-account-ledger]] rule 7). |
 | POST | `/api/payments/` | `PaymentViewSet` | `PaymentSerializer` | session | Register a payment; posts a `credit` `LedgerEntry` reducing the balance. |
 | GET | `/api/payments/{id}/` | `PaymentViewSet` | `PaymentSerializer` | session | Retrieve one payment. |
 | GET | `/api/animals/` | `AnimalViewSet` | `AnimalSerializer` | session | List individual animals (filter `?client=`). |
@@ -286,6 +286,40 @@ Fase 12 closes the roadmap ([[adr-39-gross-margin-and-fx]]). `FxRate` is a refer
 | GET | `/api/fx-rates/{id}/` | `FxRateViewSet` | `FxRateSerializer` | session | Retrieve one FX rate. |
 | POST | `/api/fx-rates/` | `FxRateViewSet` | `FxRateWriteSerializer` | session | Upsert a manual FX rate through the service; rejects a non-positive rate (decision 2). Posts no ledger entry. |
 | GET | `/api/clients/{pk}/metrics/gross-margin/` | `GrossMarginView` | — (JSON) | session | Gross margin for the client and period. Query: `?start=&end=&price_source=&category=&currency=`. Returns `null`+`not_calculable` on missing growth/price/rate (decision 4). Posts no ledger entry (decision 5). |
+
+## Feedlot domain endpoints (Phase 13 — sanitary plan / vaccination schedule)
+
+Fase 13 adds the sanitary plan on the `sanitary` app ([[adr-40-sanitary-plan-schedule]]). A `SanitaryPlan` + its `SanitaryPlanItem` rows are a reusable editable **catalog** (full-CRUD `ModelViewSet`s — a plan is master data, [[adr-24-feedlot-domain]] rule 3): each item names a `HealthProduct` at a relative `day_offset` (days after enrollment start, decision 2). A `PlanEnrollment` binds a plan to one `animal` XOR `lot` with a `start_date` and is an **operational event** — `list`/`retrieve`/`create` only, no `update`/`destroy` ([[adr-40-sanitary-plan-schedule]] decision 1). The `schedule` detail-action is a **derived** read: it crosses each enrollment's calendar (`start_date + day_offset`) against existing `HealthEvent`s to report each dose as `applied`/`pending`/`upcoming`, computed on read and never stored (decision 3). Neither the plan nor the enrollment posts a ledger entry — billing stays with `HealthEvent` ([[adr-28-animal-lifecycle-and-sanitary]] decision 5, [[adr-40-sanitary-plan-schedule]] decision 4). Same surface policy — `session` auth, `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. No new env vars.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/sanitary-plans/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | List sanitary plans (catalog, editable). Each includes its nested `items` ([[adr-40-sanitary-plan-schedule]] decision 1). |
+| POST | `/api/sanitary-plans/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | Create a sanitary plan. |
+| GET | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | Retrieve one plan with its items. |
+| PUT | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | Replace a plan (catalog edit). |
+| PATCH | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | Partial update of a plan. |
+| DELETE | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | Delete a plan. |
+| GET | `/api/sanitary-plan-items/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | List plan items (filter `?plan=`). Catalog line, editable. |
+| POST | `/api/sanitary-plan-items/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | Add a scheduled dose (`product` + `day_offset` + `dose`) to a plan. |
+| GET | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | Retrieve one plan item. |
+| PUT | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | Replace a plan item. |
+| PATCH | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | Partial update of a plan item. |
+| DELETE | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | Delete a plan item. |
+| GET | `/api/plan-enrollments/` | `PlanEnrollmentViewSet` | `PlanEnrollmentSerializer` | session | List plan enrollments (immutable; filter `?client=`). |
+| GET | `/api/plan-enrollments/{id}/` | `PlanEnrollmentViewSet` | `PlanEnrollmentSerializer` | session | Retrieve one enrollment. |
+| POST | `/api/plan-enrollments/` | `PlanEnrollmentViewSet` | `PlanEnrollmentWriteSerializer` | session | Enroll one `animal` XOR `lot` into a plan with a `start_date`; validates in the service (active plan, target owned by client, active target, XOR) ([[adr-40-sanitary-plan-schedule]] decisions 5–6). Posts no ledger entry (decision 4). Create-only. |
+| GET | `/api/plan-enrollments/schedule/` | `PlanEnrollmentViewSet.schedule` | — (JSON) | session | Derived sanitary calendar for a client (`?client=` required, optional `?as_of=YYYY-MM-DD`). Each dose reports `applied`/`pending`/`upcoming` by crossing the schedule against existing `HealthEvent`s (decision 3); computed on read, never stored. No enrollments → empty list, never a filled state. `no-store`. |
+
+## Feedlot domain endpoints (Phase 4a — payment-to-charge imputation)
+
+Fase 4a implements the item [[adr-25-account-ledger]] rule 7 deferred: explicit imputation of a payment against specific debit charges, with its own model, never mutating an entry ([[adr-41-payment-allocation]]). A `PaymentAllocation` links a `Payment` to a debit `LedgerEntry` with an `amount`; it posts **no** ledger entry and moves **no** balance — the total balance already moved when the payment posted its credit (decision 1). It is an **operational event**: `list`/`retrieve`/`create` only, no `update`/`destroy` — a wrong imputation is corrected by another allocation (decision 5). The write path goes through `impute_payment`, which validates in the service (debit of the same account, positive amount, no over-allocation of payment or debit) and, when no explicit lines are given, auto-imputes FIFO oldest-charge-first (decisions 2–3). The `outstanding` detail-action on `ClientViewSet` derives per-debit allocated/outstanding on read, never a stored field (decision 4). Same surface policy — `session` auth, `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. No new env vars.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/payment-allocations/` | `PaymentAllocationViewSet` | `PaymentAllocationSerializer` | session | List payment→charge allocations (immutable; filter `?client=` or `?payment=`). Read-only rows ([[adr-41-payment-allocation]] decision 5). |
+| POST | `/api/payment-allocations/` | `PaymentAllocationViewSet` | `PaymentAllocationWriteSerializer` | session | Impute a payment against charges via `impute_payment`: pass explicit `allocations` `[{entry, amount}]`, or omit them and set `auto=true` for FIFO oldest-first (decisions 2–3). Posts no ledger entry, moves no balance (decision 1). Create-only. |
+| GET | `/api/payment-allocations/{id}/` | `PaymentAllocationViewSet` | `PaymentAllocationSerializer` | session | Retrieve one allocation. |
+| GET | `/api/clients/{id}/outstanding/` | `ClientViewSet.outstanding` | — (JSON) | session | Derived per-charge outstanding for the client: each debit with `amount`, `allocated` (Σ allocations) and `outstanding` (`amount` − allocated), computed on read ([[adr-41-payment-allocation]] decision 4). `no-store`. |
 
 ## Contracts
 

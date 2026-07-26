@@ -15,7 +15,13 @@ from decimal import Decimal
 from django.db import transaction
 from django.db.models import Sum
 
-from apps.ledger.models import Concept, Direction, LedgerEntry, Payment
+from apps.ledger.models import (
+    Concept,
+    Direction,
+    LedgerEntry,
+    Payment,
+    PaymentAllocation,
+)
 
 
 def recompute_balance(account):
@@ -91,3 +97,133 @@ def register_payment(*, account, amount, date, method="transfer", reference="", 
     entry.source_id = payment.id
     entry.save(update_fields=["source_id"])
     return payment
+
+
+# --- payment-to-charge imputation (adr-41) ---------------------------------
+
+
+def _allocated_for_payment(payment):
+    """Sum already imputed from this payment."""
+    total = PaymentAllocation.objects.filter(payment=payment).aggregate(
+        s=Sum("amount")
+    )["s"]
+    return total or Decimal("0")
+
+
+def _allocated_for_entry(entry):
+    """Sum already imputed against this debit, across all payments."""
+    total = PaymentAllocation.objects.filter(entry=entry).aggregate(
+        s=Sum("amount")
+    )["s"]
+    return total or Decimal("0")
+
+
+def outstanding_charges(account):
+    """Per-debit imputation state, derived — never a stored field (adr-41 dec 4).
+
+    Returns one dict per debit entry of the account (oldest first) with:
+    `entry`, `date`, `concept`, `amount`, `allocated` (Σ PaymentAllocation),
+    `outstanding` (`amount` − allocated).
+    """
+    debits = LedgerEntry.objects.filter(
+        account=account, direction=Direction.DEBIT
+    ).order_by("date", "id")
+    allocated = {
+        row["entry_id"]: (row["total"] or Decimal("0"))
+        for row in PaymentAllocation.objects.filter(entry__account=account)
+        .values("entry_id")
+        .annotate(total=Sum("amount"))
+    }
+    charges = []
+    for entry in debits:
+        a = allocated.get(entry.id, Decimal("0"))
+        charges.append(
+            {
+                "entry": entry.id,
+                "date": entry.date,
+                "concept": entry.concept,
+                "amount": entry.amount,
+                "allocated": a,
+                "outstanding": entry.amount - a,
+            }
+        )
+    return charges
+
+
+def _fifo_allocations(payment):
+    """Auto-imputation lines: oldest unpaid debit first (adr-41 decision 3)."""
+    remaining = Decimal(payment.amount) - _allocated_for_payment(payment)
+    lines = []
+    for charge in outstanding_charges(payment.account):
+        if remaining <= 0:
+            break
+        outstanding = charge["outstanding"]
+        if outstanding <= 0:
+            continue
+        take = min(outstanding, remaining)
+        lines.append({"entry": charge["entry"], "amount": take})
+        remaining -= take
+    return lines
+
+
+@transaction.atomic
+def impute_payment(*, payment, allocations=None, auto=False, created_by=None):
+    """Impute a payment against debit charges (adr-41).
+
+    `allocations`: iterable of {"entry": LedgerEntry|id, "amount": <decimal-ish>}.
+    When omitted (or empty) and `auto=True`, imputes FIFO oldest-charge-first.
+    Creates PaymentAllocation rows; posts NO ledger entry and moves NO balance —
+    the total already moved when the payment posted its credit (decision 1).
+    Validates in the service (decision 2): each entry is a debit of the payment's
+    own account, amount is positive, and neither the payment nor any debit is
+    over-allocated. Raises ValueError on any violation (the whole call rolls back).
+    """
+    if not allocations:
+        if not auto:
+            raise ValueError("no allocations given and auto is False")
+        allocations = _fifo_allocations(payment)
+
+    # Resolve, validate, and accumulate per-payment / per-entry running totals so
+    # a multi-line call cannot over-allocate within itself.
+    payment_running = _allocated_for_payment(payment)
+    payment_amount = Decimal(payment.amount)
+    entry_running = {}
+    created = []
+    for line in allocations:
+        raw_entry = line["entry"]
+        entry = (
+            raw_entry
+            if isinstance(raw_entry, LedgerEntry)
+            else LedgerEntry.objects.filter(pk=raw_entry).first()
+        )
+        if entry is None:
+            raise ValueError(f"ledger entry {raw_entry} does not exist")
+        amount = Decimal(str(line["amount"]))
+        if amount <= 0:
+            raise ValueError("allocation amount must be positive")
+        if entry.account_id != payment.account_id:
+            raise ValueError("entry belongs to a different account than the payment")
+        if entry.direction != Direction.DEBIT:
+            raise ValueError("a payment can only be imputed against a debit charge")
+
+        payment_running += amount
+        if payment_running > payment_amount:
+            raise ValueError("allocations exceed the payment amount")
+
+        already = entry_running.get(entry.id)
+        if already is None:
+            already = _allocated_for_entry(entry)
+        already += amount
+        if already > entry.amount:
+            raise ValueError("allocations exceed the charge amount")
+        entry_running[entry.id] = already
+
+        created.append(
+            PaymentAllocation(
+                payment=payment, entry=entry, amount=amount, created_by=created_by
+            )
+        )
+
+    return [PaymentAllocation.objects.create(
+        payment=obj.payment, entry=obj.entry, amount=obj.amount, created_by=obj.created_by
+    ) for obj in created]

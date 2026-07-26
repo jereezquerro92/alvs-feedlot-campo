@@ -4,7 +4,7 @@
  * Docs: [[FRONTEND]]
  * LIVE-DOC:END */
 import Base from "../../../layouts/Base.astro";
-import { FeedlotLoadView } from "$lib/components/views";
+import { FeedlotOutstandingView } from "$lib/components/views";
 import { hasRole } from "$lib/auth";
 import { requireRole } from "$lib/authGate";
 import { t } from "../../../i18n";
@@ -44,50 +44,37 @@ async function getJson(path: string): Promise<any> {
 }
 
 const client = await getJson(`/api/clients/${id}/`);
-// An unknown client id bounces back to the clients list, not a broken form.
+// An unknown client id bounces back to the clients list, not a broken page.
 if (!client) return Astro.redirect("/feedlot/");
 
-const [animalsData, lotsData, feedTypesData, healthProductsData, pensData, rationsData] =
-  await Promise.all([
-    getJson(`/api/animals/?client=${id}`),
-    getJson(`/api/lots/?client=${id}`),
-    getJson(`/api/feed-types/`),
-    getJson(`/api/health-products/`),
-    getJson(`/api/pens/`),
-    getJson(`/api/rations/`),
-  ]);
+const [account, outstandingData, paymentsData, allocationsData] = await Promise.all([
+  getJson(`/api/clients/${id}/account/`),
+  getJson(`/api/clients/${id}/outstanding/`),
+  getJson(`/api/payments/?client=${id}`),
+  getJson(`/api/payment-allocations/?client=${id}`),
+]);
 
 const asArray = (d: unknown): any[] =>
   Array.isArray(d) ? d : ((d as any)?.results ?? []);
 
-const animals = asArray(animalsData);
-const lots = asArray(lotsData);
-const feedTypes = asArray(feedTypesData);
-const healthProducts = asArray(healthProductsData);
-const pens = asArray(pensData);
-const rations = asArray(rationsData);
-
-// The date default is server-supplied so the field is pre-filled without a
-// client clock ([[adr-22-showcase-ready-components]] — the caller owns "today").
-const today = new Date().toISOString().slice(0, 10);
+const charges = asArray(outstandingData);
+const payments = asArray(paymentsData);
+const allocations = asArray(allocationsData);
 
 const pending = me !== null && !hasRole(me);
 
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Base title={`${t("feedlot_load_title")} · ${client.name}`}>
-  <FeedlotLoadView
+<Base title={`${client.name} · ${t("feedlot_impute_title")}`}>
+  <FeedlotOutstandingView
     client:load
     projectSlug={publicProjectSlug}
     client={client}
-    animals={animals}
-    lots={lots}
-    feedTypes={feedTypes}
-    healthProducts={healthProducts}
-    pens={pens}
-    rations={rations}
-    today={today}
+    account={account}
+    charges={charges}
+    payments={payments}
+    allocations={allocations}
     publicBackendUrl={publicBackendUrl}
     me={me}
     pending={pending}

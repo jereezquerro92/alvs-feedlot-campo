@@ -5,7 +5,6 @@
  * LIVE-DOC:END */
 import Base from "../../layouts/Base.astro";
 import { FeedlotClientsView } from "$lib/components/views";
-import SessionBadge from "$lib/components/auth/SessionBadge.svelte";
 import { hasRole } from "$lib/auth";
 import { requireRole } from "$lib/authGate";
 import { t } from "../../i18n";
@@ -50,15 +49,12 @@ Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
 <Base title={t("feedlot_clients_title")}>
-  <FeedlotClientsView projectSlug={publicProjectSlug} clients={clients}>
-    <SessionBadge
-      client:load
-      me={me}
-      pending={pending}
-      publicBackendUrl={publicBackendUrl}
-      loginLabel={t("auth_login")}
-      logoutLabel={t("auth_logout")}
-      slot="session"
-    />
-  </FeedlotClientsView>
+  <FeedlotClientsView
+    client:load
+    projectSlug={publicProjectSlug}
+    clients={clients}
+    publicBackendUrl={publicBackendUrl}
+    me={me}
+    pending={pending}
+  />
 </Base>

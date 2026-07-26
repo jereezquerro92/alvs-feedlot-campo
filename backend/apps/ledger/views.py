@@ -4,10 +4,16 @@ Docs: [[BACKEND]]
 API: [[API]]
 LIVE-DOC:END"""
 
-from rest_framework import mixins, viewsets
+from rest_framework import mixins, status, viewsets
+from rest_framework.response import Response
 
-from apps.ledger.models import LedgerEntry, Payment
-from apps.ledger.serializers import LedgerEntrySerializer, PaymentSerializer
+from apps.ledger.models import LedgerEntry, Payment, PaymentAllocation
+from apps.ledger.serializers import (
+    LedgerEntrySerializer,
+    PaymentAllocationSerializer,
+    PaymentAllocationWriteSerializer,
+    PaymentSerializer,
+)
 
 
 class LedgerEntryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
@@ -26,5 +32,38 @@ class LedgerEntryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
 class PaymentViewSet(
     mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
 ):
-    queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
+
+    def get_queryset(self):
+        qs = Payment.objects.all()
+        client_id = self.request.query_params.get("client")
+        if client_id:
+            qs = qs.filter(account__client_id=client_id)
+        return qs
+
+
+class PaymentAllocationViewSet(
+    mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
+):
+    """Payment→charge imputation (adr-41). Immutable: create/list/retrieve only —
+    a wrong imputation is corrected by another allocation (decision 5)."""
+
+    def get_queryset(self):
+        qs = PaymentAllocation.objects.select_related("payment", "entry").all()
+        client_id = self.request.query_params.get("client")
+        payment_id = self.request.query_params.get("payment")
+        if client_id:
+            qs = qs.filter(entry__account__client_id=client_id)
+        if payment_id:
+            qs = qs.filter(payment_id=payment_id)
+        return qs
+
+    def get_serializer_class(self):
+        if self.action == "create":
+            return PaymentAllocationWriteSerializer
+        return PaymentAllocationSerializer
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response(serializer.save(), status=status.HTTP_201_CREATED)

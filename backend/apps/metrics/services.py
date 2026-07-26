@@ -317,6 +317,148 @@ def pen_occupancy_report(*, pen, start=None, end=None):
     }
 
 
+# --- pen conversion, the honest cut (Phase 4b) -------------------------------
+
+def pen_conversion(*, pen, start=None, end=None):
+    """Per-pen feed conversion — the honest cut of the closeout that adr-33 decision
+    7 and adr-34 decision 5 deferred (adr-42).
+
+    Conversion is kg fed to the pen ÷ kg gained IN the pen. Kilos fed read from
+    `FeedingEvent.pen`. Kilos gained are attributed to the pen ONLY for weighing
+    segments a target spent entirely inside one continuous stay in THIS pen, derived
+    from `PenPlacement` in/out events (adr-42 decision 2). A segment whose interval
+    spans a pen change — or a target with no placement pinning it here — is NOT
+    attributed: guessing which pen grew the animal is exactly the fabricated number
+    adr-29 rule 2 forbids. Segments that can't be pinned are counted so "grew
+    elsewhere / not placed" reads apart from "did not grow" (decision 3).
+
+    Returns `conversion=None` with a `not_calculable` reason whenever there is
+    nothing honest to divide (decision 4)."""
+    from apps.feedyard.models import PenPlacement
+
+    # Views hand dates in already parsed; coerce ISO strings too so the Python-level
+    # segment comparisons below never mix str and date.
+    start = date_cls.fromisoformat(start) if isinstance(start, str) else start
+    end = date_cls.fromisoformat(end) if isinstance(end, str) else end
+    lo, hi = _bounds(start, end)
+
+    fed = (
+        FeedingEvent.objects.filter(pen=pen, date__gte=lo, date__lte=hi).aggregate(
+            t=Sum("quantity")
+        )["t"]
+        or ZERO
+    )
+
+    gained = ZERO
+    attributed = unattributed = skipped = 0
+
+    # Only targets ever placed into this pen can contribute gain here.
+    animal_ids = set(
+        PenPlacement.objects.filter(pen=pen, animal__isnull=False).values_list(
+            "animal_id", flat=True
+        )
+    )
+    lot_ids = set(
+        PenPlacement.objects.filter(pen=pen, lot__isnull=False).values_list(
+            "lot_id", flat=True
+        )
+    )
+
+    for animal in Animal.objects.filter(id__in=animal_ids):
+        events = list(PenPlacement.objects.filter(animal=animal).order_by("date", "id"))
+        series = [s for s in growth_series(animal=animal) if lo <= s["date"] <= hi]
+        g, a, u, s_ = _attribute_segments(
+            series, events, pen_id=pen.id, head_factor=lambda row: 1
+        )
+        gained += g
+        attributed += a
+        unattributed += u
+        skipped += s_
+
+    for lot in Lot.objects.filter(id__in=lot_ids):
+        events = list(PenPlacement.objects.filter(lot=lot).order_by("date", "id"))
+        series = [s for s in growth_series(lot=lot) if lo <= s["date"] <= hi]
+        g, a, u, s_ = _attribute_segments(
+            series, events, pen_id=pen.id, head_factor=lambda row: row["head_count"] or 0
+        )
+        gained += g
+        attributed += a
+        unattributed += u
+        skipped += s_
+
+    base = {
+        "pen": pen.id,
+        "code": pen.code,
+        "kilos_fed": fed,
+        "kilos_gained": gained,
+        "segments_attributed": attributed,
+        "segments_unattributed": unattributed,
+        "segments_skipped": skipped,
+    }
+    if attributed == 0:
+        return {**base, "conversion": None, "not_calculable": "no_attributable_growth"}
+    if gained <= ZERO:
+        return {**base, "conversion": None, "not_calculable": "no_weight_gain"}
+    if fed <= ZERO:
+        return {**base, "conversion": None, "not_calculable": "no_feed_recorded"}
+    return {**base, "conversion": fed / gained, "not_calculable": ""}
+
+
+def _attribute_segments(series, events, *, pen_id, head_factor):
+    """Sum gain over calculable segments spent wholly in one stay in `pen_id` (adr-42
+    decisions 2, 3).
+
+    A segment (previous→row) is attributed to the pen the target sat in as of the
+    previous reading, but only when no placement event falls strictly inside the
+    interval (no pen change mid-segment). Non-calculable ADG segments (adr-28 rule 2)
+    are skipped; calculable segments belonging to another pen — or to no pen — are
+    counted as unattributed. Returns (gained, attributed, unattributed, skipped)."""
+    total = ZERO
+    attributed = unattributed = skipped = 0
+    previous = None
+    for row in series:
+        if previous is not None:
+            if row["adg"] is None:
+                skipped += 1
+            else:
+                a, b = previous["date"], row["date"]
+                moved_mid = any(a < e.date < b for e in events)
+                where = _pen_at(events, a)
+                if not moved_mid and where == pen_id:
+                    delta = row["weight_per_head"] - previous["weight_per_head"]
+                    total += delta * Decimal(head_factor(row))
+                    attributed += 1
+                else:
+                    unattributed += 1
+        previous = row
+    return total, attributed, unattributed, skipped
+
+
+def _pen_at(events, d):
+    """Pen id the target sits in as of date `d` inclusive, or None (adr-42 decision 2).
+
+    `events` is the target's `PenPlacement` rows ordered by (date, id); an `in` sets
+    the pen, an `out` clears it."""
+    from apps.feedyard.models import PenPlacement
+
+    current = None
+    for event in events:
+        if event.date > d:
+            break
+        current = event.pen_id if event.direction == PenPlacement.Direction.IN else None
+    return current
+
+
+def pen_closeout(*, pen, start=None, end=None):
+    """The full honest pen closeout: occupancy (adr-34) plus feed conversion (adr-42).
+
+    Both halves derive from events; the conversion carries its own `not_calculable`
+    when no segment can be honestly pinned to the pen. The occupancy half is always
+    affirmable; the conversion half is the honest subset."""
+    occupancy = pen_occupancy_report(pen=pen, start=start, end=end)
+    return {**occupancy, "conversion": pen_conversion(pen=pen, start=start, end=end)}
+
+
 # --- consistency -------------------------------------------------------------
 
 def inconsistencies(*, client):

@@ -12,6 +12,7 @@ from apps.clients.models import Account, Client
 from apps.clients.serializers import AccountSerializer, ClientSerializer
 from apps.ledger.models import LedgerEntry
 from apps.ledger.serializers import LedgerEntrySerializer
+from apps.ledger.services import outstanding_charges
 
 
 class ClientViewSet(viewsets.ModelViewSet):
@@ -30,3 +31,9 @@ class ClientViewSet(viewsets.ModelViewSet):
             .order_by("-date", "-id")
         )
         return Response(LedgerEntrySerializer(entries, many=True).data)
+
+    @action(detail=True, methods=["get"])
+    def outstanding(self, request, pk=None):
+        """Per-charge outstanding, derived on read (adr-41 decision 4)."""
+        account = Account.objects.get(client_id=pk)
+        return Response(outstanding_charges(account))

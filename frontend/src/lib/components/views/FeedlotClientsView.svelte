@@ -4,16 +4,23 @@
      LIVE-DOC:END -->
 
 <!--
-  The feedlot clients index page ([[FEEDLOT]]). Read-only: it lists clients and
-  their account balance and links each to its dashboard. Copy resolves through
-  the i18n layer ([[LOCALIZATION]]); values are Spanish, keys English. Mounts
-  with zero props and never throws ([[adr-22-showcase-ready-components]] rule 1).
+  The feedlot clients index page ([[FEEDLOT]]). Lists clients and their account
+  balance, links each to its dashboard, and carries the "new client" form — a write
+  through the declared `POST /api/clients/` endpoint ([[adr-24-feedlot-domain]] rule
+  3). Like [[FeedlotLoadView]] this is a single hydrated island that renders its own
+  SessionBadge and write form (rung 3, [[adr-04-frontend-and-design-system]] rule 3),
+  rather than receiving them as slotted sub-islands. Copy resolves through the i18n
+  layer ([[LOCALIZATION]]); values Spanish, keys English. Mounts with zero props and
+  never throws, and a bare mount issues no write ([[adr-22-showcase-ready-components]]
+  rules 1–2).
 -->
 <script lang="ts">
   import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
   import { SectionTitle } from "$lib/components/primitives/titles";
-  import { ClientsTable } from "$lib/components/feedlot";
+  import SessionBadge from "$lib/components/auth/SessionBadge.svelte";
+  import { ClientsTable, ClientForm } from "$lib/components/feedlot";
+  import type { Me } from "$lib/types/user";
   import { t } from "../../../i18n";
 
   type Client = {
@@ -27,16 +34,34 @@
   let {
     projectSlug = "",
     clients = [],
+    publicBackendUrl = "",
+    me = null,
+    pending = false,
   }: {
     projectSlug?: string;
     clients?: Client[];
+    publicBackendUrl?: string;
+    me?: Me | null;
+    pending?: boolean;
   } = $props();
+
+  // A successful create reloads so the new client appears in the list. The reload
+  // is submit-initiated, never on mount ([[adr-22-showcase-ready-components]] rule 2).
+  function reload(): void {
+    if (typeof window !== "undefined") window.location.reload();
+  }
 </script>
 
 <div class="min-h-screen flex flex-col">
   <header class="flex w-full items-center justify-between gap-4 px-6 pt-8 sm:px-10">
     <Badge variant="outline" class="text-sm font-semibold tracking-wide">{projectSlug}</Badge>
-    <slot name="session" />
+    <SessionBadge
+      {me}
+      {pending}
+      {publicBackendUrl}
+      loginLabel={t("auth_login")}
+      logoutLabel={t("auth_logout")}
+    />
   </header>
 
   <main class="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-12">
@@ -44,6 +69,15 @@
       <SectionTitle as="h1">{t("feedlot_clients_title")}</SectionTitle>
       <p class="max-w-2xl text-muted-foreground">{t("feedlot_clients_intro")}</p>
     </div>
+
+    <details class="rounded-lg border border-border/40 bg-card p-4 shadow-sm">
+      <summary class="cursor-pointer text-sm font-medium text-foreground">
+        {t("feedlot_form_new_client_cta")}
+      </summary>
+      <div class="pt-4">
+        <ClientForm {publicBackendUrl} onsaved={reload} />
+      </div>
+    </details>
 
     <ClientsTable
       {clients}
