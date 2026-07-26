@@ -24,6 +24,7 @@ class Concept(models.TextChoices):
     SERVICE = "service", "Servicio"
     ADJUSTMENT = "adjustment", "Ajuste"
     PAYMENT = "payment", "Pago"
+    SALE = "sale", "Venta"  # own-cattle sale credit (adr-43)
 
 
 class Direction(models.TextChoices):

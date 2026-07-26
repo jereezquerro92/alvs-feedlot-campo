@@ -89,6 +89,31 @@ def kilos_gained(*, client, start=None, end=None):
     }
 
 
+def target_kilos_gained(*, animal=None, lot=None):
+    """Kilos put on by ONE animal or lot over its whole series, honest-cut.
+
+    Reuses the same segment logic as `kilos_gained` so there is a single
+    definition of "kilos gained" (adr-29 rule 1): only segments whose ADG is
+    calculable count (adr-28 rule 2). Used by the sale settlement (adr-43) to
+    value a boarding client's engorde commission. Returns kilos plus the
+    measured/skipped segment counts so the caller can tell "no growth" apart
+    from "not measured".
+    """
+    if animal is not None:
+        series = growth_series(animal=animal)
+        gained, measured, skipped = _sum_segments(series, head_factor=lambda row: 1)
+    else:
+        series = growth_series(lot=lot)
+        gained, measured, skipped = _sum_segments(
+            series, head_factor=lambda row: row["head_count"] or 0
+        )
+    return {
+        "kilos_gained": gained,
+        "segments_measured": measured,
+        "segments_skipped": skipped,
+    }
+
+
 def _sum_segments(series, *, head_factor):
     """Sum per-head deltas × head count over the calculable segments only."""
     total = ZERO

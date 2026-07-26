@@ -203,7 +203,14 @@ class Death(LifecycleEvent):
 
 
 class Exit(LifecycleEvent):
-    """An exit: sale, transfer back to the client, or other. Informational price only."""
+    """An exit: sale, transfer back to the client, or other.
+
+    A `kind=sale` exit settles through the ledger (adr-43): a boarding client's
+    sale posts an engorde-commission debit, an own-cattle sale posts a sale
+    credit on the own account. `sale_price_per_kg` is the price the settlement
+    snapshots (adr-25 rule 3), not merely informational. Deaths and non-sale
+    exits post nothing (adr-28 decision 3, as amended).
+    """
 
     class Kind(models.TextChoices):
         SALE = "sale", "Venta"
@@ -216,6 +223,11 @@ class Exit(LifecycleEvent):
     weight = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     sale_price_per_kg = models.DecimalField(
         max_digits=14, decimal_places=4, null=True, blank=True
+    )
+    # Boarding-only: percent of engorde the feedlot charges as commission (adr-43).
+    # Ignored for own cattle, whose sale posts the full produced value as a credit.
+    engorde_commission_pct = models.DecimalField(
+        max_digits=6, decimal_places=3, null=True, blank=True
     )
 
     class Meta(LifecycleEvent.Meta):

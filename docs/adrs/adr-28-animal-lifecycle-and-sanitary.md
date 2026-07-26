@@ -1,6 +1,14 @@
+---
+title: adr-28-animal-lifecycle-and-sanitary
+type: adr
+status: active
+created: 2026-07-21
+tags: [adr, feedlot, livestock, sanitary, lifecycle, phase-2]
+---
+
 # ADR-28 — Ciclo del animal y la app `sanitary`
 
-**Estado:** propuesto (Fase 2)
+**Estado:** activo (Fase 2)
 **Contexto:** extiende [[adr-24-feedlot-domain]], [[adr-25-account-ledger]] y [[adr-26-livestock-individual-and-lot]].
 
 ## Contexto
@@ -34,16 +42,24 @@ por engorde. Un GDP calculado sobre el total mide cualquier cosa menos crecimien
 La alternativa —estimar contra un peso teórico— produce un número plausible y
 falso; un hueco explícito es preferible a un dato que nadie puede auditar.
 
-### 3. Muertes y salidas no tocan el ledger
+### 3. Las muertes no tocan el ledger; la salida-venta se liquida por [[adr-43-sale-settlement]]
 
-Ninguno de los dos genera asiento. El alimento y la sanidad ya consumidos quedan
-cobrados; una muerte no los revierte. El `sale_price_per_kg` de una salida es
-informativo: la venta es del cliente, no del feedlot.
+Una **muerte** (`Death`) no genera asiento: el alimento y la sanidad ya consumidos
+quedan cobrados y una muerte no los revierte. Una **salida** (`Exit`) tampoco revierte
+esos cargos; y en su tipo `transfer`/`other` (retiro sin venta) sigue sin postear nada.
+La **salida-venta** (`Exit.kind=sale`) **sí liquida**, según el modelo comercial que fijó
+el dueño y que rige [[adr-43-sale-settlement]]: hacienda de cliente (`kind=boarding`)
+cobra una comisión de engorde (débito de servicio); hacienda propia (`kind=own`) registra
+el producido como crédito en la cuenta propia. El `sale_price_per_kg` de la salida dejó de
+ser meramente informativo: es el precio que la liquidación fotografía
+([[adr-25-account-ledger]] regla 3).
 
-*Por qué:* el ledger cobra insumos entregados. Revertir cargos por mortandad
-convertiría al feedlot en asegurador del cliente, que es una decisión comercial,
-no técnica — y si algún día se toma, se implementa como un `adjustment` explícito
-y auditable, no como un efecto colateral automático.
+*Por qué:* el ledger cobra insumos entregados, y por eso una muerte no revierte cargos —
+hacerlo convertiría al feedlot en asegurador del cliente, decisión comercial y no técnica;
+si algún día se toma, entra como un `adjustment` explícito y auditable, no como efecto
+colateral automático. La venta es distinta: el dueño definió que la hotelería cobra por el
+engorde y que la hacienda propia produce un ingreso propio, y esa liquidación llega como su
+propio ADR ([[adr-25-account-ledger]] regla 6), sin mutar ningún asiento existente.
 
 ### 4. La app se llama `sanitary`, no `health`
 

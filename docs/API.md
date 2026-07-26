@@ -111,7 +111,7 @@ The feedlot is built as domain apps on the template spine ([[adr-24-feedlot-doma
 | POST | `/api/deaths/` | `DeathViewSet` | `DeathWriteSerializer` | session | Register a death for one `animal` XOR `lot`; posts no ledger entry ([[adr-28-animal-lifecycle-and-sanitary]] decision 3). |
 | GET | `/api/exits/` | `ExitViewSet` | `ExitSerializer` | session | List exits (immutable lifecycle event). |
 | GET | `/api/exits/{id}/` | `ExitViewSet` | `ExitSerializer` | session | Retrieve one exit. |
-| POST | `/api/exits/` | `ExitViewSet` | `ExitWriteSerializer` | session | Register an exit for one `animal` XOR `lot`; `sale_price_per_kg` is informative, posts no ledger entry in the initial phases ([[adr-25-account-ledger]] rule 6, [[adr-28-animal-lifecycle-and-sanitary]] decision 3). |
+| POST | `/api/exits/` | `ExitViewSet` | `ExitWriteSerializer` | session | Register an exit for one `animal` XOR `lot`. A `kind=sale` exit settles through the ledger ([[adr-43-sale-settlement]]): a boarding client posts an engorde-commission `service` debit (`commission_pct`×kilos_gained×`sale_price_per_kg`), own cattle post a `sale` credit (`weight`×`sale_price_per_kg`) on the own account. Missing inputs → no posting (honest cut, [[adr-29-metrics-derivation]]). Deaths and non-sale exits post nothing ([[adr-28-animal-lifecycle-and-sanitary]] decision 3, as amended). |
 | GET | `/api/feed-types/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | List feed-type catalog rows (editable, [[adr-24-feedlot-domain]] rule 3). |
 | POST | `/api/feed-types/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | Create a feed type. |
 | GET | `/api/feed-types/{id}/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | Retrieve one feed type. |

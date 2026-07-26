@@ -1,9 +1,10 @@
-# 15 · Liquidación de venta — propuesta diferida (Fase 4c)
+# 15 · Liquidación de venta (Fase 4c)
 
-> **No se construye ahora.** Este documento evalúa la liquidación de venta y la
-> **difiere al dueño**: no es una decisión técnica, es una decisión comercial que
-> reabre una regla de doctrina, y por eso no puede tomarla el agente por su cuenta.
-> Queda como pedido de decisión, no como diseño cerrado.
+> **Decidido y construido.** El dueño definió el modelo comercial (2026-07-26) y la
+> liquidación se implementó en [[adr-43-sale-settlement]]. Este documento conserva el
+> análisis previo —las tres interpretaciones y las preguntas— como registro de por qué
+> se difirió y cómo se resolvió. La sección **"Lo que decidió el dueño"** al pie fija el
+> resultado; el resto es historia de la decisión.
 
 ## Por qué está diferido (no es una omisión, es una regla)
 
@@ -79,10 +80,28 @@ En cuanto haya respuesta, el trabajo entra por el flujo normal, sin excepción:
 3. La fila en [[API]] antes del código, y el código nace por [[TDD]]
    ([[adr-03-api-and-backend]], [[adr-07-development-flow]]).
 
-## Estado
+## Lo que decidió el dueño (2026-07-26) — construido en [[adr-43-sale-settlement]]
 
-**Diferido al dueño.** No hay código ni ADR de liquidación en esta tanda —
-deliberadamente. Las otras tres cosas de la Fase 4 (imputación de pagos, cierre de
-ganancia por corral, y esta) se separaron por riesgo: las dos primeras eran adiciones
-que la doctrina ya habilitaba y se construyeron; esta reabre una regla de negocio y se
-frena hasta que el dueño defina el modelo.
+La liquidación se diferencia por de quién es la hacienda (`Client.kind`), y el dueño
+eligió el modelo **1 + 2 combinados**, descartando el consignatario puro (modelo 3):
+
+1. **Hacienda de cliente (`kind=boarding`).** El cliente saca las vacas, vende y cobra
+   la venta; el feedlot cobra una **comisión de engorde** — un porcentaje sobre los kilos
+   que el animal/lote engordó en el feedlot. Formula:
+   `comisión = (pct/100) × kilos_ganados × sale_price_per_kg`, donde `kilos_ganados` se
+   mide de pesaje a pesaje sobre los tramos medibles (corte honesto, adr-29). Postea un
+   **débito** `concept=service` a la cuenta del cliente.
+2. **Hacienda propia (`kind=own`).** La venta es del feedlot: el producido
+   (`weight × sale_price_per_kg`) se registra como **crédito** `concept=sale` en la
+   cuenta propia, compensando los costos ya acumulados (saldo neto → margen).
+
+**Respuestas a las preguntas de arriba:** (1) ambas haciendas, con tratamiento distinto;
+(2) en hotelería el feedlot cobra comisión de engorde, no cierra sin cobrar; (3) los
+cargos de alimento/sanidad siguen siendo saldo del cliente, la comisión es un cargo más;
+(4) boarding → cuenta del cliente (débito), propia → cuenta propia (crédito);
+(5) la venta propia es un `LedgerEntry` de la cuenta `own`, no un libro aparte;
+(6) la liquidación aplica **hacia adelante** — las salidas ya cargadas no se reprocesan.
+
+**Doctrina:** [[adr-25-account-ledger]] regla 6 se cumple (llega como su propio ADR);
+[[adr-28-animal-lifecycle-and-sanitary]] decisión 3 se enmendó in-place con consentimiento
+del dueño (adr-00 regla 4b) — las muertes siguen sin asiento, solo la salida-venta liquida.
