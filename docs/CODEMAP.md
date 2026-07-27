@@ -104,6 +104,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/api_urls.py`
 - `backend/apps/users/models.py`
 - `backend/apps/users/permissions.py`
+- `backend/apps/users/roles.py`
 - `backend/apps/users/serializers.py`
 - `backend/apps/users/urls.py`
 - `backend/apps/users/views.py`
@@ -333,6 +334,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/models.py`
 - `backend/apps/users/oidc.py`
 - `backend/apps/users/permissions.py`
+- `backend/apps/users/roles.py`
 - `backend/apps/users/serializers.py`
 - `backend/apps/users/services.py`
 - `backend/apps/users/signals.py`
@@ -343,10 +345,13 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/test_cognito_live.py`
 - `backend/apps/users/test_oidc.py`
 - `backend/apps/users/test_rbac.py`
+- `backend/apps/users/test_roles.py`
 - `backend/apps/users/test_theme.py`
 - `backend/apps/users/tests.py`
 - `backend/apps/users/urls.py`
 - `backend/apps/users/views.py`
+- `frontend/src/lib/auth.ts`
+- `frontend/src/lib/authGate.ts`
 - `frontend/src/lib/csrf.ts`
 - `frontend/src/middleware.ts`
 
@@ -409,6 +414,39 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/router/views.py`
 - `backend/config/asgi.py`
 - `backend/config/settings.py`
+
+## [[adr-20-authorization-lobby]]
+
+- `backend/apps/users/admin.py`
+- `backend/apps/users/models.py`
+- `backend/apps/users/roles.py`
+- `backend/apps/users/serializers.py`
+- `backend/apps/users/test_roles.py`
+- `frontend/src/lib/auth.ts`
+- `frontend/src/lib/authGate.ts`
+- `frontend/src/pages/feedlot/[id].astro`
+- `frontend/src/pages/feedlot/[id]/ledger.astro`
+- `frontend/src/pages/feedlot/[id]/load.astro`
+- `frontend/src/pages/feedlot/[id]/outstanding.astro`
+- `frontend/src/pages/feedlot/[id]/schedule.astro`
+- `frontend/src/pages/feedlot/index.astro`
+
+## [[adr-44-field-operational-roles]]
+
+- `backend/apps/users/admin.py`
+- `backend/apps/users/models.py`
+- `backend/apps/users/roles.py`
+- `backend/apps/users/serializers.py`
+- `backend/apps/users/test_roles.py`
+- `frontend/src/lib/auth.ts`
+- `frontend/src/lib/authGate.ts`
+- `frontend/src/lib/types/user.ts`
+- `frontend/src/pages/feedlot/[id].astro`
+- `frontend/src/pages/feedlot/[id]/ledger.astro`
+- `frontend/src/pages/feedlot/[id]/load.astro`
+- `frontend/src/pages/feedlot/[id]/outstanding.astro`
+- `frontend/src/pages/feedlot/[id]/schedule.astro`
+- `frontend/src/pages/feedlot/index.astro`
 
 ## [[API]]
 
@@ -490,8 +528,10 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/models.py`
 - `backend/apps/users/oidc.py`
 - `backend/apps/users/permissions.py`
+- `backend/apps/users/roles.py`
 - `backend/apps/users/serializers.py`
 - `backend/apps/users/templates/users/cognito_not_configured.html`
+- `backend/apps/users/test_roles.py`
 - `backend/apps/users/urls.py`
 - `backend/apps/users/views.py`
 - `backend/apps/weather/models.py`
@@ -511,6 +551,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/models.py`
 - `backend/apps/users/oidc.py`
 - `backend/apps/users/permissions.py`
+- `backend/apps/users/roles.py`
 - `backend/apps/users/serializers.py`
 - `backend/apps/users/services.py`
 - `backend/apps/users/signals.py`
@@ -521,6 +562,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/test_cognito_live.py`
 - `backend/apps/users/test_oidc.py`
 - `backend/apps/users/test_rbac.py`
+- `backend/apps/users/test_roles.py`
 - `backend/apps/users/test_theme.py`
 - `backend/apps/users/tests.py`
 - `backend/apps/users/urls.py`
@@ -720,6 +762,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/models.py`
 - `backend/apps/users/oidc.py`
 - `backend/apps/users/permissions.py`
+- `backend/apps/users/roles.py`
 - `backend/apps/users/serializers.py`
 - `backend/apps/users/services.py`
 - `backend/apps/users/signals.py`
@@ -730,6 +773,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/test_cognito_live.py`
 - `backend/apps/users/test_oidc.py`
 - `backend/apps/users/test_rbac.py`
+- `backend/apps/users/test_roles.py`
 - `backend/apps/users/test_theme.py`
 - `backend/apps/users/tests.py`
 - `backend/apps/users/urls.py`

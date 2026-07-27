@@ -1,12 +1,12 @@
 ---
 /* LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
- * Governed by: [[adr-04-frontend-and-design-system]]
+ * Governed by: [[adr-04-frontend-and-design-system]] · [[adr-44-field-operational-roles]] · [[adr-20-authorization-lobby]]
  * Docs: [[FRONTEND]]
  * LIVE-DOC:END */
 import Base from "../../layouts/Base.astro";
 import { FeedlotClientsView } from "$lib/components/views";
 import { hasRole } from "$lib/auth";
-import { requireRole } from "$lib/authGate";
+import { requireRole, portalLanding } from "$lib/authGate";
 import { t } from "../../i18n";
 import type { Me } from "$lib/types/user";
 
@@ -31,6 +31,11 @@ if (cookie) {
 // bounced to `/` with a reason, never shown the gated surface.
 const redirect = requireRole(me);
 if (redirect) return Astro.redirect(redirect);
+
+// A lot-owner portal session never sees the roster: send it straight to its own
+// client dashboard, or the lobby if unbound (adr-44 decisions 3–4). Staff → null.
+const portal = portalLanding(me);
+if (portal) return Astro.redirect(portal);
 
 let clients: any[] = [];
 try {
