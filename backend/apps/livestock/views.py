@@ -21,9 +21,11 @@ from apps.livestock.serializers import (
     WeighingWriteSerializer,
 )
 from apps.livestock.services import growth_series
+from apps.users.roles import LivestockAccess
 
 
 class AnimalViewSet(viewsets.ModelViewSet):
+    permission_classes = [LivestockAccess]
     serializer_class = AnimalSerializer
 
     def get_queryset(self):
@@ -40,6 +42,7 @@ class AnimalViewSet(viewsets.ModelViewSet):
 
 
 class LotViewSet(viewsets.ModelViewSet):
+    permission_classes = [LivestockAccess]
     serializer_class = LotSerializer
 
     def get_queryset(self):
@@ -56,6 +59,7 @@ class LotViewSet(viewsets.ModelViewSet):
 
 
 class IntakeViewSet(mixins.CreateModelMixin, viewsets.GenericViewSet):
+    permission_classes = [LivestockAccess]
     queryset = Intake.objects.all()
     serializer_class = IntakeSerializer
 
@@ -75,6 +79,7 @@ class _EventViewSet(
     Lifecycle events are immutable: no update, no destroy on purpose.
     """
 
+    permission_classes = [LivestockAccess]
     model = None
     write_serializer_class = None
 

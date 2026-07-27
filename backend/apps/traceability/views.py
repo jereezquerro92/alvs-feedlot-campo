@@ -14,11 +14,13 @@ from apps.traceability.serializers import (
     TransitDocumentSerializer,
     TransitDocumentWriteSerializer,
 )
+from apps.users.roles import TraceabilityAccess
 
 
 class EstablishmentViewSet(viewsets.ModelViewSet):
     """Editable RENSPA catalog — full CRUD (adr-38 decision 1)."""
 
+    permission_classes = [TraceabilityAccess]
     queryset = Establishment.objects.all()
     serializer_class = EstablishmentSerializer
 
@@ -29,6 +31,8 @@ class TransitDocumentViewSet(
 ):
     """Immutable DT-e documents. list/retrieve/create; a correction is a new record
     (adr-38 decision 1)."""
+
+    permission_classes = [TraceabilityAccess]
 
     def get_serializer_class(self):
         if self.action == "create":
@@ -50,6 +54,8 @@ class CaravanaViewSet(
     mixins.CreateModelMixin, viewsets.GenericViewSet,
 ):
     """Immutable caravanas. list/retrieve/create; no update/destroy (adr-38 decision 4)."""
+
+    permission_classes = [TraceabilityAccess]
 
     def get_serializer_class(self):
         if self.action == "create":

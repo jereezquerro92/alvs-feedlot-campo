@@ -51,6 +51,7 @@ def test_me_returns_current_user(client):
         "family_name": user.family_name,
         "picture": "",
         "groups": [],
+        "client": None,
         "nickname": "",
         "avatar_visible": True,
         "theme_config": {},

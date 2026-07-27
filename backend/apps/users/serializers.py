@@ -10,7 +10,7 @@ from rest_framework import serializers
 
 from apps.users.models import User
 
-READ_ONLY_FIELDS = ["sub", "email", "given_name", "family_name", "picture", "groups"]
+READ_ONLY_FIELDS = ["sub", "email", "given_name", "family_name", "picture", "groups", "client"]
 
 THEME_TOP_LEVEL_KEYS = {"mode", "bgPreset", "colors", "radius"}
 THEME_COLOR_KEYS = {"background", "primary", "secondary", "accent"}
@@ -37,11 +37,20 @@ def _is_valid_color(value):
 
 class UserSerializer(serializers.ModelSerializer):
     groups = serializers.SlugRelatedField(slug_field="name", many=True, read_only=True)
+    # The client a lot_owners session is confined to (adr-44): {id, name} or None.
+    # The frontend scopes its UI off this; the backend stays the security boundary.
+    client = serializers.SerializerMethodField()
 
     class Meta:
         model = User
         fields = READ_ONLY_FIELDS + ["nickname", "avatar_visible", "theme_config"]
         read_only_fields = ["sub", "email", "given_name", "family_name", "picture"]
+
+    def get_client(self, obj):
+        access = getattr(obj, "accessrequest", None)
+        if access is None or access.client_id is None:
+            return None
+        return {"id": access.client_id, "name": access.client.name, "kind": access.client.kind}
 
     def validate_theme_config(self, value):
         if not isinstance(value, dict):

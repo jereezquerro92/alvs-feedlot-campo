@@ -142,6 +142,7 @@ def test_me_endpoint_does_not_leak_access_request(client):
         "family_name": user.family_name,
         "picture": "",
         "groups": [],
+        "client": None,
         "nickname": "",
         "avatar_visible": True,
         "theme_config": {},

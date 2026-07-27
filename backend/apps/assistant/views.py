@@ -14,6 +14,7 @@ from apps.assistant.serializers import (
     MessageSerializer,
     SendMessageSerializer,
 )
+from apps.users.roles import AssistantAccess
 
 
 class ConversationViewSet(
@@ -23,6 +24,7 @@ class ConversationViewSet(
     """Per-client Q&A threads. list/retrieve/create; no update/destroy — a turn is
     corrected by another turn, never edited (adr-35 decision 6)."""
 
+    permission_classes = [AssistantAccess]
     serializer_class = ConversationSerializer
 
     def get_queryset(self):

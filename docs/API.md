@@ -43,6 +43,44 @@ Rules:
 
 Routes that return HTML fragments ([[HTMX]]) are endpoints like any other and MUST be declared here with the same columns; a fragment route absent from this table is invalid ([[adr-05-htmx]]). **Django renders those fragments** — do not list an Astro route as a fragment producer. JSON and HTML for the same resource are separate rows when both exist.
 
+## Authorization (RBAC)
+
+Authentication and authorization are two separate steps ([[adr-10-auth]]): Cognito opens a Django session (authentication); Django Group membership decides what that session may reach (authorization). A permission decision is read from a Django Group only — never a Cognito claim ([[adr-10-auth]] rule 2). The Auth column of every feedlot row below names the **DRF permission class** that gates it; that class maps Groups to read/write on its area.
+
+The six operational roles and the whole read/write matrix live in exactly one place — `backend/apps/users/roles.py` ([[adr-44-field-operational-roles]] decision 1). This section is a reference index into that file, not a second source of truth; when the two disagree, `roles.py` wins and this table is the defect. `admins` passes every class (the standing superset, [[adr-10-auth]]); a role-less authenticated session reaches nothing but `/` ([[adr-20-authorization-lobby]]).
+
+**Roles** ([[GLOSSARY]] canonical names, provisioned by migration `users.0007`): `field_managers` (the field foreman — reads all operations, posts charges/payments), `feed_operators` (the mixer operative — serves feed, runs the pen loop), `lot_owners` (a boarding client — READ-ONLY, confined to its own bound `Client`), `field_admins` (loads merchandise into feed + input stock), `feedlot_owners` (the owner — reads across every client and rubro), `workshop` (machinery, maintenance, fuel, alfalfa/crops).
+
+**Permission classes** (area → who reads / who writes; `admins` always passes):
+
+| Class | Area (endpoints) | Read groups | Write groups |
+|---|---|---|---|
+| `LivestockAccess` | animals, lots, intakes, weighings, deaths, exits | field_managers, feed_operators, field_admins, feedlot_owners | field_managers |
+| `FeedCatalogAccess` | feed-types | field_managers, feed_operators, field_admins, feedlot_owners | field_managers, field_admins |
+| `FeedDeliveryAccess` | feed-deliveries (merchandise into feed stock) | field_managers, field_admins, feedlot_owners | field_managers, field_admins |
+| `FeedExecutionAccess` | feedings, feed-stock (serve at the mixer) | field_managers, feed_operators, field_admins, feedlot_owners | field_managers, feed_operators |
+| `FeedyardAccess` | pens, rations, loading-orders, bunk-scores, pen-placements | field_managers, feed_operators, feedlot_owners | field_managers, feed_operators |
+| `SanitaryAccess` | health-products, health-events, sanitary-plans, sanitary-plan-items, plan-enrollments | field_managers, feed_operators, feedlot_owners | field_managers |
+| `InventoryAccess` | input-types, input-movements (merchandise into input stock) | field_managers, field_admins, feedlot_owners | field_managers, field_admins |
+| `WeatherAccess` | weather-logs | field_managers, field_admins, feedlot_owners, workshop | field_managers, field_admins |
+| `CropsAccess` | pivots, crops, cuttings, field-tasks (alfalfa) | field_managers, workshop, feedlot_owners | field_managers, workshop |
+| `MachineryAccess` | machines, maintenance-events (machinery, fuel, repairs) | field_managers, workshop, feedlot_owners | field_managers, workshop |
+| `LedgerReadAccess` | ledger-entries (immutable, read-only) | field_managers, feedlot_owners | — (nobody: entries are never written over HTTP) |
+| `LedgerWriteAccess` | payments, payment-allocations (the "carga de deudas") | field_managers, feedlot_owners | field_managers |
+| `MarketAccess` | market-sources, market-prices | field_managers, feed_operators, field_admins, feedlot_owners | field_managers, field_admins |
+| `FxAccess` | fx-rates | field_managers, field_admins, feedlot_owners | field_managers, field_admins |
+| `TraceabilityAccess` | establishments, transit-documents, caravanas | field_managers, feedlot_owners | field_managers |
+| `NotificationsAccess` | notifications | field_managers, feedlot_owners | field_managers |
+| `AdvisorAccess` | advisors, advisor-reports (generative, `?client=` filtered) | field_managers, feedlot_owners | field_managers |
+| `AssistantAccess` | conversations (generative, `?client=` filtered) | field_managers, feedlot_owners | field_managers |
+| `ClientDirectoryAccess` | clients (the roster + CRUD) | field_managers, field_admins, feedlot_owners | field_managers |
+| `ClientScopedReadPermission` | clients/{id}/{account,ledger,outstanding}, clients/{id}/metrics/\* | staff (field_managers, feedlot_owners, field_admins, feed_operators) read any; `lot_owners` reads ONLY its bound client | — (read-only portal) |
+
+> [!important] `ClientScopedReadPermission` is the security-critical class
+> It is the ONLY per-tenant boundary. A `lot_owners` session may read a `/api/clients/{id}/…` route **only** when `{id}` equals the single `Client` bound to its `AccessRequest` ([[adr-44-field-operational-roles]] decisions 3–4); an unbound session or a mismatch is **403 — it fails closed**, never "all clients". Staff roles are internal, not tenants, and read any client (decision 5). The client roster (`ClientDirectoryAccess`) is closed to `lot_owners` entirely — it would list every client. This is enforced in the backend, per request, reading Django Groups only ([[adr-10-auth]] rule 2, [[adr-20-authorization-lobby]] rule 4).
+
+The router (`CanUseRouter`, actuator tier) and the auth/health/m365 surface keep their own gates as declared in their rows — they are governed by [[adr-15-chatbot-two-tier]], [[adr-10-auth]], and [[adr-13-m365-graph]], not by this matrix.
+
 ## Endpoints
 
 | Method | Path | View/ViewSet | Serializer | Auth | Description |
@@ -62,264 +100,264 @@ Routes that return HTML fragments ([[HTMX]]) are endpoints like any other and MU
 
 ## Feedlot domain endpoints (Phases 1–5)
 
-The feedlot is built as domain apps on the template spine ([[adr-24-feedlot-domain]] rule 1): the shared spine `clients` + `ledger` + `market` + `advisors`, the cattle domain `livestock` + `feed` + `sanitary`, and the read-only `metrics`. All rows below share one auth policy — the DRF default `SessionAuthentication` + `IsAuthenticated` (`config/settings.py`), so **`session`** — and every authenticated response is `no-store` ([[CACHE]] rule 4). DRF list endpoints return a plain JSON array (no pagination wrapper). Method surface follows the app's posture: **catalogs** (`FeedType`, `HealthProduct`, `MarketSource`, `Client`) are full-CRUD `ModelViewSet`s — the only editable tables ([[adr-24-feedlot-domain]] rule 3); **operational events** expose only `list`/`retrieve`/`create` and deliberately no `update`/`destroy`, because a fact is corrected by a new fact, never mutated ([[adr-24-feedlot-domain]] rule 3, [[adr-28-animal-lifecycle-and-sanitary]]); **metrics** are read-only `GET` derivations ([[adr-29-metrics-derivation]]).
+The feedlot is built as domain apps on the template spine ([[adr-24-feedlot-domain]] rule 1): the shared spine `clients` + `ledger` + `market` + `advisors`, the cattle domain `livestock` + `feed` + `sanitary`, and the read-only `metrics`. Authentication is the Django session opened by Cognito ([[adr-10-auth]]); authorization is per-area RBAC — each row's Auth cell names the Django-Group permission class that gates it (see [Authorization (RBAC)](#authorization-rbac), [[adr-44-field-operational-roles]]). Every authenticated response is `no-store` ([[CACHE]] rule 4). DRF list endpoints return a plain JSON array (no pagination wrapper). Method surface follows the app's posture: **catalogs** (`FeedType`, `HealthProduct`, `MarketSource`, `Client`) are full-CRUD `ModelViewSet`s — the only editable tables ([[adr-24-feedlot-domain]] rule 3); **operational events** expose only `list`/`retrieve`/`create` and deliberately no `update`/`destroy`, because a fact is corrected by a new fact, never mutated ([[adr-24-feedlot-domain]] rule 3, [[adr-28-animal-lifecycle-and-sanitary]]); **metrics** are read-only `GET` derivations ([[adr-29-metrics-derivation]]).
 
 > [!note] Documentation debt closed here
 > The Phase 1–5 route surface below existed in code (`apps/{clients,ledger,livestock,feed,sanitary,market,metrics,advisors}/urls.py`) before it was declared in this file — an [[adr-03-api-and-backend]] rule 1 gap accrued across those phases. This section records the surface as-built; it introduces no new route.
 
 | Method | Path | View/ViewSet | Serializer | Auth | Description |
 |---|---|---|---|---|---|
-| GET | `/api/clients/` | `ClientViewSet` | `ClientSerializer` | session | List clients (feedlot account holders). |
-| POST | `/api/clients/` | `ClientViewSet` | `ClientSerializer` | session | Create a client; its `Account` is auto-created by a `post_save` signal ([[adr-25-account-ledger]]). |
-| GET | `/api/clients/{id}/` | `ClientViewSet` | `ClientSerializer` | session | Retrieve one client, including `balance` derived from the ledger. |
-| PUT | `/api/clients/{id}/` | `ClientViewSet` | `ClientSerializer` | session | Replace a client's editable fields (catalog-like row, [[adr-24-feedlot-domain]] rule 3). |
-| PATCH | `/api/clients/{id}/` | `ClientViewSet` | `ClientSerializer` | session | Partial update of a client's editable fields. |
-| DELETE | `/api/clients/{id}/` | `ClientViewSet` | `ClientSerializer` | session | Delete a client. |
-| GET | `/api/clients/{id}/account/` | `ClientViewSet.account` | — | session | Detail action: the client's current-account summary (balance = Σ debits − Σ credits, [[adr-25-account-ledger]] rule 2). |
-| GET | `/api/clients/{id}/ledger/` | `ClientViewSet.ledger` | — | session | Detail action: the client's immutable `LedgerEntry` rows ([[adr-25-account-ledger]] rule 1). |
-| GET | `/api/clients/{id}/metrics/summary/` | `SummaryView` | — | session | Derived summary for a client + period (balance, herd, cost, conversion, mortality, inconsistencies). Null-contract, [[metrics-null-contract]]. |
-| GET | `/api/clients/{id}/metrics/daily-cost/` | `DailyCostView` | — | session | Derived daily cost series over the period. Null-contract. |
-| GET | `/api/clients/{id}/metrics/growth/` | `GrowthView` | — | session | Derived growth (kilos gained, skipped non-measurable segments, [[adr-29-metrics-derivation]] rule 3). Null-contract. |
-| GET | `/api/clients/{id}/metrics/conversion/` | `ConversionView` | — | session | Derived feed conversion. Returns `null` + reason when not computable ([[adr-29-metrics-derivation]] rule 2). |
-| GET | `/api/clients/{id}/metrics/mortality/` | `MortalityView` | — | session | Derived mortality rate (0..1) + entered head. Null-contract. |
-| GET | `/api/clients/{id}/metrics/account/` | `AccountEvolutionView` | — | session | Derived account-balance evolution series (points of date + balance). Null-contract. |
-| GET | `/api/ledger-entries/` | `LedgerEntryViewSet` | `LedgerEntrySerializer` | session | List immutable ledger entries (filter `?client=`); read-only — entries are never edited ([[adr-25-account-ledger]] rule 1). |
-| GET | `/api/ledger-entries/{id}/` | `LedgerEntryViewSet` | `LedgerEntrySerializer` | session | Retrieve one ledger entry. |
-| GET | `/api/payments/` | `PaymentViewSet` | `PaymentSerializer` | session | List payments (filter `?client=`; each posts a `credit` entry, [[adr-25-account-ledger]] rule 7). |
-| POST | `/api/payments/` | `PaymentViewSet` | `PaymentSerializer` | session | Register a payment; posts a `credit` `LedgerEntry` reducing the balance. |
-| GET | `/api/payments/{id}/` | `PaymentViewSet` | `PaymentSerializer` | session | Retrieve one payment. |
-| GET | `/api/animals/` | `AnimalViewSet` | `AnimalSerializer` | session | List individual animals (filter `?client=`). |
-| POST | `/api/animals/` | `AnimalViewSet` | `AnimalSerializer` | session | Create an animal ([[adr-26-livestock-individual-and-lot]]). |
-| GET | `/api/animals/{id}/` | `AnimalViewSet` | `AnimalSerializer` | session | Retrieve one animal; `current_weight` derived from latest weighing (rule 5). |
-| PUT | `/api/animals/{id}/` | `AnimalViewSet` | `AnimalSerializer` | session | Replace an animal's fields. See [[feedlot-mutation-caveat]]. |
-| PATCH | `/api/animals/{id}/` | `AnimalViewSet` | `AnimalSerializer` | session | Partial update of an animal. See [[feedlot-mutation-caveat]]. |
-| DELETE | `/api/animals/{id}/` | `AnimalViewSet` | `AnimalSerializer` | session | Delete an animal. See [[feedlot-mutation-caveat]]. |
-| GET | `/api/animals/{id}/growth/` | `AnimalViewSet.growth` | — | session | Detail action: derived per-head growth across successive weighings ([[adr-26-livestock-individual-and-lot]] rule 5). |
-| GET | `/api/lots/` | `LotViewSet` | `LotSerializer` | session | List lots (filter `?client=`); counters `head_count`/`total_weight` are event-maintained (rule 4). |
-| POST | `/api/lots/` | `LotViewSet` | `LotSerializer` | session | Create a lot ([[adr-26-livestock-individual-and-lot]]). |
-| GET | `/api/lots/{id}/` | `LotViewSet` | `LotSerializer` | session | Retrieve one lot. |
-| PUT | `/api/lots/{id}/` | `LotViewSet` | `LotSerializer` | session | Replace a lot's fields. See [[feedlot-mutation-caveat]]. |
-| PATCH | `/api/lots/{id}/` | `LotViewSet` | `LotSerializer` | session | Partial update of a lot. See [[feedlot-mutation-caveat]]. |
-| DELETE | `/api/lots/{id}/` | `LotViewSet` | `LotSerializer` | session | Delete a lot. See [[feedlot-mutation-caveat]]. |
-| GET | `/api/lots/{id}/growth/` | `LotViewSet.growth` | — | session | Detail action: derived lot growth per head; `null` + reason when head count changed between weighings ([[adr-28-animal-lifecycle-and-sanitary]] decision 2). |
-| POST | `/api/intakes/` | `IntakeViewSet` | `IntakeSerializer` | session | Register a cattle intake, `mode` ∈ {`individual`, `lot`}; creates `Animal`s or a `Lot` through the service ([[adr-26-livestock-individual-and-lot]] rule 1). Create-only. |
-| GET | `/api/weighings/` | `WeighingViewSet` | `WeighingSerializer` | session | List weighings (immutable lifecycle event). |
-| GET | `/api/weighings/{id}/` | `WeighingViewSet` | `WeighingSerializer` | session | Retrieve one weighing. |
-| POST | `/api/weighings/` | `WeighingViewSet` | `WeighingWriteSerializer` | session | Register a weighing for exactly one `animal` XOR `lot` ([[adr-26-livestock-individual-and-lot]] rule 3); routes to `register_weighing`. No update/destroy ([[adr-28-animal-lifecycle-and-sanitary]]). |
-| GET | `/api/deaths/` | `DeathViewSet` | `DeathSerializer` | session | List deaths (immutable lifecycle event). |
-| GET | `/api/deaths/{id}/` | `DeathViewSet` | `DeathSerializer` | session | Retrieve one death. |
-| POST | `/api/deaths/` | `DeathViewSet` | `DeathWriteSerializer` | session | Register a death for one `animal` XOR `lot`; posts no ledger entry ([[adr-28-animal-lifecycle-and-sanitary]] decision 3). |
-| GET | `/api/exits/` | `ExitViewSet` | `ExitSerializer` | session | List exits (immutable lifecycle event). |
-| GET | `/api/exits/{id}/` | `ExitViewSet` | `ExitSerializer` | session | Retrieve one exit. |
-| POST | `/api/exits/` | `ExitViewSet` | `ExitWriteSerializer` | session | Register an exit for one `animal` XOR `lot`. A `kind=sale` exit settles through the ledger ([[adr-43-sale-settlement]]): a boarding client posts an engorde-commission `service` debit (`commission_pct`×kilos_gained×`sale_price_per_kg`), own cattle post a `sale` credit (`weight`×`sale_price_per_kg`) on the own account. Missing inputs → no posting (honest cut, [[adr-29-metrics-derivation]]). Deaths and non-sale exits post nothing ([[adr-28-animal-lifecycle-and-sanitary]] decision 3, as amended). |
-| GET | `/api/feed-types/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | List feed-type catalog rows (editable, [[adr-24-feedlot-domain]] rule 3). |
-| POST | `/api/feed-types/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | Create a feed type. |
-| GET | `/api/feed-types/{id}/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | Retrieve one feed type. |
-| PUT | `/api/feed-types/{id}/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | Replace a feed type (catalog edit). |
-| PATCH | `/api/feed-types/{id}/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | Partial update of a feed type. |
-| DELETE | `/api/feed-types/{id}/` | `FeedTypeViewSet` | `FeedTypeSerializer` | session | Delete a feed type. |
-| GET | `/api/feed-deliveries/` | `FeedDeliveryViewSet` | `FeedDeliverySerializer` | session | List feed deliveries into own stock. |
-| POST | `/api/feed-deliveries/` | `FeedDeliveryViewSet` | `FeedDeliverySerializer` | session | Register a feed delivery (an `in` stock movement); routes to `register_delivery`. Create-only. |
-| GET | `/api/feedings/` | `FeedingEventViewSet` | `FeedingEventSerializer` | session | List feeding events (filter `?client=`). |
-| POST | `/api/feedings/` | `FeedingEventViewSet` | `FeedingEventSerializer` | session | Register a feeding for one `animal` XOR `lot`; `origin=own_stock` posts a debit + `out` movement, `origin=client_stock` posts only the `out` movement (no charge) — [[adr-25-account-ledger]] rule 4. Routes to `register_feeding`. Create-only. |
-| GET | `/api/feed-stock/` | `feed_stock` | — | session (`IsAuthenticated`) | Derived feed-stock balances by `(owner_kind, client, feed_type)` (filter `?client=`); function view, no model serializer. |
-| GET | `/api/health-products/` | `HealthProductViewSet` | `HealthProductSerializer` | session | List health-product catalog rows (editable, [[adr-24-feedlot-domain]] rule 3). The `sanitary` app is named to avoid the `/api/health/` liveness collision ([[adr-28-animal-lifecycle-and-sanitary]] decision 4). |
-| POST | `/api/health-products/` | `HealthProductViewSet` | `HealthProductSerializer` | session | Create a health product. |
-| GET | `/api/health-products/{id}/` | `HealthProductViewSet` | `HealthProductSerializer` | session | Retrieve one health product. |
-| PUT | `/api/health-products/{id}/` | `HealthProductViewSet` | `HealthProductSerializer` | session | Replace a health product (catalog edit). |
-| PATCH | `/api/health-products/{id}/` | `HealthProductViewSet` | `HealthProductSerializer` | session | Partial update of a health product. |
-| DELETE | `/api/health-products/{id}/` | `HealthProductViewSet` | `HealthProductSerializer` | session | Delete a health product. |
-| GET | `/api/health-events/` | `HealthEventViewSet` | `HealthEventSerializer` | session | List health events (immutable). |
-| GET | `/api/health-events/{id}/` | `HealthEventViewSet` | `HealthEventSerializer` | session | Retrieve one health event. |
-| POST | `/api/health-events/` | `HealthEventViewSet` | `HealthEventSerializer` | session | Register a health application; always posts a `debit` — sanitary inputs are always the feedlot's ([[adr-28-animal-lifecycle-and-sanitary]] decision 5). Create-only. |
-| GET | `/api/market-sources/` | `MarketSourceViewSet` | `MarketSourceSerializer` | session | List reference-price source catalog rows (editable). |
-| POST | `/api/market-sources/` | `MarketSourceViewSet` | `MarketSourceSerializer` | session | Create a market source. |
-| GET | `/api/market-sources/{id}/` | `MarketSourceViewSet` | `MarketSourceSerializer` | session | Retrieve one market source. |
-| PUT | `/api/market-sources/{id}/` | `MarketSourceViewSet` | `MarketSourceSerializer` | session | Replace a market source. |
-| PATCH | `/api/market-sources/{id}/` | `MarketSourceViewSet` | `MarketSourceSerializer` | session | Partial update of a market source. |
-| DELETE | `/api/market-sources/{id}/` | `MarketSourceViewSet` | `MarketSourceSerializer` | session | Delete a market source. |
-| GET | `/api/market-prices/` | `MarketPriceViewSet` | `MarketPriceSerializer` | session | List reference prices (filter `?source=`, `?category=`, `?date=`); idempotent per `(source, category, date)` ([[adr-30-market-prices-connectors]] rule 6). |
-| GET | `/api/market-prices/{id}/` | `MarketPriceViewSet` | `MarketPriceSerializer` | session | Retrieve one market price. |
-| POST | `/api/market-prices/` | `MarketPriceViewSet` | `MarketPriceSerializer` | session | Create/ingest a market price row. |
-| GET | `/api/advisors/` | `AdvisorViewSet` | `AdvisorSerializer` | session | List advisor catalog rows (`livestock`, `finance`, `admin`) — read-only ([[adr-27-advisors-generative]]). |
-| GET | `/api/advisors/{id}/` | `AdvisorViewSet` | `AdvisorSerializer` | session | Retrieve one advisor. |
-| GET | `/api/advisor-reports/` | `AdvisorReportViewSet` | `AdvisorReportSerializer` | session | List persisted advisor reports (filter `?client=`) — each is the auditable record of one generation ([[adr-27-advisors-generative]] rule 3). |
-| GET | `/api/advisor-reports/{id}/` | `AdvisorReportViewSet` | `AdvisorReportSerializer` | session | Retrieve one advisor report (reading does not re-infer, [[adr-31-advisors-implementation]] decision 5). |
-| POST | `/api/advisor-reports/` | `AdvisorReportViewSet` | `AdvisorReportSerializer` | session | Generate an advisor report over a backend-assembled per-client snapshot ([[adr-31-advisors-implementation]] decisions 1–2); async Bedrock inference ([[adr-16-async-mandatory]]). |
+| GET | `/api/clients/` | `ClientViewSet` | `ClientSerializer` | `ClientDirectoryAccess` | List clients (feedlot account holders). |
+| POST | `/api/clients/` | `ClientViewSet` | `ClientSerializer` | `ClientDirectoryAccess` | Create a client; its `Account` is auto-created by a `post_save` signal ([[adr-25-account-ledger]]). |
+| GET | `/api/clients/{id}/` | `ClientViewSet` | `ClientSerializer` | `ClientDirectoryAccess` | Retrieve one client, including `balance` derived from the ledger. |
+| PUT | `/api/clients/{id}/` | `ClientViewSet` | `ClientSerializer` | `ClientDirectoryAccess` | Replace a client's editable fields (catalog-like row, [[adr-24-feedlot-domain]] rule 3). |
+| PATCH | `/api/clients/{id}/` | `ClientViewSet` | `ClientSerializer` | `ClientDirectoryAccess` | Partial update of a client's editable fields. |
+| DELETE | `/api/clients/{id}/` | `ClientViewSet` | `ClientSerializer` | `ClientDirectoryAccess` | Delete a client. |
+| GET | `/api/clients/{id}/account/` | `ClientViewSet.account` | — | `ClientScopedReadPermission` | Detail action: the client's current-account summary (balance = Σ debits − Σ credits, [[adr-25-account-ledger]] rule 2). |
+| GET | `/api/clients/{id}/ledger/` | `ClientViewSet.ledger` | — | `ClientScopedReadPermission` | Detail action: the client's immutable `LedgerEntry` rows ([[adr-25-account-ledger]] rule 1). |
+| GET | `/api/clients/{id}/metrics/summary/` | `SummaryView` | — | `ClientScopedReadPermission` | Derived summary for a client + period (balance, herd, cost, conversion, mortality, inconsistencies). Null-contract, [[metrics-null-contract]]. |
+| GET | `/api/clients/{id}/metrics/daily-cost/` | `DailyCostView` | — | `ClientScopedReadPermission` | Derived daily cost series over the period. Null-contract. |
+| GET | `/api/clients/{id}/metrics/growth/` | `GrowthView` | — | `ClientScopedReadPermission` | Derived growth (kilos gained, skipped non-measurable segments, [[adr-29-metrics-derivation]] rule 3). Null-contract. |
+| GET | `/api/clients/{id}/metrics/conversion/` | `ConversionView` | — | `ClientScopedReadPermission` | Derived feed conversion. Returns `null` + reason when not computable ([[adr-29-metrics-derivation]] rule 2). |
+| GET | `/api/clients/{id}/metrics/mortality/` | `MortalityView` | — | `ClientScopedReadPermission` | Derived mortality rate (0..1) + entered head. Null-contract. |
+| GET | `/api/clients/{id}/metrics/account/` | `AccountEvolutionView` | — | `ClientScopedReadPermission` | Derived account-balance evolution series (points of date + balance). Null-contract. |
+| GET | `/api/ledger-entries/` | `LedgerEntryViewSet` | `LedgerEntrySerializer` | `LedgerReadAccess` | List immutable ledger entries (filter `?client=`); read-only — entries are never edited ([[adr-25-account-ledger]] rule 1). |
+| GET | `/api/ledger-entries/{id}/` | `LedgerEntryViewSet` | `LedgerEntrySerializer` | `LedgerReadAccess` | Retrieve one ledger entry. |
+| GET | `/api/payments/` | `PaymentViewSet` | `PaymentSerializer` | `LedgerWriteAccess` | List payments (filter `?client=`; each posts a `credit` entry, [[adr-25-account-ledger]] rule 7). |
+| POST | `/api/payments/` | `PaymentViewSet` | `PaymentSerializer` | `LedgerWriteAccess` | Register a payment; posts a `credit` `LedgerEntry` reducing the balance. |
+| GET | `/api/payments/{id}/` | `PaymentViewSet` | `PaymentSerializer` | `LedgerWriteAccess` | Retrieve one payment. |
+| GET | `/api/animals/` | `AnimalViewSet` | `AnimalSerializer` | `LivestockAccess` | List individual animals (filter `?client=`). |
+| POST | `/api/animals/` | `AnimalViewSet` | `AnimalSerializer` | `LivestockAccess` | Create an animal ([[adr-26-livestock-individual-and-lot]]). |
+| GET | `/api/animals/{id}/` | `AnimalViewSet` | `AnimalSerializer` | `LivestockAccess` | Retrieve one animal; `current_weight` derived from latest weighing (rule 5). |
+| PUT | `/api/animals/{id}/` | `AnimalViewSet` | `AnimalSerializer` | `LivestockAccess` | Replace an animal's fields. See [[feedlot-mutation-caveat]]. |
+| PATCH | `/api/animals/{id}/` | `AnimalViewSet` | `AnimalSerializer` | `LivestockAccess` | Partial update of an animal. See [[feedlot-mutation-caveat]]. |
+| DELETE | `/api/animals/{id}/` | `AnimalViewSet` | `AnimalSerializer` | `LivestockAccess` | Delete an animal. See [[feedlot-mutation-caveat]]. |
+| GET | `/api/animals/{id}/growth/` | `AnimalViewSet.growth` | — | `LivestockAccess` | Detail action: derived per-head growth across successive weighings ([[adr-26-livestock-individual-and-lot]] rule 5). |
+| GET | `/api/lots/` | `LotViewSet` | `LotSerializer` | `LivestockAccess` | List lots (filter `?client=`); counters `head_count`/`total_weight` are event-maintained (rule 4). |
+| POST | `/api/lots/` | `LotViewSet` | `LotSerializer` | `LivestockAccess` | Create a lot ([[adr-26-livestock-individual-and-lot]]). |
+| GET | `/api/lots/{id}/` | `LotViewSet` | `LotSerializer` | `LivestockAccess` | Retrieve one lot. |
+| PUT | `/api/lots/{id}/` | `LotViewSet` | `LotSerializer` | `LivestockAccess` | Replace a lot's fields. See [[feedlot-mutation-caveat]]. |
+| PATCH | `/api/lots/{id}/` | `LotViewSet` | `LotSerializer` | `LivestockAccess` | Partial update of a lot. See [[feedlot-mutation-caveat]]. |
+| DELETE | `/api/lots/{id}/` | `LotViewSet` | `LotSerializer` | `LivestockAccess` | Delete a lot. See [[feedlot-mutation-caveat]]. |
+| GET | `/api/lots/{id}/growth/` | `LotViewSet.growth` | — | `LivestockAccess` | Detail action: derived lot growth per head; `null` + reason when head count changed between weighings ([[adr-28-animal-lifecycle-and-sanitary]] decision 2). |
+| POST | `/api/intakes/` | `IntakeViewSet` | `IntakeSerializer` | `LivestockAccess` | Register a cattle intake, `mode` ∈ {`individual`, `lot`}; creates `Animal`s or a `Lot` through the service ([[adr-26-livestock-individual-and-lot]] rule 1). Create-only. |
+| GET | `/api/weighings/` | `WeighingViewSet` | `WeighingSerializer` | `LivestockAccess` | List weighings (immutable lifecycle event). |
+| GET | `/api/weighings/{id}/` | `WeighingViewSet` | `WeighingSerializer` | `LivestockAccess` | Retrieve one weighing. |
+| POST | `/api/weighings/` | `WeighingViewSet` | `WeighingWriteSerializer` | `LivestockAccess` | Register a weighing for exactly one `animal` XOR `lot` ([[adr-26-livestock-individual-and-lot]] rule 3); routes to `register_weighing`. No update/destroy ([[adr-28-animal-lifecycle-and-sanitary]]). |
+| GET | `/api/deaths/` | `DeathViewSet` | `DeathSerializer` | `LivestockAccess` | List deaths (immutable lifecycle event). |
+| GET | `/api/deaths/{id}/` | `DeathViewSet` | `DeathSerializer` | `LivestockAccess` | Retrieve one death. |
+| POST | `/api/deaths/` | `DeathViewSet` | `DeathWriteSerializer` | `LivestockAccess` | Register a death for one `animal` XOR `lot`; posts no ledger entry ([[adr-28-animal-lifecycle-and-sanitary]] decision 3). |
+| GET | `/api/exits/` | `ExitViewSet` | `ExitSerializer` | `LivestockAccess` | List exits (immutable lifecycle event). |
+| GET | `/api/exits/{id}/` | `ExitViewSet` | `ExitSerializer` | `LivestockAccess` | Retrieve one exit. |
+| POST | `/api/exits/` | `ExitViewSet` | `ExitWriteSerializer` | `LivestockAccess` | Register an exit for one `animal` XOR `lot`. A `kind=sale` exit settles through the ledger ([[adr-43-sale-settlement]]): a boarding client posts an engorde-commission `service` debit (`commission_pct`×kilos_gained×`sale_price_per_kg`), own cattle post a `sale` credit (`weight`×`sale_price_per_kg`) on the own account. Missing inputs → no posting (honest cut, [[adr-29-metrics-derivation]]). Deaths and non-sale exits post nothing ([[adr-28-animal-lifecycle-and-sanitary]] decision 3, as amended). |
+| GET | `/api/feed-types/` | `FeedTypeViewSet` | `FeedTypeSerializer` | `FeedCatalogAccess` | List feed-type catalog rows (editable, [[adr-24-feedlot-domain]] rule 3). |
+| POST | `/api/feed-types/` | `FeedTypeViewSet` | `FeedTypeSerializer` | `FeedCatalogAccess` | Create a feed type. |
+| GET | `/api/feed-types/{id}/` | `FeedTypeViewSet` | `FeedTypeSerializer` | `FeedCatalogAccess` | Retrieve one feed type. |
+| PUT | `/api/feed-types/{id}/` | `FeedTypeViewSet` | `FeedTypeSerializer` | `FeedCatalogAccess` | Replace a feed type (catalog edit). |
+| PATCH | `/api/feed-types/{id}/` | `FeedTypeViewSet` | `FeedTypeSerializer` | `FeedCatalogAccess` | Partial update of a feed type. |
+| DELETE | `/api/feed-types/{id}/` | `FeedTypeViewSet` | `FeedTypeSerializer` | `FeedCatalogAccess` | Delete a feed type. |
+| GET | `/api/feed-deliveries/` | `FeedDeliveryViewSet` | `FeedDeliverySerializer` | `FeedDeliveryAccess` | List feed deliveries into own stock. |
+| POST | `/api/feed-deliveries/` | `FeedDeliveryViewSet` | `FeedDeliverySerializer` | `FeedDeliveryAccess` | Register a feed delivery (an `in` stock movement); routes to `register_delivery`. Create-only. |
+| GET | `/api/feedings/` | `FeedingEventViewSet` | `FeedingEventSerializer` | `FeedExecutionAccess` | List feeding events (filter `?client=`). |
+| POST | `/api/feedings/` | `FeedingEventViewSet` | `FeedingEventSerializer` | `FeedExecutionAccess` | Register a feeding for one `animal` XOR `lot`; `origin=own_stock` posts a debit + `out` movement, `origin=client_stock` posts only the `out` movement (no charge) — [[adr-25-account-ledger]] rule 4. Routes to `register_feeding`. Create-only. |
+| GET | `/api/feed-stock/` | `feed_stock` | — | `FeedExecutionAccess` | Derived feed-stock balances by `(owner_kind, client, feed_type)` (filter `?client=`); function view, no model serializer. |
+| GET | `/api/health-products/` | `HealthProductViewSet` | `HealthProductSerializer` | `SanitaryAccess` | List health-product catalog rows (editable, [[adr-24-feedlot-domain]] rule 3). The `sanitary` app is named to avoid the `/api/health/` liveness collision ([[adr-28-animal-lifecycle-and-sanitary]] decision 4). |
+| POST | `/api/health-products/` | `HealthProductViewSet` | `HealthProductSerializer` | `SanitaryAccess` | Create a health product. |
+| GET | `/api/health-products/{id}/` | `HealthProductViewSet` | `HealthProductSerializer` | `SanitaryAccess` | Retrieve one health product. |
+| PUT | `/api/health-products/{id}/` | `HealthProductViewSet` | `HealthProductSerializer` | `SanitaryAccess` | Replace a health product (catalog edit). |
+| PATCH | `/api/health-products/{id}/` | `HealthProductViewSet` | `HealthProductSerializer` | `SanitaryAccess` | Partial update of a health product. |
+| DELETE | `/api/health-products/{id}/` | `HealthProductViewSet` | `HealthProductSerializer` | `SanitaryAccess` | Delete a health product. |
+| GET | `/api/health-events/` | `HealthEventViewSet` | `HealthEventSerializer` | `SanitaryAccess` | List health events (immutable). |
+| GET | `/api/health-events/{id}/` | `HealthEventViewSet` | `HealthEventSerializer` | `SanitaryAccess` | Retrieve one health event. |
+| POST | `/api/health-events/` | `HealthEventViewSet` | `HealthEventSerializer` | `SanitaryAccess` | Register a health application; always posts a `debit` — sanitary inputs are always the feedlot's ([[adr-28-animal-lifecycle-and-sanitary]] decision 5). Create-only. |
+| GET | `/api/market-sources/` | `MarketSourceViewSet` | `MarketSourceSerializer` | `MarketAccess` | List reference-price source catalog rows (editable). |
+| POST | `/api/market-sources/` | `MarketSourceViewSet` | `MarketSourceSerializer` | `MarketAccess` | Create a market source. |
+| GET | `/api/market-sources/{id}/` | `MarketSourceViewSet` | `MarketSourceSerializer` | `MarketAccess` | Retrieve one market source. |
+| PUT | `/api/market-sources/{id}/` | `MarketSourceViewSet` | `MarketSourceSerializer` | `MarketAccess` | Replace a market source. |
+| PATCH | `/api/market-sources/{id}/` | `MarketSourceViewSet` | `MarketSourceSerializer` | `MarketAccess` | Partial update of a market source. |
+| DELETE | `/api/market-sources/{id}/` | `MarketSourceViewSet` | `MarketSourceSerializer` | `MarketAccess` | Delete a market source. |
+| GET | `/api/market-prices/` | `MarketPriceViewSet` | `MarketPriceSerializer` | `MarketAccess` | List reference prices (filter `?source=`, `?category=`, `?date=`); idempotent per `(source, category, date)` ([[adr-30-market-prices-connectors]] rule 6). |
+| GET | `/api/market-prices/{id}/` | `MarketPriceViewSet` | `MarketPriceSerializer` | `MarketAccess` | Retrieve one market price. |
+| POST | `/api/market-prices/` | `MarketPriceViewSet` | `MarketPriceSerializer` | `MarketAccess` | Create/ingest a market price row. |
+| GET | `/api/advisors/` | `AdvisorViewSet` | `AdvisorSerializer` | `AdvisorAccess` | List advisor catalog rows (`livestock`, `finance`, `admin`) — read-only ([[adr-27-advisors-generative]]). |
+| GET | `/api/advisors/{id}/` | `AdvisorViewSet` | `AdvisorSerializer` | `AdvisorAccess` | Retrieve one advisor. |
+| GET | `/api/advisor-reports/` | `AdvisorReportViewSet` | `AdvisorReportSerializer` | `AdvisorAccess` | List persisted advisor reports (filter `?client=`) — each is the auditable record of one generation ([[adr-27-advisors-generative]] rule 3). |
+| GET | `/api/advisor-reports/{id}/` | `AdvisorReportViewSet` | `AdvisorReportSerializer` | `AdvisorAccess` | Retrieve one advisor report (reading does not re-infer, [[adr-31-advisors-implementation]] decision 5). |
+| POST | `/api/advisor-reports/` | `AdvisorReportViewSet` | `AdvisorReportSerializer` | `AdvisorAccess` | Generate an advisor report over a backend-assembled per-client snapshot ([[adr-31-advisors-implementation]] decisions 1–2); async Bedrock inference ([[adr-16-async-mandatory]]). |
 
 ## Feedlot domain endpoints (Phase 6 — multi-rubro)
 
-Fase 6 adds two rubros on the same spine ([[adr-32-multi-rubro-assets]]): `crops` (alfalfa on pivots) and `machinery`. Same policy as the Phase 1–5 surface — DRF default `session` auth, every response `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. **Catalogs** `Pivot`/`Crop`/`Machine` are full-CRUD `ModelViewSet`s (editable master data — "cargar círculos" is creating pivots, [[adr-32-multi-rubro-assets]] decision 6); **operational events** `Cutting`/`FieldTask`/`MaintenanceEvent` expose only `list`/`retrieve`/`create`, no `update`/`destroy` (a fact is corrected by a new fact, [[adr-24-feedlot-domain]] rule 3). `FieldTask` and `MaintenanceEvent` post a `service` `debit` through the generic `(source_kind, source_id)` seam ([[adr-32-multi-rubro-assets]] decisions 3, 5); `Cutting` posts no ledger entry (decision 4). The shared `assets` app contributes abstract bases only ([[adr-32-multi-rubro-assets]] decision 1) and exposes no endpoints.
+Fase 6 adds two rubros on the same spine ([[adr-32-multi-rubro-assets]]): `crops` (alfalfa on pivots) and `machinery`. Authentication is the session ([[adr-10-auth]]); authorization is per-area RBAC — each row's Auth cell names the Django-Group permission class that gates it (see [Authorization (RBAC)](#authorization-rbac), [[adr-44-field-operational-roles]]). Every response `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. **Catalogs** `Pivot`/`Crop`/`Machine` are full-CRUD `ModelViewSet`s (editable master data — "cargar círculos" is creating pivots, [[adr-32-multi-rubro-assets]] decision 6); **operational events** `Cutting`/`FieldTask`/`MaintenanceEvent` expose only `list`/`retrieve`/`create`, no `update`/`destroy` (a fact is corrected by a new fact, [[adr-24-feedlot-domain]] rule 3). `FieldTask` and `MaintenanceEvent` post a `service` `debit` through the generic `(source_kind, source_id)` seam ([[adr-32-multi-rubro-assets]] decisions 3, 5); `Cutting` posts no ledger entry (decision 4). The shared `assets` app contributes abstract bases only ([[adr-32-multi-rubro-assets]] decision 1) and exposes no endpoints.
 
 | Method | Path | View/ViewSet | Serializer | Auth | Description |
 |---|---|---|---|---|---|
-| GET | `/api/pivots/` | `PivotViewSet` | `PivotSerializer` | session | List center-pivot circles (editable catalog, [[adr-32-multi-rubro-assets]] decision 6). |
-| POST | `/api/pivots/` | `PivotViewSet` | `PivotSerializer` | session | Create a pivot ("cargar círculo"). |
-| GET | `/api/pivots/{id}/` | `PivotViewSet` | `PivotSerializer` | session | Retrieve one pivot. |
-| PUT | `/api/pivots/{id}/` | `PivotViewSet` | `PivotSerializer` | session | Replace a pivot. |
-| PATCH | `/api/pivots/{id}/` | `PivotViewSet` | `PivotSerializer` | session | Partial update of a pivot (e.g. `status=retired`). |
-| DELETE | `/api/pivots/{id}/` | `PivotViewSet` | `PivotSerializer` | session | Delete a pivot. |
-| GET | `/api/crops/` | `CropViewSet` | `CropSerializer` | session | List crops/plantings (filter `?pivot=`). Editable catalog. |
-| POST | `/api/crops/` | `CropViewSet` | `CropSerializer` | session | Create a crop on a pivot (`species` ∈ `alfalfa`\|`other`). |
-| GET | `/api/crops/{id}/` | `CropViewSet` | `CropSerializer` | session | Retrieve one crop. |
-| PUT | `/api/crops/{id}/` | `CropViewSet` | `CropSerializer` | session | Replace a crop. |
-| PATCH | `/api/crops/{id}/` | `CropViewSet` | `CropSerializer` | session | Partial update of a crop. |
-| DELETE | `/api/crops/{id}/` | `CropViewSet` | `CropSerializer` | session | Delete a crop. |
-| GET | `/api/cuttings/` | `CuttingViewSet` | `CuttingSerializer` | session | List cutting (harvest) events (filter `?crop=`). |
-| GET | `/api/cuttings/{id}/` | `CuttingViewSet` | `CuttingSerializer` | session | Retrieve one cutting. |
-| POST | `/api/cuttings/` | `CuttingViewSet` | `CuttingWriteSerializer` | session | Register a cutting/harvest on a crop; posts no ledger entry ([[adr-32-multi-rubro-assets]] decision 4). Create-only. |
-| GET | `/api/field-tasks/` | `FieldTaskViewSet` | `FieldTaskSerializer` | session | List field tasks (filter `?pivot=`, `?client=`). |
-| GET | `/api/field-tasks/{id}/` | `FieldTaskViewSet` | `FieldTaskSerializer` | session | Retrieve one field task. |
-| POST | `/api/field-tasks/` | `FieldTaskViewSet` | `FieldTaskWriteSerializer` | session | Register a field task (tarea) on a pivot; posts a `service` `debit` via `register_field_task` ([[adr-32-multi-rubro-assets]] decisions 3, 5). Create-only. |
-| GET | `/api/machines/` | `MachineViewSet` | `MachineSerializer` | session | List machines (editable catalog). |
-| POST | `/api/machines/` | `MachineViewSet` | `MachineSerializer` | session | Create a machine. |
-| GET | `/api/machines/{id}/` | `MachineViewSet` | `MachineSerializer` | session | Retrieve one machine. |
-| PUT | `/api/machines/{id}/` | `MachineViewSet` | `MachineSerializer` | session | Replace a machine. |
-| PATCH | `/api/machines/{id}/` | `MachineViewSet` | `MachineSerializer` | session | Partial update of a machine (e.g. `status=retired`). |
-| DELETE | `/api/machines/{id}/` | `MachineViewSet` | `MachineSerializer` | session | Delete a machine. |
-| GET | `/api/maintenance-events/` | `MaintenanceEventViewSet` | `MaintenanceEventSerializer` | session | List maintenance events (filter `?machine=`, `?client=`). |
-| GET | `/api/maintenance-events/{id}/` | `MaintenanceEventViewSet` | `MaintenanceEventSerializer` | session | Retrieve one maintenance event. |
-| POST | `/api/maintenance-events/` | `MaintenanceEventViewSet` | `MaintenanceEventWriteSerializer` | session | Register a maintenance event (mantenimiento) on a machine; posts a `service` `debit` via `register_maintenance` ([[adr-32-multi-rubro-assets]] decisions 3, 5). Create-only. |
+| GET | `/api/pivots/` | `PivotViewSet` | `PivotSerializer` | `CropsAccess` | List center-pivot circles (editable catalog, [[adr-32-multi-rubro-assets]] decision 6). |
+| POST | `/api/pivots/` | `PivotViewSet` | `PivotSerializer` | `CropsAccess` | Create a pivot ("cargar círculo"). |
+| GET | `/api/pivots/{id}/` | `PivotViewSet` | `PivotSerializer` | `CropsAccess` | Retrieve one pivot. |
+| PUT | `/api/pivots/{id}/` | `PivotViewSet` | `PivotSerializer` | `CropsAccess` | Replace a pivot. |
+| PATCH | `/api/pivots/{id}/` | `PivotViewSet` | `PivotSerializer` | `CropsAccess` | Partial update of a pivot (e.g. `status=retired`). |
+| DELETE | `/api/pivots/{id}/` | `PivotViewSet` | `PivotSerializer` | `CropsAccess` | Delete a pivot. |
+| GET | `/api/crops/` | `CropViewSet` | `CropSerializer` | `CropsAccess` | List crops/plantings (filter `?pivot=`). Editable catalog. |
+| POST | `/api/crops/` | `CropViewSet` | `CropSerializer` | `CropsAccess` | Create a crop on a pivot (`species` ∈ `alfalfa`\|`other`). |
+| GET | `/api/crops/{id}/` | `CropViewSet` | `CropSerializer` | `CropsAccess` | Retrieve one crop. |
+| PUT | `/api/crops/{id}/` | `CropViewSet` | `CropSerializer` | `CropsAccess` | Replace a crop. |
+| PATCH | `/api/crops/{id}/` | `CropViewSet` | `CropSerializer` | `CropsAccess` | Partial update of a crop. |
+| DELETE | `/api/crops/{id}/` | `CropViewSet` | `CropSerializer` | `CropsAccess` | Delete a crop. |
+| GET | `/api/cuttings/` | `CuttingViewSet` | `CuttingSerializer` | `CropsAccess` | List cutting (harvest) events (filter `?crop=`). |
+| GET | `/api/cuttings/{id}/` | `CuttingViewSet` | `CuttingSerializer` | `CropsAccess` | Retrieve one cutting. |
+| POST | `/api/cuttings/` | `CuttingViewSet` | `CuttingWriteSerializer` | `CropsAccess` | Register a cutting/harvest on a crop; posts no ledger entry ([[adr-32-multi-rubro-assets]] decision 4). Create-only. |
+| GET | `/api/field-tasks/` | `FieldTaskViewSet` | `FieldTaskSerializer` | `CropsAccess` | List field tasks (filter `?pivot=`, `?client=`). |
+| GET | `/api/field-tasks/{id}/` | `FieldTaskViewSet` | `FieldTaskSerializer` | `CropsAccess` | Retrieve one field task. |
+| POST | `/api/field-tasks/` | `FieldTaskViewSet` | `FieldTaskWriteSerializer` | `CropsAccess` | Register a field task (tarea) on a pivot; posts a `service` `debit` via `register_field_task` ([[adr-32-multi-rubro-assets]] decisions 3, 5). Create-only. |
+| GET | `/api/machines/` | `MachineViewSet` | `MachineSerializer` | `MachineryAccess` | List machines (editable catalog). |
+| POST | `/api/machines/` | `MachineViewSet` | `MachineSerializer` | `MachineryAccess` | Create a machine. |
+| GET | `/api/machines/{id}/` | `MachineViewSet` | `MachineSerializer` | `MachineryAccess` | Retrieve one machine. |
+| PUT | `/api/machines/{id}/` | `MachineViewSet` | `MachineSerializer` | `MachineryAccess` | Replace a machine. |
+| PATCH | `/api/machines/{id}/` | `MachineViewSet` | `MachineSerializer` | `MachineryAccess` | Partial update of a machine (e.g. `status=retired`). |
+| DELETE | `/api/machines/{id}/` | `MachineViewSet` | `MachineSerializer` | `MachineryAccess` | Delete a machine. |
+| GET | `/api/maintenance-events/` | `MaintenanceEventViewSet` | `MaintenanceEventSerializer` | `MachineryAccess` | List maintenance events (filter `?machine=`, `?client=`). |
+| GET | `/api/maintenance-events/{id}/` | `MaintenanceEventViewSet` | `MaintenanceEventSerializer` | `MachineryAccess` | Retrieve one maintenance event. |
+| POST | `/api/maintenance-events/` | `MaintenanceEventViewSet` | `MaintenanceEventWriteSerializer` | `MachineryAccess` | Register a maintenance event (mantenimiento) on a machine; posts a `service` `debit` via `register_maintenance` ([[adr-32-multi-rubro-assets]] decisions 3, 5). Create-only. |
 
 ## Feedlot domain endpoints (Phase 7 — feedyard operating loop)
 
-Fase 7 adds the daily pen operating loop ([[adr-33-feedyard-operating-loop]]): the app `feedyard` owns pens, rations and the plan/monitor events. Same policy as the Phase 1–6 surface — DRF default `session` auth, every response `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. **Catalogs** `Pen`/`Ration` are full-CRUD `ModelViewSet`s (editable master data, [[adr-33-feedyard-operating-loop]] decision 5); ration lines are edited nested under their `Ration`. **Operational events** `LoadingOrder`/`BunkScore` expose only `list`/`retrieve`/`create` — a fact is corrected by a new fact ([[adr-24-feedlot-domain]] rule 3). No `feedyard` endpoint posts a ledger entry ([[adr-33-feedyard-operating-loop]] decision 1): the plan (`LoadingOrder`) is distinct from the executed, billed `FeedingEvent` (decision 2). The `FeedingEvent` row already declared in Phases 1–5 gains an optional `pen` field, additively (decision 3) — no new endpoint.
+Fase 7 adds the daily pen operating loop ([[adr-33-feedyard-operating-loop]]): the app `feedyard` owns pens, rations and the plan/monitor events. Authentication is the session ([[adr-10-auth]]); authorization is per-area RBAC — each row's Auth cell names the Django-Group permission class that gates it (see [Authorization (RBAC)](#authorization-rbac), [[adr-44-field-operational-roles]]). Every response `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. **Catalogs** `Pen`/`Ration` are full-CRUD `ModelViewSet`s (editable master data, [[adr-33-feedyard-operating-loop]] decision 5); ration lines are edited nested under their `Ration`. **Operational events** `LoadingOrder`/`BunkScore` expose only `list`/`retrieve`/`create` — a fact is corrected by a new fact ([[adr-24-feedlot-domain]] rule 3). No `feedyard` endpoint posts a ledger entry ([[adr-33-feedyard-operating-loop]] decision 1): the plan (`LoadingOrder`) is distinct from the executed, billed `FeedingEvent` (decision 2). The `FeedingEvent` row already declared in Phases 1–5 gains an optional `pen` field, additively (decision 3) — no new endpoint.
 
 | Method | Path | View/ViewSet | Serializer | Auth | Description |
 |---|---|---|---|---|---|
-| GET | `/api/pens/` | `PenViewSet` | `PenSerializer` | session | List pens/corrales (filter `?status=`). Editable catalog ([[adr-33-feedyard-operating-loop]] decision 5). |
-| POST | `/api/pens/` | `PenViewSet` | `PenSerializer` | session | Create a pen (corral). |
-| GET | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | session | Retrieve one pen. |
-| PUT | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | session | Replace a pen. |
-| PATCH | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | session | Partial update of a pen (e.g. `status=inactive`). |
-| DELETE | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | session | Delete a pen. |
-| GET | `/api/rations/` | `RationViewSet` | `RationSerializer` | session | List rations/diets with their nested lines. Editable catalog. |
-| POST | `/api/rations/` | `RationViewSet` | `RationSerializer` | session | Create a ration with its `lines` (each `feed_type`, `proportion`, `dry_matter_pct`). |
-| GET | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | session | Retrieve one ration and its lines. |
-| PUT | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | session | Replace a ration and its lines. |
-| PATCH | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | session | Partial update of a ration (e.g. `is_active=false`). |
-| DELETE | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | session | Delete a ration. |
-| GET | `/api/loading-orders/` | `LoadingOrderViewSet` | `LoadingOrderSerializer` | session | List loading orders (filter `?pen=`, `?ration=`). Planned mixer loads. |
-| GET | `/api/loading-orders/{id}/` | `LoadingOrderViewSet` | `LoadingOrderSerializer` | session | Retrieve one loading order. |
-| POST | `/api/loading-orders/` | `LoadingOrderViewSet` | `LoadingOrderWriteSerializer` | session | Register a loading order (plan) for a pen+ration via `register_loading_order`; posts no ledger entry ([[adr-33-feedyard-operating-loop]] decisions 1, 2). Create-only. |
-| GET | `/api/bunk-scores/` | `BunkScoreViewSet` | `BunkScoreSerializer` | session | List bunk (feed-trough) readings (filter `?pen=`). |
-| GET | `/api/bunk-scores/{id}/` | `BunkScoreViewSet` | `BunkScoreSerializer` | session | Retrieve one bunk score. |
-| POST | `/api/bunk-scores/` | `BunkScoreViewSet` | `BunkScoreWriteSerializer` | session | Register a daily bunk score (0–4) for a pen via `register_bunk_score`; posts no ledger entry. Create-only. |
+| GET | `/api/pens/` | `PenViewSet` | `PenSerializer` | `FeedyardAccess` | List pens/corrales (filter `?status=`). Editable catalog ([[adr-33-feedyard-operating-loop]] decision 5). |
+| POST | `/api/pens/` | `PenViewSet` | `PenSerializer` | `FeedyardAccess` | Create a pen (corral). |
+| GET | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | `FeedyardAccess` | Retrieve one pen. |
+| PUT | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | `FeedyardAccess` | Replace a pen. |
+| PATCH | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | `FeedyardAccess` | Partial update of a pen (e.g. `status=inactive`). |
+| DELETE | `/api/pens/{id}/` | `PenViewSet` | `PenSerializer` | `FeedyardAccess` | Delete a pen. |
+| GET | `/api/rations/` | `RationViewSet` | `RationSerializer` | `FeedyardAccess` | List rations/diets with their nested lines. Editable catalog. |
+| POST | `/api/rations/` | `RationViewSet` | `RationSerializer` | `FeedyardAccess` | Create a ration with its `lines` (each `feed_type`, `proportion`, `dry_matter_pct`). |
+| GET | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | `FeedyardAccess` | Retrieve one ration and its lines. |
+| PUT | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | `FeedyardAccess` | Replace a ration and its lines. |
+| PATCH | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | `FeedyardAccess` | Partial update of a ration (e.g. `is_active=false`). |
+| DELETE | `/api/rations/{id}/` | `RationViewSet` | `RationSerializer` | `FeedyardAccess` | Delete a ration. |
+| GET | `/api/loading-orders/` | `LoadingOrderViewSet` | `LoadingOrderSerializer` | `FeedyardAccess` | List loading orders (filter `?pen=`, `?ration=`). Planned mixer loads. |
+| GET | `/api/loading-orders/{id}/` | `LoadingOrderViewSet` | `LoadingOrderSerializer` | `FeedyardAccess` | Retrieve one loading order. |
+| POST | `/api/loading-orders/` | `LoadingOrderViewSet` | `LoadingOrderWriteSerializer` | `FeedyardAccess` | Register a loading order (plan) for a pen+ration via `register_loading_order`; posts no ledger entry ([[adr-33-feedyard-operating-loop]] decisions 1, 2). Create-only. |
+| GET | `/api/bunk-scores/` | `BunkScoreViewSet` | `BunkScoreSerializer` | `FeedyardAccess` | List bunk (feed-trough) readings (filter `?pen=`). |
+| GET | `/api/bunk-scores/{id}/` | `BunkScoreViewSet` | `BunkScoreSerializer` | `FeedyardAccess` | Retrieve one bunk score. |
+| POST | `/api/bunk-scores/` | `BunkScoreViewSet` | `BunkScoreWriteSerializer` | `FeedyardAccess` | Register a daily bunk score (0–4) for a pen via `register_bunk_score`; posts no ledger entry. Create-only. |
 
 ## Feedlot domain endpoints (Phase 7b — pen placement)
 
-Fase 7b adds **where the cattle are** ([[adr-34-pen-placement]]): `feedyard.PenPlacement` is an immutable event moving an `Animal` or `Lot` into/out of a `Pen`, so pen occupancy is derivable and the pen closeout of [[adr-33-feedyard-operating-loop]] decision 7 gets its missing input. Same surface policy as Phases 1–7 — `session` auth, `no-store`, JSON arrays. It is an **operational event**: `list`/`retrieve`/`create` only ([[adr-24-feedlot-domain]] rule 3), and it posts **no ledger entry** ([[adr-34-pen-placement]] decision 3). The write path goes through `register_placement`, which rejects an inactive pen or a non-active animal in the service (decision 4).
+Fase 7b adds **where the cattle are** ([[adr-34-pen-placement]]): `feedyard.PenPlacement` is an immutable event moving an `Animal` or `Lot` into/out of a `Pen`, so pen occupancy is derivable and the pen closeout of [[adr-33-feedyard-operating-loop]] decision 7 gets its missing input. Authentication is the session; authorization is per-area RBAC — each row's Auth cell names the Django-Group permission class that gates it (see [Authorization (RBAC)](#authorization-rbac), [[adr-44-field-operational-roles]]). `no-store`, JSON arrays. It is an **operational event**: `list`/`retrieve`/`create` only ([[adr-24-feedlot-domain]] rule 3), and it posts **no ledger entry** ([[adr-34-pen-placement]] decision 3). The write path goes through `register_placement`, which rejects an inactive pen or a non-active animal in the service (decision 4).
 
 | Method | Path | View/ViewSet | Serializer | Auth | Description |
 |---|---|---|---|---|---|
-| GET | `/api/pen-placements/` | `PenPlacementViewSet` | `PenPlacementSerializer` | session | List placements (filter `?pen=`, `?animal=`, `?lot=`). Cattle-in-pen movements. |
-| GET | `/api/pen-placements/{id}/` | `PenPlacementViewSet` | `PenPlacementSerializer` | session | Retrieve one placement. |
-| POST | `/api/pen-placements/` | `PenPlacementViewSet` | `PenPlacementWriteSerializer` | session | Register a placement (`direction` in/out, animal XOR lot) via `register_placement`; posts no ledger entry ([[adr-34-pen-placement]] decisions 3, 4). Create-only. |
+| GET | `/api/pen-placements/` | `PenPlacementViewSet` | `PenPlacementSerializer` | `FeedyardAccess` | List placements (filter `?pen=`, `?animal=`, `?lot=`). Cattle-in-pen movements. |
+| GET | `/api/pen-placements/{id}/` | `PenPlacementViewSet` | `PenPlacementSerializer` | `FeedyardAccess` | Retrieve one placement. |
+| POST | `/api/pen-placements/` | `PenPlacementViewSet` | `PenPlacementWriteSerializer` | `FeedyardAccess` | Register a placement (`direction` in/out, animal XOR lot) via `register_placement`; posts no ledger entry ([[adr-34-pen-placement]] decisions 3, 4). Create-only. |
 
 ## Feedlot domain endpoints (Phase 8 — conversational assistant)
 
-Fase 8 activates the **generating tier** seam of [[adr-15-chatbot-two-tier]] rule 9 as a bounded generative capability ([[adr-35-conversational-assistant]]), the multi-turn counterpart of the advisors. The `assistant` app is **READ-ONLY forever**: it produces free analytical text over ONE client's snapshot and never acts, never posts a ledger entry, never flips a switch (adr-15 rule 1, adr-35 decision 1). Same surface policy as Phases 1–7 — `session` auth, `no-store`, JSON arrays. A `Conversation` is a per-client thread and a `Message` is a turn: `list`/`retrieve`/`create`, no `update`/`destroy` — a turn is corrected by another turn ([[adr-35-conversational-assistant]] decision 6). Each `assistant` turn is generated over a backend-assembled per-client snapshot ([[adr-35-conversational-assistant]] decisions 2, 4), reusing the advisors' `build_snapshot` so the assistant and the dashboard read the same numbers (decision 3); async Bedrock inference gated by DEBUG ([[adr-16-async-mandatory]], [[adr-35-conversational-assistant]] decision 5).
+Fase 8 activates the **generating tier** seam of [[adr-15-chatbot-two-tier]] rule 9 as a bounded generative capability ([[adr-35-conversational-assistant]]), the multi-turn counterpart of the advisors. The `assistant` app is **READ-ONLY forever**: it produces free analytical text over ONE client's snapshot and never acts, never posts a ledger entry, never flips a switch (adr-15 rule 1, adr-35 decision 1). Authentication is the session; authorization is per-area RBAC — each row's Auth cell names the Django-Group permission class that gates it (see [Authorization (RBAC)](#authorization-rbac), [[adr-44-field-operational-roles]]). `no-store`, JSON arrays. A `Conversation` is a per-client thread and a `Message` is a turn: `list`/`retrieve`/`create`, no `update`/`destroy` — a turn is corrected by another turn ([[adr-35-conversational-assistant]] decision 6). Each `assistant` turn is generated over a backend-assembled per-client snapshot ([[adr-35-conversational-assistant]] decisions 2, 4), reusing the advisors' `build_snapshot` so the assistant and the dashboard read the same numbers (decision 3); async Bedrock inference gated by DEBUG ([[adr-16-async-mandatory]], [[adr-35-conversational-assistant]] decision 5).
 
 | Method | Path | View/ViewSet | Serializer | Auth | Description |
 |---|---|---|---|---|---|
-| GET | `/api/conversations/` | `ConversationViewSet` | `ConversationSerializer` | session | List conversations (filter `?client=`). Per-client Q&A threads ([[adr-35-conversational-assistant]] decision 2). |
-| GET | `/api/conversations/{id}/` | `ConversationViewSet` | `ConversationSerializer` | session | Retrieve one conversation with its turns. |
-| POST | `/api/conversations/` | `ConversationViewSet` | `ConversationSerializer` | session | Open a new per-client conversation. Create-only. |
-| GET | `/api/conversations/{id}/messages/` | `ConversationViewSet` | `MessageSerializer` | session | List the thread's turns (reading does not re-infer, [[adr-35-conversational-assistant]] decision 4). |
-| POST | `/api/conversations/{id}/messages/` | `ConversationViewSet` | `SendMessageSerializer` | session | Send a user turn; generates and returns the assistant's grounded answer over a backend-built snapshot ([[adr-35-conversational-assistant]] decisions 2, 4). |
+| GET | `/api/conversations/` | `ConversationViewSet` | `ConversationSerializer` | `AssistantAccess` | List conversations (filter `?client=`). Per-client Q&A threads ([[adr-35-conversational-assistant]] decision 2). |
+| GET | `/api/conversations/{id}/` | `ConversationViewSet` | `ConversationSerializer` | `AssistantAccess` | Retrieve one conversation with its turns. |
+| POST | `/api/conversations/` | `ConversationViewSet` | `ConversationSerializer` | `AssistantAccess` | Open a new per-client conversation. Create-only. |
+| GET | `/api/conversations/{id}/messages/` | `ConversationViewSet` | `MessageSerializer` | `AssistantAccess` | List the thread's turns (reading does not re-infer, [[adr-35-conversational-assistant]] decision 4). |
+| POST | `/api/conversations/{id}/messages/` | `ConversationViewSet` | `SendMessageSerializer` | `AssistantAccess` | Send a user turn; generates and returns the assistant's grounded answer over a backend-built snapshot ([[adr-35-conversational-assistant]] decisions 2, 4). |
 
 ## Feedlot domain endpoints (Phase 9 — notifications)
 
-Fase 9 adds the **outbound** layer ([[adr-36-notifications-digest]]): a per-client weekly digest rendered from `apps.metrics.summary` (decision 1 — no new metric) and delivered through a channel abstraction gated by DEBUG (decision 2, `MockSender` in DEBUG/tests, `WhatsAppSender` in deploy). A `Notification` is an **immutable delivery record** with `status` ∈ `pending`/`sent`/`failed` — `list`/`retrieve`/`create`, no `update`/`destroy`; a retry is a new notification (decision 3). `notifications` is read-only over domain data and posts **no** ledger entry (decision 4). Same surface policy — `session` auth, `no-store`, JSON arrays. Building/sending a digest through `POST` reuses the metrics summary; the `send_weekly_digests` management command fans the same service over every client, isolating per-client failures.
+Fase 9 adds the **outbound** layer ([[adr-36-notifications-digest]]): a per-client weekly digest rendered from `apps.metrics.summary` (decision 1 — no new metric) and delivered through a channel abstraction gated by DEBUG (decision 2, `MockSender` in DEBUG/tests, `WhatsAppSender` in deploy). A `Notification` is an **immutable delivery record** with `status` ∈ `pending`/`sent`/`failed` — `list`/`retrieve`/`create`, no `update`/`destroy`; a retry is a new notification (decision 3). `notifications` is read-only over domain data and posts **no** ledger entry (decision 4). Authorization is per-area RBAC — each row's Auth cell names the Django-Group permission class that gates it (see [Authorization (RBAC)](#authorization-rbac), [[adr-44-field-operational-roles]]); authentication is the session. `no-store`, JSON arrays. Building/sending a digest through `POST` reuses the metrics summary; the `send_weekly_digests` management command fans the same service over every client, isolating per-client failures.
 
 | Method | Path | View/ViewSet | Serializer | Auth | Description |
 |---|---|---|---|---|---|
-| GET | `/api/notifications/` | `NotificationViewSet` | `NotificationSerializer` | session | List delivery records (filter `?client=`, `?status=`). Immutable send log ([[adr-36-notifications-digest]] decision 3). |
-| GET | `/api/notifications/{id}/` | `NotificationViewSet` | `NotificationSerializer` | session | Retrieve one delivery record. |
-| POST | `/api/notifications/` | `NotificationViewSet` | `SendNotificationSerializer` | session | Build a client's weekly digest and send it over a channel; creates one immutable record and returns its outcome ([[adr-36-notifications-digest]] decisions 1–3). |
+| GET | `/api/notifications/` | `NotificationViewSet` | `NotificationSerializer` | `NotificationsAccess` | List delivery records (filter `?client=`, `?status=`). Immutable send log ([[adr-36-notifications-digest]] decision 3). |
+| GET | `/api/notifications/{id}/` | `NotificationViewSet` | `NotificationSerializer` | `NotificationsAccess` | Retrieve one delivery record. |
+| POST | `/api/notifications/` | `NotificationViewSet` | `SendNotificationSerializer` | `NotificationsAccess` | Build a client's weekly digest and send it over a channel; creates one immutable record and returns its outcome ([[adr-36-notifications-digest]] decisions 1–3). |
 
 ## Feedlot domain endpoints (Phase 10 — inventory & weather)
 
-Fase 10 generalises the feed-stock pattern ([[adr-37-inventory-and-weather]]): `InputType` is an editable catalog of non-feed inputs (diesel, posts, wire, field sanitary) and `InputStockMovement` is an **immutable** in/out event whose sum is the derived stock (decision 1) — CRUD for the catalog, `list`/`retrieve`/`create` for movements (decision 2). Inventory posts **no** ledger entry; a movement's `unit_price` is informational, never a charge (decision 3). `WeatherLog` is an immutable per-date rainfall/weather record, independent of the ledger and the domain (decision 5). Same surface policy — `session` auth, `no-store`, JSON arrays. Movements and logs are created through their services, which gate an inactive catalog item and non-positive quantities (decision 4).
+Fase 10 generalises the feed-stock pattern ([[adr-37-inventory-and-weather]]): `InputType` is an editable catalog of non-feed inputs (diesel, posts, wire, field sanitary) and `InputStockMovement` is an **immutable** in/out event whose sum is the derived stock (decision 1) — CRUD for the catalog, `list`/`retrieve`/`create` for movements (decision 2). Inventory posts **no** ledger entry; a movement's `unit_price` is informational, never a charge (decision 3). `WeatherLog` is an immutable per-date rainfall/weather record, independent of the ledger and the domain (decision 5). Authorization is per-area RBAC — each row's Auth cell names the Django-Group permission class that gates it (see [Authorization (RBAC)](#authorization-rbac), [[adr-44-field-operational-roles]]); authentication is the session. `no-store`, JSON arrays. Movements and logs are created through their services, which gate an inactive catalog item and non-positive quantities (decision 4).
 
 | Method | Path | View/ViewSet | Serializer | Auth | Description |
 |---|---|---|---|---|---|
-| GET | `/api/input-types/` | `InputTypeViewSet` | `InputTypeSerializer` | session | List general input catalog items ([[adr-37-inventory-and-weather]] decision 2). |
-| POST | `/api/input-types/` | `InputTypeViewSet` | `InputTypeSerializer` | session | Create a catalog input type. |
-| GET | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | session | Retrieve one input type. |
-| PUT | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | session | Replace an input type (editable catalog). |
-| PATCH | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | session | Update an input type (e.g. deactivate). |
-| DELETE | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | session | Delete an input type. |
-| GET | `/api/input-movements/` | `InputStockMovementViewSet` | `InputStockMovementSerializer` | session | List stock movements (filter `?input_type=`, `?owner_kind=`, `?client=`). Immutable ([[adr-37-inventory-and-weather]] decision 2). |
-| GET | `/api/input-movements/{id}/` | `InputStockMovementViewSet` | `InputStockMovementSerializer` | session | Retrieve one movement. |
-| POST | `/api/input-movements/` | `InputStockMovementViewSet` | `InputStockMovementWriteSerializer` | session | Register an in/out movement through the service; gates an inactive input type (decision 4). Posts no ledger entry (decision 3). |
-| GET | `/api/weather-logs/` | `WeatherLogViewSet` | `WeatherLogSerializer` | session | List weather logs (filter `?site=`). Immutable per-date records ([[adr-37-inventory-and-weather]] decision 5). |
-| GET | `/api/weather-logs/{id}/` | `WeatherLogViewSet` | `WeatherLogSerializer` | session | Retrieve one weather log. |
-| POST | `/api/weather-logs/` | `WeatherLogViewSet` | `WeatherLogWriteSerializer` | session | Register a per-date rainfall/weather record through the service. Posts no ledger entry (decision 5). |
+| GET | `/api/input-types/` | `InputTypeViewSet` | `InputTypeSerializer` | `InventoryAccess` | List general input catalog items ([[adr-37-inventory-and-weather]] decision 2). |
+| POST | `/api/input-types/` | `InputTypeViewSet` | `InputTypeSerializer` | `InventoryAccess` | Create a catalog input type. |
+| GET | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | `InventoryAccess` | Retrieve one input type. |
+| PUT | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | `InventoryAccess` | Replace an input type (editable catalog). |
+| PATCH | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | `InventoryAccess` | Update an input type (e.g. deactivate). |
+| DELETE | `/api/input-types/{id}/` | `InputTypeViewSet` | `InputTypeSerializer` | `InventoryAccess` | Delete an input type. |
+| GET | `/api/input-movements/` | `InputStockMovementViewSet` | `InputStockMovementSerializer` | `InventoryAccess` | List stock movements (filter `?input_type=`, `?owner_kind=`, `?client=`). Immutable ([[adr-37-inventory-and-weather]] decision 2). |
+| GET | `/api/input-movements/{id}/` | `InputStockMovementViewSet` | `InputStockMovementSerializer` | `InventoryAccess` | Retrieve one movement. |
+| POST | `/api/input-movements/` | `InputStockMovementViewSet` | `InputStockMovementWriteSerializer` | `InventoryAccess` | Register an in/out movement through the service; gates an inactive input type (decision 4). Posts no ledger entry (decision 3). |
+| GET | `/api/weather-logs/` | `WeatherLogViewSet` | `WeatherLogSerializer` | `WeatherAccess` | List weather logs (filter `?site=`). Immutable per-date records ([[adr-37-inventory-and-weather]] decision 5). |
+| GET | `/api/weather-logs/{id}/` | `WeatherLogViewSet` | `WeatherLogSerializer` | `WeatherAccess` | Retrieve one weather log. |
+| POST | `/api/weather-logs/` | `WeatherLogViewSet` | `WeatherLogWriteSerializer` | `WeatherAccess` | Register a per-date rainfall/weather record through the service. Posts no ledger entry (decision 5). |
 
 ## Feedlot domain endpoints (Phase 11 — SENASA traceability)
 
-Fase 11 adds the `traceability` app ([[adr-38-senasa-traceability]]): `Establishment` is an editable RENSPA catalog (CRUD, decision 1); `TransitDocument` (the DT-e) and `Caravana` are **immutable** events — `list`/`retrieve`/`create` (decision 1). The DT-e links an origin RENSPA to a destination RENSPA and posts **no** ledger entry (decision 2); its service gates inactive establishments, a self-transit, a non-positive head count and a duplicate `dte_number` (decision 3). A `Caravana` binds a unique `official_number` to an active `Animal` (decision 4). Same surface policy — `session` auth, `no-store`, JSON arrays. No new env vars; no SENASA integration in this cut.
+Fase 11 adds the `traceability` app ([[adr-38-senasa-traceability]]): `Establishment` is an editable RENSPA catalog (CRUD, decision 1); `TransitDocument` (the DT-e) and `Caravana` are **immutable** events — `list`/`retrieve`/`create` (decision 1). The DT-e links an origin RENSPA to a destination RENSPA and posts **no** ledger entry (decision 2); its service gates inactive establishments, a self-transit, a non-positive head count and a duplicate `dte_number` (decision 3). A `Caravana` binds a unique `official_number` to an active `Animal` (decision 4). Authorization is per-area RBAC — each row's Auth cell names the Django-Group permission class that gates it (see [Authorization (RBAC)](#authorization-rbac), [[adr-44-field-operational-roles]]); authentication is the session. `no-store`, JSON arrays. No new env vars; no SENASA integration in this cut.
 
 | Method | Path | View/ViewSet | Serializer | Auth | Description |
 |---|---|---|---|---|---|
-| GET | `/api/establishments/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | List RENSPA establishments ([[adr-38-senasa-traceability]] decision 1). |
-| POST | `/api/establishments/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | Create a catalog establishment. |
-| GET | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | Retrieve one establishment. |
-| PUT | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | Replace an establishment (editable catalog). |
-| PATCH | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | Update an establishment (e.g. deactivate). |
-| DELETE | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | session | Delete an establishment. |
-| GET | `/api/transit-documents/` | `TransitDocumentViewSet` | `TransitDocumentSerializer` | session | List DT-e transit documents (filter `?origin=`, `?destination=`). Immutable ([[adr-38-senasa-traceability]] decision 1). |
-| GET | `/api/transit-documents/{id}/` | `TransitDocumentViewSet` | `TransitDocumentSerializer` | session | Retrieve one transit document. |
-| POST | `/api/transit-documents/` | `TransitDocumentViewSet` | `TransitDocumentWriteSerializer` | session | Register a DT-e through the service; gates inactive/equal establishments, non-positive head count, duplicate `dte_number` (decision 3). Posts no ledger entry (decision 2). |
-| GET | `/api/caravanas/` | `CaravanaViewSet` | `CaravanaSerializer` | session | List caravanas (filter `?animal=`). Immutable ([[adr-38-senasa-traceability]] decision 4). |
-| GET | `/api/caravanas/{id}/` | `CaravanaViewSet` | `CaravanaSerializer` | session | Retrieve one caravana. |
-| POST | `/api/caravanas/` | `CaravanaViewSet` | `CaravanaWriteSerializer` | session | Bind a unique official caravan number to an active animal through the service (decision 4). Posts no ledger entry. |
+| GET | `/api/establishments/` | `EstablishmentViewSet` | `EstablishmentSerializer` | `TraceabilityAccess` | List RENSPA establishments ([[adr-38-senasa-traceability]] decision 1). |
+| POST | `/api/establishments/` | `EstablishmentViewSet` | `EstablishmentSerializer` | `TraceabilityAccess` | Create a catalog establishment. |
+| GET | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | `TraceabilityAccess` | Retrieve one establishment. |
+| PUT | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | `TraceabilityAccess` | Replace an establishment (editable catalog). |
+| PATCH | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | `TraceabilityAccess` | Update an establishment (e.g. deactivate). |
+| DELETE | `/api/establishments/{id}/` | `EstablishmentViewSet` | `EstablishmentSerializer` | `TraceabilityAccess` | Delete an establishment. |
+| GET | `/api/transit-documents/` | `TransitDocumentViewSet` | `TransitDocumentSerializer` | `TraceabilityAccess` | List DT-e transit documents (filter `?origin=`, `?destination=`). Immutable ([[adr-38-senasa-traceability]] decision 1). |
+| GET | `/api/transit-documents/{id}/` | `TransitDocumentViewSet` | `TransitDocumentSerializer` | `TraceabilityAccess` | Retrieve one transit document. |
+| POST | `/api/transit-documents/` | `TransitDocumentViewSet` | `TransitDocumentWriteSerializer` | `TraceabilityAccess` | Register a DT-e through the service; gates inactive/equal establishments, non-positive head count, duplicate `dte_number` (decision 3). Posts no ledger entry (decision 2). |
+| GET | `/api/caravanas/` | `CaravanaViewSet` | `CaravanaSerializer` | `TraceabilityAccess` | List caravanas (filter `?animal=`). Immutable ([[adr-38-senasa-traceability]] decision 4). |
+| GET | `/api/caravanas/{id}/` | `CaravanaViewSet` | `CaravanaSerializer` | `TraceabilityAccess` | Retrieve one caravana. |
+| POST | `/api/caravanas/` | `CaravanaViewSet` | `CaravanaWriteSerializer` | `TraceabilityAccess` | Bind a unique official caravan number to an active animal through the service (decision 4). Posts no ledger entry. |
 
 ## Feedlot domain endpoints (Phase 12 — gross margin & reference FX)
 
-Fase 12 closes the roadmap ([[adr-39-gross-margin-and-fx]]). `FxRate` is a reference exchange-rate series (ARS per one unit of `currency`), idempotent by `(currency, date, source)` — it never redenominates the ARS ledger (decision 1). `gross_margin` is a **derived** metric in `apps.metrics`, not a model: reference income (`kilos_gained` × market price) − period cost (`cost_breakdown` debits), `null`+`not_calculable` when any input is missing (decision 4), optionally expressed in another currency via `FxRate`. Same surface policy — `session` auth, `no-store`, JSON. No new env vars; FX load is manual in this cut.
+Fase 12 closes the roadmap ([[adr-39-gross-margin-and-fx]]). `FxRate` is a reference exchange-rate series (ARS per one unit of `currency`), idempotent by `(currency, date, source)` — it never redenominates the ARS ledger (decision 1). `gross_margin` is a **derived** metric in `apps.metrics`, not a model: reference income (`kilos_gained` × market price) − period cost (`cost_breakdown` debits), `null`+`not_calculable` when any input is missing (decision 4), optionally expressed in another currency via `FxRate`. Authorization is per-area RBAC — each row's Auth cell names the Django-Group permission class that gates it (see [Authorization (RBAC)](#authorization-rbac), [[adr-44-field-operational-roles]]); authentication is the session. `no-store`, JSON. No new env vars; FX load is manual in this cut.
 
 | Method | Path | View/ViewSet | Serializer | Auth | Description |
 |---|---|---|---|---|---|
-| GET | `/api/fx-rates/` | `FxRateViewSet` | `FxRateSerializer` | session | List reference FX rates (filter `?currency=`, `?source=`, `?date=`). Idempotent series ([[adr-39-gross-margin-and-fx]] decision 2). |
-| GET | `/api/fx-rates/{id}/` | `FxRateViewSet` | `FxRateSerializer` | session | Retrieve one FX rate. |
-| POST | `/api/fx-rates/` | `FxRateViewSet` | `FxRateWriteSerializer` | session | Upsert a manual FX rate through the service; rejects a non-positive rate (decision 2). Posts no ledger entry. |
-| GET | `/api/clients/{pk}/metrics/gross-margin/` | `GrossMarginView` | — (JSON) | session | Gross margin for the client and period. Query: `?start=&end=&price_source=&category=&currency=`. Returns `null`+`not_calculable` on missing growth/price/rate (decision 4). Posts no ledger entry (decision 5). |
+| GET | `/api/fx-rates/` | `FxRateViewSet` | `FxRateSerializer` | `FxAccess` | List reference FX rates (filter `?currency=`, `?source=`, `?date=`). Idempotent series ([[adr-39-gross-margin-and-fx]] decision 2). |
+| GET | `/api/fx-rates/{id}/` | `FxRateViewSet` | `FxRateSerializer` | `FxAccess` | Retrieve one FX rate. |
+| POST | `/api/fx-rates/` | `FxRateViewSet` | `FxRateWriteSerializer` | `FxAccess` | Upsert a manual FX rate through the service; rejects a non-positive rate (decision 2). Posts no ledger entry. |
+| GET | `/api/clients/{pk}/metrics/gross-margin/` | `GrossMarginView` | — (JSON) | `ClientScopedReadPermission` | Gross margin for the client and period. Query: `?start=&end=&price_source=&category=&currency=`. Returns `null`+`not_calculable` on missing growth/price/rate (decision 4). Posts no ledger entry (decision 5). |
 
 ## Feedlot domain endpoints (Phase 13 — sanitary plan / vaccination schedule)
 
-Fase 13 adds the sanitary plan on the `sanitary` app ([[adr-40-sanitary-plan-schedule]]). A `SanitaryPlan` + its `SanitaryPlanItem` rows are a reusable editable **catalog** (full-CRUD `ModelViewSet`s — a plan is master data, [[adr-24-feedlot-domain]] rule 3): each item names a `HealthProduct` at a relative `day_offset` (days after enrollment start, decision 2). A `PlanEnrollment` binds a plan to one `animal` XOR `lot` with a `start_date` and is an **operational event** — `list`/`retrieve`/`create` only, no `update`/`destroy` ([[adr-40-sanitary-plan-schedule]] decision 1). The `schedule` detail-action is a **derived** read: it crosses each enrollment's calendar (`start_date + day_offset`) against existing `HealthEvent`s to report each dose as `applied`/`pending`/`upcoming`, computed on read and never stored (decision 3). Neither the plan nor the enrollment posts a ledger entry — billing stays with `HealthEvent` ([[adr-28-animal-lifecycle-and-sanitary]] decision 5, [[adr-40-sanitary-plan-schedule]] decision 4). Same surface policy — `session` auth, `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. No new env vars.
+Fase 13 adds the sanitary plan on the `sanitary` app ([[adr-40-sanitary-plan-schedule]]). A `SanitaryPlan` + its `SanitaryPlanItem` rows are a reusable editable **catalog** (full-CRUD `ModelViewSet`s — a plan is master data, [[adr-24-feedlot-domain]] rule 3): each item names a `HealthProduct` at a relative `day_offset` (days after enrollment start, decision 2). A `PlanEnrollment` binds a plan to one `animal` XOR `lot` with a `start_date` and is an **operational event** — `list`/`retrieve`/`create` only, no `update`/`destroy` ([[adr-40-sanitary-plan-schedule]] decision 1). The `schedule` detail-action is a **derived** read: it crosses each enrollment's calendar (`start_date + day_offset`) against existing `HealthEvent`s to report each dose as `applied`/`pending`/`upcoming`, computed on read and never stored (decision 3). Neither the plan nor the enrollment posts a ledger entry — billing stays with `HealthEvent` ([[adr-28-animal-lifecycle-and-sanitary]] decision 5, [[adr-40-sanitary-plan-schedule]] decision 4). Authorization is per-area RBAC — each row's Auth cell names the Django-Group permission class that gates it (see [Authorization (RBAC)](#authorization-rbac), [[adr-44-field-operational-roles]]); authentication is the session. `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. No new env vars.
 
 | Method | Path | View/ViewSet | Serializer | Auth | Description |
 |---|---|---|---|---|---|
-| GET | `/api/sanitary-plans/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | List sanitary plans (catalog, editable). Each includes its nested `items` ([[adr-40-sanitary-plan-schedule]] decision 1). |
-| POST | `/api/sanitary-plans/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | Create a sanitary plan. |
-| GET | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | Retrieve one plan with its items. |
-| PUT | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | Replace a plan (catalog edit). |
-| PATCH | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | Partial update of a plan. |
-| DELETE | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | session | Delete a plan. |
-| GET | `/api/sanitary-plan-items/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | List plan items (filter `?plan=`). Catalog line, editable. |
-| POST | `/api/sanitary-plan-items/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | Add a scheduled dose (`product` + `day_offset` + `dose`) to a plan. |
-| GET | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | Retrieve one plan item. |
-| PUT | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | Replace a plan item. |
-| PATCH | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | Partial update of a plan item. |
-| DELETE | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | session | Delete a plan item. |
-| GET | `/api/plan-enrollments/` | `PlanEnrollmentViewSet` | `PlanEnrollmentSerializer` | session | List plan enrollments (immutable; filter `?client=`). |
-| GET | `/api/plan-enrollments/{id}/` | `PlanEnrollmentViewSet` | `PlanEnrollmentSerializer` | session | Retrieve one enrollment. |
-| POST | `/api/plan-enrollments/` | `PlanEnrollmentViewSet` | `PlanEnrollmentWriteSerializer` | session | Enroll one `animal` XOR `lot` into a plan with a `start_date`; validates in the service (active plan, target owned by client, active target, XOR) ([[adr-40-sanitary-plan-schedule]] decisions 5–6). Posts no ledger entry (decision 4). Create-only. |
-| GET | `/api/plan-enrollments/schedule/` | `PlanEnrollmentViewSet.schedule` | — (JSON) | session | Derived sanitary calendar for a client (`?client=` required, optional `?as_of=YYYY-MM-DD`). Each dose reports `applied`/`pending`/`upcoming` by crossing the schedule against existing `HealthEvent`s (decision 3); computed on read, never stored. No enrollments → empty list, never a filled state. `no-store`. |
+| GET | `/api/sanitary-plans/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | `SanitaryAccess` | List sanitary plans (catalog, editable). Each includes its nested `items` ([[adr-40-sanitary-plan-schedule]] decision 1). |
+| POST | `/api/sanitary-plans/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | `SanitaryAccess` | Create a sanitary plan. |
+| GET | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | `SanitaryAccess` | Retrieve one plan with its items. |
+| PUT | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | `SanitaryAccess` | Replace a plan (catalog edit). |
+| PATCH | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | `SanitaryAccess` | Partial update of a plan. |
+| DELETE | `/api/sanitary-plans/{id}/` | `SanitaryPlanViewSet` | `SanitaryPlanSerializer` | `SanitaryAccess` | Delete a plan. |
+| GET | `/api/sanitary-plan-items/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | `SanitaryAccess` | List plan items (filter `?plan=`). Catalog line, editable. |
+| POST | `/api/sanitary-plan-items/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | `SanitaryAccess` | Add a scheduled dose (`product` + `day_offset` + `dose`) to a plan. |
+| GET | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | `SanitaryAccess` | Retrieve one plan item. |
+| PUT | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | `SanitaryAccess` | Replace a plan item. |
+| PATCH | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | `SanitaryAccess` | Partial update of a plan item. |
+| DELETE | `/api/sanitary-plan-items/{id}/` | `SanitaryPlanItemViewSet` | `SanitaryPlanItemSerializer` | `SanitaryAccess` | Delete a plan item. |
+| GET | `/api/plan-enrollments/` | `PlanEnrollmentViewSet` | `PlanEnrollmentSerializer` | `SanitaryAccess` | List plan enrollments (immutable; filter `?client=`). |
+| GET | `/api/plan-enrollments/{id}/` | `PlanEnrollmentViewSet` | `PlanEnrollmentSerializer` | `SanitaryAccess` | Retrieve one enrollment. |
+| POST | `/api/plan-enrollments/` | `PlanEnrollmentViewSet` | `PlanEnrollmentWriteSerializer` | `SanitaryAccess` | Enroll one `animal` XOR `lot` into a plan with a `start_date`; validates in the service (active plan, target owned by client, active target, XOR) ([[adr-40-sanitary-plan-schedule]] decisions 5–6). Posts no ledger entry (decision 4). Create-only. |
+| GET | `/api/plan-enrollments/schedule/` | `PlanEnrollmentViewSet.schedule` | — (JSON) | `SanitaryAccess` | Derived sanitary calendar for a client (`?client=` required, optional `?as_of=YYYY-MM-DD`). Each dose reports `applied`/`pending`/`upcoming` by crossing the schedule against existing `HealthEvent`s (decision 3); computed on read, never stored. No enrollments → empty list, never a filled state. `no-store`. |
 
 ## Feedlot domain endpoints (Phase 4a — payment-to-charge imputation)
 
-Fase 4a implements the item [[adr-25-account-ledger]] rule 7 deferred: explicit imputation of a payment against specific debit charges, with its own model, never mutating an entry ([[adr-41-payment-allocation]]). A `PaymentAllocation` links a `Payment` to a debit `LedgerEntry` with an `amount`; it posts **no** ledger entry and moves **no** balance — the total balance already moved when the payment posted its credit (decision 1). It is an **operational event**: `list`/`retrieve`/`create` only, no `update`/`destroy` — a wrong imputation is corrected by another allocation (decision 5). The write path goes through `impute_payment`, which validates in the service (debit of the same account, positive amount, no over-allocation of payment or debit) and, when no explicit lines are given, auto-imputes FIFO oldest-charge-first (decisions 2–3). The `outstanding` detail-action on `ClientViewSet` derives per-debit allocated/outstanding on read, never a stored field (decision 4). Same surface policy — `session` auth, `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. No new env vars.
+Fase 4a implements the item [[adr-25-account-ledger]] rule 7 deferred: explicit imputation of a payment against specific debit charges, with its own model, never mutating an entry ([[adr-41-payment-allocation]]). A `PaymentAllocation` links a `Payment` to a debit `LedgerEntry` with an `amount`; it posts **no** ledger entry and moves **no** balance — the total balance already moved when the payment posted its credit (decision 1). It is an **operational event**: `list`/`retrieve`/`create` only, no `update`/`destroy` — a wrong imputation is corrected by another allocation (decision 5). The write path goes through `impute_payment`, which validates in the service (debit of the same account, positive amount, no over-allocation of payment or debit) and, when no explicit lines are given, auto-imputes FIFO oldest-charge-first (decisions 2–3). The `outstanding` detail-action on `ClientViewSet` derives per-debit allocated/outstanding on read, never a stored field (decision 4). Authorization is per-area RBAC — each row's Auth cell names the Django-Group permission class that gates it (see [Authorization (RBAC)](#authorization-rbac), [[adr-44-field-operational-roles]]); authentication is the session. `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. No new env vars.
 
 | Method | Path | View/ViewSet | Serializer | Auth | Description |
 |---|---|---|---|---|---|
-| GET | `/api/payment-allocations/` | `PaymentAllocationViewSet` | `PaymentAllocationSerializer` | session | List payment→charge allocations (immutable; filter `?client=` or `?payment=`). Read-only rows ([[adr-41-payment-allocation]] decision 5). |
-| POST | `/api/payment-allocations/` | `PaymentAllocationViewSet` | `PaymentAllocationWriteSerializer` | session | Impute a payment against charges via `impute_payment`: pass explicit `allocations` `[{entry, amount}]`, or omit them and set `auto=true` for FIFO oldest-first (decisions 2–3). Posts no ledger entry, moves no balance (decision 1). Create-only. |
-| GET | `/api/payment-allocations/{id}/` | `PaymentAllocationViewSet` | `PaymentAllocationSerializer` | session | Retrieve one allocation. |
-| GET | `/api/clients/{id}/outstanding/` | `ClientViewSet.outstanding` | — (JSON) | session | Derived per-charge outstanding for the client: each debit with `amount`, `allocated` (Σ allocations) and `outstanding` (`amount` − allocated), computed on read ([[adr-41-payment-allocation]] decision 4). `no-store`. |
+| GET | `/api/payment-allocations/` | `PaymentAllocationViewSet` | `PaymentAllocationSerializer` | `LedgerWriteAccess` | List payment→charge allocations (immutable; filter `?client=` or `?payment=`). Read-only rows ([[adr-41-payment-allocation]] decision 5). |
+| POST | `/api/payment-allocations/` | `PaymentAllocationViewSet` | `PaymentAllocationWriteSerializer` | `LedgerWriteAccess` | Impute a payment against charges via `impute_payment`: pass explicit `allocations` `[{entry, amount}]`, or omit them and set `auto=true` for FIFO oldest-first (decisions 2–3). Posts no ledger entry, moves no balance (decision 1). Create-only. |
+| GET | `/api/payment-allocations/{id}/` | `PaymentAllocationViewSet` | `PaymentAllocationSerializer` | `LedgerWriteAccess` | Retrieve one allocation. |
+| GET | `/api/clients/{id}/outstanding/` | `ClientViewSet.outstanding` | — (JSON) | `ClientScopedReadPermission` | Derived per-charge outstanding for the client: each debit with `amount`, `allocated` (Σ allocations) and `outstanding` (`amount` − allocated), computed on read ([[adr-41-payment-allocation]] decision 4). `no-store`. |
 
 ## Contracts
 

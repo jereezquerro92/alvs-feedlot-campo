@@ -13,9 +13,11 @@ from apps.advisors.serializers import (
     AdvisorSerializer,
     GenerateReportSerializer,
 )
+from apps.users.roles import AdvisorAccess
 
 
 class AdvisorViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
+    permission_classes = [AdvisorAccess]
     queryset = Advisor.objects.all()
     serializer_class = AdvisorSerializer
 
@@ -27,6 +29,7 @@ class AdvisorReportViewSet(
     """List/read stored reports; POST generates a new one (adr-27 rule 3: the
     report is the record — reads never re-run inference)."""
 
+    permission_classes = [AdvisorAccess]
     serializer_class = AdvisorReportSerializer
 
     def get_queryset(self):

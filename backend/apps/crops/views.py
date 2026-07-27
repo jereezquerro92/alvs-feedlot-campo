@@ -16,9 +16,11 @@ from apps.crops.serializers import (
     FieldTaskWriteSerializer,
     PivotSerializer,
 )
+from apps.users.roles import CropsAccess
 
 
 class PivotViewSet(viewsets.ModelViewSet):
+    permission_classes = [CropsAccess]
     queryset = Pivot.objects.all()
     serializer_class = PivotSerializer
 
@@ -31,6 +33,7 @@ class PivotViewSet(viewsets.ModelViewSet):
 
 
 class CropViewSet(viewsets.ModelViewSet):
+    permission_classes = [CropsAccess]
     queryset = Crop.objects.all()
     serializer_class = CropSerializer
 
@@ -46,6 +49,7 @@ class CuttingViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin,
     mixins.CreateModelMixin, viewsets.GenericViewSet,
 ):
+    permission_classes = [CropsAccess]
     serializer_class = CuttingSerializer
 
     def get_queryset(self):
@@ -65,6 +69,7 @@ class FieldTaskViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin,
     mixins.CreateModelMixin, viewsets.GenericViewSet,
 ):
+    permission_classes = [CropsAccess]
     serializer_class = FieldTaskSerializer
 
     def get_queryset(self):

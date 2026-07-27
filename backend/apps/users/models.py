@@ -58,6 +58,15 @@ class User(AbstractBaseUser, PermissionsMixin):
 class AccessRequest(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     role = models.ForeignKey(Group, null=True, blank=True, on_delete=models.SET_NULL)
+    # The single Client a lot_owners session is confined to (adr-44 decision 4).
+    # Set by an admin; the group membership grants the scoping, this says which client.
+    client = models.ForeignKey(
+        "clients.Client",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="access_requests",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

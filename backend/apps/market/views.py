@@ -13,9 +13,11 @@ from apps.market.serializers import (
     MarketPriceSerializer,
     MarketSourceSerializer,
 )
+from apps.users.roles import MarketAccess
 
 
 class MarketSourceViewSet(viewsets.ModelViewSet):
+    permission_classes = [MarketAccess]
     queryset = MarketSource.objects.all()
     serializer_class = MarketSourceSerializer
 
@@ -26,6 +28,7 @@ class MarketPriceViewSet(
 ):
     """Read prices; POST loads one by hand (manual fallback)."""
 
+    permission_classes = [MarketAccess]
     serializer_class = MarketPriceSerializer
 
     def get_queryset(self):

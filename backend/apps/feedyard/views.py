@@ -18,9 +18,11 @@ from apps.feedyard.serializers import (
     PenSerializer,
     RationSerializer,
 )
+from apps.users.roles import FeedyardAccess
 
 
 class PenViewSet(viewsets.ModelViewSet):
+    permission_classes = [FeedyardAccess]
     queryset = Pen.objects.all()
     serializer_class = PenSerializer
 
@@ -33,6 +35,7 @@ class PenViewSet(viewsets.ModelViewSet):
 
 
 class RationViewSet(viewsets.ModelViewSet):
+    permission_classes = [FeedyardAccess]
     queryset = Ration.objects.all()
     serializer_class = RationSerializer
 
@@ -44,6 +47,7 @@ class LoadingOrderViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin,
     mixins.CreateModelMixin, viewsets.GenericViewSet,
 ):
+    permission_classes = [FeedyardAccess]
     serializer_class = LoadingOrderSerializer
 
     def get_queryset(self):
@@ -65,6 +69,7 @@ class BunkScoreViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin,
     mixins.CreateModelMixin, viewsets.GenericViewSet,
 ):
+    permission_classes = [FeedyardAccess]
     serializer_class = BunkScoreSerializer
 
     def get_queryset(self):
@@ -86,6 +91,7 @@ class PenPlacementViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin,
     mixins.CreateModelMixin, viewsets.GenericViewSet,
 ):
+    permission_classes = [FeedyardAccess]
     serializer_class = PenPlacementSerializer
 
     def get_queryset(self):
