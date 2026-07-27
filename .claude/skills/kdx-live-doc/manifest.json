@@ -23,6 +23,11 @@
     { "glob": "backend/**/api_urls.py", "links": ["adr-03-api-and-backend", "API"] },
     { "glob": "backend/**/permissions.py", "links": ["adr-03-api-and-backend", "adr-10-auth", "API"] },
     { "glob": "backend/apps/users/oidc.py", "links": ["adr-10-auth", "API"] },
+    { "glob": "backend/apps/users/roles.py", "links": ["adr-44-field-operational-roles", "adr-20-authorization-lobby", "adr-03-api-and-backend", "API"] },
+    { "glob": "backend/apps/users/test_roles.py", "links": ["adr-44-field-operational-roles", "adr-20-authorization-lobby", "API"] },
+    { "glob": "backend/apps/users/models.py", "links": ["adr-44-field-operational-roles", "adr-20-authorization-lobby"] },
+    { "glob": "backend/apps/users/serializers.py", "links": ["adr-44-field-operational-roles", "adr-20-authorization-lobby"] },
+    { "glob": "backend/apps/users/admin.py", "links": ["adr-44-field-operational-roles", "adr-20-authorization-lobby"] },
     { "glob": "backend/apps/m365/graph.py", "links": ["adr-13-m365-graph", "API"] },
     { "glob": "backend/**/*.html", "links": ["adr-05-htmx", "HTMX", "API"] },
     { "glob": "frontend/src/**/*.astro", "links": ["adr-04-frontend-and-design-system", "FRONTEND"] },
@@ -37,6 +42,11 @@
     { "glob": "frontend/src/lib/components/theme/ThemeModeToggle.svelte", "links": ["MELT-UI"] },
     { "glob": "frontend/src/lib/components/theme/ThemeCard.svelte", "links": ["MELT-UI"] },
     { "glob": "frontend/src/middleware.ts", "links": ["adr-10-auth", "INFRASTRUCTURE"] },
+    { "glob": "frontend/src/lib/auth.ts", "links": ["adr-44-field-operational-roles", "adr-20-authorization-lobby", "adr-10-auth"] },
+    { "glob": "frontend/src/lib/authGate.ts", "links": ["adr-44-field-operational-roles", "adr-20-authorization-lobby", "adr-10-auth"] },
+    { "glob": "frontend/src/lib/types/user.ts", "links": ["adr-44-field-operational-roles"] },
+    { "glob": "frontend/src/pages/feedlot/*.astro", "links": ["adr-44-field-operational-roles", "adr-20-authorization-lobby"] },
+    { "glob": "frontend/src/pages/feedlot/**/*.astro", "links": ["adr-44-field-operational-roles", "adr-20-authorization-lobby"] },
     { "glob": "compose.yaml", "links": ["adr-09-docker-compose", "DOCKER"] }
   ]
 }

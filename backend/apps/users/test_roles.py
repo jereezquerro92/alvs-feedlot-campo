@@ -1,5 +1,5 @@
 """LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
-Governed by: [[adr-44-field-operational-roles]] · [[adr-10-auth]] · [[adr-20-authorization-lobby]]
+Governed by: [[adr-10-auth]] · [[adr-44-field-operational-roles]] · [[adr-20-authorization-lobby]]
 Docs: [[BACKEND]] · [[AUTH]]
 API: [[API]]
 LIVE-DOC:END"""

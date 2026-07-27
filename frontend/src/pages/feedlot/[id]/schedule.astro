@@ -1,13 +1,13 @@
 ---
 /* LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
- * Governed by: [[adr-04-frontend-and-design-system]]
+ * Governed by: [[adr-04-frontend-and-design-system]] · [[adr-44-field-operational-roles]] · [[adr-20-authorization-lobby]]
  * Docs: [[FRONTEND]]
  * LIVE-DOC:END */
 import Base from "../../../layouts/Base.astro";
 import { FeedlotScheduleView } from "$lib/components/views";
 import SessionBadge from "$lib/components/auth/SessionBadge.svelte";
 import { hasRole } from "$lib/auth";
-import { requireRole } from "$lib/authGate";
+import { requireRole, denyPortalSession } from "$lib/authGate";
 import { t } from "../../../i18n";
 import type { Me } from "$lib/types/user";
 
@@ -32,6 +32,11 @@ if (cookie) {
 // Lobby gate ([[adr-20-authorization-lobby]] rule 1).
 const redirect = requireRole(me);
 if (redirect) return Astro.redirect(redirect);
+
+// Sanitary scheduling is an ops surface; a read-only lot-owner portal session is
+// sent back to its own dashboard (adr-44 decision 3). Staff → null.
+const denied = denyPortalSession(me);
+if (denied) return Astro.redirect(denied);
 
 async function getJson(path: string): Promise<any> {
   try {
