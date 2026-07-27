@@ -6,6 +6,7 @@ LIVE-DOC:END"""
 
 from rest_framework import mixins, viewsets
 
+from apps.users.roles import WeatherAccess
 from apps.weather.models import WeatherLog
 from apps.weather.serializers import WeatherLogSerializer, WeatherLogWriteSerializer
 
@@ -16,6 +17,8 @@ class WeatherLogViewSet(
 ):
     """Immutable per-date weather logs. list/retrieve/create; a correction is another
     record (adr-37 decision 5)."""
+
+    permission_classes = [WeatherAccess]
 
     def get_serializer_class(self):
         if self.action == "create":

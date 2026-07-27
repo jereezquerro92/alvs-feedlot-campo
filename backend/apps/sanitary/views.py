@@ -27,9 +27,11 @@ from apps.sanitary.serializers import (
     SanitaryPlanSerializer,
 )
 from apps.sanitary.services import plan_schedule_for_client
+from apps.users.roles import SanitaryAccess
 
 
 class HealthProductViewSet(viewsets.ModelViewSet):
+    permission_classes = [SanitaryAccess]
     queryset = HealthProduct.objects.all()
     serializer_class = HealthProductSerializer
 
@@ -38,6 +40,7 @@ class HealthEventViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin,
     mixins.CreateModelMixin, viewsets.GenericViewSet,
 ):
+    permission_classes = [SanitaryAccess]
     serializer_class = HealthEventSerializer
 
     def get_queryset(self):
@@ -56,6 +59,7 @@ class HealthEventViewSet(
 class SanitaryPlanViewSet(viewsets.ModelViewSet):
     """Editable catalog: the reusable plan template (adr-40 decision 1)."""
 
+    permission_classes = [SanitaryAccess]
     queryset = SanitaryPlan.objects.prefetch_related("items__product").all()
     serializer_class = SanitaryPlanSerializer
 
@@ -63,6 +67,7 @@ class SanitaryPlanViewSet(viewsets.ModelViewSet):
 class SanitaryPlanItemViewSet(viewsets.ModelViewSet):
     """Editable catalog line. Filterable by `?plan=` to read one plan's items."""
 
+    permission_classes = [SanitaryAccess]
     serializer_class = SanitaryPlanItemSerializer
 
     def get_queryset(self):
@@ -80,6 +85,7 @@ class PlanEnrollmentViewSet(
     """Immutable event (adr-40 decision 1): list/retrieve/create only. The derived
     calendar rides on the `schedule` action, never a stored field (decision 3)."""
 
+    permission_classes = [SanitaryAccess]
     serializer_class = PlanEnrollmentSerializer
 
     def get_queryset(self):

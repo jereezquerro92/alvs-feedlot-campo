@@ -16,9 +16,16 @@ ROLE_HELP_TEXT = (
 )
 
 
+CLIENT_HELP_TEXT = (
+    "Only for a lot_owners session: the single Client this user's portal is "
+    "confined to (adr-44). A lot_owners user with no client bound sees nothing "
+    "(fails closed). Ignored for every other role."
+)
+
+
 @admin.register(AccessRequest)
 class AccessRequestAdmin(admin.ModelAdmin):
-    list_display = ("user", "role", "created_at", "updated_at")
+    list_display = ("user", "role", "client", "created_at", "updated_at")
     list_filter = ("role",)
     readonly_fields = ("user", "created_at", "updated_at")
 
@@ -31,4 +38,6 @@ class AccessRequestAdmin(admin.ModelAdmin):
         form = super().get_form(request, obj, **kwargs)
         if "role" in form.base_fields:
             form.base_fields["role"].help_text = ROLE_HELP_TEXT
+        if "client" in form.base_fields:
+            form.base_fields["client"].help_text = CLIENT_HELP_TEXT
         return form

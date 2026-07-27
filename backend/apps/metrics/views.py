@@ -14,6 +14,7 @@ from rest_framework.views import APIView
 
 from apps.clients.models import Client
 from apps.metrics import services
+from apps.users.roles import ClientScopedReadPermission
 
 
 def _period(request):
@@ -27,6 +28,8 @@ def _period(request):
 
 class _ClientMetricView(APIView):
     """Resolves the client and the period; subclasses just compute."""
+
+    permission_classes = [ClientScopedReadPermission]
 
     def get(self, request, pk):
         client = get_object_or_404(Client, pk=pk)
@@ -73,6 +76,8 @@ class GrossMarginView(APIView):
     Query: `?start=&end=&price_source=&category=&currency=`. `price_source` and
     `category` are required to price the produced kilos; `currency` is optional.
     """
+
+    permission_classes = [ClientScopedReadPermission]
 
     def get(self, request, pk):
         client = get_object_or_404(Client, pk=pk)

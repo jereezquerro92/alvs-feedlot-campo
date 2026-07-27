@@ -13,9 +13,11 @@ from apps.machinery.serializers import (
     MaintenanceEventSerializer,
     MaintenanceEventWriteSerializer,
 )
+from apps.users.roles import MachineryAccess
 
 
 class MachineViewSet(viewsets.ModelViewSet):
+    permission_classes = [MachineryAccess]
     queryset = Machine.objects.all()
     serializer_class = MachineSerializer
 
@@ -31,6 +33,7 @@ class MaintenanceEventViewSet(
     mixins.ListModelMixin, mixins.RetrieveModelMixin,
     mixins.CreateModelMixin, viewsets.GenericViewSet,
 ):
+    permission_classes = [MachineryAccess]
     serializer_class = MaintenanceEventSerializer
 
     def get_queryset(self):

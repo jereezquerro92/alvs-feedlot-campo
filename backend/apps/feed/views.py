@@ -8,7 +8,6 @@ from decimal import Decimal
 
 from rest_framework import mixins, viewsets
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from apps.feed.models import FeedDelivery, FeedingEvent, FeedType, OwnerKind
@@ -18,19 +17,23 @@ from apps.feed.serializers import (
     FeedTypeSerializer,
 )
 from apps.feed.services import stock_balance
+from apps.users.roles import FeedCatalogAccess, FeedDeliveryAccess, FeedExecutionAccess
 
 
 class FeedTypeViewSet(viewsets.ModelViewSet):
+    permission_classes = [FeedCatalogAccess]
     queryset = FeedType.objects.all()
     serializer_class = FeedTypeSerializer
 
 
 class FeedDeliveryViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
+    permission_classes = [FeedDeliveryAccess]
     queryset = FeedDelivery.objects.all()
     serializer_class = FeedDeliverySerializer
 
 
 class FeedingEventViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewsets.GenericViewSet):
+    permission_classes = [FeedExecutionAccess]
     serializer_class = FeedingEventSerializer
 
     def get_queryset(self):
@@ -42,7 +45,7 @@ class FeedingEventViewSet(mixins.CreateModelMixin, mixins.ListModelMixin, viewse
 
 
 @api_view(["GET"])
-@permission_classes([IsAuthenticated])
+@permission_classes([FeedExecutionAccess])
 def feed_stock(request):
     """Derived stock balances by (owner_kind, client, feed_type)."""
     from apps.clients.models import Client

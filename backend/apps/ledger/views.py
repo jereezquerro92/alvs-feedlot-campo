@@ -14,11 +14,13 @@ from apps.ledger.serializers import (
     PaymentAllocationWriteSerializer,
     PaymentSerializer,
 )
+from apps.users.roles import LedgerReadAccess, LedgerWriteAccess
 
 
 class LedgerEntryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet):
     """Entries are immutable — read-only over HTTP (adr-25 rule 1)."""
 
+    permission_classes = [LedgerReadAccess]
     serializer_class = LedgerEntrySerializer
 
     def get_queryset(self):
@@ -32,6 +34,7 @@ class LedgerEntryViewSet(mixins.ListModelMixin, mixins.RetrieveModelMixin, views
 class PaymentViewSet(
     mixins.CreateModelMixin, mixins.ListModelMixin, mixins.RetrieveModelMixin, viewsets.GenericViewSet
 ):
+    permission_classes = [LedgerWriteAccess]
     serializer_class = PaymentSerializer
 
     def get_queryset(self):
@@ -47,6 +50,8 @@ class PaymentAllocationViewSet(
 ):
     """Payment→charge imputation (adr-41). Immutable: create/list/retrieve only —
     a wrong imputation is corrected by another allocation (decision 5)."""
+
+    permission_classes = [LedgerWriteAccess]
 
     def get_queryset(self):
         qs = PaymentAllocation.objects.select_related("payment", "entry").all()

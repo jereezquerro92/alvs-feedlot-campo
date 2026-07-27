@@ -12,11 +12,13 @@ from apps.inventory.serializers import (
     InputStockMovementWriteSerializer,
     InputTypeSerializer,
 )
+from apps.users.roles import InventoryAccess
 
 
 class InputTypeViewSet(viewsets.ModelViewSet):
     """Editable input catalog — full CRUD (adr-37 decision 2)."""
 
+    permission_classes = [InventoryAccess]
     queryset = InputType.objects.all()
     serializer_class = InputTypeSerializer
 
@@ -27,6 +29,8 @@ class InputStockMovementViewSet(
 ):
     """Immutable stock movements. list/retrieve/create; no update/destroy — a
     correction is another movement (adr-37 decision 2)."""
+
+    permission_classes = [InventoryAccess]
 
     def get_serializer_class(self):
         if self.action == "create":

@@ -11,6 +11,7 @@ from apps.notifications.serializers import (
     NotificationSerializer,
     SendNotificationSerializer,
 )
+from apps.users.roles import NotificationsAccess
 
 
 class NotificationViewSet(
@@ -19,6 +20,8 @@ class NotificationViewSet(
 ):
     """Outbound delivery records. list/retrieve/create; no update/destroy — a send
     record is immutable and a retry is a new notification (adr-36 decision 3)."""
+
+    permission_classes = [NotificationsAccess]
 
     def get_serializer_class(self):
         if self.action == "create":
