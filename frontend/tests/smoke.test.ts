@@ -1,4 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
+// `URL.pathname` yields a leading-slash POSIX path ("/C:/…") on Windows, which
+// Bun.spawn cannot resolve; fileURLToPath is the platform-neutral conversion.
+import { fileURLToPath } from "node:url";
 import { t } from "../src/i18n";
 import { DENIED_REDIRECT } from "../src/lib/authGate";
 
@@ -48,7 +51,7 @@ async function waitForServer(timeoutMs = 20000): Promise<void> {
 }
 
 beforeAll(async () => {
-  const entry = new URL("../dist/server/entry.mjs", import.meta.url).pathname;
+  const entry = fileURLToPath(new URL("../dist/server/entry.mjs", import.meta.url));
   if (!(await Bun.file(entry).exists())) {
     throw new Error(`missing ${entry} — run \`bun run build\` before \`bun test\``);
   }
@@ -164,7 +167,7 @@ describe("/ session badge, authenticated branch (bdd-02); lobby gating (bdd-08, 
       },
     });
 
-    const entry = new URL("../dist/server/entry.mjs", import.meta.url).pathname;
+    const entry = fileURLToPath(new URL("../dist/server/entry.mjs", import.meta.url));
     ssrServer = Bun.spawn(["bun", entry], {
       env: {
         ...process.env,
@@ -222,14 +225,24 @@ describe("/ session badge, authenticated branch (bdd-02); lobby gating (bdd-08, 
     expect((body.match(/<span class="text-sm">/g) ?? []).length).toBe(0);
   });
 
-  test("with a session cookie and a role-holding group (groups: [admins]), the nav buttons + M365 Card render, no legend (bdd-08)", async () => {
+  test("with a session cookie and a role-holding group (groups: [admins]), / redirects to the feedlot, which carries the nav links and no legend (bdd-08)", async () => {
+    // The module-first redesign made `/` the login landing: a session that
+    // already holds a role never renders it, it is sent straight to the app
+    // (src/pages/index.astro). Assert that hop explicitly — following it
+    // silently is what let this test drift.
+    const hop = await fetch(`${SSR_BASE}/`, {
+      headers: { cookie: "sessionid=stub-role" },
+      redirect: "manual",
+    });
+    expect(hop.status).toBe(302);
+    expect(hop.headers.get("location")).toBe("/feedlot/");
+
     const res = await fetch(`${SSR_BASE}/`, {
       headers: { cookie: "sessionid=stub-role" },
     });
     expect(res.status).toBe(200);
     const body = await res.text();
     expect(body).toContain('href="/showcase/components/"');
-    expect((body.match(/<span class="text-sm">/g) ?? []).length).toBe(2);
     expect(body).not.toContain(t("lobby_pending"));
     // The profile deep-link lives inside SessionBadge's ☰ popover, gated on
     // the role-holding (non-pending) session.
