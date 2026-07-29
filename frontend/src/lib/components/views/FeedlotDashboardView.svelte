@@ -159,7 +159,7 @@
       breadcrumb={t("feedlot_nav_dashboard")}
       client={client}
       clients={clients}
-      switcherPattern="/feedlot/{id}/"
+      switcherPattern={"/feedlot/{id}/"}
     >
       <slot name="session" slot="session" />
     </FeedlotTopbar>
