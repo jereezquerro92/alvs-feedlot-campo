@@ -1,5 +1,5 @@
 """LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
-Governed by: [[adr-10-auth]] · [[adr-44-field-operational-roles]] · [[adr-20-authorization-lobby]] · [[adr-03-api-and-backend]]
+Governed by: [[adr-10-auth]] · [[adr-44-field-operational-roles]] · [[adr-45-lot-owner-assistant-access]] · [[adr-20-authorization-lobby]] · [[adr-03-api-and-backend]]
 Docs: [[BACKEND]] · [[AUTH]]
 API: [[API]]
 LIVE-DOC:END"""
@@ -128,6 +128,15 @@ class MachineryAccess(GroupMatrixPermission):
     write_groups = (FIELD_MANAGERS, WORKSHOP)
 
 
+class ExpensesAccess(GroupMatrixPermission):
+    """Extra charges (labor/fuel/machinery) billed to a client's account — the
+    field manager's "carga de deudas" via events, never a manual ledger debit
+    (adr-44 decision 6). The workshop role also loads fuel/machinery charges."""
+
+    read_groups = (FIELD_MANAGERS, WORKSHOP, FEEDLOT_OWNERS)
+    write_groups = (FIELD_MANAGERS, WORKSHOP)
+
+
 class LedgerReadAccess(GroupMatrixPermission):
     """Ledger entries are immutable and read-only over HTTP (adr-25 rule 1)."""
 
@@ -173,11 +182,63 @@ class AdvisorAccess(GroupMatrixPermission):
 
 
 class AssistantAccess(GroupMatrixPermission):
-    """The conversational assistant over a client's data (adr-35) — same internal
-    management tier as the advisors, same ``?client=`` shape, same reasoning."""
+    """The conversational asesor over a client's data (adr-35).
+
+    Staff (field manager, feedlot owner) read any client; a field manager also
+    writes (asks). A ``lot_owners`` portal session may ALSO use the asesor — but
+    ONLY over the client bound to its ``AccessRequest`` (adr-27 rule 2). This is
+    the third client-keyed surface the portal reaches, authorized by adr-45, the
+    additive ADR that extends the "exactamente" route list of adr-44 decision 3
+    (métricas + cuenta + asesor) by the vehicle that decision requires — a new
+    ADR, never a local exception (adr-20 rule 2). The asesor is read-only over
+    domain data (adr-35 decision 1): asking never mutates a client's records, so
+    a scoped read/ask surface does not widen the portal's read-only posture
+    beyond its own tenant.
+
+    The confinement fails closed three ways, all keyed on the bound client
+    (decision 4): here the requested ``client`` (query param or POST body) must
+    equal the bound client; ``has_object_permission`` re-checks the conversation's
+    client on a detail route; and the viewset queryset filters lists to the bound
+    client. An unbound lot-owner session reaches nothing.
+    """
 
     read_groups = (FIELD_MANAGERS, FEEDLOT_OWNERS)
     write_groups = (FIELD_MANAGERS,)
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not (user and user.is_authenticated):
+            return False
+        names = self._group_names(user)
+        if ADMINS_GROUP in names:
+            return True
+        allowed = self.read_groups if request.method in SAFE_METHODS else self.write_groups
+        if names.intersection(allowed):
+            return True
+        # Lot-owner portal: read and ask, confined to the bound client.
+        if LOT_OWNERS in names:
+            bound = bound_client_id(user)
+            if bound is None:
+                return False  # unbound → fail closed (adr-44 decision 4)
+            target = _requested_client_id(request)
+            # A detail route (messages) carries no client key; the queryset scope
+            # and has_object_permission enforce the boundary there. On list/create
+            # the client is present and must match the binding.
+            return target is None or target == bound
+        return False
+
+    def has_object_permission(self, request, view, obj):
+        user = request.user
+        names = self._group_names(user)
+        if ADMINS_GROUP in names:
+            return True
+        allowed = self.read_groups if request.method in SAFE_METHODS else self.write_groups
+        if names.intersection(allowed):
+            return True
+        if LOT_OWNERS in names:
+            bound = bound_client_id(user)
+            return bound is not None and getattr(obj, "client_id", None) == bound
+        return False
 
 
 class ClientDirectoryAccess(GroupMatrixPermission):
@@ -204,6 +265,45 @@ def _route_client_id(view):
         return int(raw)
     except (TypeError, ValueError):
         return None
+
+
+def _requested_client_id(request):
+    """The client a request targets via ``?client=`` or a JSON ``client`` body key.
+
+    Used to confine a lot-owner portal session on the query/body-keyed surfaces
+    (the asesor), where the route pk is the conversation, not the client (adr-44
+    decision 3). Returns None when absent/unparseable — the caller decides what
+    None means (a list is scoped by the queryset; a detail route rides the object).
+    """
+    raw = request.query_params.get("client")
+    if raw is None:
+        data = getattr(request, "data", None)
+        if isinstance(data, dict):
+            raw = data.get("client")
+    try:
+        return int(raw)
+    except (TypeError, ValueError):
+        return None
+
+
+# Staff groups that read the asesor unscoped (any client); a session holding one of
+# these is never confined, even if it also holds ``lot_owners`` (decision 5).
+ASSISTANT_STAFF_GROUPS = (FIELD_MANAGERS, FEEDLOT_OWNERS)
+
+
+def is_assistant_portal_session(user):
+    """True for a lot-owner-only asesor session — one that must be confined to its
+    bound client. False for staff/admin (unscoped) and for anonymous sessions.
+
+    A user who also holds a staff asesor group (or ``admins``) is NOT confined:
+    they are an internal role, not a tenant (adr-44 decision 5).
+    """
+    if not (user and user.is_authenticated):
+        return False
+    names = set(user.groups.values_list("name", flat=True))
+    if ADMINS_GROUP in names or names.intersection(ASSISTANT_STAFF_GROUPS):
+        return False
+    return LOT_OWNERS in names
 
 
 class ClientScopedReadPermission(BasePermission):

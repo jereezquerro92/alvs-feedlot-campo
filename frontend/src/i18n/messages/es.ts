@@ -25,6 +25,13 @@ export const es = {
   nav_profile: "Perfil",
   m365_status: "Estado M365",
 
+  // login landing (/) — the landing IS the login (redesign)
+  login_title: "Feedlot ALVS",
+  login_subtitle: "Gestión de hacienda, alimentación y cuenta corriente",
+  login_hint: "Iniciá sesión para acceder al panel del feedlot.",
+  login_pending_hint:
+    "Tu sesión está iniciada. Podés cerrarla desde el menú de arriba a la derecha.",
+
   // auth components
   auth_login: "Ingresar",
   auth_logout: "Salir",
@@ -375,6 +382,27 @@ export const es = {
   feedlot_ledger_col_credit: "Crédito (ARS)",
   feedlot_ledger_col_balance: "Saldo (ARS)",
 
+  // Current account — module-first redesign (adr-25)
+  feedlot_module_ledger_subtitle:
+    "El extracto de la cuenta corriente del cliente. Cada asiento es inmutable; tocá un movimiento para ver su comprobante.",
+  feedlot_module_ledger_pick_client_hint:
+    "Elegí un cliente en la barra de arriba para ver su cuenta corriente.",
+  feedlot_ledger_open_hint: "Tocá un movimiento para ver su comprobante.",
+  feedlot_ledger_receipt_title: "Comprobante del movimiento",
+  feedlot_ledger_receipt_entry: "Asiento",
+  feedlot_ledger_receipt_direction: "Tipo",
+  feedlot_ledger_receipt_dir_debit: "Débito (cargo)",
+  feedlot_ledger_receipt_dir_credit: "Crédito (pago / ingreso)",
+  feedlot_ledger_receipt_amount: "Importe",
+  feedlot_ledger_receipt_unit_price: "Precio unitario",
+  feedlot_ledger_receipt_quantity: "Cantidad",
+  feedlot_ledger_receipt_calc: "Cálculo",
+  feedlot_ledger_receipt_source: "Evento de origen",
+  feedlot_ledger_receipt_no_source: "Sin evento de origen",
+  feedlot_ledger_receipt_created: "Registrado",
+  feedlot_ledger_receipt_running: "Saldo tras el movimiento",
+  feedlot_ledger_receipt_close: "Cerrar",
+
   // Payment-to-charge imputation (adr-41)
   feedlot_impute_cta: "Imputar pagos",
   feedlot_impute_title: "Imputación de pagos",
@@ -382,6 +410,21 @@ export const es = {
     "Vinculá un pago con los cargos que cancela. Imputar no mueve el saldo — el saldo ya se movió cuando el pago registró su crédito; esto sólo deja registrado qué cargo responde cada pago. La imputación es un asiento propio, nunca edita un cargo.",
   feedlot_impute_total_outstanding: "Cargos pendientes",
   feedlot_impute_total_outstanding_hint: "sin imputar contra ningún pago",
+  feedlot_payment_favor: "Saldo a favor",
+  feedlot_payment_favor_card_hint: "el feedlot le debe al cliente",
+  feedlot_payment_form_title: "Registrar un pago",
+  feedlot_payment_form_desc:
+    "Cargá lo que pagó el cliente. Si el pago supera lo que debe, la diferencia queda como saldo a favor — no hay tope. Después, opcionalmente, imputá el pago contra los cargos.",
+  feedlot_payment_amount: "Monto (ARS)",
+  feedlot_payment_date: "Fecha",
+  feedlot_payment_method: "Medio",
+  feedlot_payment_method_transfer: "Transferencia",
+  feedlot_payment_method_cash: "Efectivo",
+  feedlot_payment_method_check: "Cheque",
+  feedlot_payment_method_other: "Otro",
+  feedlot_payment_reference: "Referencia",
+  feedlot_payment_favor_hint: "Este pago deja un saldo a favor de {n}.",
+  feedlot_payment_save: "Registrar pago",
   feedlot_impute_form_title: "Imputar un pago",
   feedlot_impute_form_desc:
     "Elegí un pago y dejá que se impute automáticamente (del cargo más viejo al más nuevo) o asignalo a un cargo puntual.",
@@ -478,6 +521,12 @@ export const es = {
   feedlot_form_add_animal: "+ Agregar animal",
   feedlot_form_remove: "Quitar",
   feedlot_form_lot_code: "Código de lote",
+  feedlot_form_lot_target: "Destino del lote",
+  feedlot_form_lot_target_new: "Crear un lote nuevo",
+  feedlot_form_lot_target_existing: "Sumar a un lote existente",
+  feedlot_form_lot_pick: "Lote a ampliar",
+  feedlot_form_lot_pick_placeholder: "Elegí un lote…",
+  feedlot_form_lot_add_hint: "Las cabezas y kilos se suman a los contadores del lote elegido.",
   feedlot_form_total_weight: "Peso total (kg)",
   feedlot_form_lot_head_count: "Cantidad de cabezas",
   feedlot_form_save_intake: "Registrar ingreso",
@@ -520,6 +569,19 @@ export const es = {
   feedlot_form_start_date: "Fecha de inicio",
   feedlot_form_save_enrollment: "Asignar plan",
 
+  // --- Sanitary plan creation (SanitaryPlan + items, adr-40) ---
+  feedlot_form_plan_name: "Nombre del plan",
+  feedlot_form_plan_description: "Descripción (opcional)",
+  feedlot_form_plan_doses: "Dosis programadas",
+  feedlot_form_plan_dose_product: "Producto",
+  feedlot_form_plan_product_placeholder: "Elegí un producto…",
+  feedlot_form_plan_dose_offset: "Día (desde inicio)",
+  feedlot_form_plan_dose_amount: "Dosis",
+  feedlot_form_plan_add_dose: "＋ Agregar dosis",
+  feedlot_form_save_plan: "Crear plan",
+  feedlot_plan_item_error:
+    "El plan «{n}» se creó, pero una dosis no se pudo guardar. Revisá y completá las dosis faltantes editando el plan.",
+
   // --- Loading order (dieta / mixer) ---
   feedlot_form_order_title: "Orden de carga (mixer)",
   feedlot_form_order_desc: "Plan de lo que el mixer debe llevar a un corral para una ración. No cobra: el cargo lo hace la ración servida.",
@@ -529,6 +591,48 @@ export const es = {
   feedlot_form_ration_placeholder: "Elegí una ración…",
   feedlot_form_planned_kg: "Kg planificados (como servido)",
   feedlot_form_save_order: "Registrar orden de carga",
+
+  // --- Pen creation (alta de corral, adr-33) ---
+  feedlot_form_pen_code: "Código del corral",
+  feedlot_form_pen_name: "Nombre",
+  feedlot_form_pen_capacity: "Capacidad (cabezas)",
+  feedlot_form_pen_status: "Estado",
+  feedlot_form_pen_status_active: "Activo",
+  feedlot_form_pen_status_inactive: "Inactivo",
+  feedlot_form_save_pen: "Crear corral",
+
+  // --- Ration recipe (receta de dieta, adr-33) ---
+  feedlot_form_ration_name: "Nombre de la ración",
+  feedlot_form_ration_description: "Descripción",
+  feedlot_form_ration_lines: "Composición (alimentos)",
+  feedlot_form_ration_line_feed: "Alimento",
+  feedlot_form_ration_line_proportion: "Proporción",
+  feedlot_form_ration_line_dm: "% Materia seca",
+  feedlot_form_ration_add_line: "＋ Agregar alimento",
+  feedlot_form_save_ration: "Crear ración",
+
+  // --- Serve a ración: multi-cliente / multi-lote / multi-alimento (adr-25/33) ---
+  feedlot_racion_clients: "1) Clientes",
+  feedlot_racion_no_clients: "No hay clientes cargados.",
+  feedlot_racion_lots: "2) Lotes de destino",
+  feedlot_racion_no_lots: "Elegí un cliente para ver sus lotes.",
+  feedlot_racion_feeds: "3) Alimentos (con origen por alimento)",
+  feedlot_racion_add_feed: "＋ Agregar alimento",
+  feedlot_racion_qty_mode: "Cantidad",
+  feedlot_racion_qty_per_lot: "Por lote (total)",
+  feedlot_racion_qty_per_head: "Por cabeza (× cabezas del lote)",
+  feedlot_racion_qty_per_lot_hint: "La cantidad se sirve tal cual a cada lote elegido.",
+  feedlot_racion_qty_per_head_hint: "La cantidad se multiplica por las cabezas de cada lote (100 vs 120 difieren).",
+  feedlot_racion_day_mode: "Días",
+  feedlot_racion_single_day: "Un solo día",
+  feedlot_racion_day_range: "Rango de días",
+  feedlot_racion_date_from: "Desde",
+  feedlot_racion_date_to: "Hasta",
+  feedlot_racion_preview: "Se van a registrar {n} raciones ({lots} lote/s × {feeds} alimento/s × {days} día/s).",
+  feedlot_racion_save: "Servir ración",
+  feedlot_racion_saving: "Registrando…",
+  feedlot_racion_done: "Listo ✓ {n} raciones registradas.",
+  feedlot_racion_partial: "Parcial: {ok} registradas, {fail} con error.",
 
   // --- Client creation (alta de cliente) ---
   feedlot_form_client_title: "Nuevo cliente",
@@ -544,4 +648,294 @@ export const es = {
   feedlot_form_target_animal: "Animal",
   feedlot_form_head_count_generic: "Cabezas",
   feedlot_form_head_count_generic_hint: "Para lotes: cuántas cabezas cubre esta operación (opcional).",
+
+  // --- Dashboard app shell: sidebar navigation (adr-04, DESIGN-SYSTEM) ---
+  feedlot_brand_subtitle: "Feedlot · Campo",
+  feedlot_nav_section_operation: "Operación",
+  feedlot_nav_dashboard: "Dashboard",
+  feedlot_nav_feeding: "Alimentación",
+  feedlot_nav_today: "hoy",
+  feedlot_nav_herd: "Hacienda",
+  feedlot_nav_sanitary: "Sanidad",
+  feedlot_nav_services: "Servicios y costos",
+  feedlot_nav_section_admin: "Administración",
+  feedlot_nav_ledger: "Cuenta corriente",
+  feedlot_nav_clients: "Clientes",
+  feedlot_nav_advisors: "Asesores IA",
+  feedlot_nav_users: "Usuarios y permisos",
+  feedlot_nav_section_reference: "Referencia",
+  feedlot_nav_prices: "Precios de hacienda",
+  // Module-first nav additions (redesign: sidebar → general modules) ---
+  feedlot_nav_section_nutrition: "Nutrición",
+  feedlot_nav_intake: "Ingresos y egresos",
+  feedlot_nav_pesajes: "Pesajes",
+  feedlot_nav_mixer: "Órdenes de carga",
+  feedlot_nav_racion: "Raciones",
+  feedlot_nav_stocks: "Stocks",
+  feedlot_nav_gastos: "Gastos extras",
+
+  // --- Dashboard app shell: topbar ---
+  feedlot_topbar_switch: "Cambiar de cliente",
+  feedlot_switcher_empty: "No hay clientes",
+  feedlot_switcher_all: "Todos los clientes",
+  feedlot_back: "Volver",
+  feedlot_kind_boarding: "Hotelería",
+  feedlot_kind_own: "Hacienda propia",
+
+  // --- General modules: shared shell copy (module-first redesign) ---
+  feedlot_module_pick_client: "Elegí un cliente",
+  feedlot_module_pick_client_hint:
+    "Usá el selector de arriba para elegir la hacienda sobre la que querés cargar u operar.",
+  feedlot_module_intake_title: "Ingresos y egresos",
+  feedlot_module_intake_subtitle: "Altas de hacienda, bajas por muerte y salidas.",
+  feedlot_module_feed_title: "Alimentación",
+  feedlot_module_feed_subtitle: "Registrar consumo y entregas de alimento del cliente.",
+  feedlot_module_health_title: "Sanidad",
+  feedlot_module_health_subtitle: "Aplicaciones sanitarias, planes y calendario.",
+  feedlot_module_weighing_title: "Pesajes",
+  feedlot_module_weighing_subtitle: "Registrar pesajes y ver la evolución por lote.",
+  feedlot_module_group_intake: "Cargar ingreso",
+  feedlot_module_group_death: "Registrar mortandad",
+  feedlot_module_group_exit: "Registrar egreso",
+  feedlot_module_group_feeding: "Registrar alimentación",
+  feedlot_module_group_delivery: "Entrega de alimento del cliente",
+  feedlot_module_group_health_event: "Aplicación sanitaria",
+  feedlot_module_group_enrollment: "Inscribir a un plan sanitario",
+  feedlot_module_group_plan: "Crear un plan sanitario",
+  feedlot_module_group_plan_hint:
+    "Una plantilla reutilizable de dosis por día relativo al inicio. No cobra: el cargo lo hace cada aplicación real.",
+  feedlot_module_group_calendar: "Calendario de vacunación",
+  feedlot_module_group_calendar_hint:
+    "Derivado de las inscripciones y las aplicaciones registradas: aplicada, pendiente o próxima por dosis.",
+  feedlot_module_group_weighing: "Registrar pesaje",
+  feedlot_module_group_weighing_history: "Historial de pesajes",
+
+  // --- Mixer module (corrales, raciones, órdenes de carga) ---
+  feedlot_module_mixer_title: "Mixer y órdenes de carga",
+  feedlot_module_mixer_subtitle:
+    "Corrales, raciones y el plan de carga del mixer. No cobra: el cargo lo hace la ración servida.",
+  feedlot_module_group_pen: "Nuevo corral",
+  feedlot_module_group_ration: "Nueva ración (receta)",
+  feedlot_module_group_order: "Orden de carga",
+  feedlot_module_group_recent_orders: "Órdenes cargadas",
+  feedlot_module_no_pens: "Todavía no hay corrales. Creá uno para poder cargar una orden.",
+  feedlot_module_no_rations: "Todavía no hay raciones. Creá una para poder cargar una orden.",
+  feedlot_module_recent_orders_empty: "Todavía no hay órdenes de carga.",
+  feedlot_module_order_col_date: "Fecha",
+  feedlot_module_order_col_pen: "Corral",
+  feedlot_module_order_col_ration: "Ración",
+  feedlot_module_order_col_kg: "Kg plan.",
+
+  // --- Ración module (servir dieta multi-cliente) ---
+  feedlot_module_racion_title: "Servir ración",
+  feedlot_module_racion_subtitle:
+    "Cargá la misma ración a uno o varios clientes y lotes, con el origen de cada alimento. Se registra como consumo y cobra el stock propio.",
+  feedlot_module_group_serve: "Ración a servir",
+
+  // --- Stocks module (existencias de alimento: propio cross-feedlot + del cliente) ---
+  feedlot_module_stocks_title: "Stocks de alimento",
+  feedlot_module_stocks_subtitle:
+    "Existencias de alimento derivadas de entregas y consumos. El stock propio es del feedlot; el del cliente es lo que trajo por contrato.",
+  feedlot_module_group_stock_own: "Stock propio (todo el feedlot)",
+  feedlot_module_group_stock_own_hint:
+    "Alimento propio disponible, común a todos los clientes: entregas propias menos lo consumido de stock propio.",
+  feedlot_module_group_stock_client: "Stock traído por el cliente",
+  feedlot_module_group_stock_client_hint:
+    "Lo que este cliente aportó de su propio alimento, menos lo ya consumido de ese stock. No se cobra: es alimento del cliente.",
+  feedlot_module_stock_pick_client_hint:
+    "Elegí un cliente arriba para ver, además del stock propio, lo que ese cliente trajo.",
+  feedlot_stock_col_feed: "Alimento",
+  feedlot_stock_col_unit: "Unidad",
+  feedlot_stock_col_balance: "Existencia",
+  feedlot_stock_empty: "No hay tipos de alimento activos para mostrar.",
+  feedlot_stock_client_empty: "Este cliente no trajo alimento propio.",
+
+  // --- Weighing history (per-lot / per-animal, list + graph) ---
+  weighing_history_pick: "Elegí un lote o animal",
+  weighing_history_hint: "Elegí un lote o animal para ver su historial de pesajes y su evolución.",
+  weighing_history_empty: "Este lote o animal todavía no tiene pesajes registrados.",
+  weighing_chart_label: "Evolución del peso por cabeza (kg)",
+  weighing_col_wph: "Peso/cabeza (kg)",
+  weighing_col_adg: "GDP (kg/día)",
+  weighing_not_calculable: "No calculable",
+  weighing_adg_same_date: "Dos pesajes en la misma fecha: no se puede calcular la ganancia diaria.",
+  weighing_adg_head_changed: "Cambió la cantidad de cabezas entre pesajes: la ganancia por cabeza no es comparable.",
+  weighing_loading: "Cargando pesajes…",
+
+  // --- Dashboard: page header + actions ---
+  feedlot_dash_title: "Dashboard del cliente",
+  feedlot_action_export: "↓ Exportar",
+  feedlot_action_export_soon: "Exportación disponible próximamente",
+  feedlot_action_analyze: "✦ Pedir análisis",
+  feedlot_dash_derivation_note:
+    "Los valores se derivan de los eventos cargados. Una métrica sin datos suficientes se muestra como «—» con su motivo, nunca como un número inventado.",
+
+  // --- Dashboard: KPI tiles (adr-29 null-contract) ---
+  feedlot_kpi_herd: "Hacienda actual",
+  feedlot_kpi_balance: "Saldo cuenta",
+  feedlot_kpi_balance_owes: "el cliente debe",
+  feedlot_kpi_balance_credit: "saldo a favor",
+  feedlot_kpi_balance_settled: "al día",
+  feedlot_kpi_herd_sub_empty: "sin hacienda cargada",
+  feedlot_kpi_feed_cost: "Costeo alimentación",
+  feedlot_kpi_feed_cost_sub: "débitos de alimento del período",
+  feedlot_kpi_gdp: "GDP promedio",
+  feedlot_kpi_conversion: "Conversión",
+  feedlot_kpi_conversion_sub: "kg consumidos / kg ganados",
+  feedlot_kpi_mortality: "Mortandad",
+
+  // --- Dashboard: charts ---
+  feedlot_chart_cost_title: "Costo diario y acumulado",
+  feedlot_chart_cost_desc: "Cargo diario (barras) y su acumulado (línea), en ARS",
+  feedlot_chart_cost_bar: "Cargo del día",
+  feedlot_chart_cost_line: "Acumulado",
+  feedlot_donut_title: "Costeo por concepto",
+  feedlot_donut_desc: "Distribución de los débitos del período",
+  feedlot_donut_center: "Costo total",
+  feedlot_lots_title: "Peso promedio por lote",
+  feedlot_lots_desc: "Peso total ÷ cabezas de cada lote (kg/cabeza)",
+  feedlot_recent_title: "Movimientos recientes",
+  feedlot_recent_desc: "Últimos asientos de la cuenta corriente",
+  feedlot_recent_empty: "Sin movimientos en la cuenta.",
+
+  // --- Ledger concepts (adr-25) ---
+  feedlot_concept_feeding: "Alimentación",
+  feedlot_concept_health: "Sanidad",
+  feedlot_concept_service: "Servicio",
+  feedlot_concept_adjustment: "Ajuste",
+  feedlot_concept_sale: "Venta",
+  feedlot_concept_payment: "Pago",
+
+  // --- Extra-expenses module (adr-44 decision 6) ---
+  feedlot_module_gastos_title: "Gastos extras",
+  feedlot_module_gastos_subtitle:
+    "Cargá mano de obra, combustible o maquinaria a la cuenta corriente de un cliente. Cada gasto queda como un asiento de servicio en el ledger.",
+  feedlot_module_group_expense: "Nuevo gasto",
+  feedlot_module_group_recent_expenses: "Gastos recientes",
+  feedlot_expense_charges_to: "Se carga a la cuenta de",
+  feedlot_expense_pick_client: "Elegí un cliente en la barra superior para cargar un gasto.",
+  feedlot_expense_category: "Tipo de gasto",
+  feedlot_expense_cat_labor: "Mano de obra",
+  feedlot_expense_cat_fuel: "Combustible",
+  feedlot_expense_cat_machinery: "Maquinaria",
+  feedlot_expense_cat_other: "Otro",
+  feedlot_expense_title: "Detalle",
+  feedlot_expense_title_placeholder: "p. ej. Jornal de carga, Gasoil tractor…",
+  feedlot_expense_lot: "Lote",
+  feedlot_expense_lot_all: "Todo el cliente",
+  feedlot_expense_lot_hint:
+    "Dejá «Todo el cliente» para cargar el gasto sin asignarlo a un lote puntual.",
+  feedlot_expense_fuel_kind: "Tipo de combustible",
+  feedlot_expense_fuel_kind_placeholder: "p. ej. Gasoil, Nafta…",
+  feedlot_expense_hours: "Horas",
+  feedlot_expense_litres: "Litros",
+  feedlot_expense_quantity: "Cantidad",
+  feedlot_expense_price_hour: "Precio por hora",
+  feedlot_expense_price_litre: "Precio por litro",
+  feedlot_expense_price_unit: "Precio unitario",
+  feedlot_expense_total_preview: "Total a cargar:",
+  feedlot_expense_save: "Cargar gasto",
+  feedlot_expense_recent_empty: "Todavía no hay gastos cargados para este cliente.",
+  feedlot_expense_col_date: "Fecha",
+  feedlot_expense_col_category: "Tipo",
+  feedlot_expense_col_title: "Detalle",
+  feedlot_expense_col_lot: "Lote",
+  feedlot_expense_col_total: "Total",
+
+  // --- AI advisor module (adr-35 conversational assistant, adr-27 advisors) ---
+  feedlot_module_asesor_title: "Asesor IA",
+  feedlot_module_asesor_subtitle:
+    "Preguntale a los datos del cliente. Elegí una pregunta rápida o escribí la tuya; el asesor responde solo con los números cargados, nunca inventa.",
+  feedlot_asesor_pick_client: "Elegí un cliente en la barra superior para consultarle al asesor.",
+  feedlot_asesor_asks_about: "Consultando la cuenta de",
+  feedlot_asesor_presets_title: "Preguntas rápidas",
+  feedlot_asesor_group_livestock: "Ganadero",
+  feedlot_asesor_group_finance: "Finanzas",
+  feedlot_asesor_group_admin: "Administración",
+  feedlot_asesor_input_placeholder: "Escribí tu pregunta…",
+  feedlot_asesor_send: "Preguntar",
+  feedlot_asesor_thinking: "El asesor está pensando…",
+  feedlot_asesor_empty:
+    "Todavía no hay preguntas en esta conversación. Empezá con una pregunta rápida o escribí la tuya.",
+  feedlot_asesor_you: "Vos",
+  feedlot_asesor_advisor: "Asesor",
+  feedlot_asesor_error: "No se pudo obtener la respuesta. Probá de nuevo.",
+  feedlot_asesor_disclaimer:
+    "Las respuestas se generan sobre los datos cargados del cliente. El asesor solo informa: no ejecuta acciones ni modifica nada.",
+  // Preset questions — the chip label IS the question sent to the advisor.
+  feedlot_asesor_q_head: "¿Cuántas cabezas tiene el cliente ahora mismo?",
+  feedlot_asesor_q_adg: "¿Cuál es la ganancia diaria de peso (GDP) promedio?",
+  feedlot_asesor_q_conversion: "¿Cómo viene la conversión alimenticia?",
+  feedlot_asesor_q_mortality: "¿Hubo muertes en el período? ¿Cuál es la mortandad?",
+  feedlot_asesor_q_lot_weights: "¿Cuánto pesan en promedio los lotes?",
+  feedlot_asesor_q_growth: "¿Cuántos kilos engordó la hacienda en el período?",
+  feedlot_asesor_q_balance: "¿Cuál es el saldo de la cuenta corriente?",
+  feedlot_asesor_q_feed_cost: "¿Cuánto costó la alimentación en el período?",
+  feedlot_asesor_q_cost_breakdown: "¿Cómo se reparte el costo por concepto?",
+  feedlot_asesor_q_expenses:
+    "¿Qué gastos extras se cargaron (mano de obra, combustible, maquinaria)?",
+  feedlot_asesor_q_margin: "¿Cuál es el margen bruto estimado?",
+  feedlot_asesor_q_outstanding: "¿Qué cargos quedan pendientes de pago?",
+  feedlot_asesor_q_sanitary_pending: "¿Hay sanidad pendiente en el plan?",
+  feedlot_asesor_q_recent_moves: "¿Cuáles son los últimos movimientos de la cuenta?",
+  feedlot_asesor_q_summary: "Dame un resumen general de la situación del cliente.",
+
+  // --- Prices module (adr-30 reference cattle prices; MarketAccess-gated) ---
+  feedlot_module_precios_title: "Precios de hacienda",
+  feedlot_module_precios_subtitle:
+    "Precios de referencia de mercado por fuente y categoría. Son valores externos para métricas y análisis; nunca la moneda de la cuenta, que sigue en ARS con precio histórico.",
+  feedlot_precios_reference_note:
+    "Cañuelas (mercado físico, diario) e IPCVA (índice, mensual) miden cosas distintas y no se promedian. Cada precio queda con su fuente; el vacío de un día no es un error.",
+  feedlot_precios_sources_title: "Fuentes",
+  feedlot_precios_sources_empty: "No hay fuentes de precios configuradas.",
+  feedlot_precios_source_automated: "Automática",
+  feedlot_precios_source_manual: "Manual",
+  feedlot_precios_source_inactive: "Inactiva",
+  feedlot_precios_prices_title: "Últimos precios",
+  feedlot_precios_empty: "Todavía no hay precios cargados.",
+  feedlot_precios_col_source: "Fuente",
+  feedlot_precios_col_category: "Categoría",
+  feedlot_precios_col_date: "Fecha",
+  feedlot_precios_col_avg: "Promedio",
+  feedlot_precios_col_min: "Mín.",
+  feedlot_precios_col_max: "Máx.",
+  feedlot_precios_col_median: "Mediana",
+  feedlot_precios_col_head: "Cabezas",
+  feedlot_precios_unit_hint: "Valores en ARS/kg salvo el índice IPCVA (USD/kg), separado por fuente.",
+
+  // --- Users & permissions module (adr-44 six field roles; reference-only) ---
+  feedlot_module_usuarios_title: "Usuarios y permisos",
+  feedlot_module_usuarios_subtitle:
+    "Los seis roles operativos del campo y qué puede ver y cargar cada uno. Un rol es un grupo de Django; la autorización se decide en el backend, nunca en un claim del proveedor de login.",
+  feedlot_usuarios_session_title: "Tu sesión",
+  feedlot_usuarios_session_name: "Nombre",
+  feedlot_usuarios_session_email: "Email",
+  feedlot_usuarios_session_groups: "Grupos",
+  feedlot_usuarios_session_no_groups: "Sin grupos asignados",
+  feedlot_usuarios_session_client: "Cliente vinculado",
+  feedlot_usuarios_roles_title: "Roles del campo",
+  feedlot_usuarios_col_role: "Rol",
+  feedlot_usuarios_col_group: "Grupo Django",
+  feedlot_usuarios_col_nature: "Alcance",
+  feedlot_role_field_managers: "Encargado del campo",
+  feedlot_role_field_managers_nature:
+    "Staff; ve todo lo operativo y carga deudas (eventos y pagos a la cuenta corriente).",
+  feedlot_role_feed_operators: "Operativo (mixer)",
+  feedlot_role_feed_operators_nature:
+    "Staff; prepara el mixer: órdenes de carga, alimentación y lectura de comedero.",
+  feedlot_role_lot_owners: "Dueño de lotes",
+  feedlot_role_lot_owners_nature:
+    "Portal de cliente; solo lectura, acotado a SU cliente: métricas de su hacienda y su saldo.",
+  feedlot_role_field_admins: "Administrativo del campo",
+  feedlot_role_field_admins_nature:
+    "Staff; carga ingresos de mercadería a los stocks (del campo y propios por contrato).",
+  feedlot_role_feedlot_owners: "Dueño del campo",
+  feedlot_role_feedlot_owners_nature:
+    "Staff/dueño; lectura sobre todos los clientes (hacienda por contrato y propia).",
+  feedlot_role_workshop: "Taller",
+  feedlot_role_workshop_nature:
+    "Staff; carga maquinaria, mantenimiento, combustible y alfalfa (cultivos).",
+  feedlot_usuarios_admin_note:
+    "Los roles se asignan en el panel de administración de Django, por un administrador y nunca por autoservicio. Un cliente se vincula al dueño de lotes ahí mismo.",
+  feedlot_usuarios_admin_link: "Abrir panel de administración",
 } as const;

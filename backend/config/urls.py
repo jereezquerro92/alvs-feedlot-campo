@@ -26,6 +26,8 @@ urlpatterns = [
     # Feedlot multi-rubro (Phase 6) — docs/adrs/adr-32-multi-rubro-assets.md, docs/API.md
     path("api/", include("apps.crops.urls")),
     path("api/", include("apps.machinery.urls")),
+    # Extra expenses (labor/fuel/machinery "carga de deudas") — docs/adrs/adr-44-field-operational-roles.md, docs/API.md
+    path("api/", include("apps.expenses.urls")),
     # Feedlot pen operating loop (Phase 7) — docs/adrs/adr-33-feedyard-operating-loop.md, docs/API.md
     path("api/", include("apps.feedyard.urls")),
     # Conversational assistant (Phase 8) — docs/adrs/adr-35-conversational-assistant.md, docs/API.md

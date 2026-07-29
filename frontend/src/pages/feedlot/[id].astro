@@ -53,12 +53,14 @@ const client = await getJson(`/api/clients/${id}/`);
 // An unknown client id bounces back to the clients list, not a broken page.
 if (!client) return Astro.redirect("/feedlot/");
 
-const [summary, account, animalsData, lotsData, pricesData] = await Promise.all([
+const [summary, account, animalsData, lotsData, pricesData, dailyCostData, clientsData] = await Promise.all([
   getJson(`/api/clients/${id}/metrics/summary/`),
   getJson(`/api/clients/${id}/metrics/account/`),
   getJson(`/api/animals/?client=${id}`),
   getJson(`/api/lots/?client=${id}`),
   getJson(`/api/market-prices/?source=canuelas`),
+  getJson(`/api/clients/${id}/metrics/daily-cost/`),
+  getJson(`/api/clients/`),
 ]);
 
 const asArray = (d: unknown): any[] =>
@@ -67,6 +69,10 @@ const asArray = (d: unknown): any[] =>
 const animals = asArray(animalsData);
 const lots = asArray(lotsData);
 const prices = asArray(pricesData);
+const dailyCost = asArray(dailyCostData);
+// Roster for the topbar client dropdown (module-first redesign). A lot-owner
+// portal session only ever sees its own client, so the dropdown collapses to one.
+const clients = asArray(clientsData);
 
 const pending = me !== null && !hasRole(me);
 
@@ -77,8 +83,10 @@ Astro.response.headers.set("Cache-Control", "no-store");
   <FeedlotDashboardView
     projectSlug={publicProjectSlug}
     client={client}
+    clients={clients}
     summary={summary}
     account={account}
+    dailyCost={dailyCost}
     prices={prices}
     animals={animals}
     lots={lots}

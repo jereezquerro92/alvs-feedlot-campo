@@ -49,6 +49,12 @@ class Lot(models.Model):
 
     class Meta:
         ordering = ["client", "code"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["client", "code"],
+                name="unique_lot_code_per_client",
+            )
+        ]
 
     def __str__(self):
         return f"{self.code} ({self.client_id})"

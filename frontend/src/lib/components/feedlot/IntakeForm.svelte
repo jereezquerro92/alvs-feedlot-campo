@@ -7,8 +7,11 @@
   Register a cattle intake for one client. Writes only through the declared endpoint
   `POST /api/intakes/`, which dispatches on `mode`
   ([[adr-26-livestock-individual-and-lot]] rule 1): `individual` creates one Animal
-  per ear tag; `lot` creates an anonymous Lot carried as head_count + total_weight.
-  Both modes are first-class. A bare mount performs NO request
+  per ear tag; `lot` creates an anonymous Lot (carried as head_count + total_weight)
+  OR — the "creates or updates" half of rule 1 — adds head_count/total_weight to an
+  EXISTING lot's event-maintained counters when an existing `lot` id is sent instead
+  of a new `code`. A new lot code is unique per client (task #20). Both modes are
+  first-class. A bare mount performs NO request
   ([[adr-22-showcase-ready-components]] rule 2), mounts with zero props and never
   throws (rule 1). Session + CSRF per [[AUTH]].
 -->
@@ -21,15 +24,26 @@
 
   let {
     clientId = null,
+    lots = [],
     today = "",
     publicBackendUrl = "",
     onsaved = undefined,
   }: {
     clientId?: number | null;
+    lots?: Array<Record<string, any>>;
     today?: string;
     publicBackendUrl?: string;
     onsaved?: (() => void) | undefined;
   } = $props();
+
+  // Only active lots of the current client can receive more head.
+  const openLots = $derived(
+    (lots ?? []).filter(
+      (l) =>
+        (l?.status ?? "active") === "active" &&
+        (clientId === null || Number(l?.client) === Number(clientId)),
+    ),
+  );
 
   const categories = [
     { value: "cow", label: "Vaca" },
@@ -43,6 +57,9 @@
   const blankAnimal = (): AnimalRow => ({ ear_tag: "", category: "steer", sex: "", entry_weight: "" });
 
   let mode = $state("individual");
+  // Within lot mode: "new" creates a fresh lot; "existing" adds to a chosen lot.
+  let lotTarget = $state("new");
+  let lotId = $state("");
   let date = $state(today);
   let animals = $state<AnimalRow[]>([blankAnimal()]);
   let code = $state("");
@@ -55,8 +72,12 @@
   const individualValid = $derived(
     animals.length > 0 && animals.every((a) => a.ear_tag.trim() !== "" && a.category !== ""),
   );
+  const countsValid = $derived(
+    headCount !== "" && Number(headCount) > 0 && totalWeight !== "" && Number(totalWeight) > 0,
+  );
   const lotValid = $derived(
-    code.trim() !== "" && headCount !== "" && Number(headCount) > 0 && totalWeight !== "" && Number(totalWeight) > 0,
+    countsValid &&
+      (lotTarget === "existing" ? lotId !== "" : code.trim() !== ""),
   );
   const valid = $derived(
     clientId !== null && date !== "" && (mode === "individual" ? individualValid : lotValid),
@@ -87,9 +108,13 @@
         return row;
       });
     } else {
-      body.code = code.trim();
       body.head_count = Number(headCount);
       body.total_weight = Number(totalWeight);
+      if (lotTarget === "existing") {
+        body.lot = Number(lotId);
+      } else {
+        body.code = code.trim();
+      }
     }
     try {
       const res = await fetch(`${publicBackendUrl}/api/intakes/`, {
@@ -108,6 +133,7 @@
       ok = true;
       animals = [blankAnimal()];
       code = "";
+      lotId = "";
       headCount = "";
       totalWeight = "";
       onsaved?.();
@@ -190,9 +216,31 @@
     </div>
   {:else}
     <div class="flex flex-col gap-1.5">
-      <Label for="i-code">{t("feedlot_form_lot_code")}</Label>
-      <Input id="i-code" type="text" bind:value={code} disabled={saving} />
+      <Label for="i-lot-target">{t("feedlot_form_lot_target")}</Label>
+      <select id="i-lot-target" class={inputClass} bind:value={lotTarget} disabled={saving}>
+        <option value="new">{t("feedlot_form_lot_target_new")}</option>
+        <option value="existing" disabled={openLots.length === 0}>
+          {t("feedlot_form_lot_target_existing")}
+        </option>
+      </select>
     </div>
+    {#if lotTarget === "existing"}
+      <div class="flex flex-col gap-1.5">
+        <Label for="i-lot">{t("feedlot_form_lot_pick")}</Label>
+        <select id="i-lot" class={inputClass} bind:value={lotId} disabled={saving}>
+          <option value="">{t("feedlot_form_lot_pick_placeholder")}</option>
+          {#each openLots as l (l.id)}
+            <option value={l.id}>{l.code} · {l.head_count} cab.</option>
+          {/each}
+        </select>
+        <p class="text-xs text-muted-foreground">{t("feedlot_form_lot_add_hint")}</p>
+      </div>
+    {:else}
+      <div class="flex flex-col gap-1.5">
+        <Label for="i-code">{t("feedlot_form_lot_code")}</Label>
+        <Input id="i-code" type="text" bind:value={code} disabled={saving} />
+      </div>
+    {/if}
     <div class="grid grid-cols-2 gap-3">
       <div class="flex flex-col gap-1.5">
         <Label for="i-head">{t("feedlot_form_lot_head_count")}</Label>

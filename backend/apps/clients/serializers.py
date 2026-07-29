@@ -12,7 +12,7 @@ from apps.clients.models import Account, Client
 class AccountSerializer(serializers.ModelSerializer):
     class Meta:
         model = Account
-        fields = ["client", "balance_cached", "updated_at"]
+        fields = ["id", "client", "balance_cached", "updated_at"]
         read_only_fields = fields
 
 

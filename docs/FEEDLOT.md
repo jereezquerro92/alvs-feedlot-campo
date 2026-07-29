@@ -38,6 +38,12 @@ Cattle domain (today):
 - `feed` — `FeedType`, `FeedDelivery`, `FeedStockMovement`, `FeedingEvent`.
 - `health` — `HealthProduct`, `HealthEvent`.
 
+Later additions (shipped, grow-by-addition):
+
+- `expenses` — `ExpenseEvent`: extra charges (labor/fuel/machinery) billed to a client
+  through the ledger seam, never a manual debit ([[adr-44-field-operational-roles]] decision 6).
+- `assistant` — the per-client conversational asesor, read-only forever ([[adr-35-conversational-assistant]]).
+
 App naming follows [[GLOSSARY]] (lowercase, domain-named, singular PascalCase models).
 New nouns are added to [[GLOSSARY]] first (`GLOSSARY-feedlot-additions.md`).
 
@@ -75,6 +81,17 @@ are counter-entries. Every debit snapshots `unit_price` and `quantity` (historic
 
 Three read-only, per-client, generative analyses over the client's own metrics. A named
 exception to the router's zero-generation posture ([[adr-15-chatbot-two-tier]]).
+
+### Roles and the client portal ([[adr-44-field-operational-roles]], [[adr-45-lot-owner-assistant-access]])
+
+Six operative field roles are Django Groups; the matrix of who reads/writes which area
+lives in one file, `apps/users/roles.py` ([[adr-44-field-operational-roles]] decision 1).
+`lot_owners` is a **client portal**: read-only and confined to the single `Client` bound
+to its `AccessRequest`, reaching exactly three client-keyed surfaces — metrics, the account,
+and the conversational asesor ([[adr-45-lot-owner-assistant-access]]). Reference market
+prices (`market`) are staff-only cross-client data, shown in the redesign's *precios*
+module and never scoped to a tenant. The users module is reference-only: a grant is an
+admin action in `/admin/`, never self-service ([[adr-20-authorization-lobby]] rule 3).
 
 ## Localization
 

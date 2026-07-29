@@ -8,7 +8,11 @@ from rest_framework import serializers
 
 from apps.clients.models import Client
 from apps.livestock.models import Animal, Intake, Lot
-from apps.livestock.services import create_individual_intake, create_lot_intake
+from apps.livestock.services import (
+    add_to_lot_intake,
+    create_individual_intake,
+    create_lot_intake,
+)
 
 
 class LotSerializer(serializers.ModelSerializer):
@@ -43,8 +47,12 @@ class IntakeSerializer(serializers.Serializer):
     mode = serializers.ChoiceField(choices=Intake.Mode.choices)
     # individual
     animals = IntakeAnimalSerializer(many=True, required=False)
-    # lot
+    # lot: EITHER a new `code` (creates an anonymous lot) OR an existing `lot`
+    # id (adds to that lot's counters, adr-26 rule 1 "creates or updates").
     code = serializers.CharField(max_length=40, required=False)
+    lot = serializers.PrimaryKeyRelatedField(
+        queryset=Lot.objects.all(), required=False, allow_null=True
+    )
     head_count = serializers.IntegerField(required=False, min_value=1)
     total_weight = serializers.DecimalField(max_digits=12, decimal_places=2, required=False)
 
@@ -53,9 +61,16 @@ class IntakeSerializer(serializers.Serializer):
             if not attrs.get("animals"):
                 raise serializers.ValidationError("Individual intake requires `animals`.")
         else:
-            for f in ("code", "head_count", "total_weight"):
+            for f in ("head_count", "total_weight"):
                 if attrs.get(f) in (None, ""):
                     raise serializers.ValidationError(f"Lot intake requires `{f}`.")
+            # Exactly one of: a new `code`, or an existing `lot`.
+            has_code = attrs.get("code") not in (None, "")
+            has_lot = attrs.get("lot") is not None
+            if has_code == has_lot:
+                raise serializers.ValidationError(
+                    "Lot intake requires either a new `code` or an existing `lot`, not both."
+                )
         return attrs
 
     def create(self, validated):
@@ -64,6 +79,15 @@ class IntakeSerializer(serializers.Serializer):
                 client=validated["client"], date=validated["date"], animals=validated["animals"]
             )
             return {"intake": intake.id, "mode": "individual", "animals": [a.id for a in animals]}
+        if validated.get("lot") is not None:
+            intake, lot = add_to_lot_intake(
+                client=validated["client"],
+                date=validated["date"],
+                lot=validated["lot"],
+                head_count=validated["head_count"],
+                total_weight=validated["total_weight"],
+            )
+            return {"intake": intake.id, "mode": "lot", "lot": lot.id, "added": True}
         intake, lot = create_lot_intake(
             client=validated["client"],
             date=validated["date"],

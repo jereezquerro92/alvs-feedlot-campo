@@ -127,6 +127,71 @@ button:disabled,
   --corner-nav-icon: oklch(0.12 0.01 50);
 }
 
+/* --- The feedlot app is green -------------------------------------------------
+   The template's global brand stays orange (`--primary` above) for the showcase,
+   chat and profile surfaces. The feedlot operational app runs green: any subtree
+   wrapped in `.feedlot-app` overrides `--primary`/`--ring` to green, so every
+   Tailwind `bg-primary`/`text-primary`/`ring` utility resolves green under the
+   cascade WITHOUT touching a single component class ([[adr-04-frontend-and-design-system]]
+   rule 5 — every visual value is a token; [[DESIGN-SYSTEM]] variable-driven theming).
+   The dark-green sidebar and the chart palette are their own tokens, read by the
+   feedlot shell components through `var(--sidebar-*)` / `var(--chart-*)`. Light + dark,
+   always. */
+.feedlot-app {
+  --primary: oklch(0.52 0.12 152);
+  --primary-foreground: oklch(0.99 0.01 152);
+  --ring: oklch(0.52 0.11 152);
+  --success: oklch(0.56 0.13 150);
+  --success-foreground: oklch(0.99 0.01 150);
+
+  /* Dark forest-green sidebar — same in both themes; the fill is what carries
+     the brand, the icons/text ride on it. */
+  --sidebar: oklch(0.30 0.045 155);
+  --sidebar-foreground: oklch(0.96 0.015 150);
+  --sidebar-muted: oklch(0.74 0.03 150);
+  --sidebar-border: oklch(0.38 0.04 155);
+  --sidebar-active-bg: oklch(0.42 0.075 152);
+  --sidebar-active-foreground: oklch(0.99 0.01 150);
+  --sidebar-hover-bg: oklch(0.36 0.05 153);
+  --sidebar-logo-bg: oklch(0.64 0.14 150);
+  --sidebar-logo-foreground: oklch(0.18 0.03 150);
+
+  /* Chart palette — categorical, read by GrowthCostChart / CostDonut / ConversionByLot. */
+  --chart-1: oklch(0.55 0.13 152);   /* green   — feeding / weight / good */
+  --chart-2: oklch(0.60 0.13 240);   /* blue    — client feed */
+  --chart-3: oklch(0.72 0.15 85);    /* amber   — labour */
+  --chart-4: oklch(0.60 0.14 300);   /* violet  — machinery */
+  --chart-5: oklch(0.60 0.17 25);    /* red     — health / over */
+  --chart-6: oklch(0.62 0.02 150);   /* grey    — other */
+  --chart-warn: oklch(0.72 0.16 60); /* orange  — mid warning */
+}
+
+.dark .feedlot-app {
+  --primary: oklch(0.68 0.13 152);
+  --primary-foreground: oklch(0.16 0.02 152);
+  --ring: oklch(0.68 0.12 152);
+  --success: oklch(0.72 0.13 150);
+  --success-foreground: oklch(0.16 0.02 150);
+
+  --sidebar: oklch(0.24 0.035 155);
+  --sidebar-foreground: oklch(0.95 0.015 150);
+  --sidebar-muted: oklch(0.66 0.03 150);
+  --sidebar-border: oklch(0.32 0.035 155);
+  --sidebar-active-bg: oklch(0.36 0.07 152);
+  --sidebar-active-foreground: oklch(0.99 0.01 150);
+  --sidebar-hover-bg: oklch(0.30 0.045 153);
+  --sidebar-logo-bg: oklch(0.60 0.13 150);
+  --sidebar-logo-foreground: oklch(0.15 0.03 150);
+
+  --chart-1: oklch(0.66 0.13 152);
+  --chart-2: oklch(0.68 0.13 240);
+  --chart-3: oklch(0.78 0.14 85);
+  --chart-4: oklch(0.68 0.13 300);
+  --chart-5: oklch(0.68 0.16 25);
+  --chart-6: oklch(0.66 0.02 150);
+  --chart-warn: oklch(0.78 0.15 60);
+}
+
 @theme inline {
   --radius-sm: calc(var(--radius) - 0.25rem);
   --radius-md: calc(var(--radius) - 0.125rem);

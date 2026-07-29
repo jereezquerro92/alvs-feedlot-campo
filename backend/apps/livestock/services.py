@@ -6,6 +6,7 @@ LIVE-DOC:END"""
 
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from apps.livestock.models import Animal, Intake, Lot
@@ -35,6 +36,15 @@ def create_individual_intake(*, client, date, animals):
 
 @transaction.atomic
 def create_lot_intake(*, client, date, code, head_count, total_weight):
+    """Create a fresh anonymous lot and its opening intake.
+
+    The lot `code` is unique per client (task #20): a friendly ValidationError is
+    raised before the write so the caller gets a clean message, not a DB
+    IntegrityError leaking out of the UniqueConstraint.
+    """
+    if Lot.objects.filter(client=client, code=code).exists():
+        raise ValidationError(f"El cliente ya tiene un lote con el código «{code}».")
+
     lot = Lot.objects.create(
         client=client,
         code=code,
@@ -50,6 +60,39 @@ def create_lot_intake(*, client, date, code, head_count, total_weight):
         total_weight=Decimal(total_weight),
         lot=lot,
     )
+    return intake, lot
+
+
+@transaction.atomic
+def add_to_lot_intake(*, client, date, lot, head_count, total_weight):
+    """Add an intake to an EXISTING lot, growing its event-maintained counters.
+
+    ADR-26 rule 1 sanctions `lot` mode as "creates OR updates a Lot": adding head
+    and kilos to a lot that already exists is a new Intake event, and the lot's
+    counters are moved only by that event (rule 4), never hand-edited. The lot must
+    belong to `client` and still be active.
+    """
+    if lot.client_id != client.id:
+        raise ValidationError("El lote pertenece a otro cliente.")
+    if lot.status != Lot.Status.ACTIVE:
+        raise ValidationError(f"El lote no está activo (estado: {lot.status}).")
+
+    added_head = int(head_count)
+    added_weight = Decimal(total_weight)
+
+    intake = Intake.objects.create(
+        client=client,
+        date=date,
+        mode=Intake.Mode.LOT,
+        head_count=added_head,
+        total_weight=added_weight,
+        lot=lot,
+    )
+
+    lot.head_count = lot.head_count + added_head
+    lot.total_weight = lot.total_weight + added_weight
+    lot.save(update_fields=["head_count", "total_weight"])
+
     return intake, lot
 
 
