@@ -18,7 +18,17 @@ from decimal import Decimal
 
 from django.db.models import Sum
 
+from apps.breeding.models import (
+    Calving,
+    CalvingOutcome,
+    PregnancyCheck,
+    PregnancyResult,
+    Service,
+    Weaning,
+)
 from apps.feed.models import FeedingEvent
+from apps.genetics.models import Direction as MoveDir, SemenBatch, SemenMovement
+from apps.genetics.services import current_semen_stock
 from apps.ledger.models import Concept, Direction, LedgerEntry
 from apps.livestock.models import Animal, Death, Exit, Intake, Lot
 from apps.livestock.services import growth_series
@@ -674,3 +684,193 @@ def gross_margin(
             result["not_calculable"] = "no_fx_rate"
 
     return result
+
+
+# --- reproduction (adr-46 decision 8) ----------------------------------------
+#
+# Pure functions over the breeding events of one client. Every rate is a ratio of
+# two honest event counts; when the denominator is zero the rate is `None` plus a
+# reason, never a fabricated zero (adr-29 rule 2). A "% pregnancy = 0" and a "no
+# services to evaluate" are opposite situations and must stay distinguishable.
+
+def _dam_key(event):
+    """The reproductive unit an event targets — an animal or a lot."""
+    return ("animal", event.animal_id) if event.animal_id else ("lot", event.lot_id)
+
+
+def pregnancy_rate(*, client, start=None, end=None):
+    """Pregnant diagnoses over services in the period. `None` if nothing served."""
+    lo, hi = _bounds(start, end)
+    serviced = Service.objects.filter(
+        client=client, date__gte=lo, date__lte=hi
+    ).count()
+    pregnant = PregnancyCheck.objects.filter(
+        client=client, result=PregnancyResult.PREGNANT, date__gte=lo, date__lte=hi
+    ).count()
+    return {
+        "serviced": serviced,
+        "pregnant": pregnant,
+        "rate": (Decimal(pregnant) / Decimal(serviced)) if serviced else None,
+        "not_calculable": "" if serviced else "no_services_in_period",
+    }
+
+
+def calving_rate(*, client, start=None, end=None):
+    """Calvings over pregnant diagnoses. `None` if nothing was diagnosed pregnant."""
+    lo, hi = _bounds(start, end)
+    pregnant = PregnancyCheck.objects.filter(
+        client=client, result=PregnancyResult.PREGNANT, date__gte=lo, date__lte=hi
+    ).count()
+    calvings = Calving.objects.filter(
+        client=client, date__gte=lo, date__lte=hi
+    ).count()
+    return {
+        "pregnant": pregnant,
+        "calvings": calvings,
+        "rate": (Decimal(calvings) / Decimal(pregnant)) if pregnant else None,
+        "not_calculable": "" if pregnant else "no_pregnancy_checks",
+    }
+
+
+def weaning_rate(*, client, start=None, end=None):
+    """Weanings over calvings. `None` if nothing calved."""
+    lo, hi = _bounds(start, end)
+    calvings = Calving.objects.filter(
+        client=client, date__gte=lo, date__lte=hi
+    ).count()
+    weanings = Weaning.objects.filter(
+        client=client, date__gte=lo, date__lte=hi
+    ).count()
+    return {
+        "calvings": calvings,
+        "weanings": weanings,
+        "rate": (Decimal(weanings) / Decimal(calvings)) if calvings else None,
+        "not_calculable": "" if calvings else "no_calvings",
+    }
+
+
+def calving_interval(*, client, start=None, end=None):
+    """Average days between successive calvings per dam (IEP). Needs at least one
+    dam with two calvings; otherwise `None` with the reason. The interval is a
+    historical span, so it reads every calving up to the period end, not only the
+    window — bounding it to the window would hide the previous calving that closes
+    the interval."""
+    _, hi = _bounds(start, end)
+    calvings = (
+        Calving.objects.filter(client=client, date__lte=hi)
+        .order_by("date", "id")
+    )
+    by_dam = {}
+    for calving in calvings:
+        by_dam.setdefault(_dam_key(calving), []).append(calving.date)
+
+    intervals = []
+    for dates in by_dam.values():
+        for prev, nxt in zip(dates, dates[1:]):
+            intervals.append((nxt - prev).days)
+
+    if not intervals:
+        return {
+            "dams_with_interval": 0,
+            "average_days": None,
+            "not_calculable": "insufficient_calving_history",
+        }
+    return {
+        "dams_with_interval": len(by_dam),
+        "average_days": Decimal(sum(intervals)) / Decimal(len(intervals)),
+        "not_calculable": "",
+    }
+
+
+def kg_weaned_per_dam(*, client, start=None, end=None):
+    """Total weaning weight over the number of dams weaned in the period. `None`
+    if nothing was weaned."""
+    lo, hi = _bounds(start, end)
+    weanings = Weaning.objects.filter(client=client, date__gte=lo, date__lte=hi)
+    dams = set()
+    total = ZERO
+    for weaning in weanings:
+        dams.add(_dam_key(weaning))
+        total += weaning.weaning_weight or ZERO
+    return {
+        "dams": len(dams),
+        "total_kg": total,
+        "kg_per_dam": (total / Decimal(len(dams))) if dams else None,
+        "not_calculable": "" if dams else "no_weanings",
+    }
+
+
+def reproduction(*, client, start=None, end=None):
+    """The five derived reproductive metrics for one client and period, each
+    carrying its own `not_calculable` (adr-46 decision 8)."""
+    return {
+        "pregnancy_rate": pregnancy_rate(client=client, start=start, end=end),
+        "calving_rate": calving_rate(client=client, start=start, end=end),
+        "weaning_rate": weaning_rate(client=client, start=start, end=end),
+        "calving_interval": calving_interval(client=client, start=start, end=end),
+        "kg_weaned_per_dam": kg_weaned_per_dam(client=client, start=start, end=end),
+    }
+
+
+# --- genetics: semen stock (adr-47 decision 8) -------------------------------
+#
+# Derived straws per batch and per sire = Σin − Σout, total available, and per-sire
+# usage over the period. Not client-scoped: genetics is the feedyard's own asset.
+# `None` plus a reason when there are no movements at all — "0 straws" and "this
+# sire's semen was never loaded" are opposite situations (adr-29 rule 2).
+
+def semen_stock_report(*, sire=None, semen_batch=None, start=None, end=None):
+    lo, hi = _bounds(start, end)
+
+    batches = SemenBatch.objects.select_related("sire")
+    if semen_batch is not None:
+        batches = batches.filter(pk=semen_batch)
+    if sire is not None:
+        batches = batches.filter(sire_id=sire)
+
+    per_batch = []
+    per_sire = {}
+    total_available = ZERO
+    for batch in batches:
+        stock = current_semen_stock(semen_batch=batch)
+        total_available += stock
+        per_batch.append({
+            "semen_batch": batch.id,
+            "batch_code": batch.batch_code,
+            "sire": batch.sire_id,
+            "sire_name": batch.sire.name,
+            "straws": stock,
+        })
+        row = per_sire.setdefault(
+            batch.sire_id, {"sire": batch.sire_id, "sire_name": batch.sire.name,
+                            "straws": ZERO, "used": ZERO}
+        )
+        row["straws"] += stock
+
+    usage = (
+        SemenMovement.objects.filter(direction=MoveDir.OUT, date__gte=lo, date__lte=hi)
+        .filter(**({"semen_batch_id": semen_batch} if semen_batch is not None else {}))
+        .filter(**({"semen_batch__sire_id": sire} if sire is not None else {}))
+        .values("semen_batch__sire_id")
+        .annotate(used=Sum("straws"))
+    )
+    for row in usage:
+        sire_id = row["semen_batch__sire_id"]
+        target = per_sire.setdefault(
+            sire_id, {"sire": sire_id, "sire_name": None, "straws": ZERO, "used": ZERO}
+        )
+        target["used"] = row["used"] or ZERO
+
+    if not per_batch and not per_sire:
+        return {
+            "per_batch": [],
+            "per_sire": [],
+            "total_available": None,
+            "not_calculable": "no_semen_movements",
+        }
+    return {
+        "per_batch": per_batch,
+        "per_sire": list(per_sire.values()),
+        "total_available": total_available,
+        "not_calculable": "",
+    }

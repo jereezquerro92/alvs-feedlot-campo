@@ -286,6 +286,89 @@ margin always comes back and only `margin_currency` is `null` (`no_fx_rate`) if 
   manager's "carga de deudas" — an event that posts to the ledger, never a manual debit
   ([[adr-44-field-operational-roles]] decision 6).
 
+## breeding (Cría phase — reproduction events)
+
+The reproductive cycle `servicio → tacto → parición → destete` as a new app on the spine
+([[adr-46-breeding-reproduction]]), touching neither `livestock` nor the ledger except the
+one AI-service charge. The four events reuse the `LifecycleEvent` XOR base (adr-28 d1); the
+IATF protocol is an editable template like `SanitaryPlan` (adr-40). Reproductive status is
+**derived** from the events, never stored (decision 3).
+
+- **Service** — `animal?`/`lot?` (exactly one; XOR CHECK, `LifecycleEvent` base), `date`,
+  `method` (`natural`|`ai`|`iatf`|`embryo_transfer`), `sire` (nullable FK `genetics.Sire`),
+  `semen_batch` (nullable FK `genetics.SemenBatch`, for `ai`/`iatf`), `embryo_batch`
+  (nullable FK `genetics.EmbryoBatch`, for `embryo_transfer`), `protocol` (nullable FK
+  `IatfProtocol`, for `iatf`), `service_price` (nullable — the insemination fee),
+  `note`, `created_by`. Immutable; `list`/`retrieve`/`create`. Written only by
+  `register_service`, which decrements a `SemenMovement`/`EmbryoMovement` `out` and, for
+  `method ∈ {ai, iatf}` on a `Client(kind=boarding)` target, posts a `service` `debit`
+  via `(source_kind="breeding_service", source_id)` snapshotting `service_price`
+  (decision 6). Natural/own services and every other event post **no** ledger entry.
+- **PregnancyCheck** — `animal?`/`lot?` (XOR), `date`, `method`
+  (`palpation`|`ultrasound`|`blood`), `result` (`pregnant`|`empty`|`uncertain`),
+  `gestation_days` (nullable), `service` (nullable FK `Service` — which service it
+  confirms, hence the sire), `note`, `created_by`. Immutable; posts no ledger entry. The
+  estimated calving date is **derived** (`date + (280 − gestation_days)`), never stored.
+- **Calving** — `animal?`/`lot?` (XOR), `date`, `outcome` (`live`|`stillborn`|`aborted`),
+  `calving_ease` (`normal`|`assisted`|`caesarean`), `calf_sex` (nullable), `calf_weight`
+  (nullable birth weight), `births_count?` (for a lot calving), `service` (nullable FK),
+  `calf` (nullable FK `livestock.Animal` — the calf a live individual calving creates),
+  `note`, `created_by`. Immutable; posts no ledger entry. Genealogy is **derived**
+  (`dam = target`, `sire = service.sire`), never a field on `Animal` (decision 4).
+- **Weaning** — `animal?`/`lot?` (XOR), `date`, `weaning_weight`, `purpose`
+  (`replacement`|`sale`|`undecided`), `note`, `created_by`. Immutable; posts no ledger
+  entry. The recría hand-off; the weaned head continues as a normal `Animal` (decision 9).
+- **IatfProtocol** — `name`, `description`, `is_active`. Editable template; full CRUD.
+- **IatfProtocolStep** — `protocol`, `day_offset`, `action`, `product` (free text or
+  `HealthProduct` ref), `note`. One step at a relative offset; edited nested under the
+  protocol. Absolute dates are **derived** from the referencing `Service.date` (decision 5).
+
+Reproductive metrics live in `apps.metrics` as pure functions (decision 8): `pregnancy_rate`,
+`calving_rate`, `weaning_rate`, `calving_interval` (IEP), `kg_weaned_per_dam` — each
+`null` + a `not_calculable` reason when the input is missing ([[adr-29-metrics-derivation]]).
+
+## genetics (Cría phase — semen, DEP, embryo transfer)
+
+The genetic catalog and the semen/embryo inventory-by-movements
+([[adr-47-genetics-semen-embryo]]). Catalogs are editable; movements, flushes and sales are
+immutable. Stock is **derived** Σin − Σout, never stored (decision 2). Only the semen sale
+posts a ledger entry — a `sale` credit to the own account (decision 4).
+
+- **Sire** — `name`, `breed`, `animal` (nullable FK `livestock.Animal` — an own bull, else
+  external), `registry_id` (nullable), `is_active`, `note`. Editable catalog; full CRUD.
+- **BreedingValue** — `sire`, `trait`
+  (`birth_weight`|`weaning_weight`|`milk`|`ribeye_area`|`marbling`|`scrotal`|`other`),
+  `value`, `accuracy` (nullable), `source`, `date`. A DEP/EPD row; editable catalog
+  (decision 3) — loaded, not derived from the system's own weighings.
+- **SemenBatch** — `sire`, `batch_code`, `collection_date` (nullable), `supplier`,
+  `tank` (nullable — termo), `position` (nullable — canister/rack), `unit_cost` (nullable,
+  **informational**), `expiry_date` (nullable), `is_active`, `note`. Editable catalog.
+  Straws remaining = Σin − Σout of its movements, never stored.
+- **SemenMovement** — `semen_batch` (PROTECT), `direction` (`in`|`out`), `straws`
+  (quantity), `reason` (`purchase`|`collection`|`insemination`|`sale`|`discard`|`adjustment`),
+  `date`, `(source_kind, source_id)` generic seam (→ `Service` or `SemenSale`), `note`,
+  `created_by`. Immutable; written only by `register_semen_movement`, which gates an
+  inactive batch and a non-positive quantity (decision 7). Posts **no** ledger entry.
+- **SemenSale** — `semen_batch` (PROTECT), `date`, `straws`, `unit_price` (ARS/straw),
+  `buyer_name`, `buyer_client` (nullable FK `clients.Client` — informational),
+  `note`, `created_by`. Immutable; written only by `register_semen_sale`, which rejects
+  insufficient stock and a non-positive price, then in one transaction posts a `sale`
+  `credit` to the **own** account via `(source_kind="semen_sale", source_id)` snapshotting
+  `unit_price`×`straws` (decision 4) and a `SemenMovement` `out` (`reason=sale`).
+- **EmbryoBatch** — `donor` (FK `livestock.Animal`), `sire` (nullable FK `Sire`), `grade`,
+  `flush_date` (nullable), `tank` (nullable), `position` (nullable), `is_active`, `note`.
+  Editable catalog. Embryos remaining = Σin − Σout of its movements, never stored.
+- **EmbryoMovement** — `embryo_batch` (PROTECT), `direction` (`in`|`out`), `quantity`,
+  `reason` (`collection`|`transfer`|`sale`|`discard`|`adjustment`), `date`,
+  `(source_kind, source_id)` seam, `note`, `created_by`. Immutable; posts no ledger entry.
+- **EmbryoFlush** — `donor` (FK `livestock.Animal`), `sire` (nullable FK `Sire`), `date`,
+  `embryos_collected`, `grade`, `note`, `created_by`. Immutable donor-collection event
+  (colecta); written by `register_embryo_flush`, which creates/updates an `EmbryoBatch` and
+  posts an `EmbryoMovement` `in`. Posts **no** ledger entry (decision 6).
+
+Genetics metrics in `apps.metrics` (decision 8): semen stock per batch and per sire, total
+available straws, and per-sire usage — `null` + reason when there are no movements.
+
 ## Generic costing (scalability)
 
 `LedgerEntry` references its origin by `(source_kind, source_id)`, not by a per-domain
@@ -294,4 +377,8 @@ Phase 6 is the first proof: `crops` (`source_kind="field_task"`) and `machinery`
 (`source_kind="maintenance_event"`) both post `service` debits through this same door,
 and `ledger` gained no model, concept, or FK ([[adr-32-multi-rubro-assets]] decision 3).
 Phase 4d adds `expenses` (`source_kind="expense_event"`) through the identical door.
-Any next domain (e.g. equines) enters the same way.
+The Cría phase adds two more through the same seam with **no** new `ledger` model:
+`breeding` (`source_kind="breeding_service"`, a `service` debit to a boarding client for
+an AI/IATF service) and `genetics` (`source_kind="semen_sale"`, a `sale` **credit** to the
+own account for a semen sale — the first credit through the seam, reusing `Concept.SALE`
+from [[adr-43-sale-settlement]]). Any next domain (e.g. equines) enters the same way.

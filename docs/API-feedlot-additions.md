@@ -51,6 +51,55 @@ Proposed rows (Phase 1–2 core; refine per endpoint as TDD entries are written)
 | POST | `/api/advisors/{slug}/reports/` | `AdvisorReportView` | `AdvisorReportSerializer` | session; generative-gated | Generate an advisor report for a client+period (Phase 5). Read-only over data, per-client. Async ([[adr-16-async-mandatory]]). See [[adr-27-advisors-generative]]. |
 | GET | `/api/clients/{id}/reports/` | `AdvisorReportViewSet` | `AdvisorReportSerializer` | session | Past advisor reports for a client. |
 
+### breeding — Cría phase ([[adr-46-breeding-reproduction]])
+
+RBAC: reproductive load is `field_managers` + `feed_operators` (write); reads follow each
+role's rules ([[adr-44-field-operational-roles]] d7). `BreedingAccess` =
+`GroupMatrixPermission` area in `apps/users/roles.py`
+(`write_groups={field_managers, feed_operators}`,
+`read_groups={field_managers, feed_operators, feedlot_owners}`).
+Events are `list`/`retrieve`/`create` only — no `update`/`destroy` ([[adr-24-feedlot-domain]] r3).
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET/POST | `/api/services/` | `ServiceViewSet` | `ServiceSerializer` | `BreedingAccess` | Register a service (`natural`/`ai`/`iatf`/`embryo_transfer`) on an `animal` **xor** `lot`. `register_service` decrements a `SemenMovement`/`EmbryoMovement` `out`; `ai`/`iatf` on a `boarding` client posts a `service` `debit` (`source_kind="breeding_service"`). Contract below. |
+| GET | `/api/services/{id}/` | `ServiceViewSet` | `ServiceSerializer` | `BreedingAccess` | Retrieve a service (immutable). |
+| GET/POST | `/api/pregnancy-checks/` | `PregnancyCheckViewSet` | `PregnancyCheckSerializer` | `BreedingAccess` | Record a `tacto`/ultrasound → `result` (`pregnant`/`empty`/`uncertain`). Posts no ledger entry. Estimated calving date is derived. |
+| GET | `/api/pregnancy-checks/{id}/` | `PregnancyCheckViewSet` | `PregnancyCheckSerializer` | `BreedingAccess` | Retrieve a pregnancy check. |
+| GET/POST | `/api/calvings/` | `CalvingViewSet` | `CalvingSerializer` | `BreedingAccess` | Record a `parición`; a `live` individual calving creates a `calf` `Animal` (`Calving.calf`). Genealogy is derived, no field added to `Animal`. Posts no ledger entry. Contract below. |
+| GET | `/api/calvings/{id}/` | `CalvingViewSet` | `CalvingSerializer` | `BreedingAccess` | Retrieve a calving. |
+| GET/POST | `/api/weanings/` | `WeaningViewSet` | `WeaningSerializer` | `BreedingAccess` | Record a `destete` with `weaning_weight` and `purpose` (`replacement`/`sale`/`undecided`). Posts no ledger entry. |
+| GET | `/api/weanings/{id}/` | `WeaningViewSet` | `WeaningSerializer` | `BreedingAccess` | Retrieve a weaning. |
+| GET/POST | `/api/iatf-protocols/` | `IatfProtocolViewSet` | `IatfProtocolSerializer` | `BreedingAccess` | IATF protocol template (name, steps). Editable catalog — full CRUD. |
+| GET/PATCH/DELETE | `/api/iatf-protocols/{id}/` | `IatfProtocolViewSet` | `IatfProtocolSerializer` | `BreedingAccess` | Retrieve/update/deactivate a protocol; steps edited nested. `day_offset` is relative; absolute dates derived from `Service.date`. |
+| GET | `/api/clients/{id}/metrics/reproduction/` | `ReproductionView` | — | `ClientScopedReadPermission` | Reproductive KPIs: `pregnancy_rate`, `calving_rate`, `weaning_rate`, `calving_interval`, `kg_weaned_per_dam`. Each `null` + `not_calculable` when the input is missing (adr-29). `?start=&end=`. |
+
+### genetics — Cría phase ([[adr-47-genetics-semen-embryo]])
+
+RBAC: genetic catalog, semen/embryo inventory and semen sales are `field_managers` (write);
+reads follow role rules. `GeneticsAccess` = `GroupMatrixPermission` area in `apps/users/roles.py`.
+Catalogs are full CRUD; movements/flushes/sales are `list`/`retrieve`/`create` only.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET/POST | `/api/sires/` | `SireViewSet` | `SireSerializer` | `GeneticsAccess` | Bull catalog: own (`animal` FK) or external (`registry_id`, `breed`). Editable — full CRUD. |
+| GET/PATCH/DELETE | `/api/sires/{id}/` | `SireViewSet` | `SireSerializer` | `GeneticsAccess` | Retrieve/update/deactivate a sire. |
+| GET/POST | `/api/breeding-values/` | `BreedingValueViewSet` | `BreedingValueSerializer` | `GeneticsAccess` | DEP/EPD rows (`trait`, `value`, `accuracy`, `source`, `date`). Editable catalog, loaded not derived (adr-47 d3). |
+| GET/PATCH/DELETE | `/api/breeding-values/{id}/` | `BreedingValueViewSet` | `BreedingValueSerializer` | `GeneticsAccess` | Retrieve/update/delete a breeding value. |
+| GET/POST | `/api/semen-batches/` | `SemenBatchViewSet` | `SemenBatchSerializer` | `GeneticsAccess` | Semen batch catalog (sire, tank/position, `unit_cost` informational). Straws remaining derived Σin−Σout. |
+| GET/PATCH/DELETE | `/api/semen-batches/{id}/` | `SemenBatchViewSet` | `SemenBatchSerializer` | `GeneticsAccess` | Retrieve/update/deactivate a semen batch. |
+| GET/POST | `/api/semen-movements/` | `SemenMovementViewSet` | `SemenMovementSerializer` | `GeneticsAccess` | Immutable `in`/`out` straw movement. `register_semen_movement` gates an inactive batch / non-positive qty. Posts no ledger entry. |
+| GET | `/api/semen-movements/{id}/` | `SemenMovementViewSet` | `SemenMovementSerializer` | `GeneticsAccess` | Retrieve a semen movement. |
+| GET/POST | `/api/semen-sales/` | `SemenSaleViewSet` | `SemenSaleSerializer` | `GeneticsAccess` | Register a semen sale → `register_semen_sale` posts a `sale` `credit` to the **own** account (`source_kind="semen_sale"`) + a `SemenMovement` `out` (`reason=sale`). Buyer informational. Contract below. |
+| GET | `/api/semen-sales/{id}/` | `SemenSaleViewSet` | `SemenSaleSerializer` | `GeneticsAccess` | Retrieve a semen sale (immutable). |
+| GET/POST | `/api/embryo-batches/` | `EmbryoBatchViewSet` | `EmbryoBatchSerializer` | `GeneticsAccess` | Embryo batch catalog (donor, sire, grade). Embryos remaining derived Σin−Σout. |
+| GET/PATCH/DELETE | `/api/embryo-batches/{id}/` | `EmbryoBatchViewSet` | `EmbryoBatchSerializer` | `GeneticsAccess` | Retrieve/update/deactivate an embryo batch. |
+| GET/POST | `/api/embryo-movements/` | `EmbryoMovementViewSet` | `EmbryoMovementSerializer` | `GeneticsAccess` | Immutable `in`/`out` embryo movement. Posts no ledger entry. |
+| GET | `/api/embryo-movements/{id}/` | `EmbryoMovementViewSet` | `EmbryoMovementSerializer` | `GeneticsAccess` | Retrieve an embryo movement. |
+| GET/POST | `/api/embryo-flushes/` | `EmbryoFlushViewSet` | `EmbryoFlushSerializer` | `GeneticsAccess` | Register a donor collection (`colecta`) → `register_embryo_flush` creates/updates an `EmbryoBatch` + posts an `EmbryoMovement` `in`. Posts no ledger entry. |
+| GET | `/api/embryo-flushes/{id}/` | `EmbryoFlushViewSet` | `EmbryoFlushSerializer` | `GeneticsAccess` | Retrieve an embryo flush. |
+| GET | `/api/semen-stock/` | `SemenStockView` | — | `GeneticsAccess` | Derived straw stock by batch and by sire, total available, use per sire. `null` + reason when no movements (adr-29). `?sire=&semen_batch=&start=&end=`. |
+
 ## Contracts (sketch — expand per endpoint in [[API]])
 
 ### POST `/api/intakes/`
@@ -58,3 +107,12 @@ Body carries `client`, `date`, `mode`. For `individual`: a list of `{ear_tag, ca
 
 ### POST `/api/feedings/`
 Body: `client`, target (`animal` **xor** `lot`), `feed_type`, `quantity`, `unit_price`, `origin`. Server validates stock for `origin=client_stock`; on shortfall applies the policy fixed by [[adr-25-account-ledger]] (default: serve available from client stock, remainder from own stock as a charged split — confirm). Emits the stock movement(s) and, for own-stock quantity, the `debit` entry.
+
+### POST `/api/services/`
+Body: target (`animal` **xor** `lot`), `date`, `method` (`natural`/`ai`/`iatf`/`embryo_transfer`), optional `sire`, `semen_batch` (for `ai`/`iatf`), `embryo_batch` (for `embryo_transfer`), `protocol` (for `iatf`), `service_price` (the insemination fee), `note`. `register_service` validates in the service layer ([[adr-46-breeding-reproduction]] d7): target active and belonging to the client, exact `animal`/`lot` XOR, batch active with stock, protocol active. It decrements one `SemenMovement`/`EmbryoMovement` `out`; and only for `method ∈ {ai, iatf}` on a `Client(kind=boarding)` target posts a `service` `debit` via `(source_kind="breeding_service", source_id)` snapshotting `service_price` (d6). Natural / own-cattle services post no ledger entry.
+
+### POST `/api/calvings/`
+Body: target (`animal` **xor** `lot`), `date`, `outcome` (`live`/`stillborn`/`aborted`), `calving_ease`, optional `calf_sex`, `calf_weight`, `births_count` (lot), `service`, `note`. A `live` **individual** calving creates a `calf` `Animal` (`category=calf`, `client` = the dam's client) and links it as `Calving.calf`; a `lot` calving adds `births_count` head to the calf lot without per-head identity ([[adr-26-livestock-individual-and-lot]] r1). Genealogy (dam = target, sire = `service.sire`) is **derived** — no `dam`/`sire` field is added to `Animal` (adr-46 d4). Posts no ledger entry.
+
+### POST `/api/semen-sales/`
+Body: `semen_batch`, `date`, `straws`, `unit_price` (ARS/straw), `buyer_name`, optional `buyer_client`, `note`. `register_semen_sale` rejects insufficient stock and a non-positive price, then in one transaction posts a `sale` **`credit`** to the **own** account (`Client(kind=own)`) via `(source_kind="semen_sale", source_id)` snapshotting `unit_price`×`straws` ([[adr-47-genetics-semen-embryo]] d4, [[adr-43-sale-settlement]] precedent) and a `SemenMovement` `out` (`reason=sale`). The buyer is informational — no charge is posted to a buyer in this cut.
