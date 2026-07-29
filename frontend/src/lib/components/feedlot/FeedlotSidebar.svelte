@@ -47,6 +47,7 @@
     advisors: `/feedlot/asesor${q}`,
     users: "/feedlot/usuarios",
     prices: "/feedlot/precios",
+    showcase: "/showcase/components/",
   } as Record<string, string>);
 
   type Item = { key: string; label: string; icon: string; badge?: string };
@@ -81,7 +82,10 @@
     },
     {
       title: t("feedlot_nav_section_reference"),
-      items: [{ key: "prices", label: t("feedlot_nav_prices"), icon: "tag" }] as Item[],
+      items: [
+        { key: "prices", label: t("feedlot_nav_prices"), icon: "tag" },
+        { key: "showcase", label: t("nav_showcase"), icon: "grid" },
+      ] as Item[],
     },
   ]);
 </script>
