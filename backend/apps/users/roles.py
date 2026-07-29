@@ -109,6 +109,23 @@ class InventoryAccess(GroupMatrixPermission):
     write_groups = (FIELD_MANAGERS, FIELD_ADMINS)
 
 
+class BreedingAccess(GroupMatrixPermission):
+    """Reproductive events: services, pregnancy checks, calvings, weanings, IATF
+    protocols (adr-46). The field manager and the operative role load them; the
+    feedlot owner reads (adr-44 decision 7)."""
+
+    read_groups = (FIELD_MANAGERS, FEED_OPERATORS, FEEDLOT_OWNERS)
+    write_groups = (FIELD_MANAGERS, FEED_OPERATORS)
+
+
+class GeneticsAccess(GroupMatrixPermission):
+    """Genetics: sires, DEPs, semen/embryo inventory and semen sales (adr-47). The
+    field manager loads it; the feedlot owner reads (adr-44 decision 7)."""
+
+    read_groups = (FIELD_MANAGERS, FEEDLOT_OWNERS)
+    write_groups = (FIELD_MANAGERS,)
+
+
 class WeatherAccess(GroupMatrixPermission):
     read_groups = (FIELD_MANAGERS, FIELD_ADMINS, FEEDLOT_OWNERS, WORKSHOP)
     write_groups = (FIELD_MANAGERS, FIELD_ADMINS)

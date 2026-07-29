@@ -14,7 +14,7 @@ from rest_framework.views import APIView
 
 from apps.clients.models import Client
 from apps.metrics import services
-from apps.users.roles import ClientScopedReadPermission
+from apps.users.roles import ClientScopedReadPermission, GeneticsAccess
 
 
 def _period(request):
@@ -68,6 +68,33 @@ class MortalityView(_ClientMetricView):
 class AccountEvolutionView(_ClientMetricView):
     def compute(self, *, client, start, end):
         return services.account_evolution(client=client, start=start, end=end)
+
+
+class ReproductionView(_ClientMetricView):
+    """Derived reproductive metrics for one client (adr-46 decision 8)."""
+
+    def compute(self, *, client, start, end):
+        return services.reproduction(client=client, start=start, end=end)
+
+
+class SemenStockView(APIView):
+    """Derived semen stock (adr-47 decision 8). Not client-scoped — genetics is
+    the feedyard's own asset. Optional `?sire=` and `?semen_batch=` filters and
+    the `?start=&end=` period bound the per-sire usage."""
+
+    permission_classes = [GeneticsAccess]
+
+    def get(self, request):
+        start, end = _period(request)
+        params = request.query_params
+        return Response(
+            services.semen_stock_report(
+                sire=params.get("sire") or None,
+                semen_batch=params.get("semen_batch") or None,
+                start=start,
+                end=end,
+            )
+        )
 
 
 class GrossMarginView(APIView):

@@ -16,4 +16,6 @@ urlpatterns = [
     path("clients/<int:pk>/metrics/mortality/", views.MortalityView.as_view(), name="metrics-mortality"),
     path("clients/<int:pk>/metrics/account/", views.AccountEvolutionView.as_view(), name="metrics-account"),
     path("clients/<int:pk>/metrics/gross-margin/", views.GrossMarginView.as_view(), name="metrics-gross-margin"),
+    path("clients/<int:pk>/metrics/reproduction/", views.ReproductionView.as_view(), name="metrics-reproduction"),
+    path("semen-stock/", views.SemenStockView.as_view(), name="metrics-semen-stock"),
 ]

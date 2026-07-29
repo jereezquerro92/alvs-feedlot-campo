@@ -61,6 +61,8 @@ The six operational roles and the whole read/write matrix live in exactly one pl
 | `FeedExecutionAccess` | feedings, feed-stock (serve at the mixer) | field_managers, feed_operators, field_admins, feedlot_owners | field_managers, feed_operators |
 | `FeedyardAccess` | pens, rations, loading-orders, bunk-scores, pen-placements | field_managers, feed_operators, feedlot_owners | field_managers, feed_operators |
 | `SanitaryAccess` | health-products, health-events, sanitary-plans, sanitary-plan-items, plan-enrollments | field_managers, feed_operators, feedlot_owners | field_managers |
+| `BreedingAccess` | services, pregnancy-checks, calvings, weanings, iatf-protocols, iatf-protocol-steps | field_managers, feed_operators, feedlot_owners | field_managers, feed_operators |
+| `GeneticsAccess` | sires, breeding-values, semen-batches, semen-movements, semen-sales, embryo-batches, embryo-movements, embryo-flushes | field_managers, feedlot_owners | field_managers |
 | `InventoryAccess` | input-types, input-movements (merchandise into input stock) | field_managers, field_admins, feedlot_owners | field_managers, field_admins |
 | `WeatherAccess` | weather-logs | field_managers, field_admins, feedlot_owners, workshop | field_managers, field_admins |
 | `CropsAccess` | pivots, crops, cuttings, field-tasks (alfalfa) | field_managers, workshop, feedlot_owners | field_managers, workshop |
@@ -369,6 +371,91 @@ Fase 4a implements the item [[adr-25-account-ledger]] rule 7 deferred: explicit 
 | POST | `/api/payment-allocations/` | `PaymentAllocationViewSet` | `PaymentAllocationWriteSerializer` | `LedgerWriteAccess` | Impute a payment against charges via `impute_payment`: pass explicit `allocations` `[{entry, amount}]`, or omit them and set `auto=true` for FIFO oldest-first (decisions 2–3). Posts no ledger entry, moves no balance (decision 1). Create-only. |
 | GET | `/api/payment-allocations/{id}/` | `PaymentAllocationViewSet` | `PaymentAllocationSerializer` | `LedgerWriteAccess` | Retrieve one allocation. |
 | GET | `/api/clients/{id}/outstanding/` | `ClientViewSet.outstanding` | — (JSON) | `ClientScopedReadPermission` | Derived per-charge outstanding for the client: each debit with `amount`, `allocated` (Σ allocations) and `outstanding` (`amount` − allocated), computed on read ([[adr-41-payment-allocation]] decision 4). `no-store`. |
+
+## Feedlot domain endpoints (Cría phase — breeding & genetics)
+
+The cría/recría phase adds two apps on the spine, growing by addition and touching neither `livestock` nor `ledger` except through the sanctioned `(source_kind, source_id)` seam ([[adr-24-feedlot-domain]] rule 4). **`breeding`** ([[adr-46-breeding-reproduction]]) carries the four reproductive events — `Service`, `PregnancyCheck`, `Calving`, `Weaning` — each an immutable dated event targeting one `animal` XOR `lot` ([[adr-26-livestock-individual-and-lot]] rule 3), plus the reusable editable IATF template (`IatfProtocol` + `IatfProtocolStep`, relative `day_offset`, [[adr-46-breeding-reproduction]] decision 5). **`genetics`** ([[adr-47-genetics-semen-embryo]]) carries the genetic catalog (`Sire`, `BreedingValue`, `SemenBatch`, `EmbryoBatch` — editable master data) and the immutable stock/sale events (`SemenMovement`, `SemenSale`, `EmbryoMovement`, `EmbryoFlush`); straw and embryo stock is derived Σin−Σout, never a stored field ([[adr-47-genetics-semen-embryo]] decision 2). Catalogs are full-CRUD `ModelViewSet`s; events are `list`/`retrieve`/`create` only — a correction is another event ([[adr-24-feedlot-domain]] rule 3).
+
+**Only two rows post a ledger entry, both through the generic seam with an existing `Concept` (no new `Concept`, no ledger migration):** an AI/IATF `Service` on a `Client(kind=boarding)` posts a `service` **debit** for the insemination fee (`source_kind="breeding_service"`, snapshots `service_price`, [[adr-46-breeding-reproduction]] decision 6); a `SemenSale` posts a `sale` **credit** to the own account (`Client(kind=own)`) for the proceeds (`source_kind="semen_sale"`, reuses `Concept.SALE`, snapshots `unit_price`×`straws`, [[adr-47-genetics-semen-embryo]] decision 4). Every other event — natural/own-cattle service, embryo transfer, `PregnancyCheck`, `Calving`, `Weaning`, all stock movements, and `EmbryoFlush` — posts **no** ledger entry ([[adr-46-breeding-reproduction]] decision 1, [[adr-47-genetics-semen-embryo]] decision 6). Semen/embryo consumption on a service is a stock `out` (`register_service`), never a charge here. Writes go through the service layer (`register_service`, `register_pregnancy_check`, `register_calving`, `register_weaning`; `register_semen_movement`, `register_semen_sale`, `register_embryo_flush`, `register_embryo_movement`), which validates in the service — active target owned by the client, exact XOR, active/in-stock batch, active protocol, positive amounts — never in the view ([[adr-46-breeding-reproduction]] decision 7, [[adr-47-genetics-semen-embryo]] decision 7). A live individual `Calving` creates the calf `Animal` (`category=calf`) and links it in `Calving.calf`; genealogy is derived, never a `dam`/`sire` field on `Animal` ([[adr-46-breeding-reproduction]] decision 4). Authorization is per-area RBAC — each row's Auth cell names the Django-Group permission class that gates it (see [Authorization (RBAC)](#authorization-rbac), [[adr-44-field-operational-roles]] decision 7); authentication is the session. `no-store` ([[CACHE]] rule 4), lists as plain JSON arrays. No new env vars ([[adr-46-breeding-reproduction]], [[adr-47-genetics-semen-embryo]] consequences).
+
+### `breeding` — reproductive events + IATF template
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/services/` | `ServiceViewSet` | `ServiceSerializer` | `BreedingAccess` | List reproductive services (immutable; filter `?client=`, `?animal=`, `?lot=`). |
+| POST | `/api/services/` | `ServiceViewSet` | `ServiceWriteSerializer` | `BreedingAccess` | Register a service on one `animal` XOR `lot` via `register_service`: decrements a `SemenMovement` out for `method∈{ai,iatf}` or an `EmbryoMovement` out for `method=embryo_transfer`; for `method∈{ai,iatf}` on a `Client(kind=boarding)` posts a `service` debit (`source_kind="breeding_service"`, snapshots `service_price`, [[adr-46-breeding-reproduction]] decision 6). Natural/own-cattle service posts none. Validates active target owned by client, XOR, in-stock/active batch, active protocol (decision 7). Create-only. |
+| GET | `/api/services/{id}/` | `ServiceViewSet` | `ServiceSerializer` | `BreedingAccess` | Retrieve one service. |
+| GET | `/api/pregnancy-checks/` | `PregnancyCheckViewSet` | `PregnancyCheckSerializer` | `BreedingAccess` | List pregnancy-diagnosis events (immutable; filter `?client=`, `?animal=`, `?lot=`). |
+| POST | `/api/pregnancy-checks/` | `PregnancyCheckViewSet` | `PregnancyCheckWriteSerializer` | `BreedingAccess` | Register a pregnancy check (`result`, `method`, optional `gestation_days`, optional `service`) via `register_pregnancy_check`. Posts no ledger entry. Create-only. |
+| GET | `/api/pregnancy-checks/{id}/` | `PregnancyCheckViewSet` | `PregnancyCheckSerializer` | `BreedingAccess` | Retrieve one pregnancy check. |
+| GET | `/api/calvings/` | `CalvingViewSet` | `CalvingSerializer` | `BreedingAccess` | List calving events (immutable; filter `?client=`, `?animal=`, `?lot=`). |
+| POST | `/api/calvings/` | `CalvingViewSet` | `CalvingWriteSerializer` | `BreedingAccess` | Register a calving via `register_calving`: a live individual calving creates a calf `Animal` (`category=calf`) and links it in `Calving.calf` ([[adr-46-breeding-reproduction]] decision 4); a lot calving records `births_count`. Posts no ledger entry. Create-only. |
+| GET | `/api/calvings/{id}/` | `CalvingViewSet` | `CalvingSerializer` | `BreedingAccess` | Retrieve one calving. |
+| GET | `/api/weanings/` | `WeaningViewSet` | `WeaningSerializer` | `BreedingAccess` | List weaning events (immutable; filter `?client=`, `?animal=`, `?lot=`). |
+| POST | `/api/weanings/` | `WeaningViewSet` | `WeaningWriteSerializer` | `BreedingAccess` | Register a weaning (`weaning_weight`, `purpose`) via `register_weaning`. Posts no ledger entry. Create-only. |
+| GET | `/api/weanings/{id}/` | `WeaningViewSet` | `WeaningSerializer` | `BreedingAccess` | Retrieve one weaning. |
+| GET | `/api/iatf-protocols/` | `IatfProtocolViewSet` | `IatfProtocolSerializer` | `BreedingAccess` | List IATF protocol templates (catalog, editable). Each includes its nested `steps`. |
+| POST | `/api/iatf-protocols/` | `IatfProtocolViewSet` | `IatfProtocolSerializer` | `BreedingAccess` | Create an IATF protocol template. |
+| GET | `/api/iatf-protocols/{id}/` | `IatfProtocolViewSet` | `IatfProtocolSerializer` | `BreedingAccess` | Retrieve one protocol with its steps. |
+| PUT | `/api/iatf-protocols/{id}/` | `IatfProtocolViewSet` | `IatfProtocolSerializer` | `BreedingAccess` | Replace a protocol (catalog edit). |
+| PATCH | `/api/iatf-protocols/{id}/` | `IatfProtocolViewSet` | `IatfProtocolSerializer` | `BreedingAccess` | Partial update of a protocol. |
+| DELETE | `/api/iatf-protocols/{id}/` | `IatfProtocolViewSet` | `IatfProtocolSerializer` | `BreedingAccess` | Delete a protocol. |
+| GET | `/api/iatf-protocol-steps/` | `IatfProtocolStepViewSet` | `IatfProtocolStepSerializer` | `BreedingAccess` | List protocol steps (filter `?protocol=`). Catalog line, editable. |
+| POST | `/api/iatf-protocol-steps/` | `IatfProtocolStepViewSet` | `IatfProtocolStepSerializer` | `BreedingAccess` | Add a step (`action` + relative `day_offset`) to a protocol. Absolute dates derive from the service that references the protocol ([[adr-46-breeding-reproduction]] decision 5), never stored here. |
+| GET | `/api/iatf-protocol-steps/{id}/` | `IatfProtocolStepViewSet` | `IatfProtocolStepSerializer` | `BreedingAccess` | Retrieve one step. |
+| PUT | `/api/iatf-protocol-steps/{id}/` | `IatfProtocolStepViewSet` | `IatfProtocolStepSerializer` | `BreedingAccess` | Replace a step. |
+| PATCH | `/api/iatf-protocol-steps/{id}/` | `IatfProtocolStepViewSet` | `IatfProtocolStepSerializer` | `BreedingAccess` | Partial update of a step. |
+| DELETE | `/api/iatf-protocol-steps/{id}/` | `IatfProtocolStepViewSet` | `IatfProtocolStepSerializer` | `BreedingAccess` | Delete a step. |
+
+### `genetics` — sire/semen/embryo catalog + stock & sale events
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/sires/` | `SireViewSet` | `SireSerializer` | `GeneticsAccess` | List breeding-bull catalog rows (editable). A `Sire` may link an own `Animal` or be external (`registry_id`, `breed`). |
+| POST | `/api/sires/` | `SireViewSet` | `SireSerializer` | `GeneticsAccess` | Create a sire. |
+| GET | `/api/sires/{id}/` | `SireViewSet` | `SireSerializer` | `GeneticsAccess` | Retrieve one sire. |
+| PUT | `/api/sires/{id}/` | `SireViewSet` | `SireSerializer` | `GeneticsAccess` | Replace a sire (catalog edit). |
+| PATCH | `/api/sires/{id}/` | `SireViewSet` | `SireSerializer` | `GeneticsAccess` | Partial update of a sire. |
+| DELETE | `/api/sires/{id}/` | `SireViewSet` | `SireSerializer` | `GeneticsAccess` | Delete a sire. |
+| GET | `/api/breeding-values/` | `BreedingValueViewSet` | `BreedingValueSerializer` | `GeneticsAccess` | List DEP/EPD rows (catalog; filter `?sire=`). A loaded genetic evaluation, not a derived metric ([[adr-47-genetics-semen-embryo]] decision 3). |
+| POST | `/api/breeding-values/` | `BreedingValueViewSet` | `BreedingValueSerializer` | `GeneticsAccess` | Add a DEP/EPD (`trait`, `value`, `accuracy`, `source`, `date`) to a sire. |
+| GET | `/api/breeding-values/{id}/` | `BreedingValueViewSet` | `BreedingValueSerializer` | `GeneticsAccess` | Retrieve one breeding value. |
+| PUT | `/api/breeding-values/{id}/` | `BreedingValueViewSet` | `BreedingValueSerializer` | `GeneticsAccess` | Replace a breeding value. |
+| PATCH | `/api/breeding-values/{id}/` | `BreedingValueViewSet` | `BreedingValueSerializer` | `GeneticsAccess` | Partial update of a breeding value. |
+| DELETE | `/api/breeding-values/{id}/` | `BreedingValueViewSet` | `BreedingValueSerializer` | `GeneticsAccess` | Delete a breeding value. |
+| GET | `/api/semen-batches/` | `SemenBatchViewSet` | `SemenBatchSerializer` | `GeneticsAccess` | List straw-batch catalog rows (editable; filter `?sire=`). `unit_cost` is informational; stock is derived, never a field ([[adr-47-genetics-semen-embryo]] decision 2). |
+| POST | `/api/semen-batches/` | `SemenBatchViewSet` | `SemenBatchSerializer` | `GeneticsAccess` | Create a semen batch. |
+| GET | `/api/semen-batches/{id}/` | `SemenBatchViewSet` | `SemenBatchSerializer` | `GeneticsAccess` | Retrieve one semen batch (includes derived `semen_stock`). |
+| PUT | `/api/semen-batches/{id}/` | `SemenBatchViewSet` | `SemenBatchSerializer` | `GeneticsAccess` | Replace a semen batch (catalog edit). |
+| PATCH | `/api/semen-batches/{id}/` | `SemenBatchViewSet` | `SemenBatchSerializer` | `GeneticsAccess` | Partial update of a semen batch. |
+| DELETE | `/api/semen-batches/{id}/` | `SemenBatchViewSet` | `SemenBatchSerializer` | `GeneticsAccess` | Delete a semen batch. |
+| GET | `/api/semen-movements/` | `SemenMovementViewSet` | `SemenMovementSerializer` | `GeneticsAccess` | List straw movements (immutable; filter `?semen_batch=`). Stock is Σin−Σout of these. |
+| POST | `/api/semen-movements/` | `SemenMovementViewSet` | `SemenMovementWriteSerializer` | `GeneticsAccess` | Register an in/out straw movement via `register_semen_movement` (rejects inactive batch, non-positive quantity). Posts no ledger entry. Create-only. |
+| GET | `/api/semen-movements/{id}/` | `SemenMovementViewSet` | `SemenMovementSerializer` | `GeneticsAccess` | Retrieve one movement. |
+| GET | `/api/semen-sales/` | `SemenSaleViewSet` | `SemenSaleSerializer` | `GeneticsAccess` | List semen-sale events (immutable; filter `?semen_batch=`). |
+| POST | `/api/semen-sales/` | `SemenSaleViewSet` | `SemenSaleWriteSerializer` | `GeneticsAccess` | Register a semen sale via `register_semen_sale`: in one transaction posts a `sale` **credit** to the own account (`source_kind="semen_sale"`, snapshots `unit_price`×`straws`) and a `SemenMovement` out (`reason=sale`); rejects insufficient stock and non-positive price ([[adr-47-genetics-semen-embryo]] decisions 4, 7). Buyer (`buyer_name`, `buyer_client`) is informational. Create-only. |
+| GET | `/api/semen-sales/{id}/` | `SemenSaleViewSet` | `SemenSaleSerializer` | `GeneticsAccess` | Retrieve one semen sale. |
+| GET | `/api/embryo-batches/` | `EmbryoBatchViewSet` | `EmbryoBatchSerializer` | `GeneticsAccess` | List embryo-batch catalog rows (editable; filter `?donor=`, `?sire=`). Stock is derived Σin−Σout, never a field. |
+| POST | `/api/embryo-batches/` | `EmbryoBatchViewSet` | `EmbryoBatchSerializer` | `GeneticsAccess` | Create an embryo batch. |
+| GET | `/api/embryo-batches/{id}/` | `EmbryoBatchViewSet` | `EmbryoBatchSerializer` | `GeneticsAccess` | Retrieve one embryo batch (includes derived stock). |
+| PUT | `/api/embryo-batches/{id}/` | `EmbryoBatchViewSet` | `EmbryoBatchSerializer` | `GeneticsAccess` | Replace an embryo batch (catalog edit). |
+| PATCH | `/api/embryo-batches/{id}/` | `EmbryoBatchViewSet` | `EmbryoBatchSerializer` | `GeneticsAccess` | Partial update of an embryo batch. |
+| DELETE | `/api/embryo-batches/{id}/` | `EmbryoBatchViewSet` | `EmbryoBatchSerializer` | `GeneticsAccess` | Delete an embryo batch. |
+| GET | `/api/embryo-movements/` | `EmbryoMovementViewSet` | `EmbryoMovementSerializer` | `GeneticsAccess` | List embryo movements (immutable; filter `?embryo_batch=`). |
+| POST | `/api/embryo-movements/` | `EmbryoMovementViewSet` | `EmbryoMovementWriteSerializer` | `GeneticsAccess` | Register an in/out embryo movement via `register_embryo_movement` (rejects inactive batch, non-positive quantity). Posts no ledger entry. Create-only. |
+| GET | `/api/embryo-movements/{id}/` | `EmbryoMovementViewSet` | `EmbryoMovementSerializer` | `GeneticsAccess` | Retrieve one movement. |
+| GET | `/api/embryo-flushes/` | `EmbryoFlushViewSet` | `EmbryoFlushSerializer` | `GeneticsAccess` | List donor-collection events (immutable; filter `?donor=`). |
+| POST | `/api/embryo-flushes/` | `EmbryoFlushViewSet` | `EmbryoFlushWriteSerializer` | `GeneticsAccess` | Register a flush via `register_embryo_flush`: creates/updates the donor's `EmbryoBatch` and posts an `EmbryoMovement` in ([[adr-47-genetics-semen-embryo]] decision 5). Posts no ledger entry. Create-only. |
+| GET | `/api/embryo-flushes/{id}/` | `EmbryoFlushViewSet` | `EmbryoFlushSerializer` | `GeneticsAccess` | Retrieve one flush. |
+
+### breeding & genetics derived metrics (read-only)
+
+The reproductive and genetic metrics are **derived** JSON payloads (no model serialization, hence `—`), pure functions in `apps.metrics` obeying the null-contract of [[adr-29-metrics-derivation]] rule 2 — a metric that cannot be computed returns `null` plus a `not_calculable` cause, never a filled zero ([[adr-46-breeding-reproduction]] decision 8, [[adr-47-genetics-semen-embryo]] decision 8). All read-only `GET`, computed on read, `no-store`.
+
+| Method | Path | View/ViewSet | Serializer | Auth | Description |
+|---|---|---|---|---|---|
+| GET | `/api/clients/{id}/metrics/reproduction/` | `ReproductionView` | — (JSON) | `ClientScopedReadPermission` | Derived reproductive metrics for the client (optional `?start=`/`?end=`): `pregnancy_rate`, `calving_rate`, `weaning_rate`, `calving_interval` (IEP), `kg_weaned_per_dam` — each `null`+`not_calculable` (`no_services_in_period`, `no_pregnancy_checks`, `no_calvings`, …) when the input is missing ([[adr-46-breeding-reproduction]] decision 8). `no-store`. |
+| GET | `/api/semen-stock/` | `SemenStockView` | — (JSON) | `GeneticsAccess` | Derived semen stock (optional `?sire=`, `?semen_batch=`): straws per batch and per sire = Σin−Σout, total available, and per-sire usage over the period; `null`+`not_calculable` when no movements ([[adr-47-genetics-semen-embryo]] decision 8). `no-store`. |
 
 ## Contracts
 

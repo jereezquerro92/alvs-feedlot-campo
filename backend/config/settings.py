@@ -129,6 +129,9 @@ INSTALLED_APPS = [
     "apps.weather",
     "apps.traceability",
     "apps.fx",
+    # Cría y recría: genética y reproducción — docs/adrs/adr-46, adr-47
+    "apps.genetics",
+    "apps.breeding",
 ]
 
 MIDDLEWARE = [

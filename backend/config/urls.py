@@ -39,4 +39,7 @@ urlpatterns = [
     path("api/", include("apps.traceability.urls")),
     # Gross margin & reference FX (Phase 12) — docs/adrs/adr-39-gross-margin-and-fx.md, docs/API.md
     path("api/", include("apps.fx.urls")),
+    # Cría y recría (genética + reproducción) — docs/adrs/adr-46, adr-47, docs/API.md
+    path("api/", include("apps.genetics.urls")),
+    path("api/", include("apps.breeding.urls")),
 ]
