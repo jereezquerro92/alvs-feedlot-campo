@@ -37,6 +37,10 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/assistant/serializers.py`
 - `backend/apps/assistant/urls.py`
 - `backend/apps/assistant/views.py`
+- `backend/apps/breeding/models.py`
+- `backend/apps/breeding/serializers.py`
+- `backend/apps/breeding/urls.py`
+- `backend/apps/breeding/views.py`
 - `backend/apps/clients/models.py`
 - `backend/apps/clients/serializers.py`
 - `backend/apps/clients/urls.py`
@@ -61,6 +65,10 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/fx/serializers.py`
 - `backend/apps/fx/urls.py`
 - `backend/apps/fx/views.py`
+- `backend/apps/genetics/models.py`
+- `backend/apps/genetics/serializers.py`
+- `backend/apps/genetics/urls.py`
+- `backend/apps/genetics/views.py`
 - `backend/apps/health/urls.py`
 - `backend/apps/health/views.py`
 - `backend/apps/inventory/models.py`
@@ -174,6 +182,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/LedgerTable.svelte`
 - `frontend/src/lib/components/feedlot/LoadingOrderForm.svelte`
 - `frontend/src/lib/components/feedlot/LotBars.svelte`
+- `frontend/src/lib/components/feedlot/M365StatusCard.svelte`
 - `frontend/src/lib/components/feedlot/MetricCard.svelte`
 - `frontend/src/lib/components/feedlot/OutstandingTable.svelte`
 - `frontend/src/lib/components/feedlot/PaymentForm.svelte`
@@ -306,7 +315,6 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/views/FeedlotOutstandingView.svelte`
 - `frontend/src/lib/components/views/FeedlotScheduleView.svelte`
 - `frontend/src/lib/components/views/GastosModuleView.svelte`
-- `frontend/src/lib/components/views/LobbyView.svelte`
 - `frontend/src/lib/components/views/LoginLandingView.svelte`
 - `frontend/src/lib/components/views/MixerModuleView.svelte`
 - `frontend/src/lib/components/views/PreciosModuleView.svelte`
@@ -403,6 +411,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 ## [[adr-13-m365-graph]]
 
 - `backend/apps/m365/graph.py`
+- `frontend/src/lib/components/feedlot/M365StatusCard.svelte`
 
 ## [[adr-15-chatbot-two-tier]]
 
@@ -501,6 +510,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/GrowthCostChart.svelte`
 - `frontend/src/lib/components/feedlot/KpiCard.svelte`
 - `frontend/src/lib/components/feedlot/LotBars.svelte`
+- `frontend/src/lib/components/feedlot/M365StatusCard.svelte`
 - `frontend/src/lib/components/feedlot/RecentMovements.svelte`
 - `frontend/src/lib/components/feedlot/WeighingHistory.svelte`
 - `frontend/src/lib/components/views/AsesorModuleView.svelte`
@@ -599,6 +609,10 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/assistant/test_assistant_access.py`
 - `backend/apps/assistant/urls.py`
 - `backend/apps/assistant/views.py`
+- `backend/apps/breeding/models.py`
+- `backend/apps/breeding/serializers.py`
+- `backend/apps/breeding/urls.py`
+- `backend/apps/breeding/views.py`
 - `backend/apps/clients/models.py`
 - `backend/apps/clients/serializers.py`
 - `backend/apps/clients/urls.py`
@@ -623,6 +637,10 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/fx/serializers.py`
 - `backend/apps/fx/urls.py`
 - `backend/apps/fx/views.py`
+- `backend/apps/genetics/models.py`
+- `backend/apps/genetics/serializers.py`
+- `backend/apps/genetics/urls.py`
+- `backend/apps/genetics/views.py`
 - `backend/apps/health/urls.py`
 - `backend/apps/health/views.py`
 - `backend/apps/inventory/models.py`
@@ -739,6 +757,14 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/assistant/test_assistant_access.py`
 - `backend/apps/assistant/urls.py`
 - `backend/apps/assistant/views.py`
+- `backend/apps/breeding/admin.py`
+- `backend/apps/breeding/apps.py`
+- `backend/apps/breeding/models.py`
+- `backend/apps/breeding/serializers.py`
+- `backend/apps/breeding/services.py`
+- `backend/apps/breeding/test_breeding.py`
+- `backend/apps/breeding/urls.py`
+- `backend/apps/breeding/views.py`
 - `backend/apps/clients/admin.py`
 - `backend/apps/clients/apps.py`
 - `backend/apps/clients/management/commands/seed_demo_feedlot.py`
@@ -788,6 +814,14 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/fx/test_fx.py`
 - `backend/apps/fx/urls.py`
 - `backend/apps/fx/views.py`
+- `backend/apps/genetics/admin.py`
+- `backend/apps/genetics/apps.py`
+- `backend/apps/genetics/models.py`
+- `backend/apps/genetics/serializers.py`
+- `backend/apps/genetics/services.py`
+- `backend/apps/genetics/test_genetics.py`
+- `backend/apps/genetics/urls.py`
+- `backend/apps/genetics/views.py`
 - `backend/apps/health/apps.py`
 - `backend/apps/health/test_cache.py`
 - `backend/apps/health/tests.py`
@@ -856,6 +890,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/metrics/services.py`
 - `backend/apps/metrics/test_metrics.py`
 - `backend/apps/metrics/test_pen_conversion.py`
+- `backend/apps/metrics/test_reproduction_metrics.py`
 - `backend/apps/metrics/urls.py`
 - `backend/apps/metrics/views.py`
 - `backend/apps/notifications/admin.py`
@@ -1029,6 +1064,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/LedgerTable.svelte`
 - `frontend/src/lib/components/feedlot/LoadingOrderForm.svelte`
 - `frontend/src/lib/components/feedlot/LotBars.svelte`
+- `frontend/src/lib/components/feedlot/M365StatusCard.svelte`
 - `frontend/src/lib/components/feedlot/MetricCard.svelte`
 - `frontend/src/lib/components/feedlot/OutstandingTable.svelte`
 - `frontend/src/lib/components/feedlot/PaymentForm.svelte`
@@ -1153,7 +1189,6 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/views/FeedlotOutstandingView.svelte`
 - `frontend/src/lib/components/views/FeedlotScheduleView.svelte`
 - `frontend/src/lib/components/views/GastosModuleView.svelte`
-- `frontend/src/lib/components/views/LobbyView.svelte`
 - `frontend/src/lib/components/views/LoginLandingView.svelte`
 - `frontend/src/lib/components/views/MixerModuleView.svelte`
 - `frontend/src/lib/components/views/PreciosModuleView.svelte`
@@ -1237,6 +1272,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/LedgerTable.svelte`
 - `frontend/src/lib/components/feedlot/LoadingOrderForm.svelte`
 - `frontend/src/lib/components/feedlot/LotBars.svelte`
+- `frontend/src/lib/components/feedlot/M365StatusCard.svelte`
 - `frontend/src/lib/components/feedlot/MetricCard.svelte`
 - `frontend/src/lib/components/feedlot/OutstandingTable.svelte`
 - `frontend/src/lib/components/feedlot/PaymentForm.svelte`
@@ -1369,7 +1405,6 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/views/FeedlotOutstandingView.svelte`
 - `frontend/src/lib/components/views/FeedlotScheduleView.svelte`
 - `frontend/src/lib/components/views/GastosModuleView.svelte`
-- `frontend/src/lib/components/views/LobbyView.svelte`
 - `frontend/src/lib/components/views/LoginLandingView.svelte`
 - `frontend/src/lib/components/views/MixerModuleView.svelte`
 - `frontend/src/lib/components/views/PreciosModuleView.svelte`

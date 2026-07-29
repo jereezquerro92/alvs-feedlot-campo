@@ -73,11 +73,11 @@ test("/ renders a Showcase button, with an explicit Cache-Control, and hides the
   expect(res.headers.get("cache-control")).toBeTruthy();
   const body = await res.text();
   expect(body).toContain('href="/showcase/components/"');
-  // The M365 status card (two <span class="text-sm"> word slots) is gated
-  // behind an authenticated session on the frontend, even though
-  // adr-13-m365-graph rule 3 leaves its backend routes AllowAny. The exact
-  // class excludes SessionBadge's differently-classed username span.
-  expect((body.match(/<span class="text-sm">/g) ?? []).length).toBe(0);
+  // The M365 status card is gated behind a role-holding session on the
+  // frontend, even though adr-13-m365-graph rule 3 leaves its backend routes
+  // AllowAny — the login landing never carries it. Probed by the card's own
+  // marker, not by a Tailwind class that any other element could grow.
+  expect(body).not.toContain('data-testid="m365-word"');
 });
 
 test("/ with no theme cookie renders the flipped defaults on <html> — dark mode + melt background (docs/bdds/bdd-07-melt-theme-sitewide.md)", async () => {
@@ -222,7 +222,7 @@ describe("/ session badge, authenticated branch (bdd-02); lobby gating (bdd-08, 
     expect(body).toContain(t("lobby_pending"));
     expect(body).not.toContain('href="/showcase/components/"');
     expect(body).not.toContain('href="/profile/"');
-    expect((body.match(/<span class="text-sm">/g) ?? []).length).toBe(0);
+    expect(body).not.toContain('data-testid="m365-word"');
   });
 
   test("with a session cookie and a role-holding group (groups: [admins]), / redirects to the feedlot, which carries the nav links and no legend (bdd-08)", async () => {
@@ -243,6 +243,9 @@ describe("/ session badge, authenticated branch (bdd-02); lobby gating (bdd-08, 
     expect(res.status).toBe(200);
     const body = await res.text();
     expect(body).toContain('href="/showcase/components/"');
+    // The M365 strip found its home on the roster (#42): two word slots, each
+    // either a Graph word or the page's error-code fallback — never absent.
+    expect((body.match(/data-testid="m365-word"/g) ?? []).length).toBe(2);
     expect(body).not.toContain(t("lobby_pending"));
     // The profile deep-link lives inside SessionBadge's ☰ popover, gated on
     // the role-holding (non-pending) session.
