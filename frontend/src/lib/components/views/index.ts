@@ -3,7 +3,6 @@
  * Docs: [[FRONTEND]]
  * LIVE-DOC:END */
 
-export { default as LobbyView } from "./LobbyView.svelte";
 export { default as LoginLandingView } from "./LoginLandingView.svelte";
 export { default as ProfileView } from "./ProfileView.svelte";
 export { default as ShowcaseView } from "./ShowcaseView.svelte";

@@ -40,3 +40,4 @@ export { default as GrowthCostChart } from "./GrowthCostChart.svelte";
 export { default as CostDonut } from "./CostDonut.svelte";
 export { default as LotBars } from "./LotBars.svelte";
 export { default as RecentMovements } from "./RecentMovements.svelte";
+export { default as M365StatusCard } from "./M365StatusCard.svelte";

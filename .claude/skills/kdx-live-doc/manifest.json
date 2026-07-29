@@ -61,6 +61,7 @@
     { "glob": "frontend/src/lib/components/feedlot/GrowthCostChart.svelte", "links": ["adr-29-metrics-derivation", "adr-22-showcase-ready-components"] },
     { "glob": "frontend/src/lib/components/feedlot/KpiCard.svelte", "links": ["adr-29-metrics-derivation", "adr-22-showcase-ready-components"] },
     { "glob": "frontend/src/lib/components/feedlot/LotBars.svelte", "links": ["adr-29-metrics-derivation", "adr-22-showcase-ready-components"] },
+    { "glob": "frontend/src/lib/components/feedlot/M365StatusCard.svelte", "links": ["adr-13-m365-graph", "adr-22-showcase-ready-components"] },
     { "glob": "frontend/src/lib/components/feedlot/RecentMovements.svelte", "links": ["adr-25-account-ledger", "adr-22-showcase-ready-components"] },
     { "glob": "frontend/src/lib/components/feedlot/WeighingHistory.svelte", "links": ["adr-22-showcase-ready-components", "adr-29-metrics-derivation", "FEEDLOT"] },
     { "glob": "frontend/src/lib/components/views/AsesorModuleView.svelte", "links": ["adr-22-showcase-ready-components", "adr-24-feedlot-domain", "FEEDLOT"] },

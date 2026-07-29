@@ -17,7 +17,7 @@
 <script lang="ts">
   import FeedlotShell from "$lib/components/feedlot/FeedlotShell.svelte";
   import SessionBadge from "$lib/components/auth/SessionBadge.svelte";
-  import { ClientsTable, ClientForm } from "$lib/components/feedlot";
+  import { ClientsTable, ClientForm, M365StatusCard } from "$lib/components/feedlot";
   import type { Me } from "$lib/types/user";
   import { t } from "../../../i18n";
 
@@ -34,11 +34,16 @@
     publicBackendUrl = "",
     me = null,
     pending = false,
+    /** Graph words fetched server-side by the page ([[adr-13-m365-graph]] rule 3). */
+    m365Hello = "",
+    m365World = "",
   }: {
     clients?: Client[];
     publicBackendUrl?: string;
     me?: Me | null;
     pending?: boolean;
+    m365Hello?: string;
+    m365World?: string;
   } = $props();
 
   // A successful create reloads so the new client appears in the list. The reload
@@ -69,6 +74,11 @@
       <h1 class="text-2xl font-bold tracking-tight">{t("feedlot_clients_title")}</h1>
       <p class="max-w-2xl text-sm text-muted-foreground">{t("feedlot_clients_intro")}</p>
     </div>
+
+    <!-- The Graph integration strip. Its old home was the lobby, which the
+         module-first redesign removed; this roster IS the post-login landing a
+         role-holding session reaches, so the status lands where it is seen. -->
+    <M365StatusCard hello={m365Hello} world={m365World} />
 
     <details class="rounded-2xl p-5"
       style="background: var(--card); border: var(--hairline) solid var(--border);">
