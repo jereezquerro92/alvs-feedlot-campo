@@ -45,6 +45,10 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/crops/serializers.py`
 - `backend/apps/crops/urls.py`
 - `backend/apps/crops/views.py`
+- `backend/apps/expenses/models.py`
+- `backend/apps/expenses/serializers.py`
+- `backend/apps/expenses/urls.py`
+- `backend/apps/expenses/views.py`
 - `backend/apps/feed/models.py`
 - `backend/apps/feed/serializers.py`
 - `backend/apps/feed/urls.py`
@@ -148,24 +152,41 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedback/Progress.svelte`
 - `frontend/src/lib/components/feedback/Toast.svelte`
 - `frontend/src/lib/components/feedback/index.ts`
+- `frontend/src/lib/components/feedlot/AsesorChat.svelte`
 - `frontend/src/lib/components/feedlot/ClientForm.svelte`
+- `frontend/src/lib/components/feedlot/ClientSwitcher.svelte`
 - `frontend/src/lib/components/feedlot/ClientsTable.svelte`
+- `frontend/src/lib/components/feedlot/CostDonut.svelte`
 - `frontend/src/lib/components/feedlot/DeathForm.svelte`
 - `frontend/src/lib/components/feedlot/EnrollmentForm.svelte`
 - `frontend/src/lib/components/feedlot/ExitForm.svelte`
+- `frontend/src/lib/components/feedlot/ExpenseForm.svelte`
 - `frontend/src/lib/components/feedlot/FeedDeliveryForm.svelte`
 - `frontend/src/lib/components/feedlot/FeedingForm.svelte`
+- `frontend/src/lib/components/feedlot/FeedlotShell.svelte`
+- `frontend/src/lib/components/feedlot/FeedlotSidebar.svelte`
+- `frontend/src/lib/components/feedlot/FeedlotTopbar.svelte`
+- `frontend/src/lib/components/feedlot/GrowthCostChart.svelte`
 - `frontend/src/lib/components/feedlot/HealthEventForm.svelte`
 - `frontend/src/lib/components/feedlot/HerdTable.svelte`
 - `frontend/src/lib/components/feedlot/IntakeForm.svelte`
+- `frontend/src/lib/components/feedlot/KpiCard.svelte`
 - `frontend/src/lib/components/feedlot/LedgerTable.svelte`
 - `frontend/src/lib/components/feedlot/LoadingOrderForm.svelte`
+- `frontend/src/lib/components/feedlot/LotBars.svelte`
 - `frontend/src/lib/components/feedlot/MetricCard.svelte`
 - `frontend/src/lib/components/feedlot/OutstandingTable.svelte`
+- `frontend/src/lib/components/feedlot/PaymentForm.svelte`
 - `frontend/src/lib/components/feedlot/PaymentImputationForm.svelte`
+- `frontend/src/lib/components/feedlot/PenForm.svelte`
+- `frontend/src/lib/components/feedlot/RationForm.svelte`
+- `frontend/src/lib/components/feedlot/RationServeForm.svelte`
+- `frontend/src/lib/components/feedlot/RecentMovements.svelte`
+- `frontend/src/lib/components/feedlot/SanitaryPlanForm.svelte`
 - `frontend/src/lib/components/feedlot/SanitaryScheduleTable.svelte`
 - `frontend/src/lib/components/feedlot/TrendChart.svelte`
 - `frontend/src/lib/components/feedlot/WeighingForm.svelte`
+- `frontend/src/lib/components/feedlot/WeighingHistory.svelte`
 - `frontend/src/lib/components/feedlot/index.ts`
 - `frontend/src/lib/components/form/Calendar.svelte`
 - `frontend/src/lib/components/form/Checkbox.svelte`
@@ -273,17 +294,27 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/ui/table/table-header.svelte`
 - `frontend/src/lib/components/ui/table/table-row.svelte`
 - `frontend/src/lib/components/ui/table/table.svelte`
+- `frontend/src/lib/components/views/AsesorModuleView.svelte`
 - `frontend/src/lib/components/views/ChatView.svelte`
+- `frontend/src/lib/components/views/FeedStockView.svelte`
+- `frontend/src/lib/components/views/FeedlotAccountView.svelte`
 - `frontend/src/lib/components/views/FeedlotClientsView.svelte`
 - `frontend/src/lib/components/views/FeedlotDashboardView.svelte`
 - `frontend/src/lib/components/views/FeedlotLedgerView.svelte`
 - `frontend/src/lib/components/views/FeedlotLoadView.svelte`
+- `frontend/src/lib/components/views/FeedlotModuleView.svelte`
 - `frontend/src/lib/components/views/FeedlotOutstandingView.svelte`
 - `frontend/src/lib/components/views/FeedlotScheduleView.svelte`
+- `frontend/src/lib/components/views/GastosModuleView.svelte`
 - `frontend/src/lib/components/views/LobbyView.svelte`
+- `frontend/src/lib/components/views/LoginLandingView.svelte`
+- `frontend/src/lib/components/views/MixerModuleView.svelte`
+- `frontend/src/lib/components/views/PreciosModuleView.svelte`
 - `frontend/src/lib/components/views/ProfileView.svelte`
+- `frontend/src/lib/components/views/RationServeModuleView.svelte`
 - `frontend/src/lib/components/views/ShowcaseGalleryView.svelte`
 - `frontend/src/lib/components/views/ShowcaseView.svelte`
+- `frontend/src/lib/components/views/UsuariosModuleView.svelte`
 - `frontend/src/lib/components/views/index.ts`
 - `frontend/src/lib/corner-nav-triangle.ts`
 - `frontend/src/lib/csrf.ts`
@@ -301,7 +332,19 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/pages/feedlot/[id]/load.astro`
 - `frontend/src/pages/feedlot/[id]/outstanding.astro`
 - `frontend/src/pages/feedlot/[id]/schedule.astro`
+- `frontend/src/pages/feedlot/alimentacion.astro`
+- `frontend/src/pages/feedlot/asesor.astro`
+- `frontend/src/pages/feedlot/cuenta.astro`
+- `frontend/src/pages/feedlot/gastos.astro`
+- `frontend/src/pages/feedlot/hacienda.astro`
 - `frontend/src/pages/feedlot/index.astro`
+- `frontend/src/pages/feedlot/mixer.astro`
+- `frontend/src/pages/feedlot/pesajes.astro`
+- `frontend/src/pages/feedlot/precios.astro`
+- `frontend/src/pages/feedlot/racion.astro`
+- `frontend/src/pages/feedlot/sanidad.astro`
+- `frontend/src/pages/feedlot/stocks.astro`
+- `frontend/src/pages/feedlot/usuarios.astro`
 - `frontend/src/pages/healthz.ts`
 - `frontend/src/pages/index.astro`
 - `frontend/src/pages/profile.astro`
@@ -324,6 +367,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 
 ## [[adr-10-auth]]
 
+- `backend/apps/assistant/test_assistant_access.py`
 - `backend/apps/router/permissions.py`
 - `backend/apps/users/admin.py`
 - `backend/apps/users/api_urls.py`
@@ -354,6 +398,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/authGate.ts`
 - `frontend/src/lib/csrf.ts`
 - `frontend/src/middleware.ts`
+- `frontend/src/pages/index.astro`
 
 ## [[adr-13-m365-graph]]
 
@@ -424,15 +469,92 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/test_roles.py`
 - `frontend/src/lib/auth.ts`
 - `frontend/src/lib/authGate.ts`
+- `frontend/src/lib/components/views/LoginLandingView.svelte`
 - `frontend/src/pages/feedlot/[id].astro`
 - `frontend/src/pages/feedlot/[id]/ledger.astro`
 - `frontend/src/pages/feedlot/[id]/load.astro`
 - `frontend/src/pages/feedlot/[id]/outstanding.astro`
 - `frontend/src/pages/feedlot/[id]/schedule.astro`
+- `frontend/src/pages/feedlot/alimentacion.astro`
+- `frontend/src/pages/feedlot/asesor.astro`
+- `frontend/src/pages/feedlot/cuenta.astro`
+- `frontend/src/pages/feedlot/gastos.astro`
+- `frontend/src/pages/feedlot/hacienda.astro`
 - `frontend/src/pages/feedlot/index.astro`
+- `frontend/src/pages/feedlot/mixer.astro`
+- `frontend/src/pages/feedlot/pesajes.astro`
+- `frontend/src/pages/feedlot/precios.astro`
+- `frontend/src/pages/feedlot/racion.astro`
+- `frontend/src/pages/feedlot/sanidad.astro`
+- `frontend/src/pages/feedlot/stocks.astro`
+- `frontend/src/pages/feedlot/usuarios.astro`
+- `frontend/src/pages/index.astro`
+
+## [[adr-22-showcase-ready-components]]
+
+- `frontend/src/lib/components/feedlot/AsesorChat.svelte`
+- `frontend/src/lib/components/feedlot/ClientSwitcher.svelte`
+- `frontend/src/lib/components/feedlot/CostDonut.svelte`
+- `frontend/src/lib/components/feedlot/FeedlotShell.svelte`
+- `frontend/src/lib/components/feedlot/FeedlotSidebar.svelte`
+- `frontend/src/lib/components/feedlot/FeedlotTopbar.svelte`
+- `frontend/src/lib/components/feedlot/GrowthCostChart.svelte`
+- `frontend/src/lib/components/feedlot/KpiCard.svelte`
+- `frontend/src/lib/components/feedlot/LotBars.svelte`
+- `frontend/src/lib/components/feedlot/RecentMovements.svelte`
+- `frontend/src/lib/components/feedlot/WeighingHistory.svelte`
+- `frontend/src/lib/components/views/AsesorModuleView.svelte`
+- `frontend/src/lib/components/views/FeedStockView.svelte`
+- `frontend/src/lib/components/views/FeedlotAccountView.svelte`
+- `frontend/src/lib/components/views/FeedlotClientsView.svelte`
+- `frontend/src/lib/components/views/FeedlotModuleView.svelte`
+- `frontend/src/lib/components/views/GastosModuleView.svelte`
+- `frontend/src/lib/components/views/LoginLandingView.svelte`
+- `frontend/src/lib/components/views/MixerModuleView.svelte`
+- `frontend/src/lib/components/views/PreciosModuleView.svelte`
+- `frontend/src/lib/components/views/RationServeModuleView.svelte`
+- `frontend/src/lib/components/views/UsuariosModuleView.svelte`
+
+## [[adr-24-feedlot-domain]]
+
+- `frontend/src/lib/components/views/AsesorModuleView.svelte`
+- `frontend/src/lib/components/views/FeedStockView.svelte`
+- `frontend/src/lib/components/views/FeedlotClientsView.svelte`
+- `frontend/src/lib/components/views/FeedlotModuleView.svelte`
+- `frontend/src/lib/components/views/GastosModuleView.svelte`
+- `frontend/src/lib/components/views/MixerModuleView.svelte`
+- `frontend/src/lib/components/views/RationServeModuleView.svelte`
+
+## [[adr-25-account-ledger]]
+
+- `frontend/src/lib/components/feedlot/RecentMovements.svelte`
+- `frontend/src/lib/components/views/FeedlotAccountView.svelte`
+
+## [[adr-27-advisors-generative]]
+
+- `backend/apps/assistant/test_assistant_access.py`
+
+## [[adr-29-metrics-derivation]]
+
+- `frontend/src/lib/components/feedlot/CostDonut.svelte`
+- `frontend/src/lib/components/feedlot/GrowthCostChart.svelte`
+- `frontend/src/lib/components/feedlot/KpiCard.svelte`
+- `frontend/src/lib/components/feedlot/LotBars.svelte`
+- `frontend/src/lib/components/feedlot/WeighingHistory.svelte`
+
+## [[adr-30-market-prices-connectors]]
+
+- `frontend/src/lib/components/views/PreciosModuleView.svelte`
+- `frontend/src/pages/feedlot/precios.astro`
+
+## [[adr-35-conversational-assistant]]
+
+- `backend/apps/assistant/test_assistant_access.py`
+- `frontend/src/pages/feedlot/asesor.astro`
 
 ## [[adr-44-field-operational-roles]]
 
+- `backend/apps/assistant/test_assistant_access.py`
 - `backend/apps/users/admin.py`
 - `backend/apps/users/models.py`
 - `backend/apps/users/roles.py`
@@ -440,13 +562,30 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/test_roles.py`
 - `frontend/src/lib/auth.ts`
 - `frontend/src/lib/authGate.ts`
+- `frontend/src/lib/components/views/UsuariosModuleView.svelte`
 - `frontend/src/lib/types/user.ts`
 - `frontend/src/pages/feedlot/[id].astro`
 - `frontend/src/pages/feedlot/[id]/ledger.astro`
 - `frontend/src/pages/feedlot/[id]/load.astro`
 - `frontend/src/pages/feedlot/[id]/outstanding.astro`
 - `frontend/src/pages/feedlot/[id]/schedule.astro`
+- `frontend/src/pages/feedlot/alimentacion.astro`
+- `frontend/src/pages/feedlot/asesor.astro`
+- `frontend/src/pages/feedlot/cuenta.astro`
+- `frontend/src/pages/feedlot/gastos.astro`
+- `frontend/src/pages/feedlot/hacienda.astro`
 - `frontend/src/pages/feedlot/index.astro`
+- `frontend/src/pages/feedlot/mixer.astro`
+- `frontend/src/pages/feedlot/pesajes.astro`
+- `frontend/src/pages/feedlot/precios.astro`
+- `frontend/src/pages/feedlot/racion.astro`
+- `frontend/src/pages/feedlot/sanidad.astro`
+- `frontend/src/pages/feedlot/stocks.astro`
+- `frontend/src/pages/feedlot/usuarios.astro`
+
+## [[adr-45-lot-owner-assistant-access]]
+
+- `backend/apps/users/roles.py`
 
 ## [[API]]
 
@@ -457,6 +596,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/assets/models.py`
 - `backend/apps/assistant/models.py`
 - `backend/apps/assistant/serializers.py`
+- `backend/apps/assistant/test_assistant_access.py`
 - `backend/apps/assistant/urls.py`
 - `backend/apps/assistant/views.py`
 - `backend/apps/clients/models.py`
@@ -467,6 +607,10 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/crops/serializers.py`
 - `backend/apps/crops/urls.py`
 - `backend/apps/crops/views.py`
+- `backend/apps/expenses/models.py`
+- `backend/apps/expenses/serializers.py`
+- `backend/apps/expenses/urls.py`
+- `backend/apps/expenses/views.py`
 - `backend/apps/feed/models.py`
 - `backend/apps/feed/serializers.py`
 - `backend/apps/feed/urls.py`
@@ -542,6 +686,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 
 ## [[AUTH]]
 
+- `backend/apps/assistant/test_assistant_access.py`
 - `backend/apps/users/admin.py`
 - `backend/apps/users/api_urls.py`
 - `backend/apps/users/apps.py`
@@ -591,6 +736,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/assistant/serializers.py`
 - `backend/apps/assistant/services.py`
 - `backend/apps/assistant/test_assistant.py`
+- `backend/apps/assistant/test_assistant_access.py`
 - `backend/apps/assistant/urls.py`
 - `backend/apps/assistant/views.py`
 - `backend/apps/clients/admin.py`
@@ -609,6 +755,14 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/crops/test_crops.py`
 - `backend/apps/crops/urls.py`
 - `backend/apps/crops/views.py`
+- `backend/apps/expenses/admin.py`
+- `backend/apps/expenses/apps.py`
+- `backend/apps/expenses/models.py`
+- `backend/apps/expenses/serializers.py`
+- `backend/apps/expenses/services.py`
+- `backend/apps/expenses/test_expenses.py`
+- `backend/apps/expenses/urls.py`
+- `backend/apps/expenses/views.py`
 - `backend/apps/feed/admin.py`
 - `backend/apps/feed/apps.py`
 - `backend/apps/feed/models.py`
@@ -853,24 +1007,41 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/data/Tree.svelte`
 - `frontend/src/lib/components/feedback/Progress.svelte`
 - `frontend/src/lib/components/feedback/Toast.svelte`
+- `frontend/src/lib/components/feedlot/AsesorChat.svelte`
 - `frontend/src/lib/components/feedlot/ClientForm.svelte`
+- `frontend/src/lib/components/feedlot/ClientSwitcher.svelte`
 - `frontend/src/lib/components/feedlot/ClientsTable.svelte`
+- `frontend/src/lib/components/feedlot/CostDonut.svelte`
 - `frontend/src/lib/components/feedlot/DeathForm.svelte`
 - `frontend/src/lib/components/feedlot/EnrollmentForm.svelte`
 - `frontend/src/lib/components/feedlot/ExitForm.svelte`
+- `frontend/src/lib/components/feedlot/ExpenseForm.svelte`
 - `frontend/src/lib/components/feedlot/FeedDeliveryForm.svelte`
 - `frontend/src/lib/components/feedlot/FeedingForm.svelte`
+- `frontend/src/lib/components/feedlot/FeedlotShell.svelte`
+- `frontend/src/lib/components/feedlot/FeedlotSidebar.svelte`
+- `frontend/src/lib/components/feedlot/FeedlotTopbar.svelte`
+- `frontend/src/lib/components/feedlot/GrowthCostChart.svelte`
 - `frontend/src/lib/components/feedlot/HealthEventForm.svelte`
 - `frontend/src/lib/components/feedlot/HerdTable.svelte`
 - `frontend/src/lib/components/feedlot/IntakeForm.svelte`
+- `frontend/src/lib/components/feedlot/KpiCard.svelte`
 - `frontend/src/lib/components/feedlot/LedgerTable.svelte`
 - `frontend/src/lib/components/feedlot/LoadingOrderForm.svelte`
+- `frontend/src/lib/components/feedlot/LotBars.svelte`
 - `frontend/src/lib/components/feedlot/MetricCard.svelte`
 - `frontend/src/lib/components/feedlot/OutstandingTable.svelte`
+- `frontend/src/lib/components/feedlot/PaymentForm.svelte`
 - `frontend/src/lib/components/feedlot/PaymentImputationForm.svelte`
+- `frontend/src/lib/components/feedlot/PenForm.svelte`
+- `frontend/src/lib/components/feedlot/RationForm.svelte`
+- `frontend/src/lib/components/feedlot/RationServeForm.svelte`
+- `frontend/src/lib/components/feedlot/RecentMovements.svelte`
+- `frontend/src/lib/components/feedlot/SanitaryPlanForm.svelte`
 - `frontend/src/lib/components/feedlot/SanitaryScheduleTable.svelte`
 - `frontend/src/lib/components/feedlot/TrendChart.svelte`
 - `frontend/src/lib/components/feedlot/WeighingForm.svelte`
+- `frontend/src/lib/components/feedlot/WeighingHistory.svelte`
 - `frontend/src/lib/components/form/Calendar.svelte`
 - `frontend/src/lib/components/form/Checkbox.svelte`
 - `frontend/src/lib/components/form/Combobox.svelte`
@@ -970,22 +1141,45 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/ui/table/table-header.svelte`
 - `frontend/src/lib/components/ui/table/table-row.svelte`
 - `frontend/src/lib/components/ui/table/table.svelte`
+- `frontend/src/lib/components/views/AsesorModuleView.svelte`
 - `frontend/src/lib/components/views/ChatView.svelte`
+- `frontend/src/lib/components/views/FeedStockView.svelte`
+- `frontend/src/lib/components/views/FeedlotAccountView.svelte`
 - `frontend/src/lib/components/views/FeedlotClientsView.svelte`
 - `frontend/src/lib/components/views/FeedlotDashboardView.svelte`
 - `frontend/src/lib/components/views/FeedlotLedgerView.svelte`
 - `frontend/src/lib/components/views/FeedlotLoadView.svelte`
+- `frontend/src/lib/components/views/FeedlotModuleView.svelte`
 - `frontend/src/lib/components/views/FeedlotOutstandingView.svelte`
 - `frontend/src/lib/components/views/FeedlotScheduleView.svelte`
+- `frontend/src/lib/components/views/GastosModuleView.svelte`
 - `frontend/src/lib/components/views/LobbyView.svelte`
+- `frontend/src/lib/components/views/LoginLandingView.svelte`
+- `frontend/src/lib/components/views/MixerModuleView.svelte`
+- `frontend/src/lib/components/views/PreciosModuleView.svelte`
 - `frontend/src/lib/components/views/ProfileView.svelte`
+- `frontend/src/lib/components/views/RationServeModuleView.svelte`
 - `frontend/src/lib/components/views/ShowcaseGalleryView.svelte`
 - `frontend/src/lib/components/views/ShowcaseView.svelte`
+- `frontend/src/lib/components/views/UsuariosModuleView.svelte`
 - `frontend/src/lib/theme.ts`
 
 ## [[DOCKER]]
 
 - `compose.yaml`
+
+## [[FEEDLOT]]
+
+- `frontend/src/lib/components/feedlot/WeighingHistory.svelte`
+- `frontend/src/lib/components/views/AsesorModuleView.svelte`
+- `frontend/src/lib/components/views/FeedStockView.svelte`
+- `frontend/src/lib/components/views/FeedlotAccountView.svelte`
+- `frontend/src/lib/components/views/FeedlotModuleView.svelte`
+- `frontend/src/lib/components/views/GastosModuleView.svelte`
+- `frontend/src/lib/components/views/MixerModuleView.svelte`
+- `frontend/src/lib/components/views/PreciosModuleView.svelte`
+- `frontend/src/lib/components/views/RationServeModuleView.svelte`
+- `frontend/src/lib/components/views/UsuariosModuleView.svelte`
 
 ## [[FRONTEND]]
 
@@ -1021,24 +1215,41 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedback/Progress.svelte`
 - `frontend/src/lib/components/feedback/Toast.svelte`
 - `frontend/src/lib/components/feedback/index.ts`
+- `frontend/src/lib/components/feedlot/AsesorChat.svelte`
 - `frontend/src/lib/components/feedlot/ClientForm.svelte`
+- `frontend/src/lib/components/feedlot/ClientSwitcher.svelte`
 - `frontend/src/lib/components/feedlot/ClientsTable.svelte`
+- `frontend/src/lib/components/feedlot/CostDonut.svelte`
 - `frontend/src/lib/components/feedlot/DeathForm.svelte`
 - `frontend/src/lib/components/feedlot/EnrollmentForm.svelte`
 - `frontend/src/lib/components/feedlot/ExitForm.svelte`
+- `frontend/src/lib/components/feedlot/ExpenseForm.svelte`
 - `frontend/src/lib/components/feedlot/FeedDeliveryForm.svelte`
 - `frontend/src/lib/components/feedlot/FeedingForm.svelte`
+- `frontend/src/lib/components/feedlot/FeedlotShell.svelte`
+- `frontend/src/lib/components/feedlot/FeedlotSidebar.svelte`
+- `frontend/src/lib/components/feedlot/FeedlotTopbar.svelte`
+- `frontend/src/lib/components/feedlot/GrowthCostChart.svelte`
 - `frontend/src/lib/components/feedlot/HealthEventForm.svelte`
 - `frontend/src/lib/components/feedlot/HerdTable.svelte`
 - `frontend/src/lib/components/feedlot/IntakeForm.svelte`
+- `frontend/src/lib/components/feedlot/KpiCard.svelte`
 - `frontend/src/lib/components/feedlot/LedgerTable.svelte`
 - `frontend/src/lib/components/feedlot/LoadingOrderForm.svelte`
+- `frontend/src/lib/components/feedlot/LotBars.svelte`
 - `frontend/src/lib/components/feedlot/MetricCard.svelte`
 - `frontend/src/lib/components/feedlot/OutstandingTable.svelte`
+- `frontend/src/lib/components/feedlot/PaymentForm.svelte`
 - `frontend/src/lib/components/feedlot/PaymentImputationForm.svelte`
+- `frontend/src/lib/components/feedlot/PenForm.svelte`
+- `frontend/src/lib/components/feedlot/RationForm.svelte`
+- `frontend/src/lib/components/feedlot/RationServeForm.svelte`
+- `frontend/src/lib/components/feedlot/RecentMovements.svelte`
+- `frontend/src/lib/components/feedlot/SanitaryPlanForm.svelte`
 - `frontend/src/lib/components/feedlot/SanitaryScheduleTable.svelte`
 - `frontend/src/lib/components/feedlot/TrendChart.svelte`
 - `frontend/src/lib/components/feedlot/WeighingForm.svelte`
+- `frontend/src/lib/components/feedlot/WeighingHistory.svelte`
 - `frontend/src/lib/components/feedlot/index.ts`
 - `frontend/src/lib/components/form/Calendar.svelte`
 - `frontend/src/lib/components/form/Checkbox.svelte`
@@ -1146,17 +1357,27 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/ui/table/table-header.svelte`
 - `frontend/src/lib/components/ui/table/table-row.svelte`
 - `frontend/src/lib/components/ui/table/table.svelte`
+- `frontend/src/lib/components/views/AsesorModuleView.svelte`
 - `frontend/src/lib/components/views/ChatView.svelte`
+- `frontend/src/lib/components/views/FeedStockView.svelte`
+- `frontend/src/lib/components/views/FeedlotAccountView.svelte`
 - `frontend/src/lib/components/views/FeedlotClientsView.svelte`
 - `frontend/src/lib/components/views/FeedlotDashboardView.svelte`
 - `frontend/src/lib/components/views/FeedlotLedgerView.svelte`
 - `frontend/src/lib/components/views/FeedlotLoadView.svelte`
+- `frontend/src/lib/components/views/FeedlotModuleView.svelte`
 - `frontend/src/lib/components/views/FeedlotOutstandingView.svelte`
 - `frontend/src/lib/components/views/FeedlotScheduleView.svelte`
+- `frontend/src/lib/components/views/GastosModuleView.svelte`
 - `frontend/src/lib/components/views/LobbyView.svelte`
+- `frontend/src/lib/components/views/LoginLandingView.svelte`
+- `frontend/src/lib/components/views/MixerModuleView.svelte`
+- `frontend/src/lib/components/views/PreciosModuleView.svelte`
 - `frontend/src/lib/components/views/ProfileView.svelte`
+- `frontend/src/lib/components/views/RationServeModuleView.svelte`
 - `frontend/src/lib/components/views/ShowcaseGalleryView.svelte`
 - `frontend/src/lib/components/views/ShowcaseView.svelte`
+- `frontend/src/lib/components/views/UsuariosModuleView.svelte`
 - `frontend/src/lib/components/views/index.ts`
 - `frontend/src/lib/corner-nav-triangle.ts`
 - `frontend/src/lib/csrf.ts`
@@ -1174,7 +1395,19 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/pages/feedlot/[id]/load.astro`
 - `frontend/src/pages/feedlot/[id]/outstanding.astro`
 - `frontend/src/pages/feedlot/[id]/schedule.astro`
+- `frontend/src/pages/feedlot/alimentacion.astro`
+- `frontend/src/pages/feedlot/asesor.astro`
+- `frontend/src/pages/feedlot/cuenta.astro`
+- `frontend/src/pages/feedlot/gastos.astro`
+- `frontend/src/pages/feedlot/hacienda.astro`
 - `frontend/src/pages/feedlot/index.astro`
+- `frontend/src/pages/feedlot/mixer.astro`
+- `frontend/src/pages/feedlot/pesajes.astro`
+- `frontend/src/pages/feedlot/precios.astro`
+- `frontend/src/pages/feedlot/racion.astro`
+- `frontend/src/pages/feedlot/sanidad.astro`
+- `frontend/src/pages/feedlot/stocks.astro`
+- `frontend/src/pages/feedlot/usuarios.astro`
 - `frontend/src/pages/healthz.ts`
 - `frontend/src/pages/index.astro`
 - `frontend/src/pages/profile.astro`
