@@ -66,6 +66,7 @@ const payments = asArray(paymentsData);
 const allocations = asArray(allocationsData);
 
 const pending = me !== null && !hasRole(me);
+const today = new Date().toISOString().slice(0, 10);
 
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
@@ -79,6 +80,7 @@ Astro.response.headers.set("Cache-Control", "no-store");
     charges={charges}
     payments={payments}
     allocations={allocations}
+    today={today}
     publicBackendUrl={publicBackendUrl}
     me={me}
     pending={pending}

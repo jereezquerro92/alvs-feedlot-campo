@@ -20,7 +20,7 @@
   import { Button } from "$lib/components/ui/button";
   import { SectionTitle } from "$lib/components/primitives/titles";
   import SessionBadge from "$lib/components/auth/SessionBadge.svelte";
-  import { MetricCard, OutstandingTable, PaymentImputationForm } from "$lib/components/feedlot";
+  import { MetricCard, OutstandingTable, PaymentForm, PaymentImputationForm } from "$lib/components/feedlot";
   import type { Me } from "$lib/types/user";
   import { t } from "../../../i18n";
 
@@ -31,6 +31,7 @@
     charges = [],
     payments = [],
     allocations = [],
+    today = "",
     publicBackendUrl = "",
     me = null,
     pending = false,
@@ -41,6 +42,7 @@
     charges?: Array<Record<string, any>>;
     payments?: Array<Record<string, any>>;
     allocations?: Array<Record<string, any>>;
+    today?: string;
     publicBackendUrl?: string;
     me?: Me | null;
     pending?: boolean;
@@ -53,6 +55,9 @@
   }
 
   const balance = $derived(num(account?.balance_cached) ?? num(client?.balance));
+  const accountId = $derived(num(account?.id));
+  // Positive balance = the client owes; negative = a credit balance / saldo a favor.
+  const favor = $derived(balance !== null && balance < 0 ? -balance : 0);
   const totalOutstanding = $derived(
     charges.reduce((sum, c) => sum + (num(c.outstanding) ?? 0), 0),
   );
@@ -81,10 +86,29 @@
       <p class="max-w-2xl text-sm text-muted-foreground">{t("feedlot_impute_intro")}</p>
     </div>
 
-    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
       <MetricCard label={t("feedlot_ledger_balance")} value={balance} currency="ARS" hint={t("feedlot_ledger_balance_hint")} />
       <MetricCard label={t("feedlot_impute_total_outstanding")} value={totalOutstanding} currency="ARS" hint={t("feedlot_impute_total_outstanding_hint")} />
+      {#if favor > 0}
+        <MetricCard label={t("feedlot_payment_favor")} value={favor} currency="ARS" hint={t("feedlot_payment_favor_card_hint")} />
+      {/if}
     </div>
+
+    <Card.Root class="border-border/40 shadow-sm">
+      <Card.Header>
+        <Card.Title class="text-base">{t("feedlot_payment_form_title")}</Card.Title>
+        <Card.Description>{t("feedlot_payment_form_desc")}</Card.Description>
+      </Card.Header>
+      <Card.Content>
+        <PaymentForm
+          accountId={accountId}
+          balance={balance}
+          today={today}
+          {publicBackendUrl}
+          onsaved={reload}
+        />
+      </Card.Content>
+    </Card.Root>
 
     <Card.Root class="border-border/40 shadow-sm">
       <Card.Header>

@@ -1,0 +1,54 @@
+---
+/* LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+ * Governed by: [[adr-04-frontend-and-design-system]] · [[adr-44-field-operational-roles]] · [[adr-20-authorization-lobby]]
+ * Docs: [[FRONTEND]]
+ * LIVE-DOC:END */
+import Base from "../../layouts/Base.astro";
+import { UsuariosModuleView } from "$lib/components/views";
+import SessionBadge from "$lib/components/auth/SessionBadge.svelte";
+import { hasRole } from "$lib/auth";
+import { requireRole, denyPortalSession } from "$lib/authGate";
+import { t } from "../../i18n";
+import type { Me } from "$lib/types/user";
+
+const backendApiUrl = process.env.BACKEND_API_URL ?? "http://localhost:8000";
+const publicBackendUrl = process.env.PUBLIC_BACKEND_URL ?? "http://localhost:8000";
+
+const cookie = Astro.request.headers.get("cookie");
+const headers: Record<string, string> = cookie ? { cookie } : {};
+
+let me: Me | null = null;
+if (cookie) {
+  try {
+    const res = await fetch(`${backendApiUrl}/api/me/`, { headers });
+    if (res.ok) me = (await res.json()) as Me;
+  } catch (err) {
+    console.error("SSR /api/me/ failed:", err);
+  }
+}
+
+const redirect = requireRole(me);
+if (redirect) return Astro.redirect(redirect);
+// Reference-only page for staff; a lot-owner portal session belongs in its own
+// scoped surface, not the roles matrix (adr-44 decision 3).
+const denied = denyPortalSession(me);
+if (denied) return Astro.redirect(denied);
+
+const pending = me !== null && !hasRole(me);
+
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<Base title={t("feedlot_module_usuarios_title")}>
+  <UsuariosModuleView client:load me={me} publicBackendUrl={publicBackendUrl}>
+    <SessionBadge
+      client:load
+      me={me}
+      pending={pending}
+      publicBackendUrl={publicBackendUrl}
+      loginLabel={t("auth_login")}
+      logoutLabel={t("auth_logout")}
+      slot="session"
+    />
+  </UsuariosModuleView>
+</Base>

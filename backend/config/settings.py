@@ -119,6 +119,8 @@ INSTALLED_APPS = [
     "apps.assets",
     "apps.crops",
     "apps.machinery",
+    # Extra expenses "carga de deudas" (labor/fuel/machinery) — docs/adrs/adr-44-field-operational-roles.md
+    "apps.expenses",
     # Feedlot pen operating loop (Phase 7) — docs/adrs/adr-33-feedyard-operating-loop.md
     "apps.feedyard",
     "apps.assistant",

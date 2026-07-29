@@ -272,6 +272,20 @@ rule 1): `income − cost` for one client and period, where income is a **refere
 margin always comes back and only `margin_currency` is `null` (`no_fx_rate`) if there is no
 `FxRate`. Exposed read-only at `GET /api/clients/{id}/metrics/gross-margin/`.
 
+## expenses (Phase 4d — extra charges billed to a client)
+
+- **ExpenseEvent** — a `CostedEvent` (abstract base reused from `assets`,
+  [[adr-32-multi-rubro-assets]]): `client` (PROTECT), `lot?` (attributes the charge to
+  one lot; null = the whole client), `date`, `category` (`labor`|`fuel`|`machinery`|
+  `other`), `unit_price`, `quantity`, `description`. On create it posts a `service`
+  `debit` `LedgerEntry` through the generic `(source_kind="expense_event", source_id)`
+  seam ([[adr-24-feedlot-domain]] rule 4) — no new ledger model, `Concept`, or migration
+  ([[adr-25-account-ledger]] rule 1). It snapshots `unit_price`×`quantity` at posting
+  time, so a later price change never rewrites the charge (rule 3). Immutable:
+  `list`/`retrieve`/`create` only. This is the in-doctrine rendering of the field
+  manager's "carga de deudas" — an event that posts to the ledger, never a manual debit
+  ([[adr-44-field-operational-roles]] decision 6).
+
 ## Generic costing (scalability)
 
 `LedgerEntry` references its origin by `(source_kind, source_id)`, not by a per-domain
@@ -279,4 +293,5 @@ FK. This is the pivot that makes multi-domain costing additive ([[adr-24-feedlot
 Phase 6 is the first proof: `crops` (`source_kind="field_task"`) and `machinery`
 (`source_kind="maintenance_event"`) both post `service` debits through this same door,
 and `ledger` gained no model, concept, or FK ([[adr-32-multi-rubro-assets]] decision 3).
+Phase 4d adds `expenses` (`source_kind="expense_event"`) through the identical door.
 Any next domain (e.g. equines) enters the same way.

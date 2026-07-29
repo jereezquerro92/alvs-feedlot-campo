@@ -1,23 +1,21 @@
 <!-- LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
-     Governed by: [[adr-04-frontend-and-design-system]]
+     Governed by: [[adr-04-frontend-and-design-system]] · [[adr-22-showcase-ready-components]] · [[adr-24-feedlot-domain]]
      Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]]
      LIVE-DOC:END -->
 
 <!--
-  The feedlot clients index page ([[FEEDLOT]]). Lists clients and their account
-  balance, links each to its dashboard, and carries the "new client" form — a write
-  through the declared `POST /api/clients/` endpoint ([[adr-24-feedlot-domain]] rule
-  3). Like [[FeedlotLoadView]] this is a single hydrated island that renders its own
-  SessionBadge and write form (rung 3, [[adr-04-frontend-and-design-system]] rule 3),
-  rather than receiving them as slotted sub-islands. Copy resolves through the i18n
-  layer ([[LOCALIZATION]]); values Spanish, keys English. Mounts with zero props and
-  never throws, and a bare mount issues no write ([[adr-22-showcase-ready-components]]
-  rules 1–2).
+  The feedlot clients index / post-login landing ([[FEEDLOT]]). Renders inside the
+  shared green FeedlotShell so the design is consistent with every module and the
+  dashboard (redesign — no more plain-white revert). Lists clients with their
+  balance, links each to its dashboard, carries the "new client" write form
+  (`POST /api/clients/`, [[adr-24-feedlot-domain]] rule 3), and offers the topbar
+  dropdown to jump straight into a client. One hydrated island that renders its own
+  SessionBadge into the shell's session slot. Copy via i18n ([[LOCALIZATION]]).
+  Mounts with zero props, never throws, no write on mount
+  ([[adr-22-showcase-ready-components]] rules 1–2).
 -->
 <script lang="ts">
-  import { Badge } from "$lib/components/ui/badge";
-  import { Button } from "$lib/components/ui/button";
-  import { SectionTitle } from "$lib/components/primitives/titles";
+  import FeedlotShell from "$lib/components/feedlot/FeedlotShell.svelte";
   import SessionBadge from "$lib/components/auth/SessionBadge.svelte";
   import { ClientsTable, ClientForm } from "$lib/components/feedlot";
   import type { Me } from "$lib/types/user";
@@ -32,13 +30,11 @@
   };
 
   let {
-    projectSlug = "",
     clients = [],
     publicBackendUrl = "",
     me = null,
     pending = false,
   }: {
-    projectSlug?: string;
     clients?: Client[];
     publicBackendUrl?: string;
     me?: Me | null;
@@ -52,26 +48,31 @@
   }
 </script>
 
-<div class="min-h-screen flex flex-col">
-  <header class="flex w-full items-center justify-between gap-4 px-6 pt-8 sm:px-10">
-    <Badge variant="outline" class="text-sm font-semibold tracking-wide">{projectSlug}</Badge>
-    <SessionBadge
-      {me}
-      {pending}
-      {publicBackendUrl}
-      loginLabel={t("auth_login")}
-      logoutLabel={t("auth_logout")}
-    />
-  </header>
+<FeedlotShell
+  active="clients"
+  clients={clients}
+  currentClient={null}
+  breadcrumb={t("feedlot_clients_title")}
+  switcherPattern="/feedlot/{id}/"
+>
+  <SessionBadge
+    slot="session"
+    {me}
+    {pending}
+    {publicBackendUrl}
+    loginLabel={t("auth_login")}
+    logoutLabel={t("auth_logout")}
+  />
 
-  <main class="mx-auto flex w-full max-w-4xl flex-1 flex-col gap-6 px-6 py-12">
-    <div class="flex flex-col gap-2">
-      <SectionTitle as="h1">{t("feedlot_clients_title")}</SectionTitle>
-      <p class="max-w-2xl text-muted-foreground">{t("feedlot_clients_intro")}</p>
+  <div class="mx-auto flex w-full max-w-4xl flex-col gap-6">
+    <div class="flex flex-col gap-1">
+      <h1 class="text-2xl font-bold tracking-tight">{t("feedlot_clients_title")}</h1>
+      <p class="max-w-2xl text-sm text-muted-foreground">{t("feedlot_clients_intro")}</p>
     </div>
 
-    <details class="rounded-lg border border-border/40 bg-card p-4 shadow-sm">
-      <summary class="cursor-pointer text-sm font-medium text-foreground">
+    <details class="rounded-2xl p-5"
+      style="background: var(--card); border: var(--hairline) solid var(--border);">
+      <summary class="cursor-pointer text-sm font-semibold text-foreground">
         {t("feedlot_form_new_client_cta")}
       </summary>
       <div class="pt-4">
@@ -79,21 +80,20 @@
       </div>
     </details>
 
-    <ClientsTable
-      {clients}
-      columns={{
-        name: t("feedlot_col_client"),
-        kind: t("feedlot_col_kind"),
-        taxId: t("feedlot_col_taxid"),
-        balance: t("feedlot_col_balance"),
-        action: "",
-      }}
-      detailLabel={t("feedlot_view_dashboard")}
-      emptyLabel={t("feedlot_empty_clients")}
-    />
-
-    <div>
-      <Button href="/" variant="secondary" size="sm">{t("feedlot_back_home")}</Button>
+    <div class="rounded-2xl p-2 sm:p-4"
+      style="background: var(--card); border: var(--hairline) solid var(--border);">
+      <ClientsTable
+        {clients}
+        columns={{
+          name: t("feedlot_col_client"),
+          kind: t("feedlot_col_kind"),
+          taxId: t("feedlot_col_taxid"),
+          balance: t("feedlot_col_balance"),
+          action: "",
+        }}
+        detailLabel={t("feedlot_view_dashboard")}
+        emptyLabel={t("feedlot_empty_clients")}
+      />
     </div>
-  </main>
-</div>
+  </div>
+</FeedlotShell>

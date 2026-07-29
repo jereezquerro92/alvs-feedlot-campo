@@ -1,0 +1,100 @@
+---
+/* LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+ * Governed by: [[adr-04-frontend-and-design-system]] · [[adr-44-field-operational-roles]] · [[adr-20-authorization-lobby]]
+ * Docs: [[FRONTEND]]
+ * LIVE-DOC:END */
+import Base from "../../layouts/Base.astro";
+import { GastosModuleView } from "$lib/components/views";
+import SessionBadge from "$lib/components/auth/SessionBadge.svelte";
+import { hasRole } from "$lib/auth";
+import { requireRole, requireClientScope } from "$lib/authGate";
+import { t } from "../../i18n";
+import type { Me } from "$lib/types/user";
+
+const backendApiUrl = process.env.BACKEND_API_URL ?? "http://localhost:8000";
+const publicBackendUrl = process.env.PUBLIC_BACKEND_URL ?? "http://localhost:8000";
+
+const cookie = Astro.request.headers.get("cookie");
+const headers: Record<string, string> = cookie ? { cookie } : {};
+
+let me: Me | null = null;
+if (cookie) {
+  try {
+    const res = await fetch(`${backendApiUrl}/api/me/`, { headers });
+    if (res.ok) me = (await res.json()) as Me;
+  } catch (err) {
+    console.error("SSR /api/me/ failed:", err);
+  }
+}
+
+const redirect = requireRole(me);
+if (redirect) return Astro.redirect(redirect);
+
+async function getJson(path: string): Promise<any> {
+  try {
+    const res = await fetch(`${backendApiUrl}${path}`, { headers });
+    if (!res.ok) return null;
+    return await res.json();
+  } catch (err) {
+    console.error(`SSR ${path} failed:`, err);
+    return null;
+  }
+}
+
+const asArray = (d: unknown): any[] =>
+  Array.isArray(d) ? d : ((d as any)?.results ?? []);
+
+const clientParam = Astro.url.searchParams.get("client");
+
+// A lot-owner portal session may only view its own client (adr-44 decision 3):
+// gate the requested client id before any per-client fetch.
+if (clientParam) {
+  const scoped = requireClientScope(me, clientParam);
+  if (scoped) return Astro.redirect(scoped);
+}
+
+const clients = asArray(await getJson(`/api/clients/`));
+
+const today = new Date().toISOString().slice(0, 10);
+
+let currentClient: any = null;
+let lots: any[] = [];
+let expenses: any[] = [];
+if (clientParam) {
+  currentClient = await getJson(`/api/clients/${clientParam}/`);
+  if (currentClient) {
+    const [lotsData, expensesData] = await Promise.all([
+      getJson(`/api/lots/?client=${clientParam}`),
+      getJson(`/api/expenses/?client=${clientParam}`),
+    ]);
+    lots = asArray(lotsData);
+    expenses = asArray(expensesData);
+  }
+}
+
+const pending = me !== null && !hasRole(me);
+
+Astro.response.headers.set("Cache-Control", "no-store");
+---
+
+<Base title={t("feedlot_module_gastos_title")}>
+  <GastosModuleView
+    client:load
+    clients={clients}
+    currentClient={currentClient}
+    lots={lots}
+    expenses={expenses}
+    today={today}
+    publicBackendUrl={publicBackendUrl}
+  >
+    <SessionBadge
+      client:load
+      me={me}
+      pending={pending}
+      publicBackendUrl={publicBackendUrl}
+      loginLabel={t("auth_login")}
+      logoutLabel={t("auth_logout")}
+      slot="session"
+    />
+  </GastosModuleView>
+</Base>
