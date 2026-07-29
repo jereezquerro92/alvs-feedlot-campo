@@ -15,7 +15,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / ".claude" / "skills" / "kdx-live-doc"
 LINKER = SKILL / "link.py"
-MANIFEST = json.loads((SKILL / "manifest.json").read_text())
+MANIFEST = json.loads((SKILL / "manifest.json").read_text(encoding="utf-8"))
 START, END = "LIVE-DOC:START", "LIVE-DOC:END"
 API_TRIGGERS = ("models.py", "views.py", "viewsets.py", "serializers.py",
                 "urls.py", "api_urls.py", "permissions.py")
@@ -48,6 +48,7 @@ def block_body(text: str) -> list[str] | None:
 def matched_files() -> list[Path]:
     from fnmatch import fnmatch
     excl = set(MANIFEST["exclude_dirs"])
+    excl_globs = MANIFEST["exclude_globs"]
     out = []
     for root in MANIFEST["roots"]:
         p = ROOT / root
@@ -58,6 +59,10 @@ def matched_files() -> list[Path]:
             if not f.stat().st_size or f.name.endswith(".d.ts"):
                 continue
             rel = f.relative_to(ROOT).as_posix()
+            # Honour exclude_globs exactly as the linker does: a file it must never
+            # stamp carries no block, so asserting block invariants on it is wrong.
+            if any(fnmatch(rel, g) for g in excl_globs):
+                continue
             if any(fnmatch(rel, r["glob"]) or fnmatch(rel, "**/" + r["glob"])
                    for r in MANIFEST["rules"]):
                 out.append(f)
@@ -82,7 +87,7 @@ def main() -> None:
     wikilink = re.compile(r"\[\[[^\]]+\]\]")
     prose_line = re.compile(r"^(Governed by:|Docs:|API:)")
     for f in files:
-        text = f.read_text()
+        text = f.read_text(encoding="utf-8")
         # 2. exactly one block
         if text.count(START) != 1 or text.count(END) != 1:
             fail(f"{f}: expected exactly one live-doc block")
@@ -103,7 +108,7 @@ def main() -> None:
     ok("every block is wikilinks-only; route surface cites [[API]]")
 
     # 5. CODEMAP exists and points at the ruling ADR
-    codemap = (ROOT / "docs" / "CODEMAP.md").read_text()
+    codemap = (ROOT / "docs" / "CODEMAP.md").read_text(encoding="utf-8")
     assert "adr-17-live-doc-backlinks" in codemap, "CODEMAP missing ADR link"
     ok("CODEMAP.md present and linked")
 
