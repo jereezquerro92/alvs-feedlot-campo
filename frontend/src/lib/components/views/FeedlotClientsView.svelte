@@ -53,7 +53,7 @@
   clients={clients}
   currentClient={null}
   breadcrumb={t("feedlot_clients_title")}
-  switcherPattern="/feedlot/{id}/"
+  switcherPattern={"/feedlot/{id}/"}
 >
   <SessionBadge
     slot="session"
