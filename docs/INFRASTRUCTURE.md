@@ -132,7 +132,7 @@ The backend **task** role carries an inline policy (`kdx-router-bedrock-nova-mic
 - GitHub Actions with **OIDC** (`token.actions.githubusercontent.com`) — no long-lived AWS keys.
 - Per-env deploy roles: `gha-deploy-<env>`; trust policy scoped to specific repos. `sub` entries for repos created/renamed/transferred after GitHub's immutable-subject cutoff use the immutable format with owner/repo numeric IDs — format, cutoff, and this repo's live values in [[GH]] ([[adr-23-oidc-immutable-subject-claim]]).
 - **Branch → env:** `refs/heads/main` → **dev** deploy; `refs/heads/prod` → **prod** deploy. Release tags `v*` may also trigger prod when defined in workflow. Git rules: [[GH]], [[adr-08-github-and-git]]. For the template's own run the `dev ← main` leg is out of scope — see "Ephemeral reference run" below ([[adr-12-ephemeral-run]]).
-- Direct push to `main`/`prod` is `kodexArg` only; CI still runs on those refs after their land.
+- Direct push to `main`/`prod` is the owning account only ([[adr-08-github-and-git]] rules 1, 4; [[GH]] — `jereezquerro92` for this repo); CI still runs on those refs after their land.
 - Pipeline: build image → push to ECR → update ECS service.
 
 ## Security groups

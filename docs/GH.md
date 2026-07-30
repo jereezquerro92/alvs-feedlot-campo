@@ -8,10 +8,7 @@ tags: [harness, github, git]
 
 # GH — GitHub + git for this template
 
-Owner of **this** repository: **`jereezquerro92`** — `jereezquerro92/alvs-feedlot-campo`. Repo protocol: SSH. CLI: `gh` (used directly). Ruled by [[adr-08-github-and-git]], whose rule 1 names `kodexArg` — the template's owner, not this repo's.
-
-> [!warning] Open divergence, not a settled rule
-> adr-08 rule 1 and the owner recorded above disagree. Rewriting that rule from a constant into a per-repository lookup alters its force, so it is a supersession only the owner may authorize ([[adr-00-adr-doctrine]] rule 4, [[adr-48-derived-project-deploy-identity]] rule 4). This line records the fact; it does not amend adr-08. Everything else adr-08 rules — the branch roles, who may push them — binds unchanged and applies to the identity named above.
+Owner of **this** repository: **`jereezquerro92`** — `jereezquerro92/alvs-feedlot-campo`. Repo protocol: SSH. CLI: `gh` (used directly). Ruled by [[adr-08-github-and-git]], whose rule 1 makes the owning account a per-repository fact that **this line is the record of**. `kodexArg` owns the template this project was spawned from and holds no authority here ([[adr-48-derived-project-deploy-identity]] rule 4; the in-place edit is recorded as adr-08 rule 10, issue #52). Everything else adr-08 rules — the branch roles, who may push them — binds unchanged and applies to the account named above.
 
 ## Branches
 
@@ -45,10 +42,10 @@ structure; GitHub wraps them):
      ....+....|....+....|....+....|....+....|....+....|....+....|....+....|....+....|
   1| ---                          ╮
   2| name: Feature (BDD)          │  frontmatter: name = chooser label in GitHub,
-  3| about: ...                !! │  labels=feat, assignees=kodexArg, title prefix "feat: "
+  3| about: ...                !! │  labels=feat, assignees=<owning account>, title prefix "feat: "
   4| title: "feat: "              │  (GitHub reads THIS, not the filename)
   5| labels: feat                 │
-  6| assignees: kodexArg          │
+  6| assignees: jereezquerro92    │
   7| ---                          ╯
   9| <!-- ...                  !! ╮  author guidance: BDD-first, language, wikilinks,
  14| -->                          ╯  issue→PR loop. Not shown in the rendered issue.

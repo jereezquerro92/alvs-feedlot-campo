@@ -2,7 +2,12 @@ name: ci
 
 on:
   pull_request:
-    branches: [main]
+    # `prod` belongs here as much as `main` (issue #57): prod's branch
+    # protection requires the backend/frontend/harness contexts this workflow
+    # produces, so a promotion PR that cannot start it can never merge — and
+    # enforce_admins closes the escape hatch. Removing `prod` makes production
+    # unreachable, it does not merely skip a check.
+    branches: [main, prod]
 
 jobs:
   backend:

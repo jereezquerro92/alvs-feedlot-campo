@@ -73,9 +73,9 @@ def main():
             print(
                 "PR-flow nudge (adr-19-issue-worktree-pr): every change is "
                 "issue -> (worktree optional) -> PR; main is reached only by merging a "
-                "PR, never by a direct hand-commit. Integrate as the gh/kodexArg "
-                "identity, then delete the worktree (git worktree remove) and branch. "
-                "This is a reminder, not a gate."
+                "PR, never by a direct hand-commit. Integrate as the owning gh "
+                "identity (adr-08-github-and-git rule 1), then delete the worktree "
+                "(git worktree remove) and branch. This is a reminder, not a gate."
             )
         if WORKTREE_REMOVE.search(cmd):
             note = _open_pr_note(cmd)

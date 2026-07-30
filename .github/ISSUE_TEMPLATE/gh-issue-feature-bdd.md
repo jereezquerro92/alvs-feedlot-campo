@@ -3,7 +3,7 @@ name: Feature (BDD)
 about: A user-facing behavior, written BDD-first (Gherkin) with a rich reference graph
 title: "feat: "
 labels: feat
-assignees: kodexArg
+assignees: jereezquerro92
 ---
 
 <!--

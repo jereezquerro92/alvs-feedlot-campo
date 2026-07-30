@@ -7,19 +7,19 @@
 // copy (LOCALIZATION, adr-01 r3-r4). Component/variant names rendered as demo
 // labels (Showcase, DataTable, Ghost, ...) are code identifiers and stay
 // English inside the Spanish value.
+//
+// Every key here must be referenced by something that renders it — enforced by
+// tests/i18n-orphan-keys.test.ts. Copy for a feature that does not exist yet is
+// added with that feature, not ahead of it.
 export const es = {
   lobby_pending:
     "Tu solicitud de acceso está pendiente de aprobación. Un administrador la revisará en breve.",
 
   // lobby (/)
-  control_hub: "Centro de control",
-  control_hub_intro:
-    "Los controles más comunes de este template — entrá al showcase, al router de chat o a tu perfil.",
   denied_title: "Necesitás un rol para esa página",
   denied_body:
     "Tu sesión está iniciada pero todavía no tiene un rol; esa página queda fuera de alcance hasta que un administrador te asigne uno.",
   pending_title: "Autorización pendiente",
-  nav_title: "Navegar",
   nav_showcase: "Showcase",
   nav_chatui: "Chat",
   nav_profile: "Perfil",
@@ -314,9 +314,6 @@ export const es = {
   demo_toast_title: "Liquidación confirmada",
   demo_toast_desc: "INV-1042 fue marcada como pagada.",
 
-  // feedlot — navegación
-  nav_feedlot: "Feedlot",
-
   // feedlot — lista de clientes
   feedlot_clients_title: "Clientes del feedlot",
   feedlot_clients_intro:
@@ -327,27 +324,11 @@ export const es = {
   feedlot_col_balance: "Saldo (ARS)",
   feedlot_view_dashboard: "Ver panel",
   feedlot_empty_clients: "Todavía no hay clientes cargados. Corré el seed de demo para verlo con datos.",
-  feedlot_back_home: "← Inicio",
 
   // feedlot — panel del cliente
   feedlot_dash_fallback: "Cliente del feedlot",
-  feedlot_dash_intro:
-    "Métricas derivadas de los eventos operativos. Un valor que no se puede calcular se muestra como «—» con su motivo, nunca como cero.",
-  feedlot_metric_balance: "Saldo cuenta",
-  feedlot_metric_head: "Cabezas",
   feedlot_unit_head: "cab.",
-  feedlot_metric_avg_weight: "Peso promedio",
-  feedlot_metric_cost: "Costo total",
-  feedlot_metric_conversion: "Conversión",
-  feedlot_metric_conversion_hint: "kg consumidos / kg ganados",
-  feedlot_metric_kilos_gained: "Kilos ganados",
-  feedlot_metric_mortality: "Mortalidad",
-  feedlot_metric_head_entered: "Cabezas ingresadas",
   feedlot_inconsistencies: "Inconsistencias detectadas para revisar",
-  feedlot_chart_account: "Evolución de la cuenta",
-  feedlot_chart_account_desc: "Saldo acumulado por asiento (ARS)",
-  feedlot_chart_prices: "Precio de referencia",
-  feedlot_chart_prices_desc: "Promedio diario (Cañuelas)",
   feedlot_no_chart: "Sin datos para graficar",
   feedlot_herd_title: "Rodeo",
   feedlot_herd_lots: "Lotes",
@@ -390,12 +371,8 @@ export const es = {
   feedlot_ledger_open_hint: "Tocá un movimiento para ver su comprobante.",
   feedlot_ledger_receipt_title: "Comprobante del movimiento",
   feedlot_ledger_receipt_entry: "Asiento",
-  feedlot_ledger_receipt_direction: "Tipo",
   feedlot_ledger_receipt_dir_debit: "Débito (cargo)",
   feedlot_ledger_receipt_dir_credit: "Crédito (pago / ingreso)",
-  feedlot_ledger_receipt_amount: "Importe",
-  feedlot_ledger_receipt_unit_price: "Precio unitario",
-  feedlot_ledger_receipt_quantity: "Cantidad",
   feedlot_ledger_receipt_calc: "Cálculo",
   feedlot_ledger_receipt_source: "Evento de origen",
   feedlot_ledger_receipt_no_source: "Sin evento de origen",
@@ -515,7 +492,6 @@ export const es = {
   feedlot_form_intake_mode_lot: "Lote (cabezas + peso total, sin identidad)",
   feedlot_form_ear_tag: "Caravana",
   feedlot_form_category: "Categoría",
-  feedlot_form_category_placeholder: "Elegí una categoría…",
   feedlot_form_sex: "Sexo",
   feedlot_form_entry_weight: "Peso de ingreso (kg)",
   feedlot_form_add_animal: "+ Agregar animal",
@@ -635,8 +611,6 @@ export const es = {
   feedlot_racion_partial: "Parcial: {ok} registradas, {fail} con error.",
 
   // --- Client creation (alta de cliente) ---
-  feedlot_form_client_title: "Nuevo cliente",
-  feedlot_form_client_desc: "Dar de alta un cliente del feedlot.",
   feedlot_form_client_name: "Nombre",
   feedlot_form_client_kind: "Tipo",
   feedlot_form_client_tax_id: "CUIT / identificación",
@@ -645,19 +619,14 @@ export const es = {
   feedlot_form_new_client_cta: "+ Nuevo cliente",
 
   // --- shared field labels for new selects ---
-  feedlot_form_target_animal: "Animal",
   feedlot_form_head_count_generic: "Cabezas",
-  feedlot_form_head_count_generic_hint: "Para lotes: cuántas cabezas cubre esta operación (opcional).",
 
   // --- Dashboard app shell: sidebar navigation (adr-04, DESIGN-SYSTEM) ---
   feedlot_brand_subtitle: "Feedlot · Campo",
   feedlot_nav_section_operation: "Operación",
   feedlot_nav_dashboard: "Dashboard",
   feedlot_nav_feeding: "Alimentación",
-  feedlot_nav_today: "hoy",
-  feedlot_nav_herd: "Hacienda",
   feedlot_nav_sanitary: "Sanidad",
-  feedlot_nav_services: "Servicios y costos",
   feedlot_nav_section_admin: "Administración",
   feedlot_nav_ledger: "Cuenta corriente",
   feedlot_nav_clients: "Clientes",
@@ -677,7 +646,6 @@ export const es = {
   // --- Dashboard app shell: topbar ---
   feedlot_topbar_switch: "Cambiar de cliente",
   feedlot_switcher_empty: "No hay clientes",
-  feedlot_switcher_all: "Todos los clientes",
   feedlot_back: "Volver",
   feedlot_kind_boarding: "Hotelería",
   feedlot_kind_own: "Hacienda propia",
