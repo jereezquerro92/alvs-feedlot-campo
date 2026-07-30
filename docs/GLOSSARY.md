@@ -18,7 +18,7 @@ Format: Term | Canonical form | Applies to | Forbidden forms.
 | production branch | `prod` | git production line; never call `main` production ([[GH]]) | `production`, `master`, `release` as the prod line |
 | development flow | `issue → worktree → PR` | the mandatory shape of every change ([[adr-19-issue-worktree-pr]], [[DEVELOPMENT-LOOP]]) | skipping the issue; a direct hand-commit to `main` |
 | worktree | `worktree` — a git worktree, keyed to its issue, under `.claude/worktrees/`; optional, and destroyed on integration ([[adr-19-issue-worktree-pr]] rule 5) | git isolation for a change | `checkout` (for this meaning); a worktree that outlives its PR |
-| integration | `integration` — merge of a PR into `main`, performed only as the `gh`/kodexArg identity ([[adr-19-issue-worktree-pr]], [[GH]]) | landing a change on `main` | calling a direct push to `main` "integration" |
+| integration | `integration` — merge of a PR into `main`, performed only as the owning `gh` identity ([[adr-19-issue-worktree-pr]], [[adr-08-github-and-git]] rule 1, [[GH]]) | landing a change on `main` | calling a direct push to `main` "integration" |
 | backend | `backend` | service name, ECR suffix, repo path `backend/`, docs | `server`, `api-server`, `api/` as the Django root path |
 | frontend | `frontend` | service name, ECR suffix, repo path `frontend/`, docs | `web`, `client`, `ui`, `app/` as the Astro root path |
 | environments | `dev`, `prod`, `local` | infra, secrets paths, docs | `staging` (does not exist here), `development`, `production` |

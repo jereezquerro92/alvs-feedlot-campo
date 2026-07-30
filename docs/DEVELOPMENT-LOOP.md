@@ -76,7 +76,7 @@ flowchart LR
     WORK --> PR["Open PR → main"]
     PR --> GATE{"PR gate:<br/>guardians ✔ · tests ✔"}
     GATE -->|red| WORK
-    GATE -->|green| MERGE["Merge as gh/kodexArg<br/>self-merge valid"]
+    GATE -->|green| MERGE["Merge as owning gh identity<br/>self-merge valid"]
     MERGE --> CLEAN(["Delete worktree (git worktree remove)<br/>+ branch — nothing outlives the PR"])
 ```
 
