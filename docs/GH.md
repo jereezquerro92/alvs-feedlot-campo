@@ -42,10 +42,10 @@ structure; GitHub wraps them):
      ....+....|....+....|....+....|....+....|....+....|....+....|....+....|....+....|
   1| ---                          ╮
   2| name: Feature (BDD)          │  frontmatter: name = chooser label in GitHub,
-  3| about: ...                !! │  labels=feat, assignees=kodexArg, title prefix "feat: "
+  3| about: ...                !! │  labels=feat, assignees=<owning account>, title prefix "feat: "
   4| title: "feat: "              │  (GitHub reads THIS, not the filename)
   5| labels: feat                 │
-  6| assignees: kodexArg          │
+  6| assignees: jereezquerro92    │
   7| ---                          ╯
   9| <!-- ...                  !! ╮  author guidance: BDD-first, language, wikilinks,
  14| -->                          ╯  issue→PR loop. Not shown in the rendered issue.
