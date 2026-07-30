@@ -51,9 +51,27 @@ class Command(BaseCommand):
             action="store_true",
             help="Delete existing demo data before seeding (idempotent re-run).",
         )
+        parser.add_argument(
+            "--if-debug",
+            action="store_true",
+            help=(
+                "Skip quietly instead of failing when DEBUG is off. For unattended "
+                "callers (the compose startup chain) that must not abort the boot."
+            ),
+        )
 
     def handle(self, *args, **options):
         if not settings.DEBUG:
+            # Two callers, two correct behaviours. A human typing the command
+            # outside DEBUG made a mistake and must hear about it. The compose
+            # startup chain is an `&&` sequence, so the same error would leave
+            # the backend down — it asks with --if-debug and gets a skip.
+            # Either way the decision reads `settings.DEBUG`, so there is one
+            # authority for what "DEBUG" means and no shell-side reimplementation
+            # of Django's truthiness to drift from it.
+            if options["if_debug"]:
+                self.stdout.write("seed_demo_feedlot: DEBUG is off — skipping (--if-debug).")
+                return
             raise CommandError("seed_demo_feedlot only runs with DEBUG=True (dev only).")
 
         if options["reset"]:
