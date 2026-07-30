@@ -12,28 +12,55 @@ permissions:
   id-token: write
   contents: read
 
+# The deploy target is repository configuration, never a committed literal
+# ([[adr-48-derived-project-deploy-identity]] rule 1). A project spawned from
+# this template inherits the pipeline; it must never inherit another project's
+# account, role, cluster, network, or secrets. Every value below comes from a
+# GitHub repository variable, and `preflight` hard-fails while any is unset —
+# so a repo with no infrastructure of its own cannot reach AWS at all.
 env:
-  AWS_REGION: us-east-1
-  AWS_ACCOUNT_ID: "789650504128"
-  DEPLOY_ROLE_ARN: arn:aws:iam::789650504128:role/gha-deploy-prod
-  PROJECT_SLUG: astro-drf-aws
+  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+  DEPLOY_ROLE_ARN: ${{ vars.DEPLOY_ROLE_ARN }}
+  PROJECT_SLUG: ${{ vars.PROJECT_SLUG }}
   ENV_NAME: prod
-  CLUSTER: alvs-prod
-  ECR_REGISTRY: 789650504128.dkr.ecr.us-east-1.amazonaws.com
-  PUBLIC_SUBNET_A: subnet-0367b5e29ffc0c525
-  PUBLIC_SUBNET_B: subnet-03e3ec09d37971485
-  TASK_SG_ID: sg-027b8d1f3fe41007a
-  # opaque AWS-assigned suffix — not a pure function of PROJECT_SLUG, stays literal (issue #129)
-  SECRET_DJANGO: arn:aws:secretsmanager:us-east-1:789650504128:secret:alvs/prod/astro-drf-aws/django-3aQ89E
-  # opaque AWS-assigned suffix — not a pure function of PROJECT_SLUG, stays literal (issue #129)
-  SECRET_DB: arn:aws:secretsmanager:us-east-1:789650504128:secret:alvs/prod/astro-drf-aws/db-57dPTf
-  # opaque AWS-assigned suffix — not a pure function of PROJECT_SLUG, stays literal (issue #129)
-  SECRET_COGNITO: arn:aws:secretsmanager:us-east-1:789650504128:secret:alvs/prod/astro-drf-aws/cognito-kZbof7
-  # opaque AWS-assigned suffix — not a pure function of PROJECT_SLUG, stays literal (issue #129)
-  SECRET_MSGRAPH: arn:aws:secretsmanager:us-east-1:789650504128:secret:alvs/prod/astro-drf-aws/msgraph-2vkmEp
+  CLUSTER: ${{ vars.CLUSTER }}
+  ECR_REGISTRY: ${{ vars.ECR_REGISTRY }}
+  PUBLIC_SUBNET_A: ${{ vars.PUBLIC_SUBNET_A }}
+  PUBLIC_SUBNET_B: ${{ vars.PUBLIC_SUBNET_B }}
+  TASK_SG_ID: ${{ vars.TASK_SG_ID }}
+  # A Secrets Manager ARN carries an AWS-assigned random suffix, so it is not a
+  # pure function of PROJECT_SLUG and is configured on its own (issue #129).
+  SECRET_DJANGO: ${{ vars.SECRET_DJANGO }}
+  SECRET_DB: ${{ vars.SECRET_DB }}
+  SECRET_COGNITO: ${{ vars.SECRET_COGNITO }}
+  SECRET_MSGRAPH: ${{ vars.SECRET_MSGRAPH }}
   CLOUDMAP_SERVICE: backend
 
 jobs:
+  preflight:
+    # Fails closed, before any job that authenticates to AWS: names every unset
+    # variable at once instead of dying halfway through a partial deploy. An
+    # unconfigured repo stops here — it never assumes a role, pushes an image,
+    # or runs a migration ([[adr-48-derived-project-deploy-identity]] rule 1).
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy target must be configured
+        run: |
+          missing=()
+          for v in AWS_ACCOUNT_ID DEPLOY_ROLE_ARN PROJECT_SLUG CLUSTER \
+                   ECR_REGISTRY PUBLIC_SUBNET_A PUBLIC_SUBNET_B TASK_SG_ID \
+                   SECRET_DJANGO SECRET_DB SECRET_COGNITO SECRET_MSGRAPH; do
+            [ -n "${!v}" ] || missing+=("$v")
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::deploy target not configured — unset repository variables: ${missing[*]}"
+            echo "Set them under Settings -> Secrets and variables -> Actions -> Variables."
+            echo "If this project has no AWS resources yet, that is the expected state: see docs/INVENTORY.md."
+            exit 1
+          fi
+          echo "deploy target configured: project '${PROJECT_SLUG}', account ${AWS_ACCOUNT_ID}, cluster ${CLUSTER}"
+
   test:
     runs-on: ubuntu-latest
     services:
@@ -95,7 +122,7 @@ jobs:
     # Blocking connectivity gate (#253): proves real Bedrock reachability
     # (network + IAM + model access) with OIDC credentials before any image
     # is built. Hard-fails the deploy; never runs at container boot.
-    needs: test
+    needs: [test, preflight]
     runs-on: ubuntu-latest
     env:
       SECRET_KEY: gate-only-secret-key
@@ -116,7 +143,9 @@ jobs:
         run: uv run pytest -m bedrock_live
 
   build-push:
-    needs: [test, bedrock-gate]
+    # `preflight` named explicitly, not left to the transitive chain through
+    # bedrock-gate: this is the first job that writes to another account's ECR.
+    needs: [test, preflight, bedrock-gate]
     runs-on: ubuntu-latest
     outputs:
       image_tag: ${{ steps.tag.outputs.image_tag }}

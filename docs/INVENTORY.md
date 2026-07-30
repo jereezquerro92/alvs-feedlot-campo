@@ -8,6 +8,17 @@ tags: [infrastructure, aws, inventory, ephemeral]
 
 # INVENTORY
 
+> [!warning] This project has **zero** provisioned AWS resources
+> `alvs-feedlot-campo` owns nothing in AWS: no account of its own, no role, no cluster, no ECR repository, no database, no secret. Everything below inventories the **template's** `astro-drf-aws` reference run, inherited with the code, and none of it belongs to this project ([[adr-48-derived-project-deploy-identity]] rule 3).
+>
+> Two consequences, both binding:
+> - **No document, workflow, test, or step may assume any resource below is reachable from here.** This is [[adr-12-ephemeral-run]] rule 2 — the infrastructure is born dead — applied to the stronger case of no infrastructure at all.
+> - **The deploy pipeline is correctly fail-closed.** `deploy-prod.yml` reads its target from repository variables and hard-fails while they are unset ([[adr-48-derived-project-deploy-identity]] rules 1–2). Unset is the expected state until this project provisions its own resources; the rows below are never the values to fill them with.
+>
+> When this project does provision, its resources get their own section here, in the same batch as each creation, and its OIDC trust entry uses this repo's own immutable subject ([[GH]], [[adr-23-oidc-immutable-subject-claim]]).
+
+## Template reference run (`astro-drf-aws`) — inherited, not ours
+
 The committed resource inventory for the `astro-drf-aws` stage-3 run. Every AWS resource this run touches has a row here, updated **in the same batch** as its creation ([[adr-12-ephemeral-run]] Article III). Phase E teardown executes from the `ephemeral` rows and verifies against the Resource Groups Tagging API; `shared` rows are never destroyed.
 
 - Account `789650504128`, region `us-east-1`, profile `kodex` ([[INFRASTRUCTURE]]).
@@ -16,7 +27,7 @@ The committed resource inventory for the `astro-drf-aws` stage-3 run. Every AWS 
 > [!note] Provenance
 > The `shared` section was seeded by B0 discovery (read-only, 2026-07-11). All identifiers below were confirmed to exist; zero mutations were made.
 
-## Shared resources
+### Shared resources
 
 | Resource | ID / ARN | Status | Recorded |
 |---|---|---|---|
@@ -35,18 +46,18 @@ The committed resource inventory for the `astro-drf-aws` stage-3 run. Every AWS 
 | EICE bastion `alvs-prod-eice` | `eice-031506212cc646b43` (subnet `subnet-0367b5e29ffc0c525`, create-complete) | shared | B0 discovery |
 | Fargate task SG `alvs-prod-task-sg` | `sg-027b8d1f3fe41007a` | shared | issue #40 (2026-07-12) — confirmed live: pre-existing, also attached to the `sroa-frontend`/`sroa-backend`/`kcbd-backend` services in the `alvs-prod` ECS cluster; matches `TASK_SG_NAME` in `deploy-prod.yml` unchanged, no rename needed. Carried ingress from the ALB SG (`sg-0a03c25d5eac26d26`) on 8000 only; added ingress on 4321 from the same ALB SG for this project's frontend target group — the only mutation made, additive and non-destructive. **2026-07-13 mutation**: added a self-referencing ingress rule, tcp/8000 from `sg-027b8d1f3fe41007a` itself (rule id `sgr-01fbf972cc0bba98b`, description "frontend SSR to backend via Cloud Map") — the frontend task reaches the backend task by the Cloud Map hostname, both share this SG, so the rule must allow the SG to reach itself on 8000 |
 
-### ALB HTTPS rule priorities (state at B0)
+#### ALB HTTPS rule priorities (state at B0)
 
 Used priorities on the `:443` listener: **9, 10** (`kcbd-api.grupoalvs.com`), **99** (`/ws/*` global), **100, 101** (`sroa.grupoalvs.com`), **109, 110, 111** (`astro-drf-aws.grupoalvs.com`, direct ALB routing — permanent, no CDN, issue #33), plus `default` (404). Rule **109** (host + `/accounts/*` → `tg-astro-drf-aws-backend-prod`) was added 2026-07-12 (issue #37): rule 110's path-pattern condition was already at its 4-value load and could not take a 5th (`/accounts/*`) within the 5-values-per-condition AWS quota, so the auth surface got its own higher-priority rule instead of growing 110.
 
-### Shared attachments this run will add and later remove (never the shared resource itself)
+#### Shared attachments this run will add and later remove (never the shared resource itself)
 
 - Repo entry for this repo scoped to `refs/heads/prod` in the `gha-deploy-prod` trust policy (B2.6 → removed in E). **2026-07-19 mutation**: rewritten in place from the name-only form to the immutable subject `repo:kodexArg@47777332/astro-drf-aws@1305504992:ref:refs/heads/prod` — required after the v1 history reset recreated the repo past GitHub's immutable-subject cutoff ([[GH]], [[adr-23-oidc-immutable-subject-claim]], issue #1).
 - Statement `BedrockGateNovaMicroInvoke` in the `gha-deploy-prod` inline policy `gha-deploy-prod-policy` (2026-07-19 → removed in E): `bedrock:InvokeModel` on the same four Nova Micro resources as the backend task role's `kdx-router-bedrock-nova-micro` (issue #97), nothing wider. Required by the workflow's `bedrock-live` connectivity gate, which invokes Bedrock as the deploy role before every prod deploy; the grant was missing since the gate landed and no prod push had run green since, so the gap only surfaced on the post-reset deploy (issue #1).
 - Host rule + target groups on the shared ALB for `astro-drf-aws.grupoalvs.com` (B2.8 → removed in E).
 - Route 53 records under `grupoalvs.com` (B2.7 → removed in E).
 
-## Ephemeral resources
+### Ephemeral resources
 
 Filled at B2, one row per resource in the same batch as its creation; each carries the Article III tag set. Destroyed and marked `destroyed <date>` in Phase E.
 

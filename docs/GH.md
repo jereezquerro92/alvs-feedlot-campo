@@ -8,7 +8,10 @@ tags: [harness, github, git]
 
 # GH — GitHub + git for this template
 
-Owner: **`kodexArg`**. Repo protocol: SSH. CLI: `gh` (used directly). Ruled by [[adr-08-github-and-git]].
+Owner of **this** repository: **`jereezquerro92`** — `jereezquerro92/alvs-feedlot-campo`. Repo protocol: SSH. CLI: `gh` (used directly). Ruled by [[adr-08-github-and-git]], whose rule 1 names `kodexArg` — the template's owner, not this repo's.
+
+> [!warning] Open divergence, not a settled rule
+> adr-08 rule 1 and the owner recorded above disagree. Rewriting that rule from a constant into a per-repository lookup alters its force, so it is a supersession only the owner may authorize ([[adr-00-adr-doctrine]] rule 4, [[adr-48-derived-project-deploy-identity]] rule 4). This line records the fact; it does not amend adr-08. Everything else adr-08 rules — the branch roles, who may push them — binds unchanged and applies to the identity named above.
 
 ## Branches
 
@@ -21,7 +24,7 @@ Forbidden as production name: treating `main` as live. Forbidden branch name for
 
 ## Who may push
 
-- **Direct push to `main` and `prod`:** account **`kodexArg` only**.
+- **Direct push to `main` and `prod`:** the owning account only — **`jereezquerro92`** here ([[adr-48-derived-project-deploy-identity]] rule 4).
 - Everyone else (agents, collaborators): **branches + PRs**. No direct push to protected lines.
 
 ## How we work
@@ -102,8 +105,16 @@ Ruled by [[adr-23-oidc-immutable-subject-claim]]. GitHub repos **created, rename
 Consequences that bind this template and every project spawned from it:
 
 - An AWS trust-policy `sub` entry for a post-cutoff repo MUST use the immutable format; a name-only entry never matches and STS denies `AssumeRoleWithWebIdentity` with `Not authorized to perform sts:AssumeRoleWithWebIdentity`.
-- Deleting and recreating a repo rotates its repo ID, so every trust entry for it must be re-derived — the name-only entry it had before is dead. This repo hit exactly that on its 2026-07-19 v1 history reset.
-- Read a repo's live prefix with `gh api repos/OWNER/REPO/actions/oidc/customization/sub` (`sub_claim_prefix`). This repo's: `repo:kodexArg@47777332/astro-drf-aws@1305504992`.
+- Deleting and recreating a repo rotates its repo ID, so every trust entry for it must be re-derived — the name-only entry it had before is dead. The same rotation happens when a project is spawned under a new owner: it is a different repo with a different ID, so it gets a different `sub` ([[adr-48-derived-project-deploy-identity]] rule 5).
+- Read a repo's live prefix with `gh api repos/OWNER/REPO/actions/oidc/customization/sub` (`sub_claim_prefix`).
+
+  **This repo** (`jereezquerro92/alvs-feedlot-campo`, created 2026-07-21 — post-cutoff, immutable, verified live 2026-07-30):
+
+  ```
+  repo:jereezquerro92@287022789/alvs-feedlot-campo@1307918497:ref:refs/heads/prod
+  ```
+
+  That is the only `sub` an AWS trust policy may accept for this project's `prod` deploys. The template's own prefix — `repo:kodexArg@47777332/astro-drf-aws@1305504992` — describes the template, matches nothing emitted here, and is recorded only so it is never mistaken for this one.
 - Repos born before the cutoff keep the classic format until they are recreated, renamed, or transferred — then they flip and their trust entries must follow.
 
 > [!note] Ephemeral reference run
