@@ -15,15 +15,14 @@ These are the well-determined places the literal may still appear:
   (c) the line also contains the literal `PROJECT_SLUG` — every sanctioned
       single-source fallback carries this token alongside the literal, e.g.
       `os.environ.get("PROJECT_SLUG", "<slug>")`,
-      `${PROJECT_SLUG:-<slug>}`, `PUBLIC_PROJECT_SLUG ?? "<slug>"`, or the
-      deploy workflow's `PROJECT_SLUG: <slug>` line — the literal there is
-      the one legitimate seed value, not a stray copy;
+      `${PROJECT_SLUG:-<slug>}`, or `PUBLIC_PROJECT_SLUG ?? "<slug>"` — the
+      literal there is a fallback seed, not a stray copy. The deploy workflow
+      no longer names the slug at all: its value is repository configuration
+      ([[adr-48-derived-project-deploy-identity]] rule 1, issue #48);
   (d) the line also contains `LIVE-DOC` — a generated live-doc block header
       (adr-17-live-doc-backlinks), not a hardcode;
   (e) a short, explicit EXCEPTIONS list below, for opaque values that are
-      not derivable from PROJECT_SLUG at all: `.github/workflows/
-      deploy-prod.yml` lines holding one of the six AWS-random-suffix ARNs
-      baked in at provisioning time (issue #129); `.claude/hooks/
+      not derivable from PROJECT_SLUG at all: `.claude/hooks/
       graph_first.py`'s codebase-memory-mcp project id (a different
       identifier namespace, not this app's PROJECT_SLUG);
       `tests/test_graph_first_hook.py`'s derivation fixtures — it types a
@@ -68,26 +67,10 @@ EXCLUDE_DIR_NAMES = {".git", "node_modules", ".astro", "dist", ".venv", ".mvmcp"
 # offending line; reason) — rule (e). Matched by content substring, never
 # by line number, so the exception survives surrounding edits.
 EXCEPTIONS: list[tuple[str, str, str]] = [
-    (
-        ".github/workflows/deploy-prod.yml",
-        "SECRET_DJANGO",
-        "opaque Secrets Manager ARN, random suffix baked at provisioning time",
-    ),
-    (
-        ".github/workflows/deploy-prod.yml",
-        "SECRET_DB",
-        "opaque Secrets Manager ARN, random suffix baked at provisioning time",
-    ),
-    (
-        ".github/workflows/deploy-prod.yml",
-        "SECRET_COGNITO",
-        "opaque Secrets Manager ARN, random suffix baked at provisioning time",
-    ),
-    (
-        ".github/workflows/deploy-prod.yml",
-        "SECRET_MSGRAPH",
-        "opaque Secrets Manager ARN, random suffix baked at provisioning time",
-    ),
+    # The four `SECRET_*` entries deploy-prod.yml used to need are gone with the
+    # ARNs themselves: the deploy target is repository configuration now, so no
+    # account, path, or slug is typed in the workflow at all
+    # ([[adr-48-derived-project-deploy-identity]] rule 1, issue #48).
     (
         ".claude/hooks/graph_first.py",
         "home-kodex-Templates-astro-drf-aws",
