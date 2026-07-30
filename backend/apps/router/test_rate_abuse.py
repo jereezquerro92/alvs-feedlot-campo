@@ -64,10 +64,17 @@ def test_sustained_burst_crosses_threshold_and_blocks(settings, monkeypatch):
     assert is_rate_blocked(user_id=3) is True
 
 
-def test_block_expires_after_configured_duration(settings, monkeypatch):
+# The block's TTL is real wall-clock (see `_now` in rate_abuse.py: faking the
+# clock deliberately leaves the cache backend's own TTL bookkeeping alone), so
+# the two halves of "a block is set, and it later expires" cannot be asserted
+# against the same short duration — the read-back would race the expiry. They
+# are split: the block is asserted live under a TTL too wide to race, and the
+# expiry under the short one, without re-asserting the live state (an early
+# expiry still satisfies the `is False` this one checks).
+def test_block_is_set_when_the_threshold_is_crossed(settings, monkeypatch):
     settings.ROUTER_RATE_IDLE_SKIP_SECONDS = 20
     settings.ROUTER_RATE_THRESHOLD_PER_MINUTE = 1
-    settings.ROUTER_RATE_BLOCK_SECONDS = 1
+    settings.ROUTER_RATE_BLOCK_SECONDS = 300
 
     now = [3_000_000.0]
     monkeypatch.setattr("apps.router.rate_abuse._now", lambda: now[0])
@@ -77,8 +84,21 @@ def test_block_expires_after_configured_duration(settings, monkeypatch):
     evaluate_rate_abuse(user_id=4)  # crosses threshold=1/min trivially -> blocked
     assert is_rate_blocked(user_id=4) is True
 
+
+def test_block_expires_after_configured_duration(settings, monkeypatch):
+    settings.ROUTER_RATE_IDLE_SKIP_SECONDS = 20
+    settings.ROUTER_RATE_THRESHOLD_PER_MINUTE = 1
+    settings.ROUTER_RATE_BLOCK_SECONDS = 1
+
+    now = [3_100_000.0]
+    monkeypatch.setattr("apps.router.rate_abuse._now", lambda: now[0])
+
+    evaluate_rate_abuse(user_id=7)
+    now[0] += 1
+    evaluate_rate_abuse(user_id=7)  # crosses threshold=1/min trivially -> blocked
+
     time.sleep(1.2)  # real TTL expiry (cache backend honors wall-clock TTL)
-    assert is_rate_blocked(user_id=4) is False
+    assert is_rate_blocked(user_id=7) is False
 
 
 def test_two_users_never_share_streak_or_block(settings, monkeypatch):
