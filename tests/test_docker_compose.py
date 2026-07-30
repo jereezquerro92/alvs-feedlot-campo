@@ -52,6 +52,99 @@ def test_compose_db_contract() -> None:
     ok("compose db contract")
 
 
+def test_backend_startup_chain_rebuilds_the_database() -> None:
+    """A destroyed-and-rebuilt stack must come up populated (issue #59).
+
+    The failure this guards is silent: drop `seed_demo_feedlot` and the stack
+    still builds, still passes health checks, and still serves every page — it
+    just serves them empty, which reads as "the backend is broken" rather than
+    "nobody ran the seed". Nothing else in the suite would notice.
+    """
+    text = read(ROOT / "compose.yaml")
+    # Narrow to the command itself, not the service block around it: the
+    # surrounding comments talk *about* the chain, and matching on those would
+    # let prose pass for behaviour.
+    _, _, backend_block = text.partition("\n  backend:")
+    _, _, after_command = backend_block.partition("\n    command:")
+    command, _, _ = after_command.partition("\n    volumes:")
+    if not command.strip():
+        fail("compose.yaml: cannot locate the backend service's command block")
+
+    for step in (
+        "migrate --noinput",
+        "bootstrap_admin",
+        "seed_demo_operator",
+        "seed_demo_feedlot",
+        "createcachetable",
+    ):
+        if step not in command:
+            fail(
+                f"compose.yaml: the backend startup chain no longer runs `{step}`. "
+                f"Every step rebuilds part of the database a `down -v` destroyed; "
+                f"dropping one yields a stack that boots healthy and wrong (issue #59)"
+            )
+
+    if "seed_demo_feedlot --if-debug" not in command:
+        fail(
+            "compose.yaml: seed_demo_feedlot must be called with --if-debug. The "
+            "chain is joined by `&&`, so outside DEBUG the command's CommandError "
+            "would abort the boot and leave the backend down (issue #59)"
+        )
+
+    if "|| true" in command or "|| :" in command:
+        fail(
+            "compose.yaml: the backend startup chain must not swallow failures. "
+            "--if-debug skips the one expected non-failure; everything else that "
+            "goes wrong during boot has to be loud (issue #59)"
+        )
+
+    seed = read(
+        ROOT / "backend" / "apps" / "clients" / "management" / "commands" / "seed_demo_feedlot.py"
+    )
+    if '"--if-debug"' not in seed:
+        fail(
+            "backend seed_demo_feedlot no longer accepts --if-debug, but compose.yaml "
+            "passes it: argparse would reject the flag and abort the boot (issue #59)"
+        )
+    if "DEMO_TAX_IDS" not in seed or ".exists()" not in seed:
+        fail(
+            "backend seed_demo_feedlot lost its already-seeded short-circuit. The "
+            "startup chain runs on every `up`, including one over a surviving "
+            "volume, so the command must stay idempotent (issue #59)"
+        )
+    ok("backend startup chain rebuilds and seeds the database")
+
+
+def test_frontend_start_clears_the_stale_dev_marker() -> None:
+    """A rebuilt stack must bring the frontend up too (issue #60).
+
+    `astro dev` records its owning PID in `.astro/dev.json`, and the bind mount
+    puts that file on the host, so it outlives the container. The next container
+    resolves that PID against its own namespace — where an unrelated process may
+    hold the same low number — and refuses to start. The failure is intermittent,
+    which is why it survived unnoticed: `up` succeeds, and only `ps -a` shows
+    `frontend Exited (1)` beside two healthy siblings.
+    """
+    text = read(ROOT / "compose.yaml")
+    _, _, frontend_block = text.partition("\n  frontend:")
+    _, _, after_command = frontend_block.partition("\n    command:")
+    command, _, _ = after_command.partition("\n    volumes:")
+    if not command.strip():
+        fail("compose.yaml: cannot locate the frontend service's command block")
+
+    if ".astro/dev.json" not in command:
+        fail(
+            "compose.yaml: the frontend command no longer clears .astro/dev.json "
+            "before starting. A stale marker from a previous container makes "
+            "`astro dev` refuse to start, intermittently (issue #60)"
+        )
+    if "bun run dev" not in command:
+        fail("compose.yaml: the frontend must still run the bun dev server ([[FRONTEND]])")
+    if "npm" in command:
+        fail("compose.yaml: npm is prohibited ([[adr-04-frontend-and-design-system]] rule 2)")
+    ok("frontend start clears the stale astro dev marker")
+
+
 def test_no_per_app_compose() -> None:
     for path in (
         ROOT / "backend" / "docker-compose.yaml",
@@ -213,6 +306,8 @@ def main() -> int:
     tests = [
         test_required_docs_and_compose,
         test_compose_db_contract,
+        test_backend_startup_chain_rebuilds_the_database,
+        test_frontend_start_clears_the_stale_dev_marker,
         test_no_per_app_compose,
         test_docs_reserve_app_paths,
         test_env_example_names,

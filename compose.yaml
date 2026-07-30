@@ -57,10 +57,18 @@ services:
       MSGRAPH_TENANT_ID: ${MSGRAPH_TENANT_ID:-}
       MSGRAPH_CLIENT_ID: ${MSGRAPH_CLIENT_ID:-}
       MSGRAPH_CLIENT_SECRET: ${MSGRAPH_CLIENT_SECRET:-}
+    # Every step is chained with `&&`: a failure anywhere aborts the boot rather
+    # than starting a server on a half-built database. `seed_demo_feedlot` is
+    # what makes a destroyed-and-rebuilt stack come up populated instead of
+    # healthy-and-empty (issue #59); it is idempotent on a surviving volume and
+    # takes --if-debug so a DEBUG=false local run skips it instead of killing
+    # the chain. No `|| true` anywhere — a real seed failure must still be loud.
+    # Local only: production is Fargate and never runs this ([[adr-09-docker-compose]] rule 10).
     command: >
       sh -c "uv run python manage.py migrate --noinput &&
              uv run python manage.py bootstrap_admin &&
              uv run python manage.py seed_demo_operator &&
+             uv run python manage.py seed_demo_feedlot --if-debug &&
              uv run python manage.py createcachetable &&
              uv run --with watchfiles==1.2.0 uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --reload"
     volumes:
@@ -94,7 +102,17 @@ services:
       PUBLIC_BACKEND_URL: ${PUBLIC_BACKEND_URL:-http://localhost:8000}
       PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost:4321}
       PUBLIC_PROJECT_SLUG: ${PROJECT_SLUG:-astro-drf-aws}
-    command: ["bun", "run", "dev", "--host", "0.0.0.0"]
+    # The `rm` is load-bearing (issue #60). `astro dev` records its owning PID in
+    # .astro/dev.json, and the ./frontend bind mount puts that file on the HOST,
+    # so `down` leaves it behind describing a container that no longer exists.
+    # The next container reads it and resolves that PID against its OWN
+    # namespace, where a fresh, unrelated process may well hold the same low
+    # number — so it concludes a dev server is already running and exits 1. That
+    # makes the failure intermittent, which is worse than constant. Deleting the
+    # marker is deterministic; `astro dev --force`, which the error message
+    # itself suggests, was tried and did not prevent the refusal.
+    # A container that has just been created never has a live server to protect.
+    command: ["sh", "-c", "rm -f .astro/dev.json && bun run dev --host 0.0.0.0"]
     volumes:
       - ./frontend:/app
       - /app/node_modules  # anon volume: keep the image's install, don't let the host mask it
