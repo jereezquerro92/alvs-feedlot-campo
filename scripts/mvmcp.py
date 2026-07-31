@@ -40,8 +40,24 @@ ROOT = Path(__file__).resolve().parents[1]
 MVMCP = ROOT / ".mvmcp"
 VENV = MVMCP / ".venv"
 DATA = MVMCP / "data"
-BIN = VENV / "bin" / "markdown-vault-mcp"
 PROFILE_STAMP = MVMCP / "profile"
+
+
+def venv_exe(name):
+    """Path to an executable inside VENV, for the layout this platform actually uses.
+
+    A venv is not laid out the same way everywhere: POSIX puts executables in
+    `bin/` bare, Windows puts them in `Scripts/` with an `.exe` suffix. Assuming
+    `bin/` made the whole vendored MCP unreachable on Windows — `uv venv`
+    succeeded and every step after it pointed at a path that was never created
+    (issue #67). Resolved here once so the two call sites cannot drift apart.
+    """
+    if os.name == "nt":
+        return VENV / "Scripts" / f"{name}.exe"
+    return VENV / "bin" / name
+
+
+BIN = venv_exe("markdown-vault-mcp")
 
 
 FULL = "full"
@@ -126,7 +142,7 @@ def ensure_installed():
         ["uv", "venv", "--clear", str(VENV)], check=True, stdout=sys.stderr, stderr=sys.stderr
     )
     subprocess.run(
-        ["uv", "pip", "install", "--python", str(VENV / "bin" / "python"), wanted],
+        ["uv", "pip", "install", "--python", str(venv_exe("python")), wanted],
         check=True,
         stdout=sys.stderr,
         stderr=sys.stderr,
