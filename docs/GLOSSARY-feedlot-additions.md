@@ -9,7 +9,7 @@ Merge these rows into the table in [[GLOSSARY]]; the format is
 | Django app (clients) | `clients` | client/account domain app ([[FEEDLOT]]) | `customers`, `accounts` (that is a model, not the app) |
 | Django app (livestock) | `livestock` | cattle domain app ([[FEEDLOT]]) | `cattle`, `animals`, `cows` |
 | Django app (feed) | `feed` | feed catalog/stock/rations app ([[FEEDLOT]]) | `feeding`, `food`, `nutrition` |
-| Django app (health) | `health` | animal-health app ([[FEEDLOT]]); distinct from the `/api/health/` liveness path, which is owned by the `health` **liveness** app already in the template — resolve the collision before code (rename this app `sanitary` if needed) | `sanidad`, `vet` |
+| Django app (sanitary) | `sanitary` | animal-health app — health products, health events, and the sanitary plan/schedule ([[FEEDLOT]], [[adr-28-animal-lifecycle-and-sanitary]] decision 4, [[adr-40-sanitary-plan-schedule]]); named to avoid colliding with the template's own `health` **liveness** app, which keeps `/api/health/` | `health` (that is the liveness app), `sanidad`, `vet` |
 | Django app (ledger) | `ledger` | current-account app ([[adr-25-account-ledger]]) | `billing`, `accounting`, `cta` |
 | Django app (market) | `market` | reference cattle-price app ([[FEEDLOT]]) | `prices`, `hacienda` |
 | Django app (advisors) | `advisors` | AI-advisor app ([[adr-27-advisors-generative]]) | `advisor` (singular), `consultants` |
@@ -158,3 +158,5 @@ Merge these rows into the table in [[GLOSSARY]]; the format is
 | model field (movement direction) | `direction` — `in` \| `out` | whether straws/embryos enter or leave stock ([[adr-47-genetics-semen-embryo]]) | `type`, `way`, `entry`/`exit` as values, Spanish values |
 | ledger origin ref value (genetics) | `source_kind` = `semen_sale` | the `LedgerEntry` back-link for a `SemenSale` credit; reuses `Concept.SALE` ([[adr-43-sale-settlement]]), no new `Concept` ([[adr-47-genetics-semen-embryo]], [[adr-25-account-ledger]]) | a per-domain FK, a new `Concept` value, `sale`/`venta` as `source_kind` |
 | derived metric (semen stock) | `semen_stock` | current straws of a `SemenBatch`/`Sire` = Σ in − Σ out; `null`+motivo when no movements, never a stored field ([[adr-47-genetics-semen-embryo]], [[adr-29-metrics-derivation]]) | `stock` as a stored field, `SemenBatch.straws_remaining`, a filled `0` |
+| Django app (metrics) | `metrics` | derived read-only metrics app — per-client summary, daily cost, growth, conversion, mortality and account series; every value is computed, never stored ([[adr-29-metrics-derivation]]) | `stats`, `analytics`, `reports`, `metricas` |
+| architecture term (spine) | `spine` | the shared apps every domain rides on — `clients`, `ledger`, `assets`, `market`, `fx` — reused by a new domain rather than duplicated ([[FEEDLOT]], [[adr-24-feedlot-domain]], [[adr-32-multi-rubro-assets]]) | `core`, `base`, `foundation`, `kernel`, `common` |
