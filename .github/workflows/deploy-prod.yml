@@ -34,6 +34,9 @@ env:
   SECRET_DJANGO: ${{ vars.SECRET_DJANGO }}
   SECRET_DB: ${{ vars.SECRET_DB }}
   SECRET_COGNITO: ${{ vars.SECRET_COGNITO }}
+  # Optional: no M365 Graph integration is wired for this project. Left unset
+  # here it resolves to an empty string; `preflight` does not require it and
+  # the backend taskdef step below skips the MSGRAPH_* secrets when empty.
   SECRET_MSGRAPH: ${{ vars.SECRET_MSGRAPH }}
   CLOUDMAP_SERVICE: backend
 
@@ -48,9 +51,16 @@ jobs:
       - name: Deploy target must be configured
         run: |
           missing=()
+          # SECRET_MSGRAPH is deliberately absent from this required list: this
+          # project has no M365 Graph integration wired (no route reads
+          # MSGRAPH_* outside apps/m365, which is not in use here), so
+          # provisioning a secret nothing consumes would violate rule 3 (own no
+          # sibling's resources) for a value that is not genuinely required.
+          # Every variable that IS required for something this project does
+          # ship stays in this list and still fails closed.
           for v in AWS_ACCOUNT_ID DEPLOY_ROLE_ARN PROJECT_SLUG CLUSTER \
                    ECR_REGISTRY PUBLIC_SUBNET_A PUBLIC_SUBNET_B TASK_SG_ID \
-                   SECRET_DJANGO SECRET_DB SECRET_COGNITO SECRET_MSGRAPH; do
+                   SECRET_DJANGO SECRET_DB SECRET_COGNITO; do
             [ -n "${!v}" ] || missing+=("$v")
           done
           if [ ${#missing[@]} -gt 0 ]; then
@@ -233,7 +243,7 @@ jobs:
                 "name": "${PROJECT_SLUG}-migrate",
                 "image": "${IMAGE}",
                 "essential": true,
-                "command": ["sh", "-c", "uv run python manage.py migrate --noinput && uv run python manage.py createcachetable"],
+                "command": ["sh", "-c", "uv run python manage.py migrate --noinput && uv run python manage.py bootstrap_admin && uv run python manage.py createcachetable"],
                 "environment": [
                   {"name": "PROJECT_SLUG", "value": "${PROJECT_SLUG}"},
                   {"name": "BASE_DOMAIN", "value": "grupoalvs.com"},
@@ -314,6 +324,19 @@ jobs:
       - name: Register backend task definition
         run: |
           IMAGE="${ECR_REGISTRY}/${BACKEND_REPO}:${IMAGE_TAG}"
+          # MSGRAPH secrets are injected only if SECRET_MSGRAPH is configured.
+          # Graph is an optional capability layer (adr-13), not a genuinely
+          # required variable for this project (no Graph integration is
+          # wired) — an unset SECRET_MSGRAPH must not block a deploy, and a
+          # valueFrom pointing at an ARN that doesn't exist would fail
+          # register-task-definition outright.
+          MSGRAPH_SECRETS=""
+          if [ -n "${SECRET_MSGRAPH}" ]; then
+            MSGRAPH_SECRETS=',
+                  {"name": "MSGRAPH_TENANT_ID", "valueFrom": "'"${SECRET_MSGRAPH}"':tenant_id::"},
+                  {"name": "MSGRAPH_CLIENT_ID", "valueFrom": "'"${SECRET_MSGRAPH}"':client_id::"},
+                  {"name": "MSGRAPH_CLIENT_SECRET", "valueFrom": "'"${SECRET_MSGRAPH}"':client_secret::"}'
+          fi
           cat > backend-taskdef.json <<JSON
           {
             "family": "${PROJECT_SLUG}-backend-${ENV_NAME}",
@@ -349,10 +372,7 @@ jobs:
                   {"name": "COGNITO_CLIENT_ID", "valueFrom": "${SECRET_COGNITO}:COGNITO_CLIENT_ID::"},
                   {"name": "COGNITO_CLIENT_SECRET", "valueFrom": "${SECRET_COGNITO}:COGNITO_CLIENT_SECRET::"},
                   {"name": "COGNITO_DOMAIN", "valueFrom": "${SECRET_COGNITO}:COGNITO_DOMAIN::"},
-                  {"name": "COGNITO_REGION", "valueFrom": "${SECRET_COGNITO}:COGNITO_REGION::"},
-                  {"name": "MSGRAPH_TENANT_ID", "valueFrom": "${SECRET_MSGRAPH}:tenant_id::"},
-                  {"name": "MSGRAPH_CLIENT_ID", "valueFrom": "${SECRET_MSGRAPH}:client_id::"},
-                  {"name": "MSGRAPH_CLIENT_SECRET", "valueFrom": "${SECRET_MSGRAPH}:client_secret::"}
+                  {"name": "COGNITO_REGION", "valueFrom": "${SECRET_COGNITO}:COGNITO_REGION::"}${MSGRAPH_SECRETS}
                 ],
                 "logConfiguration": {
                   "logDriver": "awslogs",
