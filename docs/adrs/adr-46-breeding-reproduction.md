@@ -1,166 +1,59 @@
 ---
-title: ADR-46 — Cría y recría: los eventos reproductivos (breeding)
+title: adr-46-breeding-reproduction
 type: adr
-status: active
+category: backend
+use_case: registrar un servicio, un tacto, una parición o un destete, cargar un protocolo IATF, leer métricas reproductivas, cobrar una inseminación
 created: 2026-07-28
-tags: [feedlot, breeding, livestock, reproduction, event-sourced]
+modified: 2026-08-02
+tags: [adr, feedlot, breeding, livestock, reproduction, event-sourced]
 ---
 
 # ADR-46 — Cría y recría: los eventos reproductivos (`breeding`)
 
-**Estado:** activo (Fase de cría)
-**Contexto:** crece por adición sobre la espina ([[adr-24-feedlot-domain]] regla 1): una app
-nueva `breeding`, sin tocar `livestock` ni el ledger salvo el único cargo que el dueño
-definió. Reusa la restricción XOR animal/lote de [[adr-26-livestock-individual-and-lot]] y
-el abstracto `LifecycleEvent` de [[adr-28-animal-lifecycle-and-sanitary]] decisión 1; el
-idiom plantilla→calendario relativo de [[adr-40-sanitary-plan-schedule]] para el protocolo
-IATF; el contrato del "no calculable" de [[adr-29-metrics-derivation]] para las métricas; y
-el par genérico `(source_kind, source_id)` de [[adr-24-feedlot-domain]] regla 4 para el
-único asiento. Depende de [[adr-47-genetics-semen-embryo]] para toros, semen y embriones.
-Reglas solamente; las entidades viven en [[FEEDLOT-DATA-MODEL]], los nombres en
-[[GLOSSARY]] (`GLOSSARY-feedlot-additions.md`) antes de su primer uso
-([[adr-01-glossary-and-localization]]).
+## CONTEXT
 
-## Contexto
+> El ciclo servicio → tacto → parición → destete, que es el corazón de un rodeo de cría y del que salen % preñez, % parición, % destete e IEP. La recría no necesita app: engordar al destetado ya está modelado. Lo genuinamente nuevo es la reproducción.
 
-Hasta hoy el sistema conoce al animal entrando, comiendo, engordando, enfermando y
-saliendo, pero no lo conoce **reproduciéndose**. Falta el corazón de un rodeo de cría: el
-ciclo `servicio → tacto → parición → destete`, del que salen las métricas que justifican el
-rubro (% preñez, % parición, % destete, IEP, kg destetados por vientre). La recría —engordar
-al destetado hasta peso objetivo— **ya está casi toda hecha**: reusa `Weighing`/GDP, `feed`,
-`sanitary` y el placement en corral. Lo genuinamente nuevo es la reproducción. Se agrega la
-app `breeding` con esos cuatro hechos, sin reescribir el dominio estable.
+## ASSERTIONS
 
-## Decisiones
+1. `breeding` son cuatro eventos reproductivos inmutables y ninguno postea asiento salvo el cargo de IA sobre hacienda de cliente (regla 6). El cobro de alimento y sanidad sigue en `feed` y `sanitary`.
+2. `Service`, `PregnancyCheck`, `Calving` y `Weaning` heredan de `LifecycleEvent` ([[adr-28-animal-lifecycle-and-sanitary]] regla 1): el par `animal`/`lot` con `CHECK` de exactamente uno ([[adr-26-livestock-individual-and-lot]] regla 3). Cada uno mantiene su tabla y expone `list`/`retrieve`/`create`, sin `update` ni `destroy`. El servicio individual es sobre una vaca; el IATF sistemático se carga sobre un `Lot`.
+3. El estado reproductivo —vacía, servida, preñada, parida, seca— se deriva cruzando los servicios, tactos y pariciones de cada vientre, y no se guarda en ningún campo. El diagnóstico vigente es el último `PregnancyCheck`, y la preñez se cierra con su `Calving`.
+4. Un `Calving` de resultado `live` sobre una vaca individual crea un `Animal` (`category=calf`) y lo referencia en `Calving.calf`. La genealogía se deriva de esa cadena —madre por el target, padre por el toro del servicio— y no se agregan campos `dam`/`sire` a `Animal` ([[adr-32-multi-rubro-assets]] regla 2). Un `Calving` sobre un `Lot` registra `births_count` sin crear identidad por cabeza.
+5. `IatfProtocol` y `IatfProtocolStep` son catálogos editables con CRUD completo; cada paso fija un `day_offset` relativo y la fecha absoluta se deriva del `Service.date`, nunca se guarda en la plantilla. Mismo idiom que [[adr-40-sanitary-plan-schedule]] reglas 1–2.
+6. Un `Service` con `method ∈ {ai, iatf}` sobre hacienda de un `Client(kind=boarding)` postea un `debit` `concept=service` por la tarifa de inseminación, vía `(source_kind="breeding_service", source_id=<Service.id>)` ([[adr-24-feedlot-domain]] regla 4), fotografiando `service_price` del día. El servicio natural, el servicio sobre hacienda propia, y los tactos, pariciones y destetes no postean nada.
+7. `register_service` descuenta un `SemenMovement` `out` para `ai`/`iatf` y un `EmbryoMovement` `out` para `embryo_transfer` ([[adr-47-genetics-semen-embryo]]). Rechaza en el servicio un target no activo o ajeno al cliente, la ausencia del XOR exacto, una partida sin stock o inactiva y un protocolo inactivo. La carga tardía con fecha retroactiva se acepta mientras el target siga activo.
+8. `apps.metrics` deriva `pregnancy_rate`, `calving_rate`, `weaning_rate`, `calving_interval` y `kg_weaned_per_dam` como funciones puras ([[adr-29-metrics-derivation]] regla 1). Cada una devuelve `null` con su `not_calculable` cuando falta el insumo, nunca un cero de relleno.
+9. La recría no gana app: el destetado es un `Animal` normal que se mide con `Weighing`, se alimenta con `feed`, se sanea con `sanitary` y se ubica con `PenPlacement`. El único agregado es el `Weaning`, con su `purpose` (`replacement` | `sale` | `undecided`).
 
-### 1. `breeding` son eventos reproductivos inmutables; casi nada toca el ledger
+## FORBIDDEN
 
-`breeding` no tiene catálogos de negocio propios más allá del protocolo IATF (decisión 5):
-son cuatro eventos fechados. Ninguno postea un asiento **salvo** el cargo de servicio de IA
-sobre hacienda de cliente (decisión 6). El cobro de alimento y sanidad sigue exclusivamente
-en `feed` y `sanitary` ([[adr-25-account-ledger]], [[adr-28-animal-lifecycle-and-sanitary]]).
+- **NEVER** guardar el estado reproductivo como campo (regla 3). Un flag mutable se desincroniza de los eventos que lo producen.
+- **NEVER** agregar `dam`/`sire` a `Animal` (regla 4). La genealogía se deriva de la cadena parición → servicio, y `livestock` no se toca.
+- **NEVER** guardar fechas absolutas en un `IatfProtocol` (regla 5). Lo ataría a un solo servicio y dejaría de ser plantilla.
+- **NEVER** cobrar un tacto, una parición o un destete (regla 6). El dueño definió exactamente un hecho económico en la reproducción, y modelar otro es especulativo.
+- **NEVER** servir un target no activo o de otro cliente (regla 7). La validación vive en el servicio, único punto de escritura.
+- **NEVER** devolver 0% de preñez cuando no hubo servicios (regla 8). Son situaciones opuestas y el hueco explícito las distingue.
 
-*Por qué:* un solo camino de cobro. La reproducción es sobre todo un registro de gestión;
-el único hecho económico que el dueño definió es el servicio de inseminación facturado.
+## REJECTED
 
-### 2. Cuatro eventos, cada uno target `Animal` XOR `Lot`, a nivel base de datos
+- **Una app de recría** — un dominio paralelo para engordar al destetado. Rechazado por la regla 9: duplicaría `livestock` y `feed` sin agregar un hecho nuevo; el destete era el único hito que faltaba.
+- **Cobrar el semen consumido como cargo del servicio** — debitar la pajuela además de la tarifa. No: el consumo propio es un `out` de stock ya valuado ([[adr-47-genetics-semen-embryo]] regla 6), y el único cargo es el servicio facturado.
+- **Un modelo polimórfico para los cuatro eventos** — una tabla reproductiva con tipo. Rechazado por el mismo motivo que en [[adr-28-animal-lifecycle-and-sanitary]]: nulables en todas las filas y un filtro por tipo en cada consulta.
 
-`Service`, `PregnancyCheck`, `Calving` y `Weaning` heredan de `LifecycleEvent`
-([[adr-28-animal-lifecycle-and-sanitary]] decisión 1): el par `animal`/`lot` con `CHECK` de
-exactamente uno ([[adr-26-livestock-individual-and-lot]] regla 3). Cada uno mantiene su
-tabla y expone `list`/`retrieve`/`create`, sin `update` ni `destroy`
-([[adr-24-feedlot-domain]] regla 3). El servicio individual es sobre una vaca; el IATF
-sistemático se carga sobre un `Lot` (un rodeo servido junto).
+## RELATED
 
-*Por qué:* reusar la forma ya probada evita una tabla polimórfica y mantiene la consulta
-directa. Los cuatro necesitan idénticamente "exactamente un target".
+### related adrs
 
-### 3. El estado reproductivo se DERIVA de los eventos, nunca se guarda
+- [[docs/adrs/adr-47-genetics-semen-embryo]] — los toros, el semen y los embriones que el servicio consume
+- [[docs/adrs/adr-28-animal-lifecycle-and-sanitary]] — regla 1, el abstracto `LifecycleEvent`
+- [[docs/adrs/adr-26-livestock-individual-and-lot]] — regla 3, el XOR animal/lote
+- [[docs/adrs/adr-40-sanitary-plan-schedule]] — el idiom plantilla + calendario relativo
+- [[docs/adrs/adr-29-metrics-derivation]] — el contrato del "no calculable"
+- [[docs/adrs/adr-44-field-operational-roles]] — el gateo RBAC de estas rutas
 
-`vacía` / `servida` / `preñada` / `parida` / `seca` no es un campo editable en `Animal` ni
-en ningún lado: se deriva cruzando los `Service`, `PregnancyCheck` y `Calving` de cada
-vientre ([[adr-24-feedlot-domain]] regla 3). El diagnóstico de preñez vigente es el último
-`PregnancyCheck`; la preñez se cierra con el `Calving` correspondiente.
+### related files
 
-*Por qué:* un flag reproductivo mutable se desincroniza de los hechos. Derivarlo garantiza
-que el estado y los eventos no puedan contradecirse — son la misma fuente.
-
-### 4. La parición crea el ternero; la genealogía se deriva, sin tocar `Animal`
-
-Un `Calving` de resultado `live` sobre una vaca individual **crea** un `Animal`
-(`category=calf`) y lo referencia en `Calving.calf` (FK nullable). La madre es el target del
-parto (`Calving.animal`), el padre es el toro del servicio que confirmó la preñez
-(`Calving.service → Service.sire`, [[adr-47-genetics-semen-embryo]]). La genealogía se
-**deriva** de esa cadena; **no** se agrega ningún campo `dam`/`sire` a `Animal` —la
-extracción mira hacia adelante ([[adr-32-multi-rubro-assets]] regla 2,
-[[adr-38-senasa-traceability]] precedente de la caravana). Un `Calving` sobre un `Lot`
-registra `births_count` y suma cabezas al lote de terneros, sin crear identidad por cabeza
-([[adr-26-livestock-individual-and-lot]] regla 1).
-
-*Por qué:* `Intake` ya crea `Animal`s, así que un evento que engendra un animal tiene
-precedente. Derivar la genealogía en vez de denormalizarla en `Animal` mantiene `livestock`
-estable y hace la parentela auditable desde el hecho que la produjo.
-
-### 5. El protocolo IATF es una plantilla editable con calendario relativo
-
-`IatfProtocol` + `IatfProtocolStep` son datos maestros: ModelViewSet con CRUD completo
-—"cargar un protocolo" es crear el protocolo y sus pasos (día 0 dispositivo, día 7
-prostaglandina, etc.)—. Cada paso fija un `day_offset` relativo; la fecha absoluta de cada
-paso se **deriva** del `Service.date` de la inseminación que referencia el protocolo, nunca
-se guarda en la plantilla. Mismo idiom que `SanitaryPlan`/`SanitaryPlanItem`
-([[adr-40-sanitary-plan-schedule]] decisiones 1–2).
-
-*Por qué:* un protocolo es "a los N días de arrancar"; guardar fechas absolutas lo ataría a
-un solo servicio. El offset relativo lo hace reusable, que es el punto de una plantilla.
-
-### 6. Solo la IA/IATF sobre hacienda de cliente cobra; el resto no postea
-
-Un `Service` con `method ∈ {ai, iatf}` sobre hacienda de un `Client(kind=boarding)` postea
-**un `debit` `concept=service`** a la cuenta del cliente, por la tarifa de inseminación, vía
-el par genérico `(source_kind="breeding_service", source_id=<Service.id>)`
-([[adr-24-feedlot-domain]] regla 4). Fotografía `service_price` (la tarifa) del día
-([[adr-25-account-ledger]] regla 3). El servicio `natural`, el servicio sobre hacienda
-propia, y los eventos `PregnancyCheck`, `Calving` y `Weaning` **no** postean asiento. El
-costo del semen consumido lo maneja `genetics` como un `out` de stock, no como un cargo acá
-([[adr-47-genetics-semen-embryo]] decisión 6).
-
-*Por qué:* el dueño definió exactamente un hecho económico en la reproducción —la IA
-facturada al cliente boarding— y ninguno más. Modelar un cargo por tacto o por parición que
-hoy no se factura es complejidad especulativa (mismo criterio que
-[[adr-28-animal-lifecycle-and-sanitary]] decisión 5); si mañana se cobra el tacto, entra por
-el mismo seam con su propio cambio.
-
-### 7. El servicio consume genética y valida en el servicio, no en la vista
-
-`register_service` descuenta un `SemenMovement` `out` del `SemenBatch` para `method ∈
-{ai, iatf}`, y un `EmbryoMovement` `out` del `EmbryoBatch` para `method=embryo_transfer`
-([[adr-47-genetics-semen-embryo]]). Rechaza en el **servicio**: un target no activo
-(muerto/vendido/egresado no se sirve), un target ajeno al cliente, la ausencia del XOR
-exacto, un `SemenBatch`/`EmbryoBatch` sin stock o inactivo, y un `IatfProtocol` inactivo. La
-carga tardía con fecha retroactiva se acepta mientras el target siga activo —misma norma de
-campo que [[adr-28-animal-lifecycle-and-sanitary]].
-
-*Por qué:* las reglas de negocio viven en el servicio, único punto de escritura, para que
-vista, admin y comando compartan la misma validación.
-
-### 8. Las métricas reproductivas se derivan en `apps.metrics`, honestas con el hueco
-
-`apps.metrics` gana, como funciones puras sobre los eventos ([[adr-29-metrics-derivation]]
-regla 1): `pregnancy_rate` (% preñez = preñadas/servidas), `calving_rate` (% parición =
-paridas/preñadas), `weaning_rate` (% destete = destetados/paridos), `calving_interval` (IEP,
-días promedio entre partos por vientre) y `kg_weaned_per_dam`. Cada una devuelve `null` con
-su `not_calculable` (`no_services_in_period`, `no_pregnancy_checks`, `no_calvings`, …)
-cuando falta el insumo, nunca un cero de relleno ([[adr-29-metrics-derivation]] regla 2).
-
-*Por qué:* un "% preñez = 0" y un "no hubo servicios que evaluar" son situaciones opuestas;
-el cero las confunde, el hueco explícito las distingue y le dice al operador qué medir.
-
-### 9. La recría no gana app: reusa lo existente más un `Weaning` con destino
-
-El destetado sigue siendo un `Animal` normal: su recría se mide con `Weighing`/GDP, se
-alimenta con `feed`, se sanea con `sanitary` y se ubica con `PenPlacement` —nada nuevo. El
-único agregado de recría es el `Weaning` (peso y fecha del destete) con un `purpose`
-(`replacement` | `sale` | `undecided`) que marca la selección de vaquillonas de reposición.
-
-*Por qué:* la recría es engorde de un animal ya modelado; crear una app paralela duplicaría
-`livestock`/`feed` sin agregar un hecho nuevo. El destete es el único hito que faltaba.
-
-## Consecuencias
-
-- El backend entra solo por [[API]] ([[adr-03-api-and-backend]]) y nace por el flujo [[TDD]]
-  ([[adr-07-development-flow]]); este ADR no exceptúa ese camino
-  ([[adr-24-feedlot-domain]] regla 6).
-- Migraciones: las tablas nuevas viven en `breeding` (`Service`, `PregnancyCheck`,
-  `Calving`, `Weaning`, `IatfProtocol`, `IatfProtocolStep`) y una FK nullable `calf` de
-  `Calving` a `livestock.Animal`. Nada fuera de la app nueva; nada en `ledger` (el débito de
-  IA reusa `Concept.SERVICE` por el seam, sin modelo ni concepto nuevo).
-- La app `advisors`/`assistant` ganan estas métricas sin cambiar su código: leen
-  `apps.metrics` ([[adr-29-metrics-derivation]] regla 1, [[adr-31-advisors-implementation]]
-  decisión 3).
-- `ASSISTANT`/`ADVISOR` y demás variables no cambian: `breeding` no agrega credenciales ni
-  servicios externos.
-- El gateo RBAC de estas rutas se declara en [[API]] con su clase de permiso antes del
-  código ([[adr-44-field-operational-roles]] decisión 7): la carga reproductiva es de
-  `field_managers` (y `feed_operators` donde aplique), la lectura sigue las reglas del rol.
-- Cualquier cambio a las reglas 1–9 es semántico y DEBE superseder este ADR
-  ([[adr-00-adr-doctrine]] regla 4).
+- [[docs/FEEDLOT-DATA-MODEL]] — `Service`, `PregnancyCheck`, `Calving`, `Weaning`, `IatfProtocol`
+- [[docs/GLOSSARY-feedlot-additions]] — los nombres reproductivos, antes del primer uso
+- [[docs/API]] — las rutas de `breeding`
