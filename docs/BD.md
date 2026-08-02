@@ -27,7 +27,7 @@ Database reference for the template. Engine: **PostgreSQL 17.9** (pin in [[REQUI
 
 ## Ephemeral run RDS (reference deploy)
 
-Ruled by [[adr-12-ephemeral-run]]. The template's own run diverges from the shared `alvs-prod-pg` precedent above: it gets a **dedicated instance, born dead** — the sanctioned divergence (no project shares this DB, and it is destroyed at teardown).
+The template's own run diverged from the shared `alvs-prod-pg` precedent above: it gets a **dedicated instance, born dead** — the sanctioned divergence (no project shares this DB, and it is destroyed at teardown).
 
 - Instance `alvs-prod-astro-drf-aws-pg` (name frozen at B1), PostgreSQL 17.9, `db.t4g.micro`, single-AZ, 20 GB gp3, isolated subnets, SG `alvs-prod-rds-sg`, never publicly reachable.
 - **Deletion protection off, no final snapshot** — ephemeral ([[INFRASTRUCTURE]] teardown order).

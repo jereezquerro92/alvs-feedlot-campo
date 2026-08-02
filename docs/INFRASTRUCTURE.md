@@ -133,7 +133,7 @@ The backend **task** role carries an inline policy (`kdx-router-bedrock-nova-mic
 
 - GitHub Actions with **OIDC** (`token.actions.githubusercontent.com`) — no long-lived AWS keys.
 - Per-env deploy roles: `gha-deploy-<env>`; trust policy scoped to specific repos. `sub` entries for repos created/renamed/transferred after GitHub's immutable-subject cutoff use the immutable format with owner/repo numeric IDs — format, cutoff, and this repo's live values in [[GH]] ([[adr-23-oidc-immutable-subject-claim]]).
-- **Branch → env:** `refs/heads/main` → **dev** deploy; `refs/heads/prod` → **prod** deploy. Release tags `v*` may also trigger prod when defined in workflow. Git rules: [[GH]], [[adr-08-github-and-git]]. For the template's own run the `dev ← main` leg is out of scope — see "Ephemeral reference run" below ([[adr-12-ephemeral-run]]).
+- **Branch → env:** `refs/heads/main` → **dev** deploy; `refs/heads/prod` → **prod** deploy. Release tags `v*` may also trigger prod when defined in workflow. Git rules: [[GH]], [[adr-08-github-and-git]]. For the template's own reference run the `dev ← main` leg was out of scope — see "Ephemeral resource discipline" below.
 - Direct push to `main`/`prod` is the owning account only ([[adr-08-github-and-git]] rules 1, 4; [[GH]] — `jereezquerro92` for this repo); CI still runs on those refs after their land.
 - Pipeline: build image → push to ECR → update ECS service.
 
@@ -147,12 +147,12 @@ Chain, strictly one-directional:
 
 DB admin access goes through an **EC2 Instance Connect Endpoint bastion** — see [[BD]].
 
-## Ephemeral reference run
+## Ephemeral resource discipline
 
-Governs the template's own reference deploy (project `astro-drf-aws`), ruled by [[adr-12-ephemeral-run]]. General multi-project doctrine above is unchanged; this section only narrows it for this run.
+This section owns how a resource of this project is born, recorded and destroyed — the discipline every provisioning step follows. The worked example below is the template's own `astro-drf-aws` reference deploy, whose resources this project does not own ([[INVENTORY]], [[adr-48-derived-project-deploy-identity]] rule 3).
 
-- **Cloud scope: prod only.** No dev cloud environment is provisioned for this run; the `dev ← main` pipeline above remains doctrine for real projects but is not exercised here. `prod` is the only branch reaching AWS, and OIDC deploy trust is scoped to `refs/heads/prod` only.
-- **Mandatory tag set** — every resource created for this run carries all three tags:
+- **A resource is born dead.** No document, code path, test or step may depend on a provisioned resource surviving. One may serve for testing after an explicit go, and only ever as ephemeral.
+- **Mandatory tag set** — every resource created carries all three tags:
 
   | Tag key | Value | Purpose |
   |---|---|---|
@@ -162,4 +162,4 @@ Governs the template's own reference deploy (project `astro-drf-aws`), ruled by 
 
 - **Inventory:** `docs/INVENTORY.md` is the committed record — columns: name, ARN, `shared` \| `ephemeral`, creating step. It is updated **in the same batch** as each resource's creation. Teardown executes from it and verifies against the Resource Groups Tagging API.
 - **Shared pre-existing ALVS resources are never destroyed** — VPC, ECS cluster, shared ALB, Route 53 zone, the GitHub OIDC provider, `gha-deploy-prod`, the EICE bastion. Only this project's attachments are removed (host rule, target groups, DNS records, the trust-policy repo entry).
-- **Teardown order** (`lifecycle=ephemeral` rows only): ECS services → ALB host rule + target groups → Cloud Map namespace → Route 53 records + ACM cert → ECR repos → log groups + alarms → IAM roles + this repo's `gha-deploy-prod` trust entry → Cognito hosted-UI domain + user pool → RDS (skip final snapshot, backups removed) → S3 buckets → **secrets last**, `delete-secret --force-delete-without-recovery`. Verified empty when the Tagging API query `project=astro-drf-aws ∧ lifecycle=ephemeral` returns the empty set.
+- **Teardown is total and gated**: it runs only on kodex's explicit go in the conversation where it happens, and the run is closed only when the Tagging API confirms no `lifecycle=ephemeral` resource remains. Order (`lifecycle=ephemeral` rows only): ECS services → ALB host rule + target groups → Cloud Map namespace → Route 53 records + ACM cert → ECR repos → log groups + alarms → IAM roles + this repo's `gha-deploy-prod` trust entry → Cognito hosted-UI domain + user pool → RDS (skip final snapshot, backups removed) → S3 buckets → **secrets last**, `delete-secret --force-delete-without-recovery`. Verified empty when the Tagging API query `project=astro-drf-aws ∧ lifecycle=ephemeral` returns the empty set.

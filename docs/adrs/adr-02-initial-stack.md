@@ -28,14 +28,13 @@ tags: [adr, stack, infrastructure, requirements]
 - **NEVER** install with npm, pnpm or yarn (rule 3). `bun` is both package manager and runtime; a second lockfile is a second answer to what version is installed.
 - **NEVER** run Node as a runtime (rule 3). It stays a documented fallback and nothing else.
 - **NEVER** add a cache server (rule 4). Redis and ElastiCache are prohibited outright; the reasoning and the four sanctioned layers belong to [[adr-06-cache]] and [[CACHE]].
-- **NEVER** diverge from [[INFRASTRUCTURE]] by local exception (rule 5). A divergence is a new ADR — the precedent is [[adr-12-ephemeral-run]] rule 4, which took that path for one RDS instance rather than quietly running a different shape.
+- **NEVER** diverge from [[INFRASTRUCTURE]] by local exception (rule 5). A divergence is a new ADR, never a shape quietly run beside the documented one.
 
 ## RELATED
 
 ### related adrs
 
 - [[docs/adrs/adr-06-cache]] — owns the cache prohibition this ADR only echoes
-- [[docs/adrs/adr-12-ephemeral-run]] — the worked example of rule 5's "new ADR, never a local exception"
 
 ### related files
 

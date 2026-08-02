@@ -163,5 +163,5 @@ SSOTs per step: [[adr-00-adr-doctrine]] · [[adr-18-markdown-vault-mcp]] · [[ad
 ## Variants
 
 - **Frontend-only** change → the `Needs backend? = no` branch of §1; [[API]] is never entered. The `bun run build` gate still runs headless before merge (see the §1 callout): this branch carries the fewest gates, so the bundle is where a broken import or SSR error surfaces.
-- **Infra / AWS** change → the shape of §2 with the `kdx-aws-*` skills in place of [[API]]/[[TDD]]; the resource row lands in [[INVENTORY]] and carries the mandatory tag set ([[INFRASTRUCTURE]], [[adr-12-ephemeral-run]]).
+- **Infra / AWS** change → the shape of §2 with the `kdx-aws-*` skills in place of [[API]]/[[TDD]]; the resource row lands in [[INVENTORY]] and carries the mandatory tag set ([[INFRASTRUCTURE]]).
 - **Smoke tests** are `kodex`-only and interactive; an agent routine that reaches a smoke step stops and defers ([[AGENTS]]).

@@ -87,7 +87,7 @@ Detail: [docs/GH.md](docs/GH.md) · [adr-08](docs/adrs/adr-08-github-and-git.md)
 All three stages are done — docs, harness, and project construction.
 The backend scaffold, custom user keyed on Cognito `sub`, `/accounts/` auth, RBAC, cache discipline,
 and containerization all landed. The reference deploy is **prod-only and ephemeral — born dead,
-user-gated on teardown** ([adr-12](docs/adrs/adr-12-ephemeral-run.md)); its provisioned resources
+user-gated on teardown** ([docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md)); its provisioned resources
 are tracked in [docs/INVENTORY.md](docs/INVENTORY.md), from which Phase E teardown executes.
 
 ## Doc map

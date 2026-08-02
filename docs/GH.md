@@ -85,5 +85,5 @@ Consequences that bind this template and every project spawned from it:
   That is the only `sub` an AWS trust policy may accept for this project's `prod` deploys. The template's own prefix — `repo:kodexArg@47777332/astro-drf-aws@1305504992` — describes the template, matches nothing emitted here, and is recorded only so it is never mistaken for this one.
 - Repos born before the cutoff keep the classic format until they are recreated, renamed, or transferred — then they flip and their trust entries must follow.
 
-> [!note] Ephemeral reference run
-> For the template's own stage-3 run the `dev ← main` pipeline is **out of scope**: `main` is the local development line, `prod` is the only branch reaching AWS, and OIDC deploy trust exists for `refs/heads/prod` only. The `dev ← main` trust above stays doctrine for real projects. Ruled by [[adr-12-ephemeral-run]].
+> [!note] The template's reference run
+> For the template's own stage-3 run the `dev ← main` pipeline was **out of scope**: `main` was the local development line, `prod` the only branch reaching AWS, and OIDC deploy trust existed for `refs/heads/prod` only. The `dev ← main` trust above is doctrine for a project that provisions its own resources ([[INFRASTRUCTURE]]).
