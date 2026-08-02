@@ -1,87 +1,53 @@
 ---
 title: adr-38-senasa-traceability
 type: adr
-status: active
+category: backend
+use_case: cargar un establecimiento o su RENSPA, registrar un DT-e, caravanear un animal, leer cobertura de caravana
 created: 2026-07-25
+modified: 2026-08-02
 tags: [adr, feedlot, traceability, senasa, renspa, dte, caravana, phase-11]
 ---
 
 # ADR-38 — Trazabilidad SENASA: RENSPA, DT-e y caravana
 
-**Estado:** activo (Fase 11)
-**Contexto:** crece por adición ([[adr-24-feedlot-domain]]): una app nueva
-`traceability` sobre la espina, sin tocar `livestock` ni el ledger. Reusa la postura
-event-sourced de [[adr-24-feedlot-domain]] regla 3 y el precedente "un catálogo se
-edita, un evento es inmutable" de [[adr-33-feedyard-operating-loop]] decisión 5.
-Reglas solamente; las entidades viven en [[FEEDLOT-DATA-MODEL]].
+## CONTEXT
 
-## Contexto
+> El movimiento de hacienda se documenta ante SENASA: cada establecimiento tiene su RENSPA, cada traslado su DT-e y cada animal su caravana. La app `traceability` registra esos tres hechos sin tocar `livestock` ni el ledger.
 
-El movimiento de hacienda en Argentina se documenta ante SENASA: cada
-establecimiento tiene un **RENSPA**, cada traslado de animales viaja con un **DT-e**
-(Documento de Tránsito electrónico) que liga un RENSPA de origen a uno de destino, y
-cada animal lleva su **caravana** oficial de identificación individual. Hoy el sistema
-sabe qué come y cuánto pesa un animal, pero no de dónde vino ni con qué documento —
-no hay trazabilidad sanitaria. Se agrega la app `traceability` con esos tres hechos.
+## ASSERTIONS
 
-## Decisiones
+1. `Establishment` —un establecimiento con su `renspa`— es catálogo editable con CRUD completo. `TransitDocument` y `Caravana` son hechos fechados: `list`/`retrieve`/`create`, sin `update` ni `destroy` ([[adr-24-feedlot-domain]] regla 3); una corrección o una re-identificación es un registro nuevo.
+2. `TransitDocument` registra `dte_number`, origen y destino como FK a `Establishment`, fecha, `category`, `head_count` y opcionalmente el `lot` que viajó. No postea asiento: un tránsito es un hecho documental sanitario, no un cargo.
+3. `register_transit` rechaza en el servicio —no en la vista— un establecimiento inactivo en origen o destino, un `head_count` no positivo, un origen igual al destino y un `dte_number` duplicado. La carga tardía con fecha retroactiva se acepta.
+4. `Caravana` liga un `official_number` único —unicidad a nivel base de datos— a un `Animal`, con su `assigned_date`. Se registra sobre un animal activo; muerto, vendido o egresado no se caravanea.
+5. `apps.metrics` deriva `caravana_coverage`: sobre la hacienda activa de un cliente, cuántas cabezas tienen caravana y cuántas no. Sin animales activos devuelve `null` con su motivo, nunca un cero ([[adr-29-metrics-derivation]] regla 2).
+6. `livestock` no se refactoriza: la `Caravana` referencia al `Animal` existente y no le agrega un campo ([[adr-32-multi-rubro-assets]] regla 2). La app no agrega variables de entorno: no hay integración con el sistema de SENASA en este cut.
 
-### 1. El RENSPA es un catálogo editable; el DT-e y la caravana son inmutables
+## FORBIDDEN
 
-`Establishment` (un establecimiento con su `renspa`) es dato maestro: ModelViewSet con
-CRUD completo — "cargar establecimientos" es crear filas. `TransitDocument` (el DT-e) y
-`Caravana` son hechos fechados: list/retrieve/create, sin update ni destroy (adr-24
-regla 3). Una corrección de un DT-e o una re-identificación es un registro nuevo.
+- **NEVER** duplicar un `official_number` (regla 4). La caravana es identidad individual permanente, y duplicarla rompe la trazabilidad que existe para garantizar.
+- **NEVER** postear un asiento por un tránsito (regla 2). El DT-e es trazabilidad, no economía; ligarlo al ledger confunde dos preguntas distintas.
+- **NEVER** editar un DT-e emitido o una caravana colocada (regla 1). Son hechos; la corrección es otro registro.
+- **NEVER** validar el tránsito en la vista (regla 3). La regla vive en el servicio, que comparten vista, admin y comando.
+- **NEVER** informar 0% de cobertura cuando no hay hacienda activa (regla 5). Son situaciones opuestas y el cero las confunde.
 
-*Por qué:* un establecimiento tiene estado que se corrige (se da de baja, se renombra);
-un documento de tránsito emitido y una caravana colocada son hechos que no se reescriben.
+## REJECTED
 
-### 2. El DT-e liga dos establecimientos por su RENSPA, no toca el ledger
+- **Un campo `caravana` en `Animal`** — la identificación oficial como columna del animal. Rechazado por la regla 6: la extracción mira hacia adelante y `livestock` no se toca; el registro fechado además conserva cuándo se colocó.
+- **Integrar la emisión o consulta del DT-e ante SENASA** — hablar con el sistema real. Fuera de alcance explícito de este cut, que registra el documento; la integración entra como adición futura con su propio cambio.
+- **El re-caravaneo por pérdida de tag** — un flujo para reemplazar una caravana. No modelado en esta fase; entra explícitamente cuando el caso aparezca, no como efecto lateral de la unicidad.
 
-`TransitDocument` registra `dte_number`, `origin`/`destination` (FK a `Establishment`),
-fecha, `category`, `head_count` y opcionalmente el `lot` que viajó. No postea asiento:
-un tránsito es un hecho documental sanitario, no un cargo. El cobro sigue siendo
-exclusivamente del ledger vía `feed` (adr-25).
+## RELATED
 
-*Por qué:* un solo camino de cobro. El DT-e es trazabilidad, no economía; ligarlo al
-ledger confundiría dos preguntas distintas.
+### related adrs
 
-### 3. El DT-e valida en el servicio, no en la vista
+- [[docs/adrs/adr-24-feedlot-domain]] — regla 3, catálogo editable y evento inmutable
+- [[docs/adrs/adr-33-feedyard-operating-loop]] — regla 5, el mismo precedente catálogo/evento
+- [[docs/adrs/adr-32-multi-rubro-assets]] — regla 2, la extracción hacia adelante
+- [[docs/adrs/adr-29-metrics-derivation]] — regla 2, el hueco honesto de la cobertura
 
-`register_transit` rechaza en el **servicio** un `Establishment` inactivo en origen o
-destino, un `head_count` no positivo, un origen igual al destino y un `dte_number`
-duplicado. La carga tardía con fecha retroactiva se acepta (misma norma de campo que
-adr-28).
+### related files
 
-*Por qué:* las reglas de negocio viven en el servicio, único punto de escritura, para
-que vista, admin y comando compartan la misma validación.
-
-### 4. La caravana identifica un animal individual y es única
-
-`Caravana` liga un `official_number` único a un `Animal` con su `assigned_date`. Se
-registra al colocarla sobre un animal activo; un animal muerto/vendido/egresado no se
-caravanea. La unicidad de `official_number` es a nivel base de datos.
-
-*Por qué:* la caravana oficial es identidad individual permanente; duplicarla rompería
-la trazabilidad que existe para garantizar. Un re-caravaneo físico (pérdida de tag) es
-una adición futura explícita, no parte de esta fase.
-
-### 5. La cobertura de caravana es una métrica derivada, honesta con el hueco
-
-`apps.metrics` gana `caravana_coverage`: sobre la hacienda **activa** de un cliente,
-cuántas cabezas tienen caravana oficial y cuántas no. Sin animales activos la cobertura
-es `null` con su motivo, nunca un cero de relleno (adr-29 regla 2).
-
-*Por qué:* "0% de cobertura" y "no hay hacienda que caravanear" son situaciones
-opuestas; un cero las confunde, el hueco explícito las distingue.
-
-## Consecuencias
-
-- El backend entra solo por [[API]] (adr-03) y nace por el flujo [[TDD]] (adr-07).
-- No se agregan variables de entorno: la app es datos internos, sin integración con el
-  sistema de SENASA en esta fase — la emisión/consulta real del DT-e ante SENASA es una
-  adición futura explícita, no parte de este cut.
-- `livestock` no se refactoriza: la `Caravana` referencia al `Animal` existente, no
-  agrega un campo a `Animal` (la extracción mira hacia adelante, adr-32 regla 2).
-- Cualquier cambio a las reglas 1–5 es semántico y DEBE superseder este ADR
-  ([[adr-00-adr-doctrine]] regla 4).
+- [[docs/FEEDLOT-DATA-MODEL]] — `Establishment`, `TransitDocument`, `Caravana`
+- [[docs/GLOSSARY-feedlot-additions]] — RENSPA, DT-e, caravana
+- [[docs/API]] — las rutas de trazabilidad
