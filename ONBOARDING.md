@@ -7,7 +7,7 @@ plus skills, hooks, and guardian agents; application code follows it, never the 
 around. It runs as an Astro 7 SSR frontend and a Django 6 + DRF backend, two Fargate services
 on AWS us-east-1.
 
-Owner: **kodexArg**. Region: **us-east-1**. Account: ALVS `789650504128`.
+Owner: **`jereezquerro92`** ([docs/GH.md](docs/GH.md) is the record). AWS layout and account: [docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md).
 
 ## Read these two first — and keep them open
 
@@ -69,8 +69,8 @@ gate; they never waive it or a guardian verdict.
 | `main` | Integration — default PR target |
 | `prod` | **Production** (never treat `main` as live) |
 
-Issues + PRs are the default surface. Direct push to `main`/`prod`: **kodexArg only** — everyone
-else uses feature branches and PRs into `main`. Release tags are semver `v*`, cut from `prod`.
+Issues + PRs are the default surface. Direct push to `main`/`prod`: **the owning account only** —
+everyone else uses feature branches and PRs into `main`. Release tags are semver `v*`, cut from `prod`.
 Detail: [docs/GH.md](docs/GH.md) · [adr-08](docs/adrs/adr-08-github-and-git.md).
 
 ## Local setup

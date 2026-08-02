@@ -39,7 +39,7 @@ anything important**.
 - **Decision:** opened **PR #344** against `main` (docs-only `INFRASTRUCTURE.md` accepted-risk
   note). Autonomous, no human review. *Not merged* — left for a human.
 - **Danger notes (low):**
-  - PR is a GitHub mutation on `kodexArg` — within the D0 grant, no `prod`, no deploy, $0 cost.
+  - PR is a GitHub mutation on the owning account — within the D0 grant, no `prod`, no deploy, $0 cost.
   - Push fell back to **HTTPS via `gh auth git-credential`** (SSH `no publickey` in sandbox).
     No credential exposed; used the existing `gh` auth.
   - **ADR-11 guardian dispatch was NOT run** for this watched-surface (`INFRASTRUCTURE.md`)
@@ -63,7 +63,7 @@ anything important**.
   `component-mount.test.ts` / `smoke.test.ts` fail identically on the unmodified tree, and
   `bun run check` hangs on an interactive install prompt — already tracked as **#313**. Not
   repaired here (out of scope). Danger-adjacent: the frontend test gate is not green in-sandbox.
-- **Danger notes (low):** PR mutation on `kodexArg`, no `prod`, no deploy, $0. No secret exposed.
+- **Danger notes (low):** PR mutation on the owning account, no `prod`, no deploy, $0. No secret exposed.
   ADR-11 guardian dispatch again not run by the builder (no grant) — **human: run guardians
   before merging #345** (frontend/design surface).
 - **Residue:** worktree `.claude/worktrees/wf_156fb35c-01f-5` + branch persist until #345 merged/closed.

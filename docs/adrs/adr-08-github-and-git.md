@@ -20,7 +20,7 @@ tags: [adr, github, git]
 2. `main` is integration, not production.
 3. `prod` is the production branch.
 4. Direct push to `main` and `prod` is allowed only as the owning account of rule 1. All other work uses feature branches and pull requests.
-5. Issues and PRs are the collaboration surface — no silent long-lived private workstreams that skip them when the change is shared or lands on `main`/`prod`. [[adr-19-issue-worktree-pr]] makes both mandatory per change: every change opens an issue first and reaches `main` only through a PR.
+5. No shared change travels on a silent long-lived private workstream that skips the collaboration surface. That the surface is mandatory per change — an issue first, `main` only through a PR — is [[adr-19-issue-worktree-pr]] rules 1–2.
 6. Feature PRs target `main`. Promotions to production target `prod` (from `main` or an agreed release head). Detail: [[GH]].
 7. Labels are only the fixed set in [[GH]].
 8. Release git tags are semver `v*`, cut from `prod` only ([[GH]]).

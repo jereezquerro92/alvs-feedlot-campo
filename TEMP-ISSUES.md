@@ -1,6 +1,6 @@
 # TEMP-ISSUES — audit board (2026-08-02)
 
-47 issues filed at **[kodexArg/alvs-feedlot-campo](https://github.com/kodexArg/alvs-feedlot-campo/issues)**, numbered 1–47.
+47 issues filed at **[jereezquerro92/alvs-feedlot-campo](https://github.com/jereezquerro92/alvs-feedlot-campo/issues)**, numbered 1–47.
 Source: automated 10-area bug hunt over commit `a663d7f`. Each issue body carries a YAML
 frontmatter block (`challenge`, `severity`, `confidence`, `related`, `files`) plus
 `## What` / `## Failure scenario` / `## Fix sketch` / `## Provenance`.

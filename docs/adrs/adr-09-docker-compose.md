@@ -16,36 +16,38 @@ tags: [adr, docker, local]
 
 ## ASSERTIONS
 
-1. Reserved paths: application code for the two services will live under `backend/` and `frontend/` only. Those names are canonical ([[GLOSSARY]]). Creating alternate roots requires a new ADR.
-2. Harness does not scaffold the apps. Stage 2 documents and wires Compose doctrine; Django/Astro trees are stage 3 (project construction). Agents must not invent `backend/` / `frontend/` application code unless the user asks for project construction.
-3. Single Compose file: local orchestration is only repository-root `compose.yaml`. Per-app compose files are not the template default.
-4. Dockerfiles will sit in `backend/` and `frontend/` when those apps exist (two images / two Fargate services — [[INFRASTRUCTURE]]).
-5. Profiles: `db`, `backend`, `frontend`, `full`. Today only `db` is implemented; `backend` / `frontend` / `full` remain reserved names for when services are added to the same file.
-6. No Redis in Compose ([[CACHE]]). Local DB is PostgreSQL 17 when `db` runs.
-7. Env names from [[VARIABLES]]; `.env.example` is the committed local template — no secrets in git.
-8. Health: db uses `pg_isready`. Backend/frontend probes (`/api/health/`, `/healthz`) apply when those services exist ([[API]], [[DOCKER]]).
-9. Verification: `python3 tests/test_docker_compose.py` must pass. Optional `--smoke` exercises live `db` only until app services exist.
-10. Scope: Compose is local only. Production remains Fargate + ECR ([[INFRASTRUCTURE]]).
+1. Application code lives under `backend/` and `frontend/` only. Those names are canonical ([[GLOSSARY]]); a third app root requires a new ADR.
+2. Reserved. The apps exist; what replaced this rule is in `REJECTED`.
+3. Local orchestration is the repository-root `compose.yaml` and nothing else. Per-app compose files are not part of this project.
+4. Each service's Dockerfile sits in its own app path — `backend/Dockerfile`, `frontend/Dockerfile` — one image per Fargate service ([[INFRASTRUCTURE]]).
+5. The profiles are `db`, `backend`, `frontend` and `full`; all four are implemented, and which services each selects is owned by [[DOCKER]].
+6. The local database is PostgreSQL 17. No cache server joins it ([[adr-06-cache]] rule 1, which holds locally exactly as it holds in production).
+7. `.env.example` is the committed local template and carries no secret. Env names come from [[VARIABLES]] ([[adr-03-api-and-backend]] rule 7).
+8. Every service carries a health probe: `pg_isready` for `db`, `/api/health/` for the backend, `/healthz` for the frontend ([[API]], [[DOCKER]]).
+9. Verification is `python3 tests/test_docker_compose.py`; its optional `--smoke` brings up `db` and asserts it healthy.
+10. Compose is local only. Production is Fargate + ECR ([[INFRASTRUCTURE]]).
 
 ## FORBIDDEN
 
-- **NEVER** create application code outside `backend/`/`frontend/`, or a third app root, without a new ADR (rule 1). The two names are canonical; a third path is a stack divergence, not a convenience.
-- **NEVER** scaffold Django/Astro trees before the user asks for project construction (rule 2). Stage 2 wires the doctrine; it does not invent the apps.
-- **NEVER** add a per-app compose file (rule 3). `compose.yaml` at the repo root is the only orchestration file this template ships.
-- **NEVER** add Redis to Compose (rule 6, [[adr-06-cache]]). The cache-server prohibition holds locally exactly as it holds in production.
+- **NEVER** create application code outside `backend/`/`frontend/`, or a third app root, without a new ADR (rule 1). A third path is a stack divergence, not a convenience.
+- **NEVER** add a per-app compose file (rule 3). The root `compose.yaml` is the only orchestration file.
+- **NEVER** add Redis to Compose ([[adr-06-cache]] rule 1). Local convenience is not an exception to the prohibition.
 - **NEVER** commit a secret into `.env.example` (rule 7). It is the local template, not a place for a real credential.
+
+## REJECTED
+
+- **Compose doctrine ahead of the apps** — rules 2, 4, 5, 8 and 9 were written while `backend/` and `frontend/` held no code: rule 2 forbade scaffolding either tree outside project construction, and the rest spoke in the future tense of services that did not yet exist ("today only `db` is implemented"). Both trees, both Dockerfiles, all four profiles and all three health probes now exist, so the staging is spent and the rules state what is. It would reopen only for a fresh project spawned from this template, whose app paths start empty again.
 
 ## RELATED
 
 ### related adrs
 
-- [[docs/adrs/adr-06-cache]] — the Redis prohibition rule 6 restates locally
-- [[docs/adrs/adr-03-api-and-backend]] — the health-route contract rule 8's probes must satisfy
+- [[docs/adrs/adr-06-cache]] — rule 1, the cache-server prohibition rule 6 defers to
+- [[docs/adrs/adr-03-api-and-backend]] — rule 7 for env names, and the health-route contract rule 8's probes satisfy
 
 ### related files
 
-- [[docs/DOCKER]] — the profiles, Dockerfile placement, and probe detail
-- [[docs/INFRASTRUCTURE]] — the two-Fargate production shape rule 4 and rule 10 point at
+- [[docs/DOCKER]] — the profiles, Dockerfile placement and probe detail
+- [[docs/INFRASTRUCTURE]] — the two-Fargate production shape rules 4 and 10 point at
 - [[docs/VARIABLES]] — env names rule 7 requires
 - [[docs/GLOSSARY]] — the canonical `backend`/`frontend` names
-- [[docs/CACHE]] — the cache prohibition

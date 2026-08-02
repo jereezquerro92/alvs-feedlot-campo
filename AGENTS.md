@@ -51,7 +51,7 @@ Inside the backend zone: confirm the existing [[API]] endpoints cannot serve the
 - [[API]] — the only source of valid endpoints. *Always in memory.*
 - [[VARIABLES]] — the only source of environment variables; secrets live in AWS Secrets Manager, always.
 - [[REQUIREMENTS]] — exact version pins; policy: latest, beta acceptable.
-- [[GH]] — GitHub/git: `main` vs `prod`, issues/PRs, labels, tags, `kodexArg` only on protected lines.
+- [[GH]] — GitHub/git: `main` vs `prod`, issues/PRs, labels, tags, and the owning account of the protected lines.
 
 **Stack**
 - [[BACKEND]] — Django 6 + DRF rules; code born through TDD once the template is finished.
@@ -90,7 +90,7 @@ Inside the backend zone: confirm the existing [[API]] endpoints cannot serve the
 
 - ADRs state rules, never information; content lives in the referenced doc ([[adr-00-adr-doctrine]]).
 - Obsidian conventions everywhere: frontmatter, `[[wikilinks]]`, callouts. One SSOT per topic — link, don't repeat.
-- Git: `main` = integration, `prod` = production; only `kodexArg` pushes those lines ([[GH]], [[adr-08-github-and-git]]). Everything in code and docs is English ([[LOCALIZATION]]).
+- Git: `main` = integration, `prod` = production; only the owning account pushes those lines ([[GH]], [[adr-08-github-and-git]]). Everything in code and docs is English ([[LOCALIZATION]]).
 
 ## Entra app registration (Microsoft Graph / SharePoint)
 
