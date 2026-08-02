@@ -30,12 +30,12 @@ tags: [adr, glossary, localization, naming]
 
 ## FORBIDDEN
 
-- **Two names for one concept** (rule 2). `PUBLIC_API_URL` and `PUBLIC_BACKEND_URL` are both declared as the client-visible backend URL ([[VARIABLES]] rows 108–109); code reads only the second, and neither row says which is which.
-- **Naming a thing that already has a name, instead of reading its row** (rule 1). The near-miss is the instructive one: `ear_tag` and `Caravana` look like one concept named twice and are not — [[GLOSSARY-feedlot-additions]] separates the internal identifier from the official SENASA record, each forbidding the other's name. The rows settled it; a reader who skipped them would have "fixed" a distinction the project needs.
-- **A foreign stem inside an otherwise-consistent identifier** (rule 4). `engorde_commission_pct` (`backend/apps/livestock/models.py:235`) names in Spanish the same gain that `kilos_gained` names in English.
-- **Letting the same class of message pick its language by when it was written** (rule 4). `ValidationError` messages are Spanish in the Phase 2–7 apps and English in `breeding`, `genetics` and `traceability` — a split no decision ever made.
-- **Hardcoding a label a message key already carries** (rule 6). Around ten components hold local `Record<string, string>` maps of Spanish enum labels, several duplicating keys that exist in `messages/es.ts` and are used correctly elsewhere in the same codebase.
-- **Generating user-facing text server-side and persisting it** (rule 6). Nine `LedgerEntry.description` call sites write Spanish prose into the database, where no i18n key can reach it and no translation can ever change it.
+- **NEVER** give one concept two names (rule 2). `PUBLIC_API_URL` and `PUBLIC_BACKEND_URL` are both declared as the client-visible backend URL ([[VARIABLES]] rows 108–109); code reads only the second, and neither row says which is which.
+- **NEVER** name a thing that already has a name instead of reading its row (rule 1). The near-miss is the instructive one: `ear_tag` and `Caravana` look like one concept named twice and are not — [[GLOSSARY-feedlot-additions]] separates the internal identifier from the official SENASA record, each forbidding the other's name. The rows settled it; a reader who skipped them would have "fixed" a distinction the project needs.
+- **NEVER** put a foreign stem inside an otherwise-consistent identifier (rule 4). `engorde_commission_pct` (`backend/apps/livestock/models.py:235`) names in Spanish the same gain that `kilos_gained` names in English.
+- **NEVER** let the same class of message pick its language by when it was written (rule 4). `ValidationError` messages are Spanish in the Phase 2–7 apps and English in `breeding`, `genetics` and `traceability` — a split no decision ever made.
+- **NEVER** hardcode a label a message key already carries (rule 6). Around ten components hold local `Record<string, string>` maps of Spanish enum labels, several duplicating keys that exist in `messages/es.ts` and are used correctly elsewhere in the same codebase.
+- **NEVER** generate user-facing text server-side and persist it (rule 6). Nine `LedgerEntry.description` call sites write Spanish prose into the database, where no i18n key can reach it and no translation can ever change it.
 
 ## REJECTED
 

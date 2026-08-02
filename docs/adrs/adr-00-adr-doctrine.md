@@ -41,7 +41,7 @@ tags: [adr, doctrine]
 4. An ADR has five level-2 sections, in this order:
    - `CONTEXT` — a single short quoted paragraph defining what this ADR is for. Up to two plain paragraphs may follow, and only when the quote alone leaves the reader unable to apply the rules. No links: they belong in `RELATED`;
    - `ASSERTIONS` — the numbered rules, each written as something the project does or requires;
-   - `FORBIDDEN` — optional, written only when this ADR forbids something outright. Each entry names the rule it enforces;
+   - `FORBIDDEN` — optional, written only when this ADR forbids something outright. Every entry opens with **NEVER** in bold, states the prohibited act as an imperative, names the rule it enforces, and ends with why. The heading is not the warning: a single entry is what gets quoted, grepped, pasted into an issue or read aloud by an agent, and it travels without the heading above it, so each line carries its own prohibition;
    - `REJECTED` — two things: the alternatives weighed and not taken, and every policy this ADR once held and holds no longer. Each entry gives the reason it lost and, where one exists, the condition that would reopen it. Nothing here is forbidden — it is what this project did not choose, or no longer chooses;
    - `RELATED` — every link the ADR carries, grouped under level-3 headings of the author's choosing.
 
@@ -59,12 +59,12 @@ tags: [adr, doctrine]
 
 ## FORBIDDEN
 
-- **Inlining a fact in an ADR** (rule 1). An ADR that carries its own facts becomes a second source of truth for them, and the two drift.
-- **Stating the same rule in two ADRs** (rule 1). One ADR owns a rule; every other links to it.
-- **Renumbering a rule** (rule 5). Citations elsewhere point at the number, and they are not all findable.
-- **Dropping a policy without recording it in `REJECTED`** (rule 8). A rule that simply vanishes leaves the code that obeyed it looking wrong for a reason nobody can find again. Doubt about whether an edit changes policy resolves to recording it.
-- **Leaving a superseded policy standing beside the rule that replaced it** (rule 8). The body is current truth; the history lives in `REJECTED`, never in the assertions.
-- **Resurrecting a body out of `docs/obsolete/`** (rule 7). A theme that ended is written new if it returns; the old body carries the context of a project that no longer exists.
+- **NEVER** inline a fact in an ADR (rule 1). An ADR that carries its own facts becomes a second source of truth for them, and the two drift.
+- **NEVER** state the same rule in two ADRs (rule 1). One ADR owns a rule; every other links to it.
+- **NEVER** renumber a rule (rule 5). Citations elsewhere point at the number, and they are not all findable.
+- **NEVER** drop a policy without recording it in `REJECTED` (rule 8). A rule that simply vanishes leaves the code that obeyed it looking wrong for a reason nobody can find again. Doubt about whether an edit changes policy resolves to recording it.
+- **NEVER** leave a superseded policy standing beside the rule that replaced it (rule 8). The body is current truth; the history lives in `REJECTED`, never in the assertions.
+- **NEVER** resurrect a body out of `docs/obsolete/` (rule 7). A theme that ended is written new if it returns; the old body carries the context of a project that no longer exists.
 
 ## REJECTED
 
@@ -89,4 +89,4 @@ tags: [adr, doctrine]
 
 - [[AGENTS]] — the gate that checks rule 9 before anything is added
 - [[docs/GLOSSARY]] — a name is decided there before its first use
-- [[docs/LOCALIZATION]] — everything written is English
+- [[docs/LOCALIZATION]] — rendering, locale and the i18n mechanism
