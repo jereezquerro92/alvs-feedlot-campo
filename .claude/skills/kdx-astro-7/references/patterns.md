@@ -129,7 +129,7 @@ Reach for shadcn when the piece is a standard, pre-built shape a Melt builder wo
 ## REST / DRF
 
 ```ts
-const BASE = import.meta.env.PUBLIC_API_URL;
+const BASE = import.meta.env.PUBLIC_BACKEND_URL;
 
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {

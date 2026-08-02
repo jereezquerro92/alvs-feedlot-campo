@@ -11,7 +11,7 @@ tags: [tdd, router, abuse, cache]
 
 ## Context
 
-Closes #371 ([[bdd-10-router-abuse-guard]]). The existing `CooldownThrottle` default (30s) is too aggressive for normal ChatUI use; this entry lowers it and adds a second, independent layer: an async, silent rate-abuse block on `POST /api/router/route/` ([[API]]) that only engages during a sustained burst, never during normal, human-paced use.
+Closes #371. The existing `CooldownThrottle` default (30s) is too aggressive for normal ChatUI use; this entry lowers it and adds a second, independent layer: an async, silent rate-abuse block on `POST /api/router/route/` ([[API]]) that only engages during a sustained burst, never during normal, human-paced use.
 
 ## Design
 

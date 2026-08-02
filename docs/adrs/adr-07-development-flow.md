@@ -2,44 +2,47 @@
 title: adr-07-development-flow
 type: adr
 category: harness
-use_case: starting any new feature or backend change, deciding whether the BDD/API/TDD gates apply, checking whether to enter or exit the backend zone
+use_case: starting any new feature or backend change, deciding whether the API/TDD gates apply, checking whether to enter or exit the backend zone
 created: 2026-07-10
 modified: 2026-08-02
-tags: [adr, workflow, bdd, tdd, api]
+tags: [adr, workflow, tdd, api]
 ---
 
 # ADR-07 — the development flow
 
 ## CONTEXT
 
-> Every change climbs the same three gates in the same order: [[BDD]] before code, [[API]] before backend work, the checkpoint before leaving the backend zone. [[DEVELOPMENT-LOOP]] carries the operational rendering; this ADR makes the order invariant.
+> Two gates in one order: [[API]] before backend work, the checkpoint before leaving the backend zone. [[DEVELOPMENT-LOOP]] renders the steps; this ADR fixes the order.
 
 ## ASSERTIONS
 
-1. User-facing work is bound by the [[BDD]] gate: its [[BDD]] entry exists before its code does.
+1. User-facing work is specified before it is built: the behavior is agreed in the issue that opens the change ([[GH]]) before its code exists.
 2. The backend zone is entered only through [[API]], and a need is served by an endpoint already declared there before a new one is considered.
-3. A new endpoint's row lands in [[API]] before its code, and the code that follows is born through the [[TDD]] flow ([[adr-03-api-and-backend]]).
-4. The backend zone is exited only through the checkpoint — does [[API]] solve the need? Its rendering as a loop lives in [[DEVELOPMENT-LOOP]].
-5. What this ADR makes invariant is the order of the gates: [[BDD]] before code, [[API]] before backend work, the checkpoint before leaving the backend zone. The intermediate steps are owned by [[BDD]], [[TDD]], and the stack docs.
-6. Two distinct claims: full activation — every feature must enter through this loop — lands only when the base template is finished (it is). Gate applicability is immediate — each gate ([[BDD]], [[API]], [[TDD]]) already binds now, wherever its subject exists, including the template's own construction.
+3. What follows the row in [[API]] is [[adr-03-api-and-backend]] rules 2 and 6 — the contract before tests and models, the code born through [[TDD]]. This ADR adds nothing to them.
+4. The backend zone is exited only through the checkpoint — does [[API]] solve the need?
+5. The intermediate steps are owned by [[TDD]] and the stack docs; this ADR owns only the order.
+6. Each gate binds now, wherever its subject exists, including the template's own construction.
 
 ## FORBIDDEN
 
-- **NEVER** write user-facing code before its [[BDD]] entry exists (rule 1). The gate exists so the behavior is specified before it is built.
-- **NEVER** enter the backend zone by a door other than [[API]] (rule 2). A need first checks whether an existing endpoint already serves it.
-- **NEVER** write a model or a test before the endpoint's row lands in [[API]] (rule 3, [[adr-03-api-and-backend]] rule 2). The contract precedes the code that serves it.
-- **NEVER** leave the backend zone without passing the does-[[API]]-solve-the-need checkpoint (rule 4). Skipping it is how an endpoint ships that never actually closed the loop back to the feature that needed it.
+- **NEVER** write user-facing code before its behavior is agreed in its issue (rule 1).
+- **NEVER** enter the backend zone by a door other than [[API]] (rule 2).
+- **NEVER** write a model or a test before the endpoint's row lands in [[API]] ([[adr-03-api-and-backend]] rule 2).
+- **NEVER** leave the backend zone without passing the checkpoint (rule 4). Skipping it ships an endpoint that never closed the loop back to the feature needing it.
+
+## REJECTED
+
+- **Staged activation** — rule 6 held until 2026-08-02 that full activation waited on the base template being finished. The template is finished, so the condition is spent; the rule now states only that the gates bind.
 
 ## RELATED
 
 ### related adrs
 
-- [[docs/adrs/adr-03-api-and-backend]] — the API-before-code sequence this ADR's rule 3 cites directly
-- [[docs/adrs/adr-19-issue-worktree-pr]] — the same before-code discipline applied to git, not the API
+- [[docs/adrs/adr-03-api-and-backend]] — rules 2 and 6, the owner of what rule 3 points at
+- [[docs/adrs/adr-19-issue-worktree-pr]] — the same before-code discipline applied to git
 
 ### related files
 
-- [[docs/DEVELOPMENT-LOOP]] — the operational rendering: exact sequence and tool/skill per step
-- [[docs/BDD]] — the user-facing gate
+- [[docs/DEVELOPMENT-LOOP]] — the operational rendering: sequence and tool per step
 - [[docs/TDD]] — the backend build flow
-- [[AGENTS]] — where this loop is indexed and opened at the start of any code
+- [[AGENTS]] — where this loop is indexed

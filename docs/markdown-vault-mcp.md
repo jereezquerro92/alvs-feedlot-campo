@@ -1,9 +1,11 @@
 ---
 title: markdown-vault-mcp
 type: reference
-status: active
+category: harness
+use_case: searching, reading or reindexing the docs vault
 created: 2026-07-14
-tags: [harness, mcp, docs, ssot]
+modified: 2026-08-02
+tags: [doc, harness, mcp, docs, ssot]
 ---
 
 # markdown-vault-mcp — the docs/ vault as a live, queryable graph

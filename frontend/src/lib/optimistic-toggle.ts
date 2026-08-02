@@ -4,7 +4,7 @@
  * LIVE-DOC:END */
 
 // Pure, DOM-free helper backing ProfileForm's avatar-visibility toggle
-// (docs/bdds/bdd-05-profile-page.md: "the toggle reverts to its prior state
+// ("the toggle reverts to its prior state
 // on avatar failure"). Kept outside the Svelte component so the revert
 // semantics are unit-testable without a browser environment.
 

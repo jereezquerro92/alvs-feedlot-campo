@@ -1,9 +1,11 @@
 ---
 title: INFRASTRUCTURE
 type: reference
-status: active
+category: devops
+use_case: touching AWS — services, networking, secret paths, deploys
 created: 2026-07-10
-tags: [harness, infrastructure, aws]
+modified: 2026-08-02
+tags: [doc, harness, infrastructure, aws]
 ---
 
 # INFRASTRUCTURE

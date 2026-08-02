@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test";
 import { copyForResult, OUTCOME_COPY, routeUtterance, type FetchLike } from "../src/lib/router-client";
 
 // Unit coverage for the router-client used by the chat surface ([[CHATBOT]],
-// bdd-04): asserts the POST shape (endpoint, credentials, CSRF header, JSON
+// asserts the POST shape (endpoint, credentials, CSRF header, JSON
 // body) and that every backend outcome — Action/navigate, Action/confirm,
 // Escalate, NO_MATCH, disabled, plus the 422/429/network error paths — maps
 // to the correct RouteResult, never leaking raw backend prose. DOM-free per

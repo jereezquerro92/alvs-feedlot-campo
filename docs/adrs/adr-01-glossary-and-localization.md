@@ -30,7 +30,7 @@ tags: [adr, glossary, localization, naming]
 
 ## FORBIDDEN
 
-- **NEVER** give one concept two names (rule 2). `PUBLIC_API_URL` and `PUBLIC_BACKEND_URL` are both declared as the client-visible backend URL ([[VARIABLES]] rows 108–109); code reads only the second, and neither row says which is which.
+- **NEVER** give one concept two names (rule 2). `PUBLIC_API_URL` and `PUBLIC_BACKEND_URL` were both declared as the client-visible backend URL, and neither row said which was which. Rule 7 settled it: `PUBLIC_BACKEND_URL` — the only one any code read — is registered in [[GLOSSARY]], and the phantom was dropped from [[VARIABLES]], `.env.example`, `env.d.ts`, `compose.yaml` and the deploy workflow.
 - **NEVER** name a thing that already has a name instead of reading its row (rule 1). The near-miss is the instructive one: `ear_tag` and `Caravana` look like one concept named twice and are not — [[GLOSSARY-feedlot-additions]] separates the internal identifier from the official SENASA record, each forbidding the other's name. The rows settled it; a reader who skipped them would have "fixed" a distinction the project needs.
 - **NEVER** put a foreign stem inside an otherwise-consistent identifier (rule 4). `engorde_commission_pct` (`backend/apps/livestock/models.py:235`) names in Spanish the same gain that `kilos_gained` names in English.
 - **NEVER** let the same class of message pick its language by when it was written (rule 4). `ValidationError` messages are Spanish in the Phase 2–7 apps and English in `breeding`, `genetics` and `traceability` — a split no decision ever made.

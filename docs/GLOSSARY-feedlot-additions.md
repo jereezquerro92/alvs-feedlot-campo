@@ -1,9 +1,11 @@
 ---
 title: GLOSSARY-feedlot-additions
 type: reference
-status: active
+category: project
+use_case: naming anything in the feedlot domain
 created: 2026-07-15
-tags: [harness, glossary, ssot, feedlot]
+modified: 2026-08-02
+tags: [doc, harness, glossary, ssot, feedlot]
 ---
 
 # GLOSSARY — feedlot additions

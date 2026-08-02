@@ -11,7 +11,7 @@ tags: [tdd, users, theme, design-system]
 
 ## Context
 
-Backend half of [[bdd-06-profile-theming]]. [[API]]'s `PATCH /api/me/` row was
+Backend half of the profile-theming feature. [[API]]'s `PATCH /api/me/` row was
 widened to accept a fourth write field, `theme_config` — the per-user
 appearance blob `{mode, bgPreset, colors, radius}` — and `GET /api/me/` was
 widened to return it ([[GLOSSARY]]: `theme_config`, `theme`, `mode`,

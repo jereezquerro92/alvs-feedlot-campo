@@ -1,9 +1,11 @@
 ---
 title: CACHE
 type: reference
-status: active
+category: backend
+use_case: caching a response, or reaching for a cache server
 created: 2026-07-10
-tags: [harness, cache]
+modified: 2026-08-02
+tags: [doc, harness, cache]
 ---
 
 # CACHE

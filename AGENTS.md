@@ -28,7 +28,7 @@ All three stages — documents, harness, project construction — are **done**. 
 
 Defined in [[DEVELOPMENT-LOOP]] and given force by [[adr-07-development-flow]]; that file also carries the operational rendering — the exact sequence and the tool or skill at each step, per use case — and is opened at the start of any code. Follow it for every feature:
 
-`idea → user-facing? → [[BDD]] → … → needs backend? → enter through [[API]]`
+`idea → user-facing? → agreed in the issue → … → needs backend? → enter through [[API]]`
 
 Inside the backend zone: confirm the existing [[API]] endpoints cannot serve the need → add the row to [[API]] → [[TDD]] flow (skills-driven) → **checkpoint: does [[API]] solve the need?** Yes returns to the frontend track; no loops back. The backend zone is entered and exited only through [[API]].
 
@@ -36,7 +36,7 @@ Inside the backend zone: confirm the existing [[API]] endpoints cannot serve the
 
 ## Testing & verification
 
-- **Smoke / end-to-end UI tests are driven through the `chrome-devtools` MCP** (chromium on the DevTools protocol at `127.0.0.1:9222`) — the DEFAULT tool for browser-level verification of the [[CHATBOT]]/chatui surface and any user-facing feature ([[BDD]], [[FRONTEND]]). Bash stands up the local stack ([[DOCKER]]) underneath it.
+- **Smoke / end-to-end UI tests are driven through the `chrome-devtools` MCP** (chromium on the DevTools protocol at `127.0.0.1:9222`) — the DEFAULT tool for browser-level verification of the [[CHATBOT]]/chatui surface and any user-facing feature ([[FRONTEND]]). Bash stands up the local stack ([[DOCKER]]) underneath it.
 - **Smoke tests are ONLY allowed for the Unix user `kodex`.** They MUST NOT run under the sudo-less `pykodex` agent sandbox, nor in any headless/cron/non-interactive agent context — browser smoke is an interactive, human-`kodex`-session-only action. An agent routine that reaches a smoke-test step stops and defers to kodex.
 
 ## Index
@@ -70,9 +70,8 @@ Inside the backend zone: confirm the existing [[API]] endpoints cannot serve the
 **Harness**
 - [[HARNESS]] — the skills this template requires, vendored into `.claude/skills/` + `skills/`; ruled by [[adr-14-harness]]. Stack/AWS work goes through these skills, vault `.md` through `obsidian-markdown`, fan-out through `kdx-orchestrator`.
 
-**Methodology** (the manuals ship with the template; a project creates its own entries)
-- [[TDD]] — manual for `docs/tdds/`; every new backend piece is born there. The template ships no entries.
-- [[BDD]] — manual for `docs/bdds/`; every user-facing feature enters there. The template ships no entries.
+**Methodology**
+- [[TDD]] — manual for `docs/tdds/`; every new backend piece is born there.
 
 ## Structure
 

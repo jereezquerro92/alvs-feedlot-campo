@@ -1,9 +1,11 @@
 ---
 title: BD
 type: reference
-status: active
+category: backend
+use_case: connecting to a database or changing one
 created: 2026-07-10
-tags: [harness, database]
+modified: 2026-08-02
+tags: [doc, harness, database]
 ---
 
 # BD

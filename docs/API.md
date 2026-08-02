@@ -1,16 +1,18 @@
 ---
 title: API
 type: reference
-status: active
+category: backend
+use_case: declaring an endpoint before writing it, or checking whether a route is valid
 created: 2026-07-10
-tags: [harness, api, ssot]
+modified: 2026-08-02
+tags: [doc, harness, api, ssot]
 ---
 
 # API
 
 Single source of truth for every HTTP endpoint in the system. Backend rules live in [[BACKEND]]; frontend consumption rules in [[FRONTEND]].
 
-**An endpoint is valid if and only if it is declared in this file** ([[adr-03-api-and-backend]]). No route may exist in code without a row here. Nothing enters [[TDD]] or `models.py` without passing through this file first. An undeclared route found in code is a defect, regardless of whether it works.
+What makes a route valid, and the protocol for changing a row, are [[adr-03-api-and-backend]] rules 1–3. What the routes *are* is this file.
 
 > [!note] Enforcement
 > The hook `hooks/check_api.py` (PostToolUse) diffs every written `urls.py` route literal against this table and blocks undeclared segments. `hooks/load_ssot.py` (SessionStart) injects this file and [[PRD]] into context at session start; `hooks/require_api_read.py` (UserPromptSubmit) forces a fresh read whenever a prompt mentions the API. `hooks/dispatch_guardians.py` (PostToolUse) routes changes to this file or the route surface (`urls.py`, `views.py`, `viewsets.py`, `serializers.py`, `models.py`, Django templates) to the guardian subagent `agents/astro-drf-aws-api.md`, which enforces the format and change protocol below.

@@ -4,7 +4,7 @@
      LIVE-DOC:END -->
 
 <!--
-  Data-entry surface for one client ([[FEEDLOT]], [[bdd-13-feedlot-data-entry]]).
+  Data-entry surface for one client ([[FEEDLOT]]).
   Unlike the read-only views, this one is a single hydrated island (rung 3 of the
   interactivity ladder, [[adr-04-frontend-and-design-system]] rule 3): it owns the
   herd and feed/health write forms whose submit state lives client-side. Each form

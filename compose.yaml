@@ -98,7 +98,6 @@ services:
       PORT: "4321"
       NODE_ENV: ${NODE_ENV:-development}
       BACKEND_API_URL: ${BACKEND_API_URL:-http://backend:8000}
-      PUBLIC_API_URL: ${PUBLIC_API_URL:-http://localhost:8000}
       PUBLIC_BACKEND_URL: ${PUBLIC_BACKEND_URL:-http://localhost:8000}
       PUBLIC_SITE_URL: ${PUBLIC_SITE_URL:-http://localhost:4321}
       PUBLIC_PROJECT_SLUG: ${PROJECT_SLUG:-astro-drf-aws}

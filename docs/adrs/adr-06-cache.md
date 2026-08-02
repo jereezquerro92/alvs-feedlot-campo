@@ -23,15 +23,15 @@ tags: [adr, cache]
 
 ## FORBIDDEN
 
-- **NEVER** add Redis, ElastiCache, or a package that requires either (rule 1). The prohibition is outright, not a preference — [[adr-02-initial-stack]] rule 4 echoes it as a stack-level closure.
-- **NEVER** ship a response with no explicit `Cache-Control` header (rule 3). A missing header is a bug regardless of what the underlying framework defaults to.
-- **NEVER** cache an authenticated response by blanket policy instead of an opt-in, row-level [[API]] decision (rule 4). `no-store` is the default a caller must deliberately override, per route, in the contract.
+- **NEVER** add Redis, ElastiCache, or a package requiring either (rule 1). The prohibition is outright, not a preference.
+- **NEVER** ship a response with no explicit `Cache-Control` header (rule 3), whatever the framework would default to.
+- **NEVER** cache an authenticated response by blanket policy (rule 4). `no-store` is overridden per row in [[API]], never globally.
 
 ## RELATED
 
 ### related adrs
 
-- [[docs/adrs/adr-02-initial-stack]] — rule 4, the stack-level echo of this ADR's cache-server prohibition
+- [[docs/adrs/adr-02-initial-stack]] — rule 4, the stack-level echo of rule 1
 
 ### related files
 

@@ -1,9 +1,11 @@
 ---
 title: REQUIREMENTS
 type: reference
-status: active
+category: devops
+use_case: pinning or re-pinning a version
 created: 2026-07-10
-tags: [harness, requirements, versions]
+modified: 2026-08-02
+tags: [doc, harness, requirements, versions]
 ---
 
 # REQUIREMENTS

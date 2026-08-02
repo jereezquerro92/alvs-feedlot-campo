@@ -1,9 +1,11 @@
 ---
 title: DOCKER
 type: reference
-status: active
+category: devops
+use_case: running or changing the local Compose stack
 created: 2026-07-10
-tags: [harness, docker, local]
+modified: 2026-08-02
+tags: [doc, harness, docker, local]
 ---
 
 # DOCKER — local containers

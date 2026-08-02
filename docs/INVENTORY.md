@@ -1,9 +1,11 @@
 ---
 title: INVENTORY
 type: reference
-status: active
+category: devops
+use_case: checking what is provisioned, or tearing it down
 created: 2026-07-11
-tags: [infrastructure, aws, inventory, ephemeral]
+modified: 2026-08-02
+tags: [doc, infrastructure, aws, inventory, ephemeral]
 ---
 
 # INVENTORY

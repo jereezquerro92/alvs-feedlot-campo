@@ -1,9 +1,11 @@
 ---
 title: FEEDLOT-DATA-MODEL
 type: reference
-status: proposed
+category: project
+use_case: looking up an entity, field or relation of the feedlot domain
 created: 2026-07-21
-tags: [feedlot, data-model, ssot]
+modified: 2026-08-02
+tags: [doc, feedlot, data-model, ssot]
 ---
 
 # FEEDLOT-DATA-MODEL — entities and relations

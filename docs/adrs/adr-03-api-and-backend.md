@@ -36,7 +36,7 @@ tags: [adr, api, backend]
 ### related adrs
 
 - [[docs/adrs/adr-05-htmx]] — fragment routes as a named case of rule 4
-- [[docs/adrs/adr-07-development-flow]] — the full BDD→API→TDD loop rule 6 defers to
+- [[docs/adrs/adr-07-development-flow]] — the API→TDD loop rule 6 defers to
 
 ### related files
 

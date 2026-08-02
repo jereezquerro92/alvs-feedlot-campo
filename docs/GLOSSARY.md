@@ -1,9 +1,11 @@
 ---
 title: GLOSSARY
 type: reference
-status: active
+category: harness
+use_case: naming anything, or finding one thing called two ways
 created: 2026-07-10
-tags: [harness, glossary, ssot]
+modified: 2026-08-02
+tags: [doc, harness, glossary, ssot]
 ---
 
 # GLOSSARY — naming authority
@@ -20,7 +22,7 @@ The names. Rules: [[adr-01-glossary-and-localization]]. Feedlot domain terms: [[
 | backend | `backend` | service name, ECR suffix, repo path `backend/`, docs | `server`, `api-server`, `api/` as the Django root path |
 | frontend | `frontend` | service name, ECR suffix, repo path `frontend/`, docs | `web`, `client`, `ui`, `app/` as the Astro root path |
 | environments | `dev`, `prod`, `local` | infra, secrets paths, docs | `staging` (does not exist here), `development`, `production` |
-| adr, tdd, bdd | lowercase in filenames (`adr-NN-slug.md`); uppercase only for the manuals [[TDD]] / [[BDD]] | files, wikilinks | mixed case in filenames |
+| adr, tdd | lowercase in filenames (`adr-NN-slug.md`); uppercase only for the manual [[TDD]] | files, wikilinks | mixed case in filenames |
 | defered | `defered` | ADR lifecycle status token ([[adr-00-adr-doctrine]]) | `deferred` — the token's spelling is intentional and machine-checked |
 | infrastructure | `INFRASTRUCTURE` (doc name), `infrastructure` (prose) | doc names, wikilinks, prose | `INFRAESTRUCTURE`, `infraestructure` — misspelling, corrected repo-wide |
 | package manager (frontend) | `bun` | everything JavaScript ([[FRONTEND]]) | `npm` (prohibited), `pnpm`, `yarn` |
@@ -29,9 +31,10 @@ The names. Rules: [[adr-01-glossary-and-localization]]. Feedlot domain terms: [[
 | fragment | `fragment` | HTMX HTML-over-the-wire responses ([[HTMX]]) | `partial`, `snippet` |
 | island | `island` | Svelte interactive components ([[FRONTEND]]) | `widget`, `component` (for this meaning) |
 | live-doc block | `live-doc block`, delimited `LIVE-DOC:START … LIVE-DOC:END` | the wikilinks-only region stamped at the top of every matched code file, linking it to the ADRs and docs that govern it ([[adr-17-live-doc-backlinks]], [[HARNESS]]); stamped only by the linker `kdx-live-doc`, never by hand | `docstring header`, `backlink header`, `doclink`, `frontmatter` (for this meaning); any block carrying prose instead of links |
-| shadow test | `shadow test` | BDD browser validation ([[BDD]]) | `e2e test`, `smoke test` |
+| shadow test | `shadow test` | browser validation of a feature's flows against the rendered UI ([[FRONTEND]]) | `e2e test`, `smoke test` |
 | endpoint | `endpoint` | any route declared in [[API]] | `route` (in API context) |
 | project slug | `astro-drf-aws` (this template's reference project; `PROJECT_SLUG` backend/CI, `PUBLIC_PROJECT_SLUG` frontend-derived form) | AWS resource names, secrets paths, hosts ([[INFRASTRUCTURE]]); frontend-visible copy via `PUBLIC_PROJECT_SLUG` ([[VARIABLES]]) | `astro_drf_aws`, `astrodrfaws`; a literal `astro-drf-aws` typed outside the sanctioned single-source points ([[VARIABLES]], issue #133) |
+| client-visible backend URL | `PUBLIC_BACKEND_URL` | the frontend's browser-visible backend origin ([[VARIABLES]]); the only name code reads | `PUBLIC_API_URL` — declared but never read, dropped repo-wide under [[adr-01-glossary-and-localization]] rule 7 |
 | base domain | `grupoalvs.com` (`BASE_DOMAIN`) | project hosts `<slug>[.dev].grupoalvs.com` | hardcoding the host instead of composing it |
 | view | Django server code only — views and viewsets ([[BACKEND]]) | backend code | calling Astro pages or Svelte files "views" |
 | page | `page` — an Astro `src/pages/` route ([[FRONTEND]]) | frontend routes | `view` (Django's word), `screen` |
@@ -90,7 +93,7 @@ The names. Rules: [[adr-01-glossary-and-localization]]. Feedlot domain terms: [[
 | Django app (m365) | `m365` | app-only Microsoft Graph capability app ([[BACKEND]], [[adr-13-m365-graph]]); no models, owns the two demo Graph read endpoints | `graph`, `microsoft`, `sharepoint` |
 | endpoint segment (hello) | `hello` — `/api/m365/hello/` | live Graph read of workbook cell A1, demo endpoint ([[API]], [[adr-13-m365-graph]]) | `cell-a1`, `test-a1` |
 | endpoint segment (world) | `world` — `/api/m365/world/` | live Graph read of workbook cell C3, demo endpoint ([[API]], [[adr-13-m365-graph]]) | `cell-c3`, `test-c3` |
-| chatbot UI | `chatui` — `/chatui/` | frontend half of the chatbot capability layer — island, page segments, BDD entries; top-level product page, deliberately outside `/showcase/` (owner decision 2026-07-14, issue 101) because it fronts a real API surface while showcase pages never do | `chat-ui`, `chatbox`, `chat-widget`, `chat` as an identifier; `/showcase/chatui` as its route |
+| chatbot UI | `chatui` — `/chatui/` | frontend half of the chatbot capability layer — island, page segments; top-level product page, deliberately outside `/showcase/` (owner decision 2026-07-14, issue 101) because it fronts a real API surface while showcase pages never do | `chat-ui`, `chatbox`, `chat-widget`, `chat` as an identifier; `/showcase/chatui` as its route |
 | chatbot router | `router` | backend half of the chatbot capability layer — app, model, endpoint and env var stems; distinct from DRF's router classes, which keep their own name | `chatrouter`, `dispatcher`, `classifier` |
 | router endpoint segment | `route` — `/api/router/route/` | the phase-1 routing endpoint ([[API]], [[CHATBOT]]) | `intent`, `interpret`, `ask` |
 | router env stem | `ROUTER_` | env vars for the router app, e.g. `ROUTER_ENABLED` ([[VARIABLES]], [[CHATBOT]]) | `CHATBOT_`, `INTENT_`, `AI_` |
@@ -131,7 +134,7 @@ The names. Rules: [[adr-01-glossary-and-localization]]. Feedlot domain terms: [[
 | showcase component (tabs) | `Tabs` | Tier-1 tabbed navigation component, `nav/`, Melt Tabs builder ([[COMPONENTIZATION]], [[MELT-UI]], issue #178) | `TabGroup`, `TabBar` |
 | showcase component (toast) | `Toast` | Tier-1 toast notification component, `feedback/`, Melt Toaster builder; its module-level singleton instance is `toaster` ([[COMPONENTIZATION]], [[MELT-UI]], issue #178) | `Notification`, `Snackbar`, `Toaster` as the component name (that is the singleton instance, not the component) |
 | showcase component (tooltip) | `Tooltip` | Tier-1 hover/focus hint component, `overlay/`, Melt Tooltip builder ([[COMPONENTIZATION]], [[MELT-UI]], issue #178) | `Hint`, `Popover` (reserved for the distinct Melt Popover builder) |
-| showcase component (dropdown menu) | `Dropdown Menu` (prose), `DropdownMenu` (code identifier) | Tier-2 nav component — user menu, row actions — `nav/`, Melt Popover primitive + hand-rolled roving-focus/typeahead menu semantics (no Melt Dropdown Menu builder in melt 0.44) ([[COMPONENTIZATION]], [[MELT-UI]], [[bdd-09-dropdown-menu-showcase]], issue #178) | `DropdownMenu` in prose without the space, `ContextMenu`, `ActionMenu` |
+| showcase component (dropdown menu) | `Dropdown Menu` (prose), `DropdownMenu` (code identifier) | Tier-2 nav component — user menu, row actions — `nav/`, Melt Popover primitive + hand-rolled roving-focus/typeahead menu semantics (no Melt Dropdown Menu builder in melt 0.44) ([[COMPONENTIZATION]], [[MELT-UI]], issue #178) | `DropdownMenu` in prose without the space, `ContextMenu`, `ActionMenu` |
 | showcase component (popover) | `Popover` | Tier-2 overlay component, `overlay/`, Melt Popover builder used bare (float/anchor/dismiss shell, no menu semantics) — the exact reservation made at the `Tooltip` row above (COMPONENTIZATION, MELT-UI, issue #213) | `ContextMenu`, `Flyout` |
 | showcase component (pagination) | `Pagination` | Tier-2 data component, `data/`, hand-rolled prev/next + numbered page controls (no Melt Pagination builder in melt 0.44, same absence recorded at the `Dropdown Menu` row above); pairs with `DataTable` ([[COMPONENTIZATION]], [[MELT-UI]], issue #219) | `Pager`, `PageNav` |
 | showcase component (PIN Input) | `PIN Input` (prose), `PinInput` (code identifier) | Tier-2 form component, `form/`, Melt PinInput builder — a second-factor confirmation-code field ([[COMPONENTIZATION]], [[MELT-UI]], issue #221) | `Otp`, `OtpInput`, `PinCode` |

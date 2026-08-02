@@ -14,7 +14,7 @@ interface Props {
 
 const { title = process.env.PUBLIC_PROJECT_SLUG ?? "astro-drf-aws" } = Astro.props;
 
-// SSR, no-flash theme apply (bdd-06 "Persistence across login — no flash";
+// SSR, no-flash theme apply ("Persistence across login — no flash";
 // [[DESIGN-SYSTEM]]): the `theme` cookie — set by the backend on login and
 // on a successful `PATCH /api/me/` ([[API]]) — is parsed and sanitized here,
 // server-side, before the first byte renders.

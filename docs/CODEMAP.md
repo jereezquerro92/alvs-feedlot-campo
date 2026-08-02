@@ -1,9 +1,11 @@
 ---
 title: CODEMAP
 type: reference
-status: active
+category: harness
+use_case: going from a doc or ADR to the code it governs
 created: 2026-07-14
-tags: [harness, codemap, generated]
+modified: 2026-08-02
+tags: [doc, harness, codemap, generated]
 ---
 
 # CODEMAP — doc → code index

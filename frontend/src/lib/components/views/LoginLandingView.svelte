@@ -6,7 +6,7 @@
 <!--
   The landing IS the login ([[FEEDLOT]], redesign): a logged-out visitor sees a
   single green sign-in screen, not the old feedlot/showcase/chat menu — of that
-  menu only the design-system gallery link survives (bdd-08), and a role-holding
+  menu only the design-system gallery link survives, and a role-holding
   session is redirected straight to the feedlot before this view ever renders
   (index.astro). This screen is reached only by an anonymous or role-less
   (pending) session. Pure presentation; the only actions are two links — Cognito
@@ -89,7 +89,7 @@
         </a>
         <p class="text-center text-xs text-muted-foreground">{t("login_hint")}</p>
 
-        <!-- The design-system gallery stays reachable from the landing (bdd-08).
+        <!-- The design-system gallery stays reachable from the landing.
              It is an affordance only: the route itself is gated, so an anonymous
              visitor following it is bounced back here ([[adr-20-authorization-lobby]]). -->
         <a

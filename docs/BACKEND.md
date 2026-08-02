@@ -1,9 +1,11 @@
 ---
 title: BACKEND
 type: reference
-status: active
+category: backend
+use_case: writing or changing Django 6 + DRF code
 created: 2026-07-10
-tags: [harness, backend]
+modified: 2026-08-02
+tags: [doc, harness, backend]
 ---
 
 # BACKEND
@@ -19,10 +21,9 @@ Rules for the Django/DRF service — one of the two Fargate services ([[INFRASTR
 
 ## Async ([[adr-16-async-mandatory]])
 
-- **Async is the default for new views**, not a stopgap wrapped around sync code. The owner's reason: results are meant to reach the browser as they arrive, not after the whole response is built.
+- **The project stays async-capable at all times** — ASGI server, config and dependencies never block a view from being `async def` ([[adr-16-async-mandatory]] rule 1). A plain sync `def` view remains the default and needs no justification; a feature reaches for `async def` when it streams or does non-blocking I/O. The owner's reason for carrying the capability: results are meant to reach the browser as they arrive, not after the whole response is built.
 - **Server-Sent Events is the default streaming mechanism**: an `async def` view returning `StreamingHttpResponse` over an async generator. No Django Channels, no channel layer, no new infrastructure — it rides the existing ASGI server and crosses the ALB like any other HTTP response.
-- **WebSockets are a reserved escalation** at the `/ws/` prefix, for a need SSE genuinely cannot meet (bidirectional push). They are not adopted by default, and only ever in a shape that needs no cross-process channel layer — Django Channels' production channel layer is Redis-backed, and Redis is prohibited outright ([[CACHE]], [[adr-06-cache]]). A WebSocket design that would require fan-out across Fargate tasks is not buildable in this stack.
-- A sync view is still permitted where a stated reason applies (e.g. a library with no async path); it is the exception now, not the norm.
+- **WebSockets** are the reserved escalation at the `/ws/` prefix ([[adr-16-async-mandatory]] rule 3). The stack fact behind that reservation: Django Channels' production channel layer is Redis-backed ([[CACHE]]), so a design needing fan-out across Fargate tasks is not buildable here at all.
 - **Bedrock calls (the router's inference client) use `boto3` wrapped in `asgiref.sync_to_async`, not `aiobotocore`.** boto3 is already the project's one AWS SDK dependency ([[REQUIREMENTS]]); an async view calling it through `sync_to_async` gets the async signature without adding and maintaining a second, less mainstream AWS SDK. Revisit only if measured latency proves the thread-pool wrap is a real bottleneck — never assumed up front.
 
 Once the base template is finished, ALL backend code is produced through the TDD flow ([[TDD]] → `docs/tdds/`), never written directly; a backend diff without a corresponding TDD entry is invalid ([[adr-07-development-flow]]).
@@ -30,16 +31,16 @@ Once the base template is finished, ALL backend code is produced through the TDD
 ## Settings philosophy
 
 - Settings are **fully env-driven**: no environment-specific settings modules, no hardcoded values that differ between dev and prod.
-- Every variable a setting reads MUST be declared in [[VARIABLES]] — that file owns env var names; do not name them here.
-- Secrets are read **only** from AWS Secrets Manager. Never from `.env` files in production, never committed, no exceptions.
+- Env var names are owned by [[VARIABLES]] and are never named here ([[adr-03-api-and-backend]] rule 7).
+- Secret values come from AWS Secrets Manager ([[adr-02-initial-stack]] rule 6); in production they are read from nowhere else.
 
 ## Cross-cutting rules (owners linked)
 
-- Code is English without exception — identifiers, comments, docstrings, commit messages ([[LOCALIZATION]]).
-- Naming authority is [[GLOSSARY]]: new domain nouns are registered there before they appear in code.
-- Caching follows [[CACHE]]. **Redis is prohibited** — do not add it, do not depend on packages that require it.
+- A name is decided in [[GLOSSARY]] before its first use, and which language it uses is decided with it ([[adr-01-glossary-and-localization]] rules 1–4).
+- Rendering, locale and the i18n mechanism are owned by [[LOCALIZATION]].
+- Caching follows [[CACHE]] ([[adr-06-cache]]).
 - Database rules (engine, migrations, data conventions) are owned by [[BD]].
-- Endpoints exist **only** via [[API]]: no route in code without its declared row.
+- Endpoints are owned by [[API]] ([[adr-03-api-and-backend]] rule 1).
 - **Code carries no comments.** Naming and structure carry the meaning; a comment or docstring is a defect unless it states something the code genuinely cannot say (e.g. a non-obvious external constraint). A docstring that restates a rule already owned by a project doc — [[CACHE]], [[VARIABLES]], [[GLOSSARY]], any ADR — is duplication that drifts; link the doc from the PR or issue, not from the code.
 
 ## Static files
@@ -74,7 +75,7 @@ On local Compose, `DJANGO_SUPERUSER_PASSWORD` in `.env` needs its literal `$` do
 - DRF viewsets + routers are the default for **JSON** APIs; plain `APIView` / class-based views for **HTML fragments** when that fits better than forcing a viewset.
 - Per domain app: `templates/<app>/…` partials for HTMX; keep fragment markup next to the domain that owns it.
 - API schema is generated by **drf-spectacular** for JSON; the generated schema is derivative — [[API]] remains the source of truth for **all** routes including fragments (spectacular may omit pure HTML views; the table still lists them).
-- Behavior specs, when used, follow [[BDD]]; test discipline is [[TDD]].
+- Test discipline is [[TDD]].
 
 > [!note] Forthcoming rule — docstring wikilinks
 > `.py` files will adopt Obsidian-style wikilink references in docstrings (e.g. linking a viewset to its [[API]] row). Specification pending; it will be ruled by an ADR. Do not improvise a format before that ADR lands.

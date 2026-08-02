@@ -391,7 +391,6 @@ jobs:
                   {"name": "HOST", "value": "0.0.0.0"},
                   {"name": "NODE_ENV", "value": "production"},
                   {"name": "PUBLIC_SITE_URL", "value": "https://${PROJECT_HOST}"},
-                  {"name": "PUBLIC_API_URL", "value": "https://${PROJECT_HOST}/api"},
                   {"name": "PUBLIC_BACKEND_URL", "value": "https://${PROJECT_HOST}"},
                   {"name": "BACKEND_API_URL", "value": "http://${CLOUDMAP_SERVICE}.${CLOUDMAP_NAMESPACE}:8000"},
                   {"name": "PUBLIC_PROJECT_SLUG", "value": "${PROJECT_SLUG}"}

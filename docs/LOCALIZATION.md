@@ -1,22 +1,24 @@
 ---
 title: LOCALIZATION
 type: reference
-status: active
+category: harness
+use_case: choosing a language for a string, or adding an i18n message
 created: 2026-07-10
-tags: [harness, localization]
+modified: 2026-08-02
+tags: [doc, harness, localization]
 ---
 
 # LOCALIZATION
 
 Simple and strict, following Django/DRF standard i18n. This doc owns all language and locale rules for both services ([[BACKEND]], [[FRONTEND]]).
 
-## The one rule
+## What this doc owns
 
-Everything that is code is English — always, no exceptions ([[adr-01-glossary-and-localization]]): identifiers, comments, docstrings, commit messages, API paths, env var names, test names, log messages. All English, everywhere, permanently. Why: agents and tooling read code as an index; a second language in code doubles the search space and breaks grepability.
+Rendering, locale and the i18n mechanism. Which language a name uses is not decided here — it is decided once per term in [[GLOSSARY]] and binds every later use of it ([[adr-01-glossary-and-localization]] rules 1, 3–4). Spanish and English are both allowed; two names for one thing are not.
 
-**Comments and docstrings:** allowed only in English. Prefer none (KISS — code should explain itself). Do not ban comments as a hard rule; ban *non-English* and *noise*. When a future ADR requires docstring wikilinks ([[BACKEND]]), those docstrings are English too.
+Two bilingual pairings are the sanctioned conventions, because each has one canonical form and one rendering of it ([[adr-01-glossary-and-localization]] rule 6): a `TextChoices` member stores an English key and displays a Spanish label (`COW = "cow", "Vaca"`), and an i18n message uses an English `snake_case` key with a localized value. Anything a user reads that is neither — a label hardcoded in a component, a message generated server-side, a string built into a persisted field — has no canonical form.
 
-Non-English text is allowed ONLY in the frontend's rendered output. Even there, all variables, keys, and message IDs in code remain English; the target language exists solely at render time, through the i18n layer.
+**Comments and docstrings:** prefer none (KISS — code should explain itself); [[BACKEND]] owns that posture. What is written follows the language its term was decided in.
 
 ## Backend rule
 

@@ -1,9 +1,11 @@
 ---
 title: GH
 type: reference
-status: active
+category: devops
+use_case: branching, opening a PR, tagging a release, or checking who owns this repo
 created: 2026-07-10
-tags: [harness, github, git]
+modified: 2026-08-02
+tags: [doc, harness, github, git]
 ---
 
 # GH — GitHub + git for this template
@@ -26,41 +28,10 @@ Forbidden as production name: treating `main` as live. Forbidden branch name for
 
 ## How we work
 
-1. **Issues** for work tracking — open early, close with PR. Every issue uses a repository template from `.github/ISSUE_TEMPLATE/` — the BDD/Gherkin feature form is `gh-issue-feature-bdd.md` (chooser label "Feature (BDD)"); its References section is filled liberally so no issue is orphaned for want of a link graph.
+1. **Issues** for work tracking — open early, close with PR. An issue states the behavior before the code exists ([[adr-07-development-flow]] rule 1) and links liberally — governing ADRs, specs, code, related issues — so none is orphaned for want of a link graph. The repository ships no issue template.
 2. **PRs** for every change that lands on `main` (and every promote to `prod`).
 3. Agents open branches / PRs; they do not force-push `main`/`prod` as another identity.
 4. Base of feature PRs: **`main`**. Base of release/promote PRs: **`prod`** (head = `main` or release branch).
-
-### The feature template at a glance (80-col view)
-
-Annotated column-ruler view of `.github/ISSUE_TEMPLATE/gh-issue-feature-bdd.md`
-(`!!` marks a line wider than the 80-col terminal — all prose/guidance, never
-structure; GitHub wraps them):
-
-```text
-              1         2         3         4         5         6         7         8
-     ....+....|....+....|....+....|....+....|....+....|....+....|....+....|....+....|
-  1| ---                          ╮
-  2| name: Feature (BDD)          │  frontmatter: name = chooser label in GitHub,
-  3| about: ...                !! │  labels=feat, assignees=<owning account>, title prefix "feat: "
-  4| title: "feat: "              │  (GitHub reads THIS, not the filename)
-  5| labels: feat                 │
-  6| assignees: jereezquerro92    │
-  7| ---                          ╯
-  9| <!-- ...                  !! ╮  author guidance: BDD-first, language, wikilinks,
- 14| -->                          ╯  issue→PR loop. Not shown in the rendered issue.
- 16| ## Story                     ╮  who / what / so-that + verbatim quote of the ask
- 23| > "<...textual>"             ╯
- 25| ## Scenario(s)               ╮  Gherkin Given/When/Then; comment invites a
- 37| ```                          ╯  Scenario Outline for the negative cases
- 39| ## Acceptance criteria       ╮  testable checklist; last row ties in
- 43| - [ ] Shadow tests ...    !! ╯  shadow tests + guardian verdicts
- 45| ## References  (star)        ╮  the star section: 4 link axes —
- 47| <!-- #189 orphaned ...       │  Governing ADRs / Specs & docs / Code / Related.
- 66| - [[informe-...]]            ╯  "link LIBERALLY" — born from the orphaned issue
- 68| ## Notes / out of scope      ╮  what a fresh agent must NOT assume
- 70| <!-- ... -->              !! ╯
-```
 
 ## Labels (issues + PRs) — fixed set
 
