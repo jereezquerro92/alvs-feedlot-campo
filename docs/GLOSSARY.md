@@ -8,9 +8,7 @@ tags: [harness, glossary, ssot]
 
 # GLOSSARY — naming authority
 
-A name is decided here before its first use ([[adr-01-glossary-and-localization]]). Every identifier-worthy term — model names, endpoint segments, env var stems, service names, UI labels, doc names — uses the canonical form below. A new term gets its row here first; the ABC gate ([[AGENTS]]) applies to naming like to everything else.
-
-Format: Term | Canonical form | Applies to | Forbidden forms.
+The names. Rules: [[adr-01-glossary-and-localization]]. Feedlot domain terms: [[GLOSSARY-feedlot-additions]].
 
 | Term | Canonical form | Applies to | Forbidden forms |
 |---|---|---|---|
@@ -63,8 +61,8 @@ Format: Term | Canonical form | Applies to | Forbidden forms.
 | Django app (health) | `health` | health/liveness domain app ([[BACKEND]]); serves `/api/health/` | `healthcheck`, `status`, `ping` |
 | Django app (users) | `users` | user/identity domain app ([[BACKEND]], [[AUTH]]); owns the `sub`-keyed user model | `accounts` (that is the URL prefix, not the app), `auth`, `core` |
 | RBAC group | `admins` | Django Group for the elevated role ([[AUTH]], [[adr-10-auth]]); RBAC is Django Groups, never Cognito | singular `admin` (collides with Django's `/admin/`), `superusers`, any Cognito group |
-| model field (users) | `nickname` | optional user-chosen display name, shown in place of the Cognito-derived given/family name when set ([[API]] `PATCH /api/me/`, [[adr-10-auth]] rule 5) | `display_name`, `alias`, `handle` |
-| model field (users) | `avatar_visible` | boolean; when false, the frontend renders two-letter initials instead of `picture` ([[API]]) | `show_avatar` (inverted polarity reads worse at the call site), `hide_avatar` |
+| model field (user nickname) | `nickname` | optional user-chosen display name, shown in place of the Cognito-derived given/family name when set ([[API]] `PATCH /api/me/`, [[adr-10-auth]] rule 5) | `display_name`, `alias`, `handle` |
+| model field (user avatar visibility) | `avatar_visible` | boolean; when false, the frontend renders two-letter initials instead of `picture` ([[API]]) | `show_avatar` (inverted polarity reads worse at the call site), `hide_avatar` |
 | endpoint segment (me) | `me` — `/api/me/` | current-session identity endpoint ([[API]]) | `profile`, `self`, `current-user` |
 | endpoint segment (restricted) | `restricted` — `/api/restricted/` | RBAC probe endpoint, group-gated ([[API]]) | `admin-only`, `protected`, `secure` |
 | endpoint segment (login) | `login` — `/accounts/login/` | OIDC login kickoff endpoint ([[AUTH]], [[API]]) | `signin`, `log-in`, `auth` |
@@ -106,13 +104,13 @@ Format: Term | Canonical form | Applies to | Forbidden forms.
 | router rate-abuse guard | `evaluate_rate_abuse`, `is_rate_blocked` (`backend/apps/router/rate_abuse.py`) | async, DB-cache-backed silent block on the router's `POST /api/router/route/` when a user's average messages-per-minute crosses a threshold (#371, [[API]], [[adr-16-async-mandatory]], [[adr-06-cache]]) — enforcement only, never authorization | `RateLimiter`, `RouterThrottle` (collides with `CooldownThrottle`'s naming axis) |
 | library | Melt UI (pkg `melt`) | headless builder layer under Bits UI/shadcn-svelte ([[MELT-UI]]) | `@melt-ui/svelte` (legacy pkg), MeltUI |
 | component layering posture | `posture` | this template's standing default for which component layer to reach for first — Melt builder, then shadcn-svelte, then custom ([[MELT-UI]], [[DESIGN-SYSTEM]], [[adr-04-frontend-and-design-system]] r8) | `priority`, `preference`, `strategy` for this meaning |
-| model field (users) | `theme_config` | per-user appearance blob `{mode,bgPreset,colors,radius}`, mirrored to the `theme` cookie ([[API]], [[DESIGN-SYSTEM]]) | `theme_settings`, `prefs`, `appearance_config` |
+| model field (user theme config) | `theme_config` | per-user appearance blob `{mode,bgPreset,colors,radius}`, mirrored to the `theme` cookie ([[API]], [[DESIGN-SYSTEM]]) | `theme_settings`, `prefs`, `appearance_config` |
 | cookie | `theme` | non-HttpOnly cookie mirroring `theme_config` for no-flash SSR ([[DESIGN-SYSTEM]], [[CACHE]]) | `theme_cookie` |
-| theme value | `mode` (`light`\|`dark`) | appearance mode ([[DESIGN-SYSTEM]]) | `dark_mode`, `color_scheme` |
-| theme value | `bgPreset` (`default`\|`melt`) | background preset; `melt` = amber dotted field ([[DESIGN-SYSTEM]]) | `background_style`, `wallpaper` |
-| color token (financial) | `--success` / `--success-foreground` | positive financial state, distinct from any UI success/validation meaning ([[DESIGN-SYSTEM]]) | `--positive`, `--green` |
-| color token (financial) | `--warning` / `--warning-foreground` | equilibrium/neutral financial state ([[DESIGN-SYSTEM]]) | `--neutral-state`, `--yellow` |
-| color token (financial) | `--negative` / `--negative-foreground` | danger financial state — a separate token name from `--destructive` even where the value is shared ([[DESIGN-SYSTEM]]) | `--danger`, `--red`, reusing `--destructive` directly instead of the named token |
+| theme value (mode) | `mode` (`light`\|`dark`) | appearance mode ([[DESIGN-SYSTEM]]) | `dark_mode`, `color_scheme` |
+| theme value (background preset) | `bgPreset` (`default`\|`melt`) | background preset; `melt` = amber dotted field ([[DESIGN-SYSTEM]]) | `background_style`, `wallpaper` |
+| color token (financial positive) | `--success` / `--success-foreground` | positive financial state, distinct from any UI success/validation meaning ([[DESIGN-SYSTEM]]) | `--positive`, `--green` |
+| color token (financial neutral) | `--warning` / `--warning-foreground` | equilibrium/neutral financial state ([[DESIGN-SYSTEM]]) | `--neutral-state`, `--yellow` |
+| color token (financial negative) | `--negative` / `--negative-foreground` | danger financial state — a separate token name from `--destructive` even where the value is shared ([[DESIGN-SYSTEM]]) | `--danger`, `--red`, reusing `--destructive` directly instead of the named token |
 | model (access) | `AccessRequest` | Django model for an admin-managed role-grant record, one per user ([[AUTH]], [[adr-20-authorization-lobby]]) | `Grant`, `RoleRequest`, `AccessGrant` |
 | model field (access) | `role` | nullable `ForeignKey` to Django's own `Group` on `AccessRequest`; `null` = pending/unassigned — RBAC roles ARE Django Groups, never a parallel role table ([[adr-20-authorization-lobby]], [[adr-10-auth]] rule 2) | `group`, `assigned_role`, `role_name` |
 | UX term (lobby) | `lobby` | the route `/`, admitting BOTH an anonymous visitor and a role-less authenticated session — the only page reachable before a role is granted ([[adr-20-authorization-lobby]]) | `waiting room`, `landing`, `landing page` |
