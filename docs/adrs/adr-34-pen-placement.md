@@ -1,89 +1,52 @@
 ---
 title: adr-34-pen-placement
 type: adr
-status: active
+category: backend
+use_case: mover hacienda de corral, leer ocupación o cabezas por corral, atribuir un animal a un corral en una fecha
 created: 2026-07-25
+modified: 2026-08-02
 tags: [adr, feedlot, feedyard, pens, placement, phase-7b]
 ---
 
 # ADR-34 — Ubicación de hacienda en corrales (`PenPlacement`)
 
-**Estado:** activo (Fase 7b)
-**Contexto:** completa el diferimiento de [[adr-33-feedyard-operating-loop]] decisión 7
-(el cierre por corral necesita saber qué hacienda estuvo en el corral). Reusa la
-restricción XOR animal/lote de [[adr-26-livestock-individual-and-lot]] y la postura
-event-sourced de [[adr-24-feedlot-domain]]. Reglas solamente; las entidades viven en
-[[FEEDLOT-DATA-MODEL]].
+## CONTEXT
 
-## Contexto
+> Dónde está cada animal: el hecho que faltaba para que el corral fuera algo más que un rótulo sobre el feeding. Se registra como movimiento fechado, y la ocupación se deriva de esos movimientos.
 
-La Fase 7 dio el corral (`Pen`), la receta (`Ration`), el plan (`LoadingOrder`) y la
-lectura de comedero (`BunkScore`), pero no dónde está cada animal. Sin eso, el corral
-es un rótulo sobre el `FeedingEvent` y nada más: no hay ocupación, no hay cabezas por
-corral, no hay base para un cierre por corral. Se agrega el hecho que faltaba —
-**dónde está la hacienda** — sin tocar cómo se cobra ni reescribir el dominio estable.
+## ASSERTIONS
 
-## Decisiones
+1. `PenPlacement` registra un movimiento fechado de un `Animal` o un `Lot` hacia adentro (`direction=in`) o hacia afuera (`direction=out`) de un `Pen`. La ubicación actual y la ocupación se derivan de esos eventos y nunca se guardan como campo editable en `Pen` ni en `Animal` ([[adr-24-feedlot-domain]] regla 3).
+2. Un `PenPlacement` apunta a un `Animal` o a un `Lot`, nunca ambos ni ninguno: `CHECK` con dos FK nulables, idéntico al de los eventos de ciclo de vida ([[adr-26-livestock-individual-and-lot]] regla 3). Para un lote, `head_count` permite mover una parte; el animal individual no se fracciona.
+3. `PenPlacement` no postea ningún asiento: mover hacienda de corral es logística interna, no un insumo entregado. El cobro sigue exclusivamente en `feed` ([[adr-25-account-ledger]] regla 4), como todo `feedyard` ([[adr-33-feedyard-operating-loop]] regla 1).
+4. `register_placement` rechaza en el servicio —no en la vista— un `Pen` con `status=inactive` y un `Animal` que no esté `active`: muerto, vendido o egresado no se ubica. La carga tardía con fecha retroactiva se acepta mientras el corral siga activo.
+5. `apps.metrics` deriva por corral la ocupación actual en cabezas, las cabezas ingresadas y egresadas del período y los kilos alimentados. La conversión por corral la completa [[adr-42-pen-conversion-honest-cut]], que usa estos eventos para atribuir el engorde.
+6. `Pen` no tiene FK a cliente: un corral aloja hacienda de varios clientes, y es el placement el que liga cada cabeza a su corral y —vía el animal o el lote— a su dueño.
 
-### 1. La ubicación es un evento inmutable, no un campo de estado
+## FORBIDDEN
 
-`PenPlacement` registra un movimiento fechado de un `Animal` o un `Lot` hacia adentro
-(`direction=in`) o hacia afuera (`direction=out`) de un `Pen`. La ubicación actual y
-la ocupación se **derivan** de esos eventos; nunca se guardan como un campo editable
-en `Pen` ni en `Animal` (misma postura que adr-24 regla 3, adr-26 regla 4).
+- **NEVER** guardar la ubicación como campo mutable en `Animal` o `Pen` (regla 1). Un feedlot mueve hacienda todo el tiempo, y el campo perdería de qué corral vino y cuánto estuvo.
+- **NEVER** postear un asiento por un movimiento de corral (regla 3). La ubicación es información de gestión, no un hecho económico.
+- **NEVER** ubicar un animal que no está activo (regla 4). Muerto, vendido o egresado no ocupa un corral.
+- **NEVER** validar el corral o el animal en la vista (regla 4). La regla vive en el servicio, único punto de escritura.
+- **NEVER** ligar un corral a un cliente (regla 6). El corral es del feedlot y aloja hacienda de varios dueños a la vez.
 
-*Por qué:* un feedlot mueve hacienda entre corrales todo el tiempo. Un campo
-`Animal.pen` mutable perdería la historia — de qué corral vino, cuánto estuvo. El
-evento la conserva y hace auditable el cierre por corral.
+## REJECTED
 
-### 2. Exactamente un target, a nivel base de datos
+- **Un campo `Animal.pen` mutable** — la ubicación como estado, más simple de leer. Rechazado por la regla 1: pierde la historia entera, que es justamente lo que hace auditable el cierre por corral.
+- **Una tabla polimórfica de "unidad de hacienda"** — un solo target para el placement. Rechazado por el mismo motivo que en [[adr-26-livestock-individual-and-lot]] regla 3: indirección en cada consulta a cambio de nada.
+- **La conversión por corral en esta fase** — cerrar ganancia junto con ocupación. Diferida por honestidad de la métrica y resuelta después por [[adr-42-pen-conversion-honest-cut]], que atribuye sólo los tramos limpios.
 
-Un `PenPlacement` apunta a un `Animal` O a un `Lot`, nunca ambos ni ninguno —
-`CHECK` constraint con dos FK nulables, idéntico al de los eventos de ciclo de vida
-(adr-26 regla 3). Para un animal individual el movimiento es de una cabeza; para un
-lote, `head_count` permite mover una parte.
+## RELATED
 
-*Por qué:* reusar la forma ya probada evita una tabla polimórfica y mantiene la
-consulta directa. Un lote se mueve parcialmente en la práctica; el animal no se
-fracciona.
+### related adrs
 
-### 3. No toca el ledger
+- [[docs/adrs/adr-33-feedyard-operating-loop]] — la fase que dejó el corral sin hacienda ubicada
+- [[docs/adrs/adr-26-livestock-individual-and-lot]] — regla 3, el XOR que este evento reusa
+- [[docs/adrs/adr-42-pen-conversion-honest-cut]] — lo que se deriva sobre estos movimientos
+- [[docs/adrs/adr-29-metrics-derivation]] — el hueco explícito en vez del número inventado
 
-`PenPlacement` no postea ningún asiento. Mover hacienda de corral no es un insumo
-entregado ni un cargo — es logística interna. El cobro sigue exclusivamente en `feed`
-(adr-25 regla 4), como todo el resto de `feedyard` (adr-33 decisión 1).
+### related files
 
-*Por qué:* un solo camino de cobro. La ubicación es información de gestión, no un
-hecho económico.
-
-### 4. Un corral inactivo y un animal no-activo rechazan el ingreso, en el servicio
-
-`register_placement` rechaza en el **servicio** (no en la vista) un `Pen` con
-`status=inactive` y un `Animal` que no esté `active` (muerto/vendido/salido no se
-ubica). La carga tardía con fecha retroactiva se acepta mientras el corral siga
-activo — misma regla que adr-28 para pesajes y sanidad.
-
-*Por qué:* las reglas de negocio viven en el servicio, único punto de escritura, para
-que la vista, el admin y un comando compartan la misma validación.
-
-### 5. El cierre por corral de esta fase es ocupación, no ganancia
-
-`apps.metrics` gana un reporte por corral: ocupación actual (cabezas), cabezas
-ingresadas/egresadas en el período y kilos alimentados al corral. La **conversión por
-corral** (kg producidos ÷ kg alimentados) sigue diferida: atribuir pesajes al tramo
-que un animal pasó en un corral es un problema aparte, y un número sin esa atribución
-sería inventado (adr-29 regla 2). Se entrega lo afirmable hoy; la conversión por
-corral entra cuando la atribución exista.
-
-*Por qué:* honestidad de la métrica. La ocupación se puede afirmar desde los eventos
-de placement; la conversión por corral no, todavía.
-
-## Consecuencias
-
-- El backend entra sólo por [[API]] (adr-03) y nace por el flujo [[TDD]] (adr-07).
-- La única migración es la tabla nueva `PenPlacement` en `feedyard`; nada fuera de la
-  app, nada en `ledger`.
-- `Pen` sigue sin FK a cliente: un corral puede alojar hacienda de varios clientes, y
-  el placement es quien liga cada cabeza a su corral y su dueño (vía el animal/lote).
-- Cualquier cambio a las reglas 1–5 es semántico y DEBE superseder este ADR
-  ([[adr-00-adr-doctrine]] regla 4).
+- [[docs/FEEDLOT-DATA-MODEL]] — `PenPlacement` y `Pen`
+- [[docs/API]] — las rutas de placement
