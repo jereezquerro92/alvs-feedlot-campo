@@ -74,6 +74,12 @@ services:
     volumes:
       - ./backend:/app
       - /app/.venv  # anon volume: keep the image's venv, don't let the host mask it
+      # anon volume: the image's `collectstatic` build step writes /app/staticfiles,
+      # which the ./backend bind mount would otherwise hide — and the container's
+      # `appuser` cannot recreate it inside a host-owned mount under rootless Docker,
+      # so the test suite's collectstatic fixture died with EACCES. Same idiom as .venv.
+      - /app/staticfiles
+      - /app/.pytest_cache  # anon volume: same reason — pytest's cache dir must be container-writable
     depends_on:
       db:
         condition: service_healthy
@@ -115,6 +121,14 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules  # anon volume: keep the image's install, don't let the host mask it
+      # anon volume: `astro dev` must mkdir /app/.astro, and under rootless Docker the
+      # container's `bun` user maps to a subuid that cannot write into the host-owned
+      # bind mount — the dev server dies with EACCES. Same idiom as node_modules: the
+      # generated cache lives in Docker-managed storage instead of on the host.
+      - /app/.astro
+      - /app/dist  # anon volume: `bun run build` (and the smoke suite that reads
+                   # dist/server/entry.mjs) needs a container-writable output dir
+
     healthcheck:
       test: ["CMD-SHELL", "bun -e \"fetch('http://127.0.0.1:4321/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))\""]
       interval: 10s
