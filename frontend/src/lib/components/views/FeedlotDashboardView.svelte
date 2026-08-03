@@ -4,12 +4,10 @@
      LIVE-DOC:END -->
 
 <!--
-  One client's feedlot dashboard ([[FEEDLOT]]), in the full app shell: a green
-  operational surface (sidebar + default header + content), scoped by `.feedlot-app` so its
-  green tokens override the template's global orange without touching any component
-  class ([[adr-04-frontend-and-design-system]] rule 5, [[DESIGN-SYSTEM]]). The page
-  canvas stays on `body` (melt dots / spotlight) — this shell must not paint a solid
-  `--canvas` fill over it.
+  One client's feedlot dashboard ([[FEEDLOT]]), composed inside FeedlotShell so
+  sidebar + Breadcrumb/session header match every other module. `.feedlot-app`
+  green tokens override the template's global orange without touching any
+  component class ([[adr-04-frontend-and-design-system]] rule 5, [[DESIGN-SYSTEM]]).
 
   It only DISPLAYS metrics derived in the backend ([[adr-29-metrics-derivation]] rule
   1) — it computes none. Every metric that arrives null renders as "—" with its reason,
@@ -23,7 +21,7 @@
   import { Button } from "$lib/components/ui/button";
   import { formatNumber } from "$lib/components/data/NumericValue.svelte";
   import {
-    FeedlotSidebar,
+    FeedlotShell,
     KpiCard,
     GrowthCostChart,
     CostDonut,
@@ -31,7 +29,6 @@
     RecentMovements,
     HerdTable,
   } from "$lib/components/feedlot";
-  import { Breadcrumb, type BreadcrumbItem } from "$lib/components/nav";
   import { t } from "../../../i18n";
 
   type Dict = Record<string, unknown> | null | undefined;
@@ -55,7 +52,7 @@
       tax_id?: string;
       balance?: string | number | null;
     } | null;
-    /** Roster retained for callers; default header uses Breadcrumb only. */
+    /** Roster retained for callers; shell header uses Breadcrumb only. */
     clients?: Array<{ id: number | string; name?: string; kind?: string }>;
     summary?: Dict;
     account?: Dict;
@@ -106,13 +103,6 @@
   const mortPct = $derived(mortRate === null ? null : mortRate * 100);
   const mortSub = $derived(`${str(mort.dead_head ?? 0)} ${t("feedlot_unit_head")}`);
 
-  const crumbs = $derived.by((): BreadcrumbItem[] => {
-    if (client?.id) {
-      return [{ label: client.name || t("feedlot_dash_fallback") }];
-    }
-    return [{ label: t("feedlot_nav_dashboard") }];
-  });
-
   // --- combo chart: real daily charge totals + their cumulative ---
   const dailyPoints = $derived(
     dailyCost.map((d) => ({ label: str(d.date), value: str(d.total) })),
@@ -160,16 +150,14 @@
   };
 </script>
 
-<div class="feedlot-app flex min-h-screen">
-  <FeedlotSidebar clientId={client?.id ?? null} active="dashboard" />
+<FeedlotShell
+  active="dashboard"
+  clients={clients}
+  currentClient={client}
+>
+  <slot name="session" slot="session" />
 
-  <div class="flex min-w-0 flex-1 flex-col">
-    <header class="flex w-full items-center justify-end gap-3 px-6 pt-8 sm:px-10">
-      <Breadcrumb items={crumbs} />
-      <slot name="session" />
-    </header>
-
-    <main class="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-8">
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
       <!-- Page header -->
       <div class="flex flex-wrap items-end justify-between gap-3">
         <div class="flex flex-col gap-1">
@@ -321,6 +309,5 @@
       </Card.Root>
 
       <p class="pb-4 text-xs text-muted-foreground">{t("feedlot_dash_derivation_note")}</p>
-    </main>
   </div>
-</div>
+</FeedlotShell>

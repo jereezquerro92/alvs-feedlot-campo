@@ -4,10 +4,12 @@
      LIVE-DOC:END -->
 
 <!--
-  Pill breadcrumb matching SessionBadge's chrome ([[DESIGN-SYSTEM]]): home icon
-  first, then trail segments. Pure navigation — links only, no fetch/mutate.
-  Mounts with zero props and never throws ([[adr-22-showcase-ready-components]]
-  rule 1). Copy via i18n ([[LOCALIZATION]]).
+  Pill breadcrumb matching SessionBadge's chrome exactly ([[DESIGN-SYSTEM]]):
+  same outer pill classes (`py-1 pl-1 pr-2`, `gap-2`, border, shadow) and a
+  `size-7` home control mirroring the avatar / hamburger hitbox. Pure
+  navigation — links only, no fetch/mutate. Mounts with zero props and never
+  throws ([[adr-22-showcase-ready-components]] rule 1). Copy via i18n
+  ([[LOCALIZATION]]).
 -->
 <script lang="ts" module>
   export type BreadcrumbItem = {
@@ -36,7 +38,7 @@
 <nav
   aria-label={t("breadcrumb_nav")}
   class={cn(
-    "inline-flex min-w-0 max-w-full items-center gap-1.5 rounded-full border border-border bg-card py-1 pl-1 pr-3 text-card-foreground shadow-sm",
+    "flex min-w-0 max-w-full items-center gap-2 rounded-full border border-border bg-card py-1 pl-1 pr-2 text-card-foreground shadow-sm",
     className,
   )}
 >
@@ -44,7 +46,7 @@
     href={homeHref}
     aria-label={t("nav_home")}
     title={t("nav_home")}
-    class="grid size-7 shrink-0 place-items-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+    class="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
   >
     <svg
       viewBox="0 0 24 24"
@@ -62,7 +64,7 @@
   </a>
 
   {#each items as item, i (i)}
-    <span class="text-muted-foreground/50 select-none" aria-hidden="true">/</span>
+    <span class="select-none text-sm font-medium text-muted-foreground/50" aria-hidden="true">/</span>
     {#if item.href}
       <a
         href={item.href}
@@ -71,7 +73,7 @@
         {item.label}
       </a>
     {:else}
-      <span class="min-w-0 truncate text-sm font-semibold" aria-current="page">
+      <span class="min-w-0 truncate text-sm font-medium" aria-current="page">
         {item.label}
       </span>
     {/if}

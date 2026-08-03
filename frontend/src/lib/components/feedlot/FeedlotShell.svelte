@@ -52,12 +52,17 @@
   const crumbs = $derived.by((): BreadcrumbItem[] => {
     const trail: BreadcrumbItem[] = [];
     if (currentClient?.id != null) {
-      trail.push({
-        label: currentClient.name || t("feedlot_dash_fallback"),
-        href: `/feedlot/${currentClient.id}/`,
-      });
+      const label = currentClient.name || t("feedlot_dash_fallback");
+      // On the client dashboard the client name is the current page; elsewhere it links home to that client.
+      if (active === "dashboard") {
+        trail.push({ label });
+      } else {
+        trail.push({ label, href: `/feedlot/${currentClient.id}/` });
+        if (breadcrumb) trail.push({ label: breadcrumb });
+      }
+    } else if (breadcrumb) {
+      trail.push({ label: breadcrumb });
     }
-    if (breadcrumb) trail.push({ label: breadcrumb });
     return trail;
   });
 </script>

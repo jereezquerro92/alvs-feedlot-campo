@@ -17,8 +17,8 @@
   import * as Card from "$lib/components/ui/card";
   import { Button } from "$lib/components/ui/button";
   import { SectionTitle } from "$lib/components/primitives/titles";
+  import FeedlotShell from "$lib/components/feedlot/FeedlotShell.svelte";
   import SessionBadge from "$lib/components/auth/SessionBadge.svelte";
-  import { Breadcrumb, type BreadcrumbItem } from "$lib/components/nav";
   import {
     FeedingForm,
     WeighingForm,
@@ -58,18 +58,6 @@
     pending?: boolean;
   } = $props();
 
-  const crumbs = $derived.by((): BreadcrumbItem[] => {
-    const trail: BreadcrumbItem[] = [];
-    if (client?.id) {
-      trail.push({
-        label: client.name || t("feedlot_dash_fallback"),
-        href: `/feedlot/${client.id}/`,
-      });
-    }
-    trail.push({ label: t("feedlot_load_title") });
-    return trail;
-  });
-
   // A write reloads the SSR data so the new fact (animal, lot, exit) is reflected
   // in the target selects without a manual refresh. The reload is caller-initiated
   // by the submit, never on mount ([[adr-22-showcase-ready-components]] rule 2).
@@ -78,21 +66,23 @@
   }
 </script>
 
-<div class="min-h-screen flex flex-col">
-  <header class="flex w-full items-center justify-end gap-3 px-6 pt-8 sm:px-10">
-    <Breadcrumb items={crumbs} />
-    <SessionBadge
-      {me}
-      {pending}
-      {publicBackendUrl}
-      loginLabel={t("auth_login")}
-      logoutLabel={t("auth_logout")}
-    />
-  </header>
+<FeedlotShell
+  active="intake"
+  currentClient={client}
+  breadcrumb={t("feedlot_load_title")}
+>
+  <SessionBadge
+    slot="session"
+    {me}
+    {pending}
+    {publicBackendUrl}
+    loginLabel={t("auth_login")}
+    logoutLabel={t("auth_logout")}
+  />
 
-  <main class="mx-auto flex w-full max-w-3xl flex-1 flex-col gap-8 px-6 py-12">
+  <div class="mx-auto flex w-full max-w-3xl flex-col gap-6">
     <div class="flex flex-col gap-2">
-      <SectionTitle as="h1">{t("feedlot_load_title")}</SectionTitle>
+      <h1 class="text-2xl font-bold tracking-tight">{t("feedlot_load_title")}</h1>
       <p class="text-sm text-muted-foreground">{client?.name ?? t("feedlot_dash_fallback")}</p>
       <p class="max-w-2xl text-sm text-muted-foreground">{t("feedlot_load_intro")}</p>
       {#if client?.id}
@@ -228,5 +218,5 @@
     <div>
       <Button href="/feedlot/" variant="secondary" size="sm">{t("feedlot_back_clients")}</Button>
     </div>
-  </main>
-</div>
+  </div>
+</FeedlotShell>
