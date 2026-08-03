@@ -84,6 +84,7 @@ Names here are reference copies of what [[GLOSSARY]] already decided, not the po
 | `ChatUI` | `chat/` | Composed chat surface (list + composer) | [[CHATBOT]] router UI |
 | `ChatMessageList` | `chat/` | Renders structured router outcomes only, never free prose | [[CHATBOT]] router UI |
 | `ChatComposer` | `chat/` | Posts raw user text to the router endpoint | [[CHATBOT]] router UI |
+| `ChatDrawer` | `shell/` | `overlay/Drawer` + `chat/ChatUI` docked right, mounted once in `Base.astro` and role-gated | The router surface on every gated page ([[CHATBOT]]) |
 | `AuthPanel` | `auth/` | Session-aware auth actions | Any authenticated page |
 | `SessionBadge` | `auth/` | Compact current-session indicator | Any authenticated page |
 | `ProfileForm` | `auth/` | Editable profile fields (nickname, avatar visibility) with confirm-guarded save | `/profile/` |
