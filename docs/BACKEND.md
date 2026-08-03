@@ -31,16 +31,16 @@ Once the base template is finished, ALL backend code is produced through the TDD
 ## Settings philosophy
 
 - Settings are **fully env-driven**: no environment-specific settings modules, no hardcoded values that differ between dev and prod.
-- Env var names are owned by [[VARIABLES]] and are never named here ([[adr-03-api-and-backend]] rule 7).
-- Secret values come from AWS Secrets Manager ([[adr-02-initial-stack]] rule 6); in production they are read from nowhere else.
+- Env var names are owned by [[VARIABLES]] and are never named here ([[adr-51-api-and-backend]] rule 7).
+- Secret values come from AWS Secrets Manager ([[adr-50-initial-stack]] rule 6); in production they are read from nowhere else.
 
 ## Cross-cutting rules (owners linked)
 
-- A name is decided in [[GLOSSARY]] before its first use, and which language it uses is decided with it ([[adr-01-glossary-and-localization]] rules 1–4).
+- A name is decided in [[GLOSSARY]] before its first use, and which language it uses is decided with it ([[adr-12-glossary-and-localization]] rules 1–4).
 - Rendering, locale and the i18n mechanism are owned by [[LOCALIZATION]].
 - Caching follows [[CACHE]] ([[adr-06-cache]]).
 - Database rules (engine, migrations, data conventions) are owned by [[BD]].
-- Endpoints are owned by [[API]] ([[adr-03-api-and-backend]] rule 1).
+- Endpoints are owned by [[API]] ([[adr-51-api-and-backend]] rule 1).
 - **Code carries no comments.** Naming and structure carry the meaning; a comment or docstring is a defect unless it states something the code genuinely cannot say (e.g. a non-obvious external constraint). A docstring that restates a rule already owned by a project doc — [[CACHE]], [[VARIABLES]], [[GLOSSARY]], any ADR — is duplication that drifts; link the doc from the PR or issue, not from the code.
 
 ## Static files

@@ -13,11 +13,11 @@ tags: [doc, harness, mcp, docs, ssot]
 The content SSOT for the vendored **markdown-vault MCP**. Its force is [[adr-18-markdown-vault-mcp]]; this file owns everything that ADR only points to. The server turns `docs/` — this template's Obsidian vault — into a searchable, backlink-aware, semantically-indexed graph, and it is the **mandatory first source of truth for reaching `docs/` content** ([[adr-18-markdown-vault-mcp]] rule 1, [[AGENTS]]).
 
 > [!important] First, not optional
-> For any question about `docs/` prose or its wikilink structure, query the `markdown-vault-docs` MCP **before** Grep/Read: `search` to find, `read` to open, `get_backlinks`/`get_outlinks`/`get_similar` to traverse. Grep/Read stay correct for code, configs, and non-`docs/` files. This mirrors how `codebase-memory-mcp` is the first source for code ([[HARNESS]]).
+> For any question about `docs/` prose or its wikilink structure, query the `markdown-vault-docs` MCP **before** Grep/Read: `search` to find, `read` to open, `get_backlinks`/`get_outlinks`/`get_similar` to traverse. Grep/Read stay correct for code, configs, and non-`docs/` files. This mirrors how `codebase-memory-mcp` is the first source for code ([[SKILL-INVENTORY]]).
 
 ## Why it is here (and why vendored)
 
-The harness at the heart of this product is its documentation graph ([[PRD]]): a web of SSOTs joined by `[[wikilinks]]`, guarded by ADRs. Reading that graph by grepping filenames throws away the graph. The MCP restores it — link-following, similarity, orphan/broken-link detection — as tools. It is **vendored and transported with the repo**, not registered per-machine, so a fresh clone on any machine has it with no external setup — the same self-contained rule [[adr-14-harness]] imposes on skills ([[adr-18-markdown-vault-mcp]] rule 2).
+The harness at the heart of this product is its documentation graph ([[PRD]]): a web of SSOTs joined by `[[wikilinks]]`, guarded by ADRs. Reading that graph by grepping filenames throws away the graph. The MCP restores it — link-following, similarity, orphan/broken-link detection — as tools. It is **vendored and transported with the repo**, not registered per-machine, so a fresh clone on any machine has it with no external setup — the same self-contained rule [[adr-02-harness]] imposes on skills ([[adr-18-markdown-vault-mcp]] rule 2).
 
 ## The moving parts
 
@@ -82,7 +82,7 @@ bash scripts/cloud_setup.sh
 
 Everything that script does stays versioned in the repo. It runs once per environment, before Claude Code launches, and Anthropic snapshots the filesystem afterwards — so later sessions start with the venv and index already on disk instead of paying for them. A `SessionStart` hook would run on *every* session including resumes, which is why the install lives in the setup script and not there.
 
-Note that `codebase-memory` takes the opposite route: it stays local-only and is absent from cloud sessions entirely ([[HARNESS]]). The two MCPs are disjoint and so are their answers to the cloud ([[adr-18-markdown-vault-mcp]] rule 4).
+Note that `codebase-memory` takes the opposite route: it stays local-only and is absent from cloud sessions entirely ([[SKILL-INVENTORY]]). The two MCPs are disjoint and so are their answers to the cloud ([[adr-18-markdown-vault-mcp]] rule 4).
 
 ## Bootstrap & freshness
 
@@ -94,7 +94,7 @@ python3 scripts/mvmcp.py serve        # what .mcp.json runs; bootstraps if neede
 The index is **not** committed — every clone builds its own on first `bootstrap` or first `serve`. After editing `docs/`, refresh before trusting the vault: call the `reindex` tool, or re-run `bootstrap`. The `mvmcp_freshness.py` SessionStart hook compares the newest `docs/*.md` mtime against `index.db` and nudges when stale or missing.
 
 > [!warning] Write degrades the link index
-> A known behaviour ([[adr-18-markdown-vault-mcp]] rule 5): heavy `write`/`edit`/`rename`/`delete` through the MCP can degrade the backlink index over time. Single edits update the index immediately; after a batch of writes, run `reindex` (or `bootstrap`) and treat `get_backlinks` as authoritative only post-refresh. Prose and Obsidian syntax are still authored through the `obsidian-markdown` skill ([[HARNESS]]).
+> A known behaviour ([[adr-18-markdown-vault-mcp]] rule 5): heavy `write`/`edit`/`rename`/`delete` through the MCP can degrade the backlink index over time. Single edits update the index immediately; after a batch of writes, run `reindex` (or `bootstrap`) and treat `get_backlinks` as authoritative only post-refresh. Prose and Obsidian syntax are still authored through the `obsidian-markdown` skill ([[SKILL-INVENTORY]]).
 
 ## Tool cheat-sheet
 
@@ -115,7 +115,7 @@ Write (honour the caveat above): `write` (create), `edit` (targeted change — r
 
 ## Keeping code linked to the vault — the live-doc docstring convention
 
-The vault indexes `docs/`; code files reach into it through their **live-doc block** — a wikilinks-only region at the top of every governed code file, naming the ADRs and docs that rule it. That is what keeps documentation *live*: a `.py` or `.astro` file carries, in its header, the `[[wikilinks]]` to the very docs this MCP serves, and `docs/CODEMAP.md` is the generated inverse index. The block's rules are owned by [[adr-17-live-doc-backlinks]], its file→link mapping by the linker manifest, and its stamping by the `kdx-live-doc` skill ([[HARNESS]]) — **never hand-authored**. Reproduced here as reference only:
+The vault indexes `docs/`; code files reach into it through their **live-doc block** — a wikilinks-only region at the top of every governed code file, naming the ADRs and docs that rule it. That is what keeps documentation *live*: a `.py` or `.astro` file carries, in its header, the `[[wikilinks]]` to the very docs this MCP serves, and `docs/CODEMAP.md` is the generated inverse index. The block's rules are owned by [[adr-17-live-doc-backlinks]], its file→link mapping by the linker manifest, and its stamping by the `kdx-live-doc` skill ([[SKILL-INVENTORY]]) — **never hand-authored**. Reproduced here as reference only:
 
 | File type | Wrapper for the `LIVE-DOC:START … LIVE-DOC:END` block |
 |---|---|
@@ -130,7 +130,7 @@ A `.py` file's block is its module docstring; a `.astro` file's block is a comme
 
 ```python
 """LIVE-DOC:START — <slug> live-doc; see [[adr-17-live-doc-backlinks]]
-Governed by: [[adr-02-initial-stack]] · [[adr-06-cache]] · [[adr-16-async-mandatory]]
+Governed by: [[adr-50-initial-stack]] · [[adr-06-cache]] · [[adr-16-async-mandatory]]
 Docs: [[BACKEND]] · [[VARIABLES]]
 LIVE-DOC:END"""
 ```

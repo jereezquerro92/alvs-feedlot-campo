@@ -1,4 +1,4 @@
-"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+"""LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
 Governed by: [[adr-10-auth]]
 Docs: [[BACKEND]] · [[AUTH]]
 API: [[API]]

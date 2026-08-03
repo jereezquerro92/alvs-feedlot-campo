@@ -1,0 +1,11 @@
+#!/bin/sh
+# The dispatch safety net's voice at commit time (adr-03 rules 3 and 8).
+#
+# Install once per clone:
+#   ln -s ../../docs/hooks/pre-commit .git/hooks/pre-commit
+#
+# It warns, it does not block: the gate cannot see whether a guardian was
+# already dispatched this batch, so blocking would only teach --no-verify.
+# The warning lands in the terminal of whichever agent is driving — and for
+# an agent bound by adr-03 rule 3, being told is what makes the duty live.
+python3 "$(git rev-parse --show-toplevel)/docs/hooks/guardian-dispatch" --staged || true

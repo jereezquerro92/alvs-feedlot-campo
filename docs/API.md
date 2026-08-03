@@ -12,10 +12,10 @@ tags: [doc, harness, api, ssot]
 
 Single source of truth for every HTTP endpoint in the system. Backend rules live in [[BACKEND]]; frontend consumption rules in [[FRONTEND]].
 
-What makes a route valid, and the protocol for changing a row, are [[adr-03-api-and-backend]] rules 1–3. What the routes *are* is this file.
+What makes a route valid, and the protocol for changing a row, are [[adr-51-api-and-backend]] rules 1–3. What the routes *are* is this file.
 
 > [!note] Enforcement
-> The hook `hooks/check_api.py` (PostToolUse) diffs every written `urls.py` route literal against this table and blocks undeclared segments. `hooks/load_ssot.py` (SessionStart) injects this file and [[PRD]] into context at session start; `hooks/require_api_read.py` (UserPromptSubmit) forces a fresh read whenever a prompt mentions the API. `hooks/dispatch_guardians.py` (PostToolUse) routes changes to this file or the route surface (`urls.py`, `views.py`, `viewsets.py`, `serializers.py`, `models.py`, Django templates) to the guardian subagent `agents/astro-drf-aws-api.md`, which enforces the format and change protocol below.
+> The hook `hooks/check_api.py` (PostToolUse) diffs every written `urls.py` route literal against this table and blocks undeclared segments. `hooks/load_ssot.py` (SessionStart) injects this file and [[PRD]] into context at session start; `hooks/require_api_read.py` (UserPromptSubmit) forces a fresh read whenever a prompt mentions the API. `hooks/dispatch_guardians.py` (PostToolUse) routes changes to this file or the route surface (`urls.py`, `views.py`, `viewsets.py`, `serializers.py`, `models.py`, Django templates) to the guardian subagent `docs/agents/astro-drf-aws-api.md`, which enforces the format and change protocol below.
 
 ## Workflow position
 
@@ -108,7 +108,7 @@ The router (`CanUseRouter`, actuator tier) and the auth/health/m365 surface keep
 The feedlot is built as domain apps on the template spine ([[adr-24-feedlot-domain]] rule 1): the shared spine `clients` + `ledger` + `market` + `advisors`, the cattle domain `livestock` + `feed` + `sanitary`, and the read-only `metrics`. Authentication is the Django session opened by Cognito ([[adr-10-auth]]); authorization is per-area RBAC — each row's Auth cell names the Django-Group permission class that gates it (see [Authorization (RBAC)](#authorization-rbac), [[adr-44-field-operational-roles]]). Every authenticated response is `no-store` ([[CACHE]] rule 4). DRF list endpoints return a plain JSON array (no pagination wrapper). Method surface follows the app's posture: **catalogs** (`FeedType`, `HealthProduct`, `MarketSource`, `Client`) are full-CRUD `ModelViewSet`s — the only editable tables ([[adr-24-feedlot-domain]] rule 3); **operational events** expose only `list`/`retrieve`/`create` and deliberately no `update`/`destroy`, because a fact is corrected by a new fact, never mutated ([[adr-24-feedlot-domain]] rule 3, [[adr-28-animal-lifecycle-and-sanitary]]); **metrics** are read-only `GET` derivations ([[adr-29-metrics-derivation]]).
 
 > [!note] Documentation debt closed here
-> The Phase 1–5 route surface below existed in code (`apps/{clients,ledger,livestock,feed,sanitary,market,metrics,advisors}/urls.py`) before it was declared in this file — an [[adr-03-api-and-backend]] rule 1 gap accrued across those phases. This section records the surface as-built; it introduces no new route.
+> The Phase 1–5 route surface below existed in code (`apps/{clients,ledger,livestock,feed,sanitary,market,metrics,advisors}/urls.py`) before it was declared in this file — an [[adr-51-api-and-backend]] rule 1 gap accrued across those phases. This section records the surface as-built; it introduces no new route.
 
 | Method | Path | View/ViewSet | Serializer | Auth | Description |
 |---|---|---|---|---|---|
@@ -523,7 +523,7 @@ The six `GET /api/clients/{id}/metrics/*` views return a **derived** JSON payloa
 
 ### feedlot-mutation-caveat
 
-`AnimalViewSet` and `LotViewSet` are declared as full `ModelViewSet`s, so `PUT`/`PATCH`/`DELETE` resolve on `/api/animals/{id}/` and `/api/lots/{id}/`. These rows record the route surface as-built ([[adr-03-api-and-backend]] rule 1). Note, however, that the event-sourced posture treats lot counters (`head_count`, `total_weight`) and `Animal.current_weight` as **event-maintained / derived**, never hand-edited ([[adr-26-livestock-individual-and-lot]] rules 4–5, [[adr-24-feedlot-domain]] rule 3): the sanctioned way to change herd state is an `Intake`/`Weighing`/`Death`/`Exit` event, not a direct write to these rows. Whether the write verbs on these two viewsets should be narrowed to match the events' `list`/`retrieve`/`create`-only shape is a doctrine question for the ADR/API guardians, flagged here and not resolved by this documentation pass. `no-store`.
+`AnimalViewSet` and `LotViewSet` are declared as full `ModelViewSet`s, so `PUT`/`PATCH`/`DELETE` resolve on `/api/animals/{id}/` and `/api/lots/{id}/`. These rows record the route surface as-built ([[adr-51-api-and-backend]] rule 1). Note, however, that the event-sourced posture treats lot counters (`head_count`, `total_weight`) and `Animal.current_weight` as **event-maintained / derived**, never hand-edited ([[adr-26-livestock-individual-and-lot]] rules 4–5, [[adr-24-feedlot-domain]] rule 3): the sanctioned way to change herd state is an `Intake`/`Weighing`/`Death`/`Exit` event, not a direct write to these rows. Whether the write verbs on these two viewsets should be narrowed to match the events' `list`/`retrieve`/`create`-only shape is a doctrine question for the ADR/API guardians, flagged here and not resolved by this documentation pass. `no-store`.
 
 ## Change protocol
 

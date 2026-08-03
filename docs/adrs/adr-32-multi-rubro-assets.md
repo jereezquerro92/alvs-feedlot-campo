@@ -51,4 +51,4 @@ tags: [adr, feedlot, multi-rubro, assets, crops, machinery]
 
 - [[docs/feedlot/14-preparacion-fase6]] — la señal de alarma que dispara la extracción
 - [[docs/FEEDLOT-DATA-MODEL]] — `Pivot`, `Machine`, `Crop`, `Cutting`, `FieldTask`, `MaintenanceEvent`
-- [[docs/LOCALIZATION]] — inglés en el código, español en el render
+- [[docs/constitution/LOCALIZATION]] — inglés en el código, español en el render

@@ -1,5 +1,5 @@
-<!-- LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
-     Governed by: [[adr-04-frontend-and-design-system]]
+<!-- LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
+     Governed by: [[adr-52-frontend-and-design-system]]
      Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]]
      LIVE-DOC:END -->
 
@@ -17,7 +17,7 @@
   #283, WCAG 4.1.2): the caller's `ariaLabel` wins when given, otherwise the
   component self-resolves the existing `home_triangle_aria_label` i18n key
   as a non-empty fallback — resolving an i18n KEY in-component is not the
-  hardcoded-string LOCALIZATION violates (adr-01).
+  hardcoded-string LOCALIZATION violates (adr-12).
 -->
 <script lang="ts">
   import { cn } from "$lib/utils";

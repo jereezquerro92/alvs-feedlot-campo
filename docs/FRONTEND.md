@@ -19,22 +19,22 @@ Rules for the frontend service: Astro SSR + Svelte islands, one of the two Farga
 > [!warning] Every page renders through `layouts/Base.astro`
 > `styles/app.css` (Tailwind + theme tokens) is imported by `Base.astro` only. A page that hand-rolls its own `<html>/<body>` instead of rendering through `Base.astro` loads zero CSS — every Tailwind class on it is inert, silently. Markup-string tests pass on such a page regardless, so this defect is invisible to the test suite; catching it needs actual visual verification, not just assertions on rendered HTML.
 - Svelte provides islands of interactivity on top of server-rendered HTML. Islands are the exception, not the default — see the interactivity ladder below.
-- **Svelte is the shipped island technology, and the only one** ([[adr-04-frontend-and-design-system]]). Astro's architecture would accommodate a React island later without a rewrite, should a future ADR add one — that is a possibility the architecture leaves open, not a capability shipped today. The interactivity ladder below stops at Svelte; any new island framework needs its own ADR and [[REQUIREMENTS]] row first.
+- **Svelte is the shipped island technology, and the only one** ([[adr-52-frontend-and-design-system]]). Astro's architecture would accommodate a React island later without a rewrite, should a future ADR add one — that is a possibility the architecture leaves open, not a capability shipped today. The interactivity ladder below stops at Svelte; any new island framework needs its own ADR and [[REQUIREMENTS]] row first.
 - Styling is Tailwind 4 (via the Vite plugin, CSS-first configuration — no `tailwind.config.js`). Components come from shadcn-svelte, which copies source into the repo rather than installing a runtime dependency; copied components are then owned by this codebase.
 - Every visual and component decision — including the current theming model — is owned by [[DESIGN-SYSTEM]].
-- **`.astro` is routes and layouts only** — every other visual unit, titles included, is a `.svelte` component ([[adr-04-frontend-and-design-system]] r9). Rationale, folder tree, and layering are owned by [[COMPONENTIZATION]].
+- **`.astro` is routes and layouts only** — every other visual unit, titles included, is a `.svelte` component ([[adr-52-frontend-and-design-system]] r9). Rationale, folder tree, and layering are owned by [[COMPONENTIZATION]].
 - Terminology for "island", "SSR", and "hypermedia" is owned by [[GLOSSARY]].
 
 ## Toolchain
 
-Everything JavaScript goes through bun ([[adr-04-frontend-and-design-system]] rule 2): install, run, scripts, tests and the lockfile (`bun.lock`). The SSR build runs under bun itself and the container base image is `oven/bun`. Why one runtime end to end: it removes a whole class of "works locally, breaks in the image" drift.
+Everything JavaScript goes through bun ([[adr-52-frontend-and-design-system]] rule 2): install, run, scripts, tests and the lockfile (`bun.lock`). The SSR build runs under bun itself and the container base image is `oven/bun`. Why one runtime end to end: it removes a whole class of "works locally, breaks in the image" drift.
 
 > [!note] Adapter caveat
 > The Astro node adapter officially targets Node. bun compatibility is therefore re-verified on every Astro major upgrade. Node LTS is the documented fallback ONLY if a real incompatibility surfaces — never a convenience choice.
 
 ## Interactivity ladder
 
-Escalate in order, never skip a rung ([[adr-04-frontend-and-design-system]]):
+Escalate in order, never skip a rung ([[adr-52-frontend-and-design-system]]):
 
 1. **Server-rendered HTML first.** Most pages need nothing else.
 2. **[[HTMX]]** for dynamic fragments — hypermedia over the wire; **Django** returns the HTML (Astro only loads the client and places `hx-*`).
@@ -75,6 +75,6 @@ Three distinct gates catch different failures; a change runs each where it appli
 
 ## Localization and caching
 
-- Rendered text is localized through the i18n layer below; a message key is English and its value is the rendering ([[adr-01-glossary-and-localization]] rule 6, [[LOCALIZATION]]).
-- **Rendering context — the i18n layer.** `frontend/src/i18n/` is the catalog module: locale config (`config.ts`), one message file per locale under `messages/`, and a render helper `t(key, locale?)` exported from `i18n/index.ts`. A `.astro` page under `src/pages/` imports it with a relative path (`import { t } from "../i18n";`) and calls `t("some_key")` in its frontmatter or template. The output is a plain string — rung 1 of the interactivity ladder ([[adr-04-frontend-and-design-system]]): no client JS, no HTMX round trip, no island, just server-rendered text. Locale identity itself comes from Astro's native `i18n` config in `astro.config.mjs` (`defaultLocale`, `locales`), which also powers `Astro.currentLocale` and the `astro:i18n` helpers for any future locale-aware routing — the catalog module never re-implements URL/locale parsing itself.
+- Rendered text is localized through the i18n layer below; a message key is English and its value is the rendering ([[adr-12-glossary-and-localization]] rule 6, [[LOCALIZATION]]).
+- **Rendering context — the i18n layer.** `frontend/src/i18n/` is the catalog module: locale config (`config.ts`), one message file per locale under `messages/`, and a render helper `t(key, locale?)` exported from `i18n/index.ts`. A `.astro` page under `src/pages/` imports it with a relative path (`import { t } from "../i18n";`) and calls `t("some_key")` in its frontmatter or template. The output is a plain string — rung 1 of the interactivity ladder ([[adr-52-frontend-and-design-system]]): no client JS, no HTMX round trip, no island, just server-rendered text. Locale identity itself comes from Astro's native `i18n` config in `astro.config.mjs` (`defaultLocale`, `locales`), which also powers `Astro.currentLocale` and the `astro:i18n` helpers for any future locale-aware routing — the catalog module never re-implements URL/locale parsing itself.
 - Caching of SSR responses follows [[CACHE]], which owns every caching decision.

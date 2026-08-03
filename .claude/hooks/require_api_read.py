@@ -3,7 +3,7 @@
 
 A prompt that plausibly touches the route surface forces a fresh read of
 docs/API.md before acting: the file is the only source of valid endpoints
-(adr-03) and may have changed since the session-start preload. The matcher
+(adr-51) and may have changed since the session-start preload. The matcher
 targets route-surface-plausible prompts, not any mention of the word "api" —
 a bare "api" that never means the route surface ("the API gate is annoying")
 no longer fires. Stdout is added to context; any internal error exits 0.
@@ -39,7 +39,7 @@ def main():
             return 0
         print(
             "API gate: this prompt mentions the API. Before acting on it, Read "
-            "docs/API.md — it is the only source of valid endpoints (adr-03) and "
+            "docs/API.md — it is the only source of valid endpoints (adr-51) and "
             "the in-memory copy may be stale. Every endpoint decision must match "
             "its rows; a needed endpoint missing there gets its row added first."
         )

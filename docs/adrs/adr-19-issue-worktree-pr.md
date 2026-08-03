@@ -19,9 +19,9 @@ tags: [adr, git, workflow, gh]
 1. Every change enters through a `gh` issue, opened before the work, in this repository's own tracker ([[GH]]) — for everything, no matter how small.
 2. The pull request is the sole integration entry point. Nothing reaches `main` except by opening a PR and merging it; there is no hand-commit to `main` in the development flow. The worktree is an option, a plain feature branch its equal; the PR is neither.
 3. Only the `gh` identity — the owning account [[adr-08-github-and-git]] rule 1 names for this repository — integrates, and in practice that is the agent, the sole holder of that credential. Routing the push through a PR does not remove the permission that rule grants. No second-party review is implied: the PR is record and gate, and self-merge is valid.
-4. The PR is the gate: guardian verdicts ([[adr-11-guardians]]) and the test suites are green before merge. The enforcement is layered and its limit is stated honestly — this doctrine is the rule, a local `PreToolUse` hook is a bypassable nudge, and the only inviolable backstop is GitHub branch protection, which lives in the repository of the moment and is not shipped by this template.
+4. The PR is the gate: guardian verdicts ([[adr-03-guardians]]) and the test suites are green before merge. The enforcement is layered and its limit is stated honestly — this doctrine is the rule, a local `PreToolUse` hook is a bypassable nudge, and the only inviolable backstop is GitHub branch protection, which lives in the repository of the moment and is not shipped by this template.
 5. Integration destroys the worktree. On merge it is removed with `git worktree remove` — explicitly, because the agent path does not auto-clean — and the branch is deleted. No worktree and no branch outlives its PR, merged or abandoned.
-6. The flow's terms enter [[GLOSSARY]] before first use ([[adr-01-glossary-and-localization]]); the step-by-step rendering and the exact commands stay in [[DEVELOPMENT-LOOP]].
+6. The flow's terms enter [[GLOSSARY]] before first use ([[adr-12-glossary-and-localization]]); the step-by-step rendering and the exact commands stay in [[DEVELOPMENT-LOOP]].
 
 ## FORBIDDEN
 
@@ -42,8 +42,8 @@ tags: [adr, git, workflow, gh]
 
 - [[docs/adrs/adr-08-github-and-git]] — the branches, the owning account and the push permission rule 3 rides on
 - [[docs/adrs/adr-07-development-flow]] — the gates a change passes between issue and PR
-- [[docs/adrs/adr-11-guardians]] — the verdicts rule 4 requires green
-- [[docs/adrs/adr-01-glossary-and-localization]] — a name decided before first use
+- [[docs/adrs/adr-03-guardians]] — the verdicts rule 4 requires green
+- [[docs/adrs/adr-12-glossary-and-localization]] — a name decided before first use
 
 ### related files
 

@@ -2,6 +2,65 @@
 
 ## [Unreleased]
 
+- group: adopcion-doctrina-kodexarg-harness-default
+  priority: high
+  commit: d661a66
+  changes:
+    - docs(adr): adr-00-discipline, adr-01-constitution, adr-02-harness, adr-03-guardians, adr-04-issue-delivery — five harness-default ADRs adopted; adr-00-adr-doctrine reconciled as adr-00-discipline (same number, new slug)
+    - docs(adr): REJECTED sections added to adr-00-discipline recording the exception to rules 5 and 7 authorized by owner on 2026-08-02
+    - chore: DEVIATION NOTED — this batch did not open an issue before starting work, violating adr-19 rule 1; recorded here as known deviation
+
+- group: renumeracion-y-plegado-de-adrs
+  priority: high
+  commit: d661a66
+  changes:
+    - docs(adr): adr-01-glossary-and-localization → adr-12, adr-02-initial-stack → adr-50, adr-03-api-and-backend → adr-51, adr-04-frontend-and-design-system → adr-52
+    - docs(adr): adr-11-guardians folded into adr-03-guardians (roster of three guardians survives as rule 9)
+    - docs(adr): adr-14-harness folded into adr-02-harness (rules 2 and 3 survive as rules 9 and 10)
+    - refactor(adrs): rule numbering within each renumbered file unchanged
+
+- group: migracion-docs-forma-harness
+  priority: normal
+  commit: d661a66
+  changes:
+    - docs: new docs/constitution/ directory with PRD.md, REQUIREMENTS.md, HARNESS.md, CONVENTION.md, LOCALIZATION.md, INFRASTRUCTURE.md
+    - docs: new docs/assertions/ family seeded with assertion-00-discipline.md
+    - refactor(docs): prior docs/HARNESS.md split — skill inventory moved to docs/SKILL-INVENTORY.md, docs/HARNESS.md becomes doctrine explainer
+    - docs: new docs/CLONE.md adapted to live repository state
+
+- group: activos-harness-agentes-hooks-skills
+  priority: normal
+  commit: d661a66
+  changes:
+    - refactor(harness): agents/ moved to docs/agents/; .claude/agents and .agents/agents link there
+    - feat(harness): 18 kwf-* agents added (canonical definitions in docs/agents/)
+    - remove(harness): 13 wf-* agents removed; kdx-wf-triage-and-fix skill removed
+    - feat(harness): docs/hooks/ (guardian-dispatch, pre-commit) and docs/skills/ (assertion-review, triage-and-fix) directories created
+    - refactor(harness): skills/ no longer a symlink; becomes real copy mirrored as adr-02 rule 9 requires
+
+- group: adr-53-membrana-api
+  priority: high
+  commit: d661a66
+  changes:
+    - docs(adr): new adr-53-api-membrane — docs/API.md is sole contact point between frontend and backend; backend publishes all endpoints; frontend forbidden to know backend internals
+    - docs(api): 44 frontend files with literal fetch() now cite docs/API.md in their live-doc blocks
+    - chore: adr-53 authorized by owner on 2026-08-03 (express consent during the batch)
+
+- group: regeneracion-live-doc-arreglo-slug
+  priority: normal
+  commit: d661a66
+  changes:
+    - refactor(linker): live-doc manifest updated to new ADR numbering; 485 files re-stamped with correct live-doc blocks
+    - docs(codemap): docs/CODEMAP.md regenerated from live-doc blocks
+    - fix(linker): PROJECT_SLUG derivation now reads git remote origin URL instead of defaulting to template slug — eliminates false-positive drift reports on 485 files
+
+- group: reparacion-referencias
+  priority: normal
+  commit: d661a66
+  changes:
+    - refactor(docs): citations to renumbered ADRs corrected in ADR prose bodies, AGENTS.md, README.md, ONBOARDING.md, vendored hooks and skills
+    - fix(docs): 20 loose citations outside live-doc blocks corrected — resolved to wrong ADR numbers during transition
+
 - group: oidc-immutable-sub
   priority: high
   commit: pending

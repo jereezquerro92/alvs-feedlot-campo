@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-AGENTS_DIR = ROOT / "agents"
+AGENTS_DIR = ROOT / "docs" / "agents"
 DISPATCH_HOOK = ROOT / ".claude" / "hooks" / "dispatch_guardians.py"
 
 # A guardian def is discovered by shape, never by a hardcoded project name
@@ -48,7 +48,7 @@ def parse_frontmatter(text: str, label: str) -> dict[str, str]:
 
 
 def discover_guardian_defs() -> dict[str, dict[str, str]]:
-    """filename stem -> frontmatter, for every agents/*.md whose
+    """filename stem -> frontmatter, for every docs/agents/*.md whose
     frontmatter description names it a guardian. Generic: no literal
     project-specific guardian name is ever hardcoded here."""
     found: dict[str, dict[str, str]] = {}
@@ -88,7 +88,7 @@ def test_identity_triangle() -> None:
     guardians = discover_guardian_defs()
     if not guardians:
         fail(
-            "no guardian definition found under agents/*.md — the "
+            "no guardian definition found under docs/agents/*.md — the "
             "discovery rule (frontmatter description containing the word "
             "'guardian') is broken or the harness shipped with zero guardians"
         )
@@ -103,16 +103,16 @@ def test_identity_triangle() -> None:
     for stem, fm in guardians.items():
         name = fm.get("name")
         if not name:
-            fail(f"agents/{stem}.md: frontmatter has no name: field")
+            fail(f"docs/agents/{stem}.md: frontmatter has no name: field")
         names.add(name)
         if name != stem:
             fail(
-                f"agents/{stem}.md: filename stem {stem!r} != frontmatter "
+                f"docs/agents/{stem}.md: filename stem {stem!r} != frontmatter "
                 f"name {name!r}"
             )
         if name not in watchlist_set:
             fail(
-                f"agents/{stem}.md: name {name!r} has no matching key in "
+                f"docs/agents/{stem}.md: name {name!r} has no matching key in "
                 f"WATCHLISTS ({DISPATCH_HOOK.relative_to(ROOT)}) — the "
                 "dispatch hook will never nudge this guardian"
             )
@@ -121,7 +121,7 @@ def test_identity_triangle() -> None:
     if extra:
         fail(
             "WATCHLISTS has key(s) with no matching guardian def under "
-            f"agents/: {sorted(extra)} — the dispatch hook nudges a "
+            f"docs/agents/: {sorted(extra)} — the dispatch hook nudges a "
             "subagent_type that resolves to nothing"
         )
 
@@ -144,10 +144,10 @@ def test_notify_prose_resolves() -> None:
         for target in NOTIFY_LINE.findall(text):
             checked += 1
             if target == stem:
-                fail(f"agents/{stem}.md: notify prose lists itself ({target!r})")
+                fail(f"docs/agents/{stem}.md: notify prose lists itself ({target!r})")
             if target not in stems:
                 fail(
-                    f"agents/{stem}.md: notify prose references {target!r}, "
+                    f"docs/agents/{stem}.md: notify prose references {target!r}, "
                     "which is not an existing guardian filename/frontmatter name"
                 )
     if checked == 0:

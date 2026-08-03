@@ -12,7 +12,7 @@ tags: [adr, infrastructure, aws, rds, divergence]
 
 ## CONTEXT
 
-> This project's production database is its own RDS instance, by explicit owner directive — a standing, recorded divergence from the shared-instance default [[BD]] prescribes, made through the divergence vehicle [[adr-02-initial-stack]] rule 5 requires.
+> This project's production database is its own RDS instance, by explicit owner directive — a standing, recorded divergence from the shared-instance default [[BD]] prescribes, made through the divergence vehicle [[adr-50-initial-stack]] rule 5 requires.
 
 ## ASSERTIONS
 
@@ -20,7 +20,7 @@ tags: [adr, infrastructure, aws, rds, divergence]
 2. The ground for the divergence is an explicit owner directive, given in conversation on 2026-07-31: this project gets its own instance. It is not derived from mirroring any sibling project's shape — the sibling actually mirrored during this project's bring-up, `alvs-financial-gateway`, is itself on the shared legacy `alvs-prod-pg` (discovered live, not assumed), so "dedicated" here is the owner's choice for this project specifically, overriding the mirror-sibling default for this one dimension only.
 3. This ADR settles nothing about any other project's database placement. [[BD]]'s general prose — one project per shared instance as the template default — stands unchanged for projects the owner has not directed otherwise; this is a per-project exception recorded here and in [[BD]].
 4. The network security group is shared infrastructure and stays shared. `sg-0c6f4c16f86f7a2b3` (`alvs-prod-rds-sg`) already fronts `alvs-prod-astro-drf-aws-pg` and the legacy `alvs-prod-pg`; reusing it for `alvs-prod-feedlot-campo-pg` is a network-level convenience with no bearing on rule 1 — the SG being shared does not make the instance shared.
-5. Full identifiers, endpoint, and provisioning record live in [[INVENTORY]]'s `feedlot-campo` section, never here ([[adr-00-adr-doctrine]] rule 1).
+5. Full identifiers, endpoint, and provisioning record live in [[INVENTORY]]'s `feedlot-campo` section, never here ([[adr-00-discipline]] rule 1).
 
 ## FORBIDDEN
 
@@ -36,7 +36,7 @@ tags: [adr, infrastructure, aws, rds, divergence]
 
 ### related adrs
 
-- [[docs/adrs/adr-02-initial-stack]] — rule 5, the requirement that an infrastructure divergence arrive as its own ADR
+- [[docs/adrs/adr-50-initial-stack]] — rule 5, the requirement that an infrastructure divergence arrive as its own ADR
 - [[docs/adrs/adr-48-derived-project-deploy-identity]] — rule 6, the inventory discipline the provisioning record follows
 
 ### history

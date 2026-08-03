@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """ADR conformance hook (PostToolUse on Write|Edit).
 
-Enforces adr-00-adr-doctrine on every file written under .claude/rules/ or
+Enforces adr-00-discipline on every file written under .claude/rules/ or
 docs/adrs/: filename pattern, required frontmatter, the `category` enum, and
 the intentional `defered` spelling (GLOSSARY forbids `deferred`).
 Exit 2 feeds the violation back to the agent; any internal error exits 0.
@@ -47,7 +47,7 @@ def check(path):
     if not FILENAME.match(path.name):
         problems.append(
             f"{path.name}: ADR filenames must match adr-NN-slug.md "
-            "(sequential NN, kebab-case English slug) per adr-00-adr-doctrine."
+            "(sequential NN, kebab-case English slug) per adr-00-discipline."
         )
     try:
         text = path.read_text(encoding="utf-8")
@@ -60,11 +60,11 @@ def check(path):
         )
     fm, body = parse(text)
     if fm is None:
-        problems.append(f"{path.name}: missing frontmatter block (adr-00-adr-doctrine).")
+        problems.append(f"{path.name}: missing frontmatter block (adr-00-discipline).")
         return problems
     for key in REQUIRED_KEYS:
         if key not in fm:
-            problems.append(f"{path.name}: frontmatter lacks '{key}' (adr-00-adr-doctrine).")
+            problems.append(f"{path.name}: frontmatter lacks '{key}' (adr-00-discipline).")
     if fm.get("type") and fm["type"] != "adr":
         problems.append(f"{path.name}: frontmatter 'type' must be 'adr', found '{fm['type']}'.")
     if "status" in fm:

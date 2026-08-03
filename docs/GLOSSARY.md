@@ -10,7 +10,7 @@ tags: [doc, harness, glossary, ssot]
 
 # GLOSSARY — naming authority
 
-The names. Rules: [[adr-01-glossary-and-localization]]. Feedlot domain terms: [[GLOSSARY-feedlot-additions]].
+The names. Rules: [[adr-12-glossary-and-localization]]. Feedlot domain terms: [[GLOSSARY-feedlot-additions]].
 
 | Term | Canonical form | Applies to | Forbidden forms |
 |---|---|---|---|
@@ -23,18 +23,18 @@ The names. Rules: [[adr-01-glossary-and-localization]]. Feedlot domain terms: [[
 | frontend | `frontend` | service name, ECR suffix, repo path `frontend/`, docs | `web`, `client`, `ui`, `app/` as the Astro root path |
 | environments | `dev`, `prod`, `local` | infra, secrets paths, docs | `staging` (does not exist here), `development`, `production` |
 | adr, tdd | lowercase in filenames (`adr-NN-slug.md`); uppercase only for the manual [[TDD]] | files, wikilinks | mixed case in filenames |
-| defered | `defered` | ADR lifecycle status token ([[adr-00-adr-doctrine]]) | `deferred` — the token's spelling is intentional and machine-checked |
+| defered | `defered` | ADR lifecycle status token ([[adr-00-discipline]]) | `deferred` — the token's spelling is intentional and machine-checked |
 | infrastructure | `INFRASTRUCTURE` (doc name), `infrastructure` (prose) | doc names, wikilinks, prose | `INFRAESTRUCTURE`, `infraestructure` — misspelling, corrected repo-wide |
 | package manager (frontend) | `bun` | everything JavaScript ([[FRONTEND]]) | `npm` (prohibited), `pnpm`, `yarn` |
 | package manager (backend) | `uv` | everything Python ([[BACKEND]]) | `pip`, `poetry` |
 | cache | the layers of [[CACHE]] | settings, infra | `redis` (prohibited) |
 | fragment | `fragment` | HTMX HTML-over-the-wire responses ([[HTMX]]) | `partial`, `snippet` |
 | island | `island` | Svelte interactive components ([[FRONTEND]]) | `widget`, `component` (for this meaning) |
-| live-doc block | `live-doc block`, delimited `LIVE-DOC:START … LIVE-DOC:END` | the wikilinks-only region stamped at the top of every matched code file, linking it to the ADRs and docs that govern it ([[adr-17-live-doc-backlinks]], [[HARNESS]]); stamped only by the linker `kdx-live-doc`, never by hand | `docstring header`, `backlink header`, `doclink`, `frontmatter` (for this meaning); any block carrying prose instead of links |
+| live-doc block | `live-doc block`, delimited `LIVE-DOC:START … LIVE-DOC:END` | the wikilinks-only region stamped at the top of every matched code file, linking it to the ADRs and docs that govern it ([[adr-17-live-doc-backlinks]], [[SKILL-INVENTORY]]); stamped only by the linker `kdx-live-doc`, never by hand | `docstring header`, `backlink header`, `doclink`, `frontmatter` (for this meaning); any block carrying prose instead of links |
 | shadow test | `shadow test` | browser validation of a feature's flows against the rendered UI ([[FRONTEND]]) | `e2e test`, `smoke test` |
 | endpoint | `endpoint` | any route declared in [[API]] | `route` (in API context) |
 | project slug | `astro-drf-aws` (this template's reference project; `PROJECT_SLUG` backend/CI, `PUBLIC_PROJECT_SLUG` frontend-derived form) | AWS resource names, secrets paths, hosts ([[INFRASTRUCTURE]]); frontend-visible copy via `PUBLIC_PROJECT_SLUG` ([[VARIABLES]]) | `astro_drf_aws`, `astrodrfaws`; a literal `astro-drf-aws` typed outside the sanctioned single-source points ([[VARIABLES]], issue #133) |
-| client-visible backend URL | `PUBLIC_BACKEND_URL` | the frontend's browser-visible backend origin ([[VARIABLES]]); the only name code reads | `PUBLIC_API_URL` — declared but never read, dropped repo-wide under [[adr-01-glossary-and-localization]] rule 7 |
+| client-visible backend URL | `PUBLIC_BACKEND_URL` | the frontend's browser-visible backend origin ([[VARIABLES]]); the only name code reads | `PUBLIC_API_URL` — declared but never read, dropped repo-wide under [[adr-12-glossary-and-localization]] rule 7 |
 | base domain | `grupoalvs.com` (`BASE_DOMAIN`) | project hosts `<slug>[.dev].grupoalvs.com` | hardcoding the host instead of composing it |
 | view | Django server code only — views and viewsets ([[BACKEND]]) | backend code | calling Astro pages or Svelte files "views" |
 | page | `page` — an Astro `src/pages/` route ([[FRONTEND]]) | frontend routes | `view` (Django's word), `screen` |
@@ -44,15 +44,15 @@ The names. Rules: [[adr-01-glossary-and-localization]]. Feedlot domain terms: [[
 | model | singular PascalCase (`User`, `Invoice`) | Django models | plural class names |
 | viewset / serializer | `<Model>ViewSet`, `<Model>Serializer` (DRF standard) | DRF classes | `<Model>API`, abbreviations (`<Model>VS`) |
 | user identity key | `sub` — the Cognito subject claim, immutable user key | user model, DRF serializers ([[BD]]) | `cognito_id`, `uid`, `user_uuid` |
-| guardian | `astro-drf-aws-prd`, `astro-drf-aws-adr`, `astro-drf-aws-api` — SSOT-watching subagents in `agents/` | agent names, dispatch hook, docs | `watcher`, `checker`, ad-hoc renames without a row here |
-| vendored skill | a real skill copy under `.claude/skills/<name>/` mirrored to `skills/<name>/`, listed in [[HARNESS]] ([[adr-14-harness]]) | the template's self-contained skill set | `linked skill`, relying on the global `~/.agents/skills/` harness |
-| harness document | `docs/HARNESS.md` | SSOT for the skills the template requires ([[adr-14-harness]]) | `skills.md`, `SKILLS.md`, listing skills in [[AGENTS]] as the source of truth |
+| guardian | `astro-drf-aws-prd`, `astro-drf-aws-adr`, `astro-drf-aws-api` — SSOT-watching subagents in `docs/agents/` | agent names, dispatch hook, docs | `watcher`, `checker`, ad-hoc renames without a row here |
+| vendored skill | a real skill copy under `.claude/skills/<name>/` mirrored to `skills/<name>/`, listed in [[SKILL-INVENTORY]] ([[adr-02-harness]]) | the template's self-contained skill set | `linked skill`, relying on the global `~/.agents/skills/` harness |
+| harness document | `docs/SKILL-INVENTORY.md` | SSOT for the skills the template requires ([[adr-02-harness]]) | `skills.md`, `SKILLS.md`, listing skills in [[AGENTS]] as the source of truth |
 | development-loop document | `docs/DEVELOPMENT-LOOP.md` | SSOT of the development loop — the canonical workflows AND their runbook (sequence + tool/skill per step); force is [[adr-07-development-flow]] | `WORKFLOW.md`, `DEV-LOOP.md`, `dev-flow.md`; putting the workflow diagrams inside the ADR; siting the loop's definition in [[PRD]] |
-| product requirements document | `docs/PRD.md` | SSOT of the **objective and the horizon** — the railguard and growth by addition; generalist, top-down, held in context always | `VISION.md`, `SPEC.md`; siting a mechanism, a roadmap, a workflow, or a restated rule in it |
+| product requirements document | `docs/constitution/PRD.md` | SSOT of the **objective and the horizon** — the railguard and growth by addition; generalist, top-down, held in context always | `VISION.md`, `SPEC.md`; siting a mechanism, a roadmap, a workflow, or a restated rule in it |
 | railguard | the foundations growth may never compromise — stack, infrastructure, and the SSOTs [[PRD]] cites | [[PRD]]; goal-alignment judgements | `guardrail` (the guardians are a different thing — see *guardian*), `rails`, `constraints` |
-| componentization | `componentization` | the `.astro`-routes-only / `.svelte`-everything-else discipline ([[adr-04-frontend-and-design-system]] r9, [[COMPONENTIZATION]]) | `componetization` (typo), `component architecture`, `component structure` |
-| componentization document | `docs/COMPONENTIZATION.md` | SSOT for the componentization folder tree and rationale ([[adr-04-frontend-and-design-system]] r9) | `COMPONENTS.md`, `ARCHITECTURE.md` |
-| vendored MCP server | project-scoped `.mcp.json` + project-local venv under `.mvmcp/`, listed in [[HARNESS]] ([[adr-18-markdown-vault-mcp]]) | the template's self-contained MCP set | relying on a machine-global MCP registration; committing `.mvmcp/` |
+| componentization | `componentization` | the `.astro`-routes-only / `.svelte`-everything-else discipline ([[adr-52-frontend-and-design-system]] r9, [[COMPONENTIZATION]]) | `componetization` (typo), `component architecture`, `component structure` |
+| componentization document | `docs/COMPONENTIZATION.md` | SSOT for the componentization folder tree and rationale ([[adr-52-frontend-and-design-system]] r9) | `COMPONENTS.md`, `ARCHITECTURE.md` |
+| vendored MCP server | project-scoped `.mcp.json` + project-local venv under `.mvmcp/`, listed in [[SKILL-INVENTORY]] ([[adr-18-markdown-vault-mcp]]) | the template's self-contained MCP set | relying on a machine-global MCP registration; committing `.mvmcp/` |
 | markdown-vault MCP server | `markdown-vault-docs` | the vendored MCP over `docs/`, first source of truth for `docs/` content ([[adr-18-markdown-vault-mcp]], [[markdown-vault-mcp]]) | `markdown-vault-syv` (kodex's SyV instance), `mvmcp` or `vault` as the registered server name |
 | markdown-vault env stem | `MARKDOWN_VAULT_MCP_` | launcher env for the vault MCP; harness-dev tooling, not app runtime, never in [[VARIABLES]] ([[adr-18-markdown-vault-mcp]] rule 3) | `MVMCP_`, `VAULT_`, declaring it as an app variable |
 | vault MCP profile | `full` / `keyword` | which vault MCP the launcher installs and serves — `full` with semantic search, `keyword` without; selected by `MARKDOWN_VAULT_MCP_PROFILE`, table owned by [[markdown-vault-mcp]] | `embeddings`/`no-embeddings`, `lite`, `degraded`, `offline` as the profile names |
@@ -106,7 +106,7 @@ The names. Rules: [[adr-01-glossary-and-localization]]. Feedlot domain terms: [[
 | router permission class | `CanUseRouter` (`backend/apps/router/permissions.py`) | DRF permission gating `RouteView`: authenticated AND member of `admins` or `ai_operators` ([[API]]) | `IsRouterUser`, reusing `IsInAdminsGroup` unmodified for the router |
 | router rate-abuse guard | `evaluate_rate_abuse`, `is_rate_blocked` (`backend/apps/router/rate_abuse.py`) | async, DB-cache-backed silent block on the router's `POST /api/router/route/` when a user's average messages-per-minute crosses a threshold (#371, [[API]], [[adr-16-async-mandatory]], [[adr-06-cache]]) — enforcement only, never authorization | `RateLimiter`, `RouterThrottle` (collides with `CooldownThrottle`'s naming axis) |
 | library | Melt UI (pkg `melt`) | headless builder layer under Bits UI/shadcn-svelte ([[MELT-UI]]) | `@melt-ui/svelte` (legacy pkg), MeltUI |
-| component layering posture | `posture` | this template's standing default for which component layer to reach for first — Melt builder, then shadcn-svelte, then custom ([[MELT-UI]], [[DESIGN-SYSTEM]], [[adr-04-frontend-and-design-system]] r8) | `priority`, `preference`, `strategy` for this meaning |
+| component layering posture | `posture` | this template's standing default for which component layer to reach for first — Melt builder, then shadcn-svelte, then custom ([[MELT-UI]], [[DESIGN-SYSTEM]], [[adr-52-frontend-and-design-system]] r8) | `priority`, `preference`, `strategy` for this meaning |
 | model field (user theme config) | `theme_config` | per-user appearance blob `{mode,bgPreset,colors,radius}`, mirrored to the `theme` cookie ([[API]], [[DESIGN-SYSTEM]]) | `theme_settings`, `prefs`, `appearance_config` |
 | cookie | `theme` | non-HttpOnly cookie mirroring `theme_config` for no-flash SSR ([[DESIGN-SYSTEM]], [[CACHE]]) | `theme_cookie` |
 | theme value (mode) | `mode` (`light`\|`dark`) | appearance mode ([[DESIGN-SYSTEM]]) | `dark_mode`, `color_scheme` |
@@ -122,7 +122,7 @@ The names. Rules: [[adr-01-glossary-and-localization]]. Feedlot domain terms: [[
 | i18n module | `frontend/src/i18n/` | the frontend's translation-catalog SSOT — locale config, per-locale catalog, render helper ([[LOCALIZATION]], [[FRONTEND]]) | `frontend/src/locales/`, `frontend/src/lang/`; a per-page translation mechanism |
 | default locale | `es` | this reference run's default locale, set in `frontend/src/i18n/config.ts` ([[LOCALIZATION]]) | `en` as this run's shipped default; a locale hardcoded outside `config.ts`; region tags (`es-AR`, `es_ES`) for it |
 | render helper | `t` | the localization function, signature `t(key, locale?)` → localized string ([[LOCALIZATION]], [[FRONTEND]]) | `translate`, `i18n`, `__`, `gettext` as the helper name |
-| message ID | English `snake_case` (e.g. `lobby_pending`) | the catalog key; IDs/keys/vars stay English, only the rendered value localizes ([[adr-01-glossary-and-localization]], [[LOCALIZATION]]) | non-English keys; camelCase/kebab-case IDs; the localized string used as its own key |
+| message ID | English `snake_case` (e.g. `lobby_pending`) | the catalog key; IDs/keys/vars stay English, only the rendered value localizes ([[adr-12-glossary-and-localization]], [[LOCALIZATION]]) | non-English keys; camelCase/kebab-case IDs; the localized string used as its own key |
 | locale | `locale` — a language code (e.g. `es`, `en`) | the language selector for routing and catalog lookup ([[LOCALIZATION]]) | `lang`, `language`, `i18n` for this meaning |
 | catalog | `catalog` | a per-locale map of message ID → localized string ([[LOCALIZATION]]) | `messages`, `translations`, `dictionary`, `strings` for this meaning |
 | showcase component (select) | `Select` | Tier-1 single-select popover component, `form/`, Melt Select builder ([[COMPONENTIZATION]], [[MELT-UI]], issue #178) | `Dropdown`, `SelectBox`, `select-input` |

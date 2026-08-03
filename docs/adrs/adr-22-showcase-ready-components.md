@@ -20,7 +20,7 @@ tags: [adr, frontend, components, showcase]
 2. The one exemption is a component whose only valid invocation is as a context-bound child of a parent compound component — never bare, by any caller. It may throw on a bare mount, because that throw states the parent requirement it exists to enforce. The parent itself carries rule 1 with no exemption.
 3. Both halves — the requirement and the exemption's exact membership — are enforced by `frontend/tests/component-mount.test.ts` and its `CONTEXT_BOUND` list ([[COMPONENTIZATION]]).
 4. A component's default invocation performs no mutating action: with no caller-supplied wiring it issues no POST, PATCH or DELETE, no navigation carrying session or state side effects, and no write. A component capable of such an action takes it through an explicit prop or callback, and that prop defaults to a safe no-op or a clearly-labeled disabled affordance when the caller supplies nothing.
-5. This adds a component contract to [[adr-04-frontend-and-design-system]] rule 9 and changes nothing else about how components are built or styled.
+5. This adds a component contract to [[adr-52-frontend-and-design-system]] rule 9 and changes nothing else about how components are built or styled.
 
 ## FORBIDDEN
 
@@ -32,13 +32,13 @@ tags: [adr, frontend, components, showcase]
 ## REJECTED
 
 - **Separate showcase variants of each component** — a `*.demo.svelte` beside every real one, free to hardcode data and stub actions. Rejected because the demo stops resembling the component the moment either changes, and the gallery then documents something that does not ship.
-- **A standing pre-v1 in-place-edit override on this ADR** — an owner authorization, recorded here on 2026-07-15, letting rules 1–2 be reworded without supersession while the project stayed pre-v1. Dropped as redundant on 2026-08-02: [[adr-00-adr-doctrine]] rule 8 now makes in-place policy change the normal path for every ADR, with the owner's authorization given in the conversation where it happens.
+- **A standing pre-v1 in-place-edit override on this ADR** — an owner authorization, recorded here on 2026-07-15, letting rules 1–2 be reworded without supersession while the project stayed pre-v1. Dropped as redundant on 2026-08-02: [[adr-00-discipline]] rule 8 now makes in-place policy change the normal path for every ADR, with the owner's authorization given in the conversation where it happens.
 
 ## RELATED
 
 ### related adrs
 
-- [[docs/adrs/adr-04-frontend-and-design-system]] — rule 9, the componentization rule this contract attaches to
+- [[docs/adrs/adr-52-frontend-and-design-system]] — rule 9, the componentization rule this contract attaches to
 
 ### related files
 

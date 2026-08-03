@@ -17,11 +17,11 @@ tags: [adr, feedlot, domain, architecture]
 ## ASSERTIONS
 
 1. The feedlot is built as domain apps on top of the template. A new capability is a new app and its [[API]] rows ([[PRD]] — grows by addition). The cattle domain is `livestock`, `feed` and `sanitary`; the shared spine it rides on is `clients`, `ledger`, `market` and `advisors`.
-2. App and model names are decided in [[GLOSSARY]] before first use ([[adr-01-glossary-and-localization]]); the feedlot additions are staged in `GLOSSARY-feedlot-additions.md`. A domain name never collides with a template surface — the animal-health domain is `sanitary` precisely because `/api/health/` is the liveness probe ([[adr-28-animal-lifecycle-and-sanitary]] rule 4).
+2. App and model names are decided in [[GLOSSARY]] before first use ([[adr-12-glossary-and-localization]]); the feedlot additions are staged in `GLOSSARY-feedlot-additions.md`. A domain name never collides with a template surface — the animal-health domain is `sanitary` precisely because `/api/health/` is the liveness probe ([[adr-28-animal-lifecycle-and-sanitary]] rule 4).
 3. Operational facts are immutable, dated event records. States — animal status, lot counts — and balances are derived from them, never stored as the editable truth. Catalogs are the only editable tables, and a correction is a new event.
 4. Costing is generic: a charge-bearing event reaches the account through the `(source_kind, source_id)` pair on `LedgerEntry` ([[adr-25-account-ledger]]), never a per-domain foreign key. Any future domain posts charges through that same pair without changing `ledger`. This pair is the sanctioned scalability seam.
-5. Every fact is stated once. The code-facing sources of truth are [[FEEDLOT]] for the domain and [[FEEDLOT-DATA-MODEL]] for the entities; an ADR links them and inlines nothing ([[adr-00-adr-doctrine]] rule 1).
-6. Backend work enters only through [[API]] ([[adr-03-api-and-backend]]) and is born through the [[TDD]] flow along the development loop ([[adr-07-development-flow]]). No feedlot ADR grants an exception to that path.
+5. Every fact is stated once. The code-facing sources of truth are [[FEEDLOT]] for the domain and [[FEEDLOT-DATA-MODEL]] for the entities; an ADR links them and inlines nothing ([[adr-00-discipline]] rule 1).
+6. Backend work enters only through [[API]] ([[adr-51-api-and-backend]]) and is born through the [[TDD]] flow along the development loop ([[adr-07-development-flow]]). No feedlot ADR grants an exception to that path.
 
 ## FORBIDDEN
 
@@ -44,7 +44,7 @@ tags: [adr, feedlot, domain, architecture]
 - [[docs/adrs/adr-25-account-ledger]] — the ledger rule 4's pair lands on
 - [[docs/adrs/adr-26-livestock-individual-and-lot]] — how cattle enter and are carried
 - [[docs/adrs/adr-28-animal-lifecycle-and-sanitary]] — the lifecycle events and the `sanitary` name
-- [[docs/adrs/adr-03-api-and-backend]] — the API-first path rule 6 keeps
+- [[docs/adrs/adr-51-api-and-backend]] — the API-first path rule 6 keeps
 - [[docs/adrs/adr-07-development-flow]] — the loop every feedlot change walks
 
 ### related files

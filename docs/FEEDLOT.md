@@ -12,7 +12,7 @@ tags: [doc, feedlot, domain, ssot]
 
 > [!note] Proposed
 > This doc adds a domain on top of the template. It is a proposal until it passes
-> the ABC gate ([[AGENTS]]) and the guardians ([[adr-11-guardians]]). Rules are in
+> the ABC gate ([[AGENTS]]) and the guardians ([[adr-03-guardians]]). Rules are in
 > [[adr-24-feedlot-domain]], [[adr-25-account-ledger]], [[adr-26-livestock-individual-and-lot]],
 > [[adr-27-advisors-generative]]. The data model is [[FEEDLOT-DATA-MODEL]].
 

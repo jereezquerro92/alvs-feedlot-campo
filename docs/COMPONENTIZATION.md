@@ -10,17 +10,17 @@ tags: [doc, frontend, componentization, design-system]
 
 # COMPONENTIZATION
 
-Content home for [[adr-04-frontend-and-design-system]] r9. Stack context: [[FRONTEND]]; component layering: [[DESIGN-SYSTEM]], [[MELT-UI]].
+Content home for [[adr-52-frontend-and-design-system]] r9. Stack context: [[FRONTEND]]; component layering: [[DESIGN-SYSTEM]], [[MELT-UI]].
 
 > [!important] This doc owns technique and folder paths — not names
-> This document is the SSOT for the componentization **technique** (the `.astro`-routes-only / `.svelte`-everything-else rule) and the **folder-path taxonomy** (which category a component's file lives under). It is **not** where a component's canonical name is decided: **[[GLOSSARY]] is the naming authority for every component name**, per [[adr-01-glossary-and-localization]] rule 1 ([[adr-00-adr-doctrine]] owner ruling, issue #206). The Component index below records the name-to-folder mapping for reference, but a new component's name still gets its GLOSSARY row first, before its first use, exactly like any other identifier-worthy term.
+> This document is the SSOT for the componentization **technique** (the `.astro`-routes-only / `.svelte`-everything-else rule) and the **folder-path taxonomy** (which category a component's file lives under). It is **not** where a component's canonical name is decided: **[[GLOSSARY]] is the naming authority for every component name**, per [[adr-12-glossary-and-localization]] rule 1 ([[adr-00-discipline]] owner ruling, issue #206). The Component index below records the name-to-folder mapping for reference, but a new component's name still gets its GLOSSARY row first, before its first use, exactly like any other identifier-worthy term.
 
 ## The rule
 
 **`.astro` is for routes and layouts only.** A file under `src/pages/**.astro` or `src/layouts/**.astro` composes components and holds page-level wiring — data fetching, prop assembly, layout slots — and authors no non-trivial markup of its own. Every other visual unit is a `.svelte` component, including a page's title: `<title>{title}</title>` hand-authored inline in a `.astro` file is a defect under this rule, not a style preference.
 
 - **A static title still ships zero client JS.** A `.svelte` component rendered inside Astro's SSR output with no hydration directive (`client:load`, `client:visible`, etc.) produces plain server-rendered markup — the componentization mandate costs nothing at runtime.
-- **A `.svelte` file with no client directive is still rung 1 of the interactivity ladder** ([[FRONTEND]], [[adr-04-frontend-and-design-system]] r3) — this rule is about markup *ownership*, not about adding hydration. Escalating to an actual island remains a separate, per-feature decision.
+- **A `.svelte` file with no client directive is still rung 1 of the interactivity ladder** ([[FRONTEND]], [[adr-52-frontend-and-design-system]] r3) — this rule is about markup *ownership*, not about adding hydration. Escalating to an actual island remains a separate, per-feature decision.
 
 ## The component contract, and the harness that enforces it
 
@@ -41,15 +41,15 @@ Two more mechanics worth knowing before touching that file. It is the only DOM-b
 ```
 src/lib/components/
   primitives/        # PageTitle.svelte, SectionTitle.svelte — .svelte, zero-hydration
-  ui/                # shadcn-svelte vendored set (adr-04 r4), incl. table/
+  ui/                # shadcn-svelte vendored set (adr-52 r4), incl. table/
   data/              # DataTable, NumericValue, StatusBadge, ChipFilterBar, Pagination, Collapsible, Tree
   dashboard/         # MetricTile, MetricTileStrip, EntityCard, EntityGrid, SummaryCard
   chat/              # ChatUI, ChatMessageList, ChatComposer — the router's chat surface (CHATBOT)
   auth/              # AuthPanel, SessionBadge, ProfileForm
-  form/              # Select, Combobox, Checkbox, Switch, DatePicker, DateRangePicker, PinInput, TagsInput — Melt builders (adr-04 r8 default)
+  form/              # Select, Combobox, Checkbox, Switch, DatePicker, DateRangePicker, PinInput, TagsInput — Melt builders (adr-52 r8 default)
   nav/               # Tabs, DropdownMenu, ContextMenu, Menubar, TableOfContents — Melt builder(s) + hand-rolled fallbacks
   feedback/          # Toast — Melt builder, module-level `toaster` singleton
-  overlay/           # Dialog, Drawer, Accordion, ConfirmDialog, Tooltip, Popover, HoverCard, ScrollArea, SidePanel — Melt builders (adr-04 r8 default), SOLID open/close primitives
+  overlay/           # Dialog, Drawer, Accordion, ConfirmDialog, Tooltip, Popover, HoverCard, ScrollArea, SidePanel — Melt builders (adr-52 r8 default), SOLID open/close primitives
   theme/             # ThemeModeToggle, QuickThemeToggle, ThemeCard — Melt-builder theme controls
   showcase/          # AlertDialogDemo, TabsDemo, DropdownMenuDemo, ContextMenuDemo, MenubarDemo, TableOfContentsDemo, TooltipDemo, PopoverDemo, HoverCardDemo, CollapsibleDemo, TreeDemo, ScrollAreaDemo, SidePanelDemo, ToastTriggerDemo — gallery-only demo compositions, not app surface
   views/             # LobbyView, ProfileView, ShowcaseView, ShowcaseGalleryView, ChatView — one zero-hydration page body per route
@@ -57,7 +57,7 @@ src/lib/components/
 
 **Every component name here is business-agnostic** — no domain (financial, HR, inventory, ...) is ever spelled into a folder or component name. A component's fitness for a specific kind of dashboard or report is recorded as guidance in the Component index below, never encoded in its identifier: a project cloning this template reads `DataTable`, not `FinancialTable`, and decides for itself where it fits.
 
-Each category resolves its own components through the layering order owned by [[DESIGN-SYSTEM]] and [[MELT-UI]]: Melt builder first, vendored shadcn-svelte second, hand-rolled custom third ([[adr-04-frontend-and-design-system]] r8). `overlay/` is the layer most likely to need a Melt builder from scratch, since no shadcn-svelte equivalent for a generic (non-alert) dialog, a drawer, or an accordion is vendored in `ui/` today.
+Each category resolves its own components through the layering order owned by [[DESIGN-SYSTEM]] and [[MELT-UI]]: Melt builder first, vendored shadcn-svelte second, hand-rolled custom third ([[adr-52-frontend-and-design-system]] r8). `overlay/` is the layer most likely to need a Melt builder from scratch, since no shadcn-svelte equivalent for a generic (non-alert) dialog, a drawer, or an accordion is vendored in `ui/` today.
 
 ## Component index
 

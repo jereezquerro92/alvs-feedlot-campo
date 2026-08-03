@@ -16,12 +16,12 @@ tags: [adr, harness, mcp, docs]
 
 ## ASSERTIONS
 
-1. The markdown-vault MCP (`markdown-vault-docs`) is the first source of truth for reaching `docs/` content — searching, reading, and traversing the vault graph. An agent consults it before Grep or Read for any `docs/` prose or wikilink question ([[adr-00-adr-doctrine]] rule 10). Grep and Read stay free for code, configs and everything outside `docs/`.
-2. The server is vendored and travels with the repo, never registered machine-globally: a project-scoped `.mcp.json`, a self-bootstrapping launcher `scripts/mvmcp.py`, and a git-ignored `.mvmcp/` holding the project-local venv, index and embeddings. A fresh clone exposes it with no external link — the discipline [[adr-14-harness]] imposes on skills, applied to the MCP. Its inventory row lives in [[HARNESS]] and its version pin in [[REQUIREMENTS]].
-3. The server name is `markdown-vault-docs` and its env stem is `MARKDOWN_VAULT_MCP_`, both registered in [[GLOSSARY]] before use. That env is harness tooling — never app runtime, never a secret — so it does not enter [[VARIABLES]], which governs only what backend or frontend code reads ([[adr-03-api-and-backend]] rule 7).
+1. The markdown-vault MCP (`markdown-vault-docs`) is the first source of truth for reaching `docs/` content — searching, reading, and traversing the vault graph. An agent consults it before Grep or Read for any `docs/` prose or wikilink question ([[adr-00-discipline]] rule 10). Grep and Read stay free for code, configs and everything outside `docs/`.
+2. The server is vendored and travels with the repo, never registered machine-globally: a project-scoped `.mcp.json`, a self-bootstrapping launcher `scripts/mvmcp.py`, and a git-ignored `.mvmcp/` holding the project-local venv, index and embeddings. A fresh clone exposes it with no external link — the discipline [[adr-02-harness]] imposes on skills, applied to the MCP. Its inventory row lives in [[SKILL-INVENTORY]] and its version pin in [[REQUIREMENTS]].
+3. The server name is `markdown-vault-docs` and its env stem is `MARKDOWN_VAULT_MCP_`, both registered in [[GLOSSARY]] before use. That env is harness tooling — never app runtime, never a secret — so it does not enter [[VARIABLES]], which governs only what backend or frontend code reads ([[adr-51-api-and-backend]] rule 7).
 4. This MCP owns the `docs/` prose and wikilink graph; `codebase-memory-mcp` owns the code graph. Neither is folded into the other: a code-structure question goes to codebase-memory first, a doc question here.
-5. The index is kept fresh. After `docs/` changes it is rebuilt or reindexed before its answers are trusted; the `mvmcp_freshness.py` SessionStart hook is the safety net, not the trigger. Writes carry the link-index degradation caveat recorded in [[markdown-vault-mcp]], and Obsidian syntax is still authored through the `obsidian-markdown` skill ([[HARNESS]]).
-6. This ADR gives force and states no procedure. The bootstrap, the tool list, the exclusion set and the indexed frontmatter fields are owned by [[markdown-vault-mcp]] ([[adr-00-adr-doctrine]] rule 1).
+5. The index is kept fresh. After `docs/` changes it is rebuilt or reindexed before its answers are trusted; the `mvmcp_freshness.py` SessionStart hook is the safety net, not the trigger. Writes carry the link-index degradation caveat recorded in [[markdown-vault-mcp]], and Obsidian syntax is still authored through the `obsidian-markdown` skill ([[SKILL-INVENTORY]]).
+6. This ADR gives force and states no procedure. The bootstrap, the tool list, the exclusion set and the indexed frontmatter fields are owned by [[markdown-vault-mcp]] ([[adr-00-discipline]] rule 1).
 
 ## FORBIDDEN
 
@@ -39,13 +39,13 @@ tags: [adr, harness, mcp, docs]
 
 ### related adrs
 
-- [[docs/adrs/adr-00-adr-doctrine]] — rule 10, the MCP-first order this ADR carries out
-- [[docs/adrs/adr-14-harness]] — the vendoring discipline rule 2 follows
-- [[docs/adrs/adr-03-api-and-backend]] — rule 7, why the launcher's env stays out of [[VARIABLES]]
+- [[docs/adrs/adr-00-discipline]] — rule 10, the MCP-first order this ADR carries out
+- [[docs/adrs/adr-02-harness]] — the vendoring discipline rule 2 follows
+- [[docs/adrs/adr-51-api-and-backend]] — rule 7, why the launcher's env stays out of [[VARIABLES]]
 
 ### related files
 
 - [[docs/markdown-vault-mcp]] — the server, its config, tools and caveats
-- [[docs/HARNESS]] — the inventory row and the `obsidian-markdown` skill
+- [[docs/SKILL-INVENTORY]] — the inventory row and the `obsidian-markdown` skill
 - [[docs/GLOSSARY]] — the server name and env stem
-- [[docs/REQUIREMENTS]] — the version pin
+- [[docs/constitution/REQUIREMENTS]] — the version pin

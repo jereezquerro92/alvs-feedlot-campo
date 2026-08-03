@@ -31,7 +31,7 @@ echo "[cloud_setup] pre-warming the frontend dependencies (bun install)"
 # Bake node_modules into the environment snapshot so a cloud session can build
 # the frontend, not only propose the change (#319). This is bun-only with
 # --frozen-lockfile, matching frontend/Dockerfile and ci.yml — npm is prohibited
-# and Node is not in the stack (adr-04 rule 2).
+# and Node is not in the stack (adr-52 rule 2).
 #
 # Deliberately NON-FATAL, unlike the MCP bootstrap above. A missing node_modules
 # is graceful degradation (the session can still install, or use the oven/bun

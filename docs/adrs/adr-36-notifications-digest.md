@@ -20,7 +20,7 @@ tags: [adr, feedlot, notifications, digest, whatsapp, phase-9]
 2. `get_sender(channel)` es el único punto de selección: en DEBUG devuelve `MockSender` —sin red, registra lo enviado— y fuera de DEBUG el sender real del canal. Ningún setting fuerza el mock a un deploy, mismo gate que los clientes de inferencia; los tests corren contra el mock.
 3. `Notification` guarda `client`, `channel`, `to_address`, `subject`, `body` y un `status` ∈ {`pending`, `sent`, `failed`} con su `error` y `sent_at`. Se crea y se lee, sin `update` ni `destroy` ([[adr-24-feedlot-domain]] regla 3): un reintento es una notificación nueva.
 4. `notifications` es read-only sobre los datos del cliente: lee métricas, arma texto y manda. No postea asiento ni cambia estado de dominio — es una capa de salida, no un actuador.
-5. `WHATSAPP_TOKEN` y `WHATSAPP_PHONE_NUMBER_ID` entran en [[VARIABLES]] antes de leerse ([[adr-03-api-and-backend]] regla 7) y sólo los lee el sender real. Viven en `.env` local o en Secrets Manager, nunca en git.
+5. `WHATSAPP_TOKEN` y `WHATSAPP_PHONE_NUMBER_ID` entran en [[VARIABLES]] antes de leerse ([[adr-51-api-and-backend]] regla 7) y sólo los lee el sender real. Viven en `.env` local o en Secrets Manager, nunca en git.
 6. El comando `send_weekly_digests` arma y manda por cliente, y una falla de envío de un cliente no frena a los demás — misma disciplina de aislamiento que `ingest_prices` ([[adr-30-market-prices-connectors]] regla 7).
 
 ## FORBIDDEN

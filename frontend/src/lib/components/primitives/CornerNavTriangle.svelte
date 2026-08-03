@@ -1,5 +1,5 @@
-<!-- LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
-     Governed by: [[adr-04-frontend-and-design-system]]
+<!-- LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
+     Governed by: [[adr-52-frontend-and-design-system]]
      Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]]
      LIVE-DOC:END -->
 
@@ -8,7 +8,7 @@
   (#374, mounted globally in Base.astro by
   #377). Distinct from primitives/HomeTriangle.svelte (#255): top-left,
   right-angle, single-target. Rounded-corner polygon has no Melt builder
-  (adr-04 r8 last resort) — drawn as an SVG path instead of clip-path.
+  (adr-52 r8 last resort) — drawn as an SVG path instead of clip-path.
   Zero props is a safe default (adr-22 r1/r2): a plain, non-mutating
   `<a href>` derived from the current route.
 -->

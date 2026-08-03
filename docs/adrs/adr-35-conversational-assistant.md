@@ -22,7 +22,7 @@ tags: [adr, feedlot, assistant, generative, chatbot, phase-8]
 4. Una `Conversation` es un hilo por cliente y cada `Message` de rol `assistant` persiste su `input_snapshot`, `model_id`, `tokens` y `latency_ms`. Leer un mensaje no vuelve a inferir: se ve exactamente qué datos vio el modelo en cada respuesta.
 5. `AssistantBedrockClient` (real, `converse`, temperatura 0.3) y `MockAssistantClient` (determinista, sin red) se eligen en `get_assistant_client`, único punto de selección, gateado por DEBUG igual que el router y los asesores. Un proceso no-DEBUG sólo puede construir el cliente real; los tests corren contra el mock.
 6. Conversaciones y mensajes exponen `list`/`retrieve`/`create`, sin `update` ni `destroy` ([[adr-24-feedlot-domain]] regla 3): un turno es un hecho fechado y una corrección es otro turno.
-7. La inferencia sigue las reglas en vigor: async con `sync_to_async` sobre `boto3` ([[adr-16-async-mandatory]] regla 4), sobre Bedrock. `ASSISTANT_BEDROCK_MODEL_ID` entra en [[VARIABLES]] antes de leerse ([[adr-03-api-and-backend]] regla 7) y reusa `BEDROCK_REGION`.
+7. La inferencia sigue las reglas en vigor: async con `sync_to_async` sobre `boto3` ([[adr-16-async-mandatory]] regla 4), sobre Bedrock. `ASSISTANT_BEDROCK_MODEL_ID` entra en [[VARIABLES]] antes de leerse ([[adr-51-api-and-backend]] regla 7) y reusa `BEDROCK_REGION`.
 8. Es una capa de capacidad, no un cambio de doctrina: Cognito sigue siendo el único autenticador ([[adr-10-auth]]), [[CACHE]] no gana un servidor ([[adr-06-cache]]) y el router sigue siendo el único con derechos de actuador.
 
 ## FORBIDDEN

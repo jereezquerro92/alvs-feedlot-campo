@@ -4,50 +4,70 @@ type: reference
 category: harness
 use_case: running the triage-and-fix party
 created: 2026-07-17
-modified: 2026-08-02
+modified: 2026-08-03
 tags: [doc, harness, workflow, agents, triage]
 ---
 
 # TRIAGE-TEAMMATES — the party that hunts an issue
 
-The `triage-and-fix` Workflow takes **one issue** and ends with a pull request, a comment on
-that issue, or a new issue. Between those two points nothing is improvised: a JavaScript
-script holds the plan, and every node is an agent whose **tool grant is its contract**.
+The `triage-and-fix` skill takes **one issue** and ends with a pull request, a comment on
+that issue, or a new issue. Between those two points nothing is improvised: the skill's
+`SKILL.md` holds the playbook, and every node is an agent whose **tool grant is its
+contract**.
 
-Vendored per [[adr-14-harness]] and inventoried in [[HARNESS]]. The skill that documents and
-validates it is `.claude/skills/kdx-wf-triage-and-fix/`; the script the runtime actually runs
-is `.claude/workflows/triage-and-fix.js`; the cast lives in `agents/wf-*.md`.
+Vendored per [[adr-02-harness]] and inventoried in [[SKILL-INVENTORY]]. The skill that
+documents and drives it is `docs/skills/triage-and-fix/` (mirrored at
+`.claude/skills/triage-and-fix/` and `skills/triage-and-fix/`); the cast — 18 nodes —
+lives in `docs/agents/kwf-*.md`, with a soul file per node under
+`docs/agents/souls/kwf-*.md`. This replaced the earlier, deleted `wf-*` cast (13 agents)
+and its skill `kdx-wf-triage-and-fix`; nothing under either old name exists on disk
+anymore. Binding ADR: [[docs/adrs/adr-04-issue-delivery]] (law:
+[[docs/adrs/adr-01-constitution]], tooling: [[docs/adrs/adr-02-harness]]).
 
 > [!important] The one idea to keep
 > **Reliability here has exactly three sources: model tier, tool grant, and the schema that
 > closes the output.** It is never a property of a name. The owl is not reliable because it
-> is an owl — it is reliable because a closed question against an allowlisted first-party
-> domain is a reliable *shape*. An earlier draft of this system wrote "the owl is the only
+> is an owl — it is reliable because a closed question run through `WebSearch`/`FetchURL`
+> is a reliable *shape*. An earlier draft of this system wrote "the owl is the only
 > trustworthy familiar" and a model read that as an engineering fact. That is the failure
 > this design exists to prevent.
 
 ## The party
 
-Ten members. **Two of them are not agents at all** — the task and the tavernkeeper are script,
-and that is the point of them.
+Eighteen cast nodes, plus two non-agent steps folded into the main agent's own script: the
+task (a string it assembles) and the tavern routing (an `if` on the hunter's tags).
 
-| # | Who | agentType | Model | Tools — *this is the enforcement* |
+| # | Who | agentType | tier intent | Tools — *this is the enforcement* |
 |---|---|---|---|---|
-| 1 | 🎯 **hunter** | `wf-hunter` | sonnet | Bash, Read, Glob, Grep |
-| 2 | 🦅 **falcon** | `wf-falcon` | haiku | Bash |
-| 3 | 🐕 **hound** | `wf-hound` | haiku | Read, Glob, Grep |
-| — | 📋 **the task** | *script* | — | — |
-| — | 🍺 **tavernkeeper** | *script `if`* | — | — |
-| 4 | ⚔️ **hero**, planning | `wf-hero-plan` | opus | Read, Glob, Grep, Agent — **no write, no web** |
-| 4a | 🦉 **owl** | `wf-owl` | haiku | WebSearch, WebFetch |
-| 4b | 🐈‍⬛ **cat** | `wf-cat` | haiku | WebSearch, WebFetch |
-| 4c | 🐕 **hound** | `wf-hound` | haiku | Read, Glob, Grep |
-| 4d | 🐁 **mouse** | `wf-mouse` | haiku | Read, Glob, Grep |
-| 5 | ⚔️ **hero**, building | `wf-hero-build` | opus | Read, Glob, Grep, Edit, Write, Bash — **no web, no Agent** |
-| 6 | 👤 **shadow** | `wf-shadow` | sonnet | **none at all** |
-| 7 | 🎻 **bard** | `wf-bard` | sonnet | Bash |
+| 1 | 🎯 **hunter** | `kwf-hunter` | low | Bash, Read, Glob, Grep |
+| 2 | 🦅 **falcon** | `kwf-falcon` | low, cheap | Bash |
+| 3 | 🐕 **hound** | `kwf-hound` | low | Read, Glob, Grep |
+| — | 📋 **the task** | *main agent assembles a string* | — | — |
+| — | 🍺 **routing** | *an `if` on `hunter.domain`/`hunter.difficulty`* | — | — |
+| 4 | 🧙 **mage** | `kwf-mage` | heavy (k3-256k) | Read, Glob, Grep, Agent, Bash\* |
+| 4s | 🪄 **sorcerer** | `kwf-sorcerer` | mid (K2.7 highspeed), `trivial` plans only | Read, Glob, Grep, Agent, Bash\* |
+| 4a | 🦉 **owl** | `kwf-owl` | cheapest | WebSearch, FetchURL |
+| 4b | 🐈‍⬛ **cat** | `kwf-cat` | cheapest | WebSearch, FetchURL |
+| 4c | 🐕 **hound** (familiar) | `kwf-hound` | cheapest | Read, Glob, Grep |
+| 4d | 🐁 **mouse** | `kwf-mouse` | cheapest | Read, Glob, Grep |
+| 4e | ⚖️ **inquisitor** | `kwf-inquisitor` | heavy (k3-256k) | Read, Glob, Grep |
+| 5a | ⚔️ **warrior** | `kwf-warrior` | high (inherits caller) | Read, Glob, Grep, Edit, Write, Bash |
+| 5b | 🗡️ **thief** | `kwf-thief` | high (inherits caller) | Read, Glob, Grep, Edit, Write, Bash |
+| 5c | 🪓 **dwarf** | `kwf-dwarf` | high (inherits caller) | Read, Glob, Grep, Edit, Write, Bash |
+| 5d | 🏹 **archer** | `kwf-archer` | high (inherits caller) | Read, Glob, Grep, Edit, Write, Bash |
+| 5e | 🧝 **elf-mage** | `kwf-elf-mage` | heavy (k3-256k) | Read, Glob, Grep, Edit, Write, Bash |
+| 5f | 🛡️ **paladin** | `kwf-paladin` | heavy (k3-256k) | Read, Glob, Grep, Edit, Write, Bash |
+| 6 | 🙏 **priest** | `kwf-priest` | cheap | **none** |
+| 7 | 👤 **shadow** | `kwf-shadow` | low | **none** |
+| 8 | 🎻 **bard** | `kwf-bard` | high | Bash |
 
-Seven `agent()` calls per issue. Two of them opus.
+\* The mage's/sorcerer's `Bash` is granted for the familiar watchdog loop only; any other
+use is a defect. Its `subagents:` allowlist (`kwf-owl`, `kwf-cat`, `kwf-hound`,
+`kwf-mouse`) is the enforcement that it can spawn *only* its familiars.
+
+Camp specialists (5a–5f) run **N in parallel**, one per path-disjoint slice the mage or
+sorcerer's plan emits — not a fixed pair. Node spec, contracts and ownership per node:
+`docs/skills/triage-and-fix/references/cast.md`.
 
 ## The flow
 
@@ -57,32 +77,40 @@ graph TD
     I([issue]) --> H[hunter · triage + domain]
     I --> F[falcon · duplicados]
     I --> D[hound · chunks de codigo]
-    H --> T[la task · script]
+    H --> T[la task · string]
     F --> T
     D --> T
     F -.->|emergencia| X([quick-exit])
     H -.->|vampiro| X
     H -.->|terreno malo| X
-    T --> IF[tavernkeeper · un IF]
-    IF --> P[hero-plan · no escribe]
-    P -.->|opcional| FAM[owl · cat · hound · mouse]
-    FAM -.-> P
-    P --> PLAN[el plan · artifact]
-    PLAN --> B[hero-build · worktree aislado]
-    B --> S[shadow · cero tools]
+    T --> IF[routing · un IF]
+    IF -->|trivial| SO[sorcerer · mid tier]
+    IF -->|easy/medium/hard| M[mage · heavy tier]
+    M -.->|opcional| FAM[owl · cat · hound · mouse]
+    SO -.->|opcional| FAM
+    FAM -.-> M
+    FAM -.-> SO
+    M --> PLAN[el plan · artifact]
+    SO --> PLAN
+    PLAN --> INQ[inquisitor · plan vs PRD/ADRs/TDD]
+    INQ -.->|violation, cap 2| M
+    INQ --> CAMP[camp · N especialistas en paralelo]
+    CAMP --> PR2[priest · gate clean/blocked]
+    PR2 --> S[shadow · cero tools]
     S --> BA[bard]
-    BA --> PR([pull request])
+    BA --> PROD([pull request])
     BA --> CO([comment en el issue])
     BA --> NI([issue nuevo])
+    BA --> PB[post-bard · guardian-dispatch + assertion-review + kwf-deps cascade]
   classDef step fill:#1a1714,stroke:#5a544a,stroke-width:1.5px,color:#F3EEE4;
   classDef hero fill:#1a1714,stroke:#ff8c42,stroke-width:2px,color:#ffaa70;
   classDef cool fill:#1a1714,stroke:#4FA6AB,stroke-width:1.5px,color:#7cc4c8;
   classDef ok fill:#1a1714,stroke:#87A878,stroke-width:1.5px,color:#a9c49e;
   classDef bad fill:#1a1714,stroke:#FF6A1A,stroke-width:1.5px,color:#FF6A1A;
   class I,T,D,F,PLAN step
-  class H,P,B hero
-  class IF,FAM,S cool
-  class PR,CO,NI,BA ok
+  class H,M,SO,CAMP hero
+  class IF,FAM,S,PR2,PB cool
+  class PROD,CO,NI,BA ok
   class X bad
 ```
 
@@ -94,10 +122,10 @@ This is the load-bearing asymmetry, and it is not an inconsistency:
 %%{init: {'theme':'base','themeVariables':{'lineColor':'#8a8578','edgeLabelBackground':'#1a1714','tertiaryTextColor':'#F3EEE4'}}}%%
 graph LR
     subgraph OBLIGATORIO
-        HU[hunter] -.- SC["parallel() en el script<br/>falcon y hound SIEMPRE vuelan<br/>el hunter no puede declinar"]
+        HU[hunter] -.- SC["parallel en el script del agente principal<br/>falcon y hound SIEMPRE vuelan<br/>el hunter no puede declinar"]
     end
     subgraph OPCIONAL
-        HE[hero-plan] -.- FA["tool Agent, desde adentro<br/>manda familiars si quiere<br/>si no manda a nadie, no pasa nada"]
+        HE[mage/sorcerer] -.- FA["tool Agent, desde adentro<br/>manda familiars si quiere<br/>si no manda a nadie, no pasa nada"]
     end
   classDef step fill:#1a1714,stroke:#5a544a,stroke-width:1.5px,color:#F3EEE4;
   classDef hero fill:#1a1714,stroke:#ff8c42,stroke-width:2px,color:#ffaa70;
@@ -108,43 +136,96 @@ graph LR
   class SC,FA step
 ```
 
-The **hunter's** scouts live in the script's `parallel()`. It cannot decline to be scouted
-for, because it is not the one who calls them.
+The **hunter's** scouts fly in the main agent's own forest step. It cannot decline to be
+scouted for, because it is not the one who calls them.
 
-The **hero's** familiars are spawned by the hero itself, with its own `Agent` tool. On an
-`easy` × `small` job — a fix it can already see in the chunks the hound brought — it sends
-nobody and nothing fails. The rule of thumb it carries: *send a familiar when you would
-otherwise be guessing.*
+The **mage's** (or **sorcerer's**) familiars are spawned by the planner itself, with its own
+`Agent` tool. On an `easy` × `small` job — a fix it can already see in the chunks the hound
+brought — it sends nobody and nothing fails. The rule of thumb it carries: *send a familiar
+when you would otherwise be guessing.*
 
-These are the only two places the runtime offers, and the difference between them **is** the
-mandatory/optional distinction.
+These are the only two places the run offers a fan-out, and the difference between them
+**is** the mandatory/optional distinction.
 
-## The tavernkeeper is an `if`
+## Routing is an `if`, not an agent
 
 > [!warning] It used to be an agent. It was deleted, not moved.
-> Two sonnet calls whose entire output was a label interpolated into a prompt. It routed to
-> no different agent — the hero is one opus agent either way — granted no different tools,
-> and chose no different model. **It was not a router; it was a second, worse read of an
-> issue the hunter had already read with tools in hand.**
+> The old `wf-*` cast carried a "tavernkeeper" — two sonnet calls whose entire output was a
+> label interpolated into a prompt. It routed to no different agent by itself, granted no
+> different tools, and chose no different model beyond what the routed-to node already
+> pinned. **It was not a router; it was a second, worse read of an issue the hunter had
+> already read with tools in hand.**
 
-The judgment moved to the node already paying for that context (`hunterSchema.domain`), and
-what remains is what it always was:
+The judgment lives on the node already paying for that context — the main agent branches
+on `hunter.difficulty` (`trivial` → sorcerer; `easy`/`medium`/`hard` → mage) and on
+`hunter.domain` to pick the domain brief handed to whichever planner runs. The lesson
+generalises: **a node that re-derives, at lower context, a judgment an upstream node was
+already holding is not a gate. It is a worse copy.**
 
-```js
-const domain = paperwork.domain;
-const domainBrief = DOMAIN[domain] || 'No domain brief. Work from the task alone.';
-```
+## The doctrine loop — before camp
 
-The character stays — an `if` is allowed a voice. The lesson generalises: **a node that
-re-derives, at lower context, a judgment an upstream node was already holding is not a gate.
-It is a worse copy.**
+Once a plan exists, ⚖️ **kwf-inquisitor** (heavy tier) reads it against the PRD, the
+binding ADRs, and — on any plan touching `docs/assertions/**` — TDD completeness. A
+`violation` verdict resumes the same planner instance (mage or sorcerer) with the
+findings, capped at **2** loops; a third violation aborts the run as `doctrine-failed`.
+Only a `compliant` verdict releases the plan to camp.
+
+## The camp — N parallel specialists
+
+The plan emits path-disjoint slices, each assigned a specialist: ⚔️ `warrior` (backend),
+🗡️ `thief` (frontend), 🪓 `dwarf` (devops/infra), 🏹 `archer` (design/cosmetic), plus the
+heavy pair 🧝 `elf-mage` (very complex) and 🛡️ `paladin` (heavy devops). One parallel
+dispatch, each in its own git worktree and branch, files it alone touches. The combined
+diff then goes to 🙏 **kwf-priest** — a zero-tool gate that reads `clean` or `blocked` off
+what the camp **did**, never off the plan's intent. `blocked` ends the run; nothing
+publishes.
+
+## Two nodes worth understanding
+
+### 👤 shadow — blind on purpose
+
+Zero tools. Not "no docs", not "no web": **it cannot open a single file**. It sees only
+the combined diff handed to it.
+
+It answers one question: *does this code stand up with nothing else in hand?* That is a
+different gate than a guardian's ([[adr-03-guardians]]): a guardian checks code **against**
+the constitution; the shadow checks whether it is self-sufficient **without** it. Code that
+only makes sense with [[PRD]] open beside it fails here regardless of any guardian verdict.
+
+### 🎻 bard — the terminal verdict
+
+The only node that mutates anything outside the working tree. It weighs the shadow and
+priest verdicts against the builders' own account of what they ran, merges path-disjoint
+branches when there is more than one, and publishes exactly one outcome: a pull request, a
+comment on the issue the run started from, or — only for a genuinely different subject — a
+new issue.
+
+**Not hunted is not failure.** The default for a failed hunt is a **comment on the issue the
+run started from**; a new issue that orphans the finding from the original is the wrong
+call.
+
+## Post-bard — closing the batch
+
+Once the bard publishes, the run is not done. The main agent runs, in order:
+
+1. **Guardian dispatch** — `python3 docs/hooks/guardian-dispatch <baseRef>` from repo root;
+   every guardian it names is dispatched and its `violation`/`danger`/`needs-new-adr`
+   verdict is honored.
+2. **Assertion review** — if the combined diff touches `docs/assertions/**` (other than
+   `assertion-00-discipline.md`), the `docs/skills/assertion-review/` skill runs. Unmet
+   assertions leave the batch unclosed until TDD produces the proving tests.
+
+`docs/skills/triage-and-fix/bin/kwf-deps cascade <pr>` runs whenever anything is deferred
+— see the REQUIREMENT system below.
 
 ## The prey table
 
-The hunter tags every issue on two axes. Rows are `difficulty`, columns are `size`.
+The hunter tags every issue on two axes. Rows are `difficulty` (now including `trivial`),
+columns are `size`.
 
 |  | **small** | **medium** | **large** |
 |---|---|---|---|
+| **trivial** | — routes to sorcerer, mid tier — | | |
 | **easy** | hierbas | ratas gigantes | goblins |
 | **medium** | puma | huargos | orcos |
 | **hard** | jabalies | skaven asesino | waaaagh! |
@@ -156,98 +237,58 @@ The axes are orthogonal on purpose. A one-line fix repeated across forty files i
 `easy` × `large`. A single hidden race is `hard` × `small`.
 
 > [!note] The tags choose the posture, never the model
-> The hero is opus regardless. What `difficulty` × `size` buys is **how much fan-out is worth
-> it**: `hard`/`large` → send familiars before committing to an approach; otherwise → you
-> likely need nobody.
+> `trivial` alone moves the model tier, to the sorcerer's mid rung. Everywhere else the
+> mage stays heavy regardless; what `difficulty` × `size` buys there is **how much fan-out
+> is worth it**: `hard`/`large` → send familiars before committing to an approach;
+> otherwise → you likely need nobody.
 
 ## The flavour is a render, never an input
 
-Every schema carries typed fields and the two machine tags — **never a prey name, never a
-scene**. No node reads "skaven" out of another node's output. The prey name is derived from
-the tags *after* every decision is made, and it only reaches the log.
-
-The party's spoken lines are the same: a closed `SAY` table in the script, written in advance.
-**No node produces its own line**, and there is no `quote` field in any schema — a
-model-generated line would be model output reaching the log, which is a channel: inert today,
-load-bearing the first time someone parses it.
+Every YAML output contract carries typed fields and the machine tags — **never a prey
+name, never a scene**. No node reads "skaven" out of another node's output. The prey name
+is derived from the tags *after* every decision is made, and it only reaches the log.
 
 Strip every animal from this system and every outcome is byte-identical.
 
-## Two nodes worth understanding
+## The REQUIREMENT system (labels only)
 
-### 👤 shadow — blind on purpose
+| Label | Meaning |
+|---|---|
+| `requires:<N>` | Do not merge before PR #N. |
+| `deferred` | Hunt called off — directly or by cascade. |
 
-Zero tools. Not "no docs", not "no web": **it cannot open a single file**. Verified
-empirically — a probe agent declared `tools: []` reports `NO TOOLS AVAILABLE` and makes zero
-tool calls.
+Deferred = label present **or** closed unmerged. Spec:
+`docs/skills/triage-and-fix/references/deps.md`.
 
-It answers one question: *does this code stand up with nothing else in hand?* That is a
-different gate than a guardian's ([[adr-11-guardians]]): a guardian checks code **against**
-the constitution; the shadow checks whether it is self-sufficient **without** it. Code that
-only makes sense with [[PRD]] open beside it fails here regardless of any guardian verdict.
+```
+docs/skills/triage-and-fix/bin/kwf-deps requires <pr> <N...> [--repo R] [--dry-run]
+docs/skills/triage-and-fix/bin/kwf-deps check <pr> [--repo R]
+docs/skills/triage-and-fix/bin/kwf-deps cascade <pr> [--repo R] [--dry-run] [--force]
+docs/skills/triage-and-fix/bin/kwf-deps lift <pr> [--repo R] [--dry-run]
+docs/skills/triage-and-fix/bin/kwf-deps status <pr> [--repo R]
+```
 
-Its blindness is why `hero-build`'s `diff` field is load-bearing: that string is the **only**
-way the code is ever seen by anyone downstream.
-
-### 🎻 bard — the terminal verdict
-
-The only node that mutates anything outside the working tree. It weighs two witnesses who saw
-different things:
-
-- The hero's account of what it **ran** is first-hand evidence.
-- The hero's account of whether the code is **clear** is worthless — the author is the one
-  person who cannot un-know the intent.
-- The shadow is the better witness on legibility, and guessing on anything else.
-
-**Not hunted is not failure.** The default for a failed hunt is a **comment on the issue the
-run started from** — a new issue saying "we tried #42 and failed" orphans the finding from
-#42. A new issue is only for a genuinely different subject.
+Optional Actions trigger: `docs/skills/triage-and-fix/extras/gha-kwf-deps.yml`.
 
 ## Running it
 
-```
-Workflow({ name: 'triage-and-fix',
-           args: { issue: '42', repo: 'kodexArg/astro-drf-aws' } })
-```
+The main agent — not a native `Workflow` runtime — is the script: it follows
+`docs/skills/triage-and-fix/SKILL.md` phase by phase, dispatching each `kwf-*` node
+per the host's spawn mechanics (`docs/skills/triage-and-fix/references/runtimes.md`).
+Several issues, sequentially, is a choice the caller makes one hunt at a time — a party
+that picks its own work is a party with no owner.
 
-Several issues, sequentially — the list is **yours**, not the workflow's. The script has no
-shell and cannot run `gh issue list` itself, and it should not: a party that picks its own
-work is a party with no owner.
+## What it does NOT do on its own — read this before trusting a run
 
-```
-Workflow({ name: 'triage-and-fix',
-           args: { issues: ['41','42','43'], repo: 'kodexArg/astro-drf-aws' } })
-```
+The skill's playbook already wires this repo's mandatory gates into the post-bard step
+(guardian dispatch, assertion review). What it still does not do:
 
-Sequential is deliberate: `pipeline()` would run N heroes at once, and an abort mid-flight
-would leave N half-hunts.
-
-> [!warning] Prerequisites, both real
-> Dynamic workflows must be **on** (`/config`), and the session must have **started after**
-> the `wf-*` cast landed — the agent registry loads at startup.
-
-## What it does NOT do — read this before trusting a run
-
-This workflow is generic. **This repo's mandatory gates are not in it**, and no node enforces
-them:
-
-- **No [[TDD]] entry is written.** [[adr-07-development-flow]] rule 1 requires the behavior to
-  be agreed before the code exists; [[adr-03-api-and-backend]] rule 2 requires
-  `plan → API → TDD → models.py`. No schema field carries either.
-- **No guardian is engaged.** [[adr-11-guardians]] rule 3 — *guardians are sought, not only
-  triggered*. Seven `agent()` calls and none is a guardian.
-- **No [[API]] row check.** A new endpoint's row must land before its code
-  ([[adr-03-api-and-backend]] rule 1).
-- **No live-doc block or CODEMAP stamping** ([[adr-17-live-doc-backlinks]]).
+- **No live-doc block or CODEMAP stamping** is triggered automatically
+  ([[adr-17-live-doc-backlinks]]) — that runs through its own vendored linker.
 - **The hunter's constitution check is narrower than the ABC gate** in [[AGENTS]]: it is
-  permissive-by-default (`false` only when a written rule *forbids* the issue) and never asks
-  whether the change touches [[API]].
-
-The bard opens a PR; it never merges. That leaves [[adr-19-issue-worktree-pr]] rule 4's gate
-room to run — but **nothing inside this workflow populates it**. Treat a `triage-and-fix` PR
-as a draft that still owes its gates.
+  permissive-by-default (`false` only when a written rule *forbids* the issue).
 
 > [!success] What it does get right
 > It never reaches for a browser smoke test — the shadow reviews a diff string with zero
-> tools, the bard never opens chromium. And `wf-hero-build` runs with `isolation: 'worktree'`,
-> so it never writes into the checkout the run was launched from.
+> tools, the bard never opens chromium. And every camp specialist runs in its own git
+> worktree, so it never writes into the checkout the run was launched from.

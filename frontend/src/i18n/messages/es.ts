@@ -1,10 +1,10 @@
-/* LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
- * Governed by: [[adr-04-frontend-and-design-system]]
+/* LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
+ * Governed by: [[adr-52-frontend-and-design-system]]
  * Docs: [[FRONTEND]]
  * LIVE-DOC:END */
 
 // Keys are English snake_case (GLOSSARY: message ID); values own the Spanish
-// copy (LOCALIZATION, adr-01 r3-r4). Component/variant names rendered as demo
+// copy (LOCALIZATION, adr-12 r3-r4). Component/variant names rendered as demo
 // labels (Showcase, DataTable, Ghost, ...) are code identifiers and stay
 // English inside the Spanish value.
 //
@@ -621,7 +621,7 @@ export const es = {
   // --- shared field labels for new selects ---
   feedlot_form_head_count_generic: "Cabezas",
 
-  // --- Dashboard app shell: sidebar navigation (adr-04, DESIGN-SYSTEM) ---
+  // --- Dashboard app shell: sidebar navigation (adr-52, DESIGN-SYSTEM) ---
   feedlot_brand_subtitle: "Feedlot · Campo",
   feedlot_nav_section_operation: "Operación",
   feedlot_nav_dashboard: "Dashboard",

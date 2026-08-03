@@ -22,7 +22,7 @@ tags: [adr, docker, local]
 4. Each service's Dockerfile sits in its own app path — `backend/Dockerfile`, `frontend/Dockerfile` — one image per Fargate service ([[INFRASTRUCTURE]]).
 5. The profiles are `db`, `backend`, `frontend` and `full`; all four are implemented, and which services each selects is owned by [[DOCKER]].
 6. The local database is PostgreSQL 17. No cache server joins it ([[adr-06-cache]] rule 1, which holds locally exactly as it holds in production).
-7. `.env.example` is the committed local template and carries no secret. Env names come from [[VARIABLES]] ([[adr-03-api-and-backend]] rule 7).
+7. `.env.example` is the committed local template and carries no secret. Env names come from [[VARIABLES]] ([[adr-51-api-and-backend]] rule 7).
 8. Every service carries a health probe: `pg_isready` for `db`, `/api/health/` for the backend, `/healthz` for the frontend ([[API]], [[DOCKER]]).
 9. Verification is `python3 tests/test_docker_compose.py`; its optional `--smoke` brings up `db` and asserts it healthy.
 10. Compose is local only. Production is Fargate + ECR ([[INFRASTRUCTURE]]).
@@ -43,11 +43,11 @@ tags: [adr, docker, local]
 ### related adrs
 
 - [[docs/adrs/adr-06-cache]] — rule 1, the cache-server prohibition rule 6 defers to
-- [[docs/adrs/adr-03-api-and-backend]] — rule 7 for env names, and the health-route contract rule 8's probes satisfy
+- [[docs/adrs/adr-51-api-and-backend]] — rule 7 for env names, and the health-route contract rule 8's probes satisfy
 
 ### related files
 
 - [[docs/DOCKER]] — the profiles, Dockerfile placement and probe detail
-- [[docs/INFRASTRUCTURE]] — the two-Fargate production shape rules 4 and 10 point at
+- [[docs/constitution/INFRASTRUCTURE]] — the two-Fargate production shape rules 4 and 10 point at
 - [[docs/VARIABLES]] — env names rule 7 requires
 - [[docs/GLOSSARY]] — the canonical `backend`/`frontend` names

@@ -11,7 +11,7 @@ would resolve it precisely. Any internal error exits 0 (fail-open).
 The challenge requires an explicit Python target: a repo-wide sweep with no path
 is a text search until it says otherwise. And it never fires in a cloud session
 (CLAUDE_CODE_REMOTE) — the graph is machine-global and deliberately not vendored
-([[HARNESS]], [[adr-18-markdown-vault-mcp]] rule 4), so there is nothing there to
+([[SKILL-INVENTORY]], [[adr-18-markdown-vault-mcp]] rule 4), so there is nothing there to
 prefer over Grep, and an "ask" no human can answer would stall the session.
 
 Escalate the one matcher below from "ask" to "deny" if discipline still slips.

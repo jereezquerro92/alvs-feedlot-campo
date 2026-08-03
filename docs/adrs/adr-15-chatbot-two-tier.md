@@ -23,7 +23,7 @@ tags: [adr, chatbot, router, ai, security]
 5. The choosing tier NEVER forwards user-supplied text to the generating tier. What it forwards is a structured reinterpretation: a hand-authored template selected from a closed set, filled with typed, validated slots. A free-prose restatement would make the choosing tier a generator, violating rule 1, and would reopen the channel this design exists to close. Mechanism and its limits: [[CHATBOT]].
 6. A free-text slot is a residual channel and requires an explicit, recorded decision in [[CHATBOT]] before it ships. No document, comment, or commit message may state the containment as a closed channel or a proof; it is bounded as [[CHATBOT]] bounds it. Overstating the security property is a defect.
 7. Inference is deterministic and structurally constrained: temperature 0, and constrained decoding where the provider supports it, with code-side enum validation enforcing the same closure regardless.
-8. This is a capability layer, not a doctrine change ([[adr-13-m365-graph]] precedent). Cognito remains the sole authentication provider ([[adr-10-auth]]); [[CACHE]] gains no cache server ([[adr-06-cache]]); every endpoint enters through [[API]] before code ([[adr-03-api-and-backend]]); every variable a setting reads enters [[VARIABLES]] first; the app, its endpoint segments, and its env stem get their [[GLOSSARY]] rows before first use ([[adr-01-glossary-and-localization]]).
+8. This is a capability layer, not a doctrine change ([[adr-13-m365-graph]] precedent). Cognito remains the sole authentication provider ([[adr-10-auth]]); [[CACHE]] gains no cache server ([[adr-06-cache]]); every endpoint enters through [[API]] before code ([[adr-51-api-and-backend]]); every variable a setting reads enters [[VARIABLES]] first; the app, its endpoint segments, and its env stem get their [[GLOSSARY]] rows before first use ([[adr-12-glossary-and-localization]]).
 9. The template ships the choosing tier and stops. The generating tier's bounded activations arrived as their own decisions — the advisors ([[adr-27-advisors-generative]]) and the conversational assistant ([[adr-35-conversational-assistant]]) — each read-only, each holding rule 1's disjunction intact. Any further generative surface, and any RAG, enters the same way: through [[adr-07-development-flow]], never by widening a tier this ADR already bounds.
 
 ## FORBIDDEN
@@ -47,8 +47,8 @@ tags: [adr, chatbot, router, ai, security]
 - [[docs/adrs/adr-27-advisors-generative]] — the first bounded activation of the generating tier
 - [[docs/adrs/adr-35-conversational-assistant]] — the generating tier's conversational activation, read-only forever
 - [[docs/adrs/adr-06-cache]] — no cache server rides in with this layer
-- [[docs/adrs/adr-03-api-and-backend]] — every route of this surface enters through [[API]] first
-- [[docs/adrs/adr-01-glossary-and-localization]] — names enter [[GLOSSARY]] before first use
+- [[docs/adrs/adr-51-api-and-backend]] — every route of this surface enters through [[API]] first
+- [[docs/adrs/adr-12-glossary-and-localization]] — names enter [[GLOSSARY]] before first use
 - [[docs/adrs/adr-07-development-flow]] — the path any new generative surface enters through
 
 ### related files

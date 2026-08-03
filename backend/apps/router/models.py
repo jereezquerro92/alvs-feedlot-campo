@@ -1,5 +1,5 @@
-"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
-Governed by: [[adr-15-chatbot-two-tier]] · [[adr-16-async-mandatory]] · [[adr-03-api-and-backend]]
+"""LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-15-chatbot-two-tier]] · [[adr-16-async-mandatory]] · [[adr-51-api-and-backend]] · [[adr-53-api-membrane]]
 Docs: [[BACKEND]] · [[CHATBOT]]
 API: [[API]]
 LIVE-DOC:END"""
@@ -16,7 +16,7 @@ from django.contrib.auth.models import Group
 from django.core.validators import RegexValidator
 from django.db import models
 
-# Path-relative validator (adr-03/#107): Intent.target is a site-relative
+# Path-relative validator (adr-51/#107): Intent.target is a site-relative
 # path such as "/dashboard/", never an absolute URL — pre-empts an intent
 # row pointing off-site.
 path_relative_validator = RegexValidator(

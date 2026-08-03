@@ -46,7 +46,7 @@ The browser talks to Cognito; Django brokers the exchange and then owns the sess
 
 ### Endpoints (declared in [[API]] at stage 3)
 
-These routes are **declared in [[API]]** (added there at step A3) but **not yet implemented in code**. Project construction (stage 3) writes the code against those existing rows — the row precedes the code ([[adr-03-api-and-backend]], no shadow routes). The surface, all under the ALB-routed `/accounts/` prefix ([[INFRASTRUCTURE]]):
+These routes are **declared in [[API]]** (added there at step A3) but **not yet implemented in code**. Project construction (stage 3) writes the code against those existing rows — the row precedes the code ([[adr-51-api-and-backend]], no shadow routes). The surface, all under the ALB-routed `/accounts/` prefix ([[INFRASTRUCTURE]]):
 
 | Route | Role |
 |---|---|

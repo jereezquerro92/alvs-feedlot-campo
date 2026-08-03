@@ -18,7 +18,7 @@ tags: [adr, workflow, tdd, api]
 
 1. User-facing work is specified before it is built: the behavior is agreed in the issue that opens the change ([[GH]]) before its code exists.
 2. The backend zone is entered only through [[API]], and a need is served by an endpoint already declared there before a new one is considered.
-3. What follows the row in [[API]] is [[adr-03-api-and-backend]] rules 2 and 6 — the contract before tests and models, the code born through [[TDD]]. This ADR adds nothing to them.
+3. What follows the row in [[API]] is [[adr-51-api-and-backend]] rules 2 and 6 — the contract before tests and models, the code born through [[TDD]]. This ADR adds nothing to them.
 4. The backend zone is exited only through the checkpoint — does [[API]] solve the need?
 5. The intermediate steps are owned by [[TDD]] and the stack docs; this ADR owns only the order.
 6. Each gate binds now, wherever its subject exists, including the template's own construction.
@@ -27,7 +27,7 @@ tags: [adr, workflow, tdd, api]
 
 - **NEVER** write user-facing code before its behavior is agreed in its issue (rule 1).
 - **NEVER** enter the backend zone by a door other than [[API]] (rule 2).
-- **NEVER** write a model or a test before the endpoint's row lands in [[API]] ([[adr-03-api-and-backend]] rule 2).
+- **NEVER** write a model or a test before the endpoint's row lands in [[API]] ([[adr-51-api-and-backend]] rule 2).
 - **NEVER** leave the backend zone without passing the checkpoint (rule 4). Skipping it ships an endpoint that never closed the loop back to the feature needing it.
 
 ## REJECTED
@@ -38,7 +38,7 @@ tags: [adr, workflow, tdd, api]
 
 ### related adrs
 
-- [[docs/adrs/adr-03-api-and-backend]] — rules 2 and 6, the owner of what rule 3 points at
+- [[docs/adrs/adr-51-api-and-backend]] — rules 2 and 6, the owner of what rule 3 points at
 - [[docs/adrs/adr-19-issue-worktree-pr]] — the same before-code discipline applied to git
 
 ### related files

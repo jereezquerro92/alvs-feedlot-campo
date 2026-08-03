@@ -1,5 +1,5 @@
-"""LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
-Governed by: [[adr-06-cache]] · [[adr-02-initial-stack]]
+"""LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
+Governed by: [[adr-06-cache]] · [[adr-50-initial-stack]]
 Docs: [[BACKEND]] · [[CACHE]]
 LIVE-DOC:END"""
 
