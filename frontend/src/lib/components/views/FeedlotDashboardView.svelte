@@ -5,9 +5,11 @@
 
 <!--
   One client's feedlot dashboard ([[FEEDLOT]]), in the full app shell: a green
-  operational surface (sidebar + topbar + content), scoped by `.feedlot-app` so its
+  operational surface (sidebar + default header + content), scoped by `.feedlot-app` so its
   green tokens override the template's global orange without touching any component
-  class ([[adr-04-frontend-and-design-system]] rule 5, [[DESIGN-SYSTEM]]).
+  class ([[adr-04-frontend-and-design-system]] rule 5, [[DESIGN-SYSTEM]]). The page
+  canvas stays on `body` (melt dots / spotlight) — this shell must not paint a solid
+  `--canvas` fill over it.
 
   It only DISPLAYS metrics derived in the backend ([[adr-29-metrics-derivation]] rule
   1) — it computes none. Every metric that arrives null renders as "—" with its reason,
@@ -22,7 +24,6 @@
   import { formatNumber } from "$lib/components/data/NumericValue.svelte";
   import {
     FeedlotSidebar,
-    FeedlotTopbar,
     KpiCard,
     GrowthCostChart,
     CostDonut,
@@ -30,6 +31,7 @@
     RecentMovements,
     HerdTable,
   } from "$lib/components/feedlot";
+  import { Breadcrumb, type BreadcrumbItem } from "$lib/components/nav";
   import { t } from "../../../i18n";
 
   type Dict = Record<string, unknown> | null | undefined;
@@ -53,7 +55,7 @@
       tax_id?: string;
       balance?: string | number | null;
     } | null;
-    /** Full roster feeding the topbar client dropdown (module-first redesign). */
+    /** Roster retained for callers; default header uses Breadcrumb only. */
     clients?: Array<{ id: number | string; name?: string; kind?: string }>;
     summary?: Dict;
     account?: Dict;
@@ -104,6 +106,13 @@
   const mortPct = $derived(mortRate === null ? null : mortRate * 100);
   const mortSub = $derived(`${str(mort.dead_head ?? 0)} ${t("feedlot_unit_head")}`);
 
+  const crumbs = $derived.by((): BreadcrumbItem[] => {
+    if (client?.id) {
+      return [{ label: client.name || t("feedlot_dash_fallback") }];
+    }
+    return [{ label: t("feedlot_nav_dashboard") }];
+  });
+
   // --- combo chart: real daily charge totals + their cumulative ---
   const dailyPoints = $derived(
     dailyCost.map((d) => ({ label: str(d.date), value: str(d.total) })),
@@ -151,18 +160,14 @@
   };
 </script>
 
-<div class="feedlot-app flex min-h-screen" style="background: var(--canvas);">
+<div class="feedlot-app flex min-h-screen">
   <FeedlotSidebar clientId={client?.id ?? null} active="dashboard" />
 
   <div class="flex min-w-0 flex-1 flex-col">
-    <FeedlotTopbar
-      breadcrumb={t("feedlot_nav_dashboard")}
-      client={client}
-      clients={clients}
-      switcherPattern={"/feedlot/{id}/"}
-    >
-      <slot name="session" slot="session" />
-    </FeedlotTopbar>
+    <header class="flex w-full items-center justify-end gap-3 px-6 pt-8 sm:px-10">
+      <Breadcrumb items={crumbs} />
+      <slot name="session" />
+    </header>
 
     <main class="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-8">
       <!-- Page header -->

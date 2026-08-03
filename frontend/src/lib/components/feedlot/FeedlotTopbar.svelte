@@ -74,7 +74,10 @@
     {/if}
 
     {#if kindLabel}
-      <span class="hidden rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary md:inline">
+      <span
+        class="hidden items-center rounded-full px-3 py-1.5 text-sm font-semibold text-primary md:inline-flex"
+        style="background: color-mix(in oklab, var(--primary) 12%, transparent); border: var(--hairline) solid color-mix(in oklab, var(--primary) 25%, transparent);"
+      >
         {kindLabel}
       </span>
     {/if}

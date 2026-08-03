@@ -16,16 +16,15 @@
 -->
 <script lang="ts">
   import * as Card from "$lib/components/ui/card";
-  import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
   import { SectionTitle } from "$lib/components/primitives/titles";
   import SessionBadge from "$lib/components/auth/SessionBadge.svelte";
+  import { Breadcrumb, type BreadcrumbItem } from "$lib/components/nav";
   import { MetricCard, OutstandingTable, PaymentForm, PaymentImputationForm } from "$lib/components/feedlot";
   import type { Me } from "$lib/types/user";
   import { t } from "../../../i18n";
 
   let {
-    projectSlug = "",
     client = null,
     account = null,
     charges = [],
@@ -36,7 +35,6 @@
     me = null,
     pending = false,
   }: {
-    projectSlug?: string;
     client?: { id: number; name: string; balance?: string | number | null } | null;
     account?: Record<string, unknown> | null;
     charges?: Array<Record<string, any>>;
@@ -47,6 +45,18 @@
     me?: Me | null;
     pending?: boolean;
   } = $props();
+
+  const crumbs = $derived.by((): BreadcrumbItem[] => {
+    const trail: BreadcrumbItem[] = [];
+    if (client?.id) {
+      trail.push({
+        label: client.name || t("feedlot_dash_fallback"),
+        href: `/feedlot/${client.id}/`,
+      });
+    }
+    trail.push({ label: t("feedlot_impute_title") });
+    return trail;
+  });
 
   function num(v: unknown): number | null {
     if (v === null || v === undefined || v === "") return null;
@@ -68,8 +78,8 @@
 </script>
 
 <div class="min-h-screen flex flex-col">
-  <header class="flex w-full items-center justify-between gap-4 px-6 pt-8 sm:px-10">
-    <Badge variant="outline" class="text-sm font-semibold tracking-wide">{projectSlug}</Badge>
+  <header class="flex w-full items-center justify-end gap-3 px-6 pt-8 sm:px-10">
+    <Breadcrumb items={crumbs} />
     <SessionBadge
       {me}
       {pending}

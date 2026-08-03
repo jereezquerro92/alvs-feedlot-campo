@@ -15,10 +15,10 @@
 -->
 <script lang="ts">
   import * as Card from "$lib/components/ui/card";
-  import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
   import { SectionTitle } from "$lib/components/primitives/titles";
   import SessionBadge from "$lib/components/auth/SessionBadge.svelte";
+  import { Breadcrumb, type BreadcrumbItem } from "$lib/components/nav";
   import {
     FeedingForm,
     WeighingForm,
@@ -33,7 +33,6 @@
   import { t } from "../../../i18n";
 
   let {
-    projectSlug = "",
     client = null,
     animals = [],
     lots = [],
@@ -46,7 +45,6 @@
     me = null,
     pending = false,
   }: {
-    projectSlug?: string;
     client?: { id: number; name: string; kind?: string } | null;
     animals?: Array<Record<string, any>>;
     lots?: Array<Record<string, any>>;
@@ -60,6 +58,18 @@
     pending?: boolean;
   } = $props();
 
+  const crumbs = $derived.by((): BreadcrumbItem[] => {
+    const trail: BreadcrumbItem[] = [];
+    if (client?.id) {
+      trail.push({
+        label: client.name || t("feedlot_dash_fallback"),
+        href: `/feedlot/${client.id}/`,
+      });
+    }
+    trail.push({ label: t("feedlot_load_title") });
+    return trail;
+  });
+
   // A write reloads the SSR data so the new fact (animal, lot, exit) is reflected
   // in the target selects without a manual refresh. The reload is caller-initiated
   // by the submit, never on mount ([[adr-22-showcase-ready-components]] rule 2).
@@ -69,8 +79,8 @@
 </script>
 
 <div class="min-h-screen flex flex-col">
-  <header class="flex w-full items-center justify-between gap-4 px-6 pt-8 sm:px-10">
-    <Badge variant="outline" class="text-sm font-semibold tracking-wide">{projectSlug}</Badge>
+  <header class="flex w-full items-center justify-end gap-3 px-6 pt-8 sm:px-10">
+    <Breadcrumb items={crumbs} />
     <SessionBadge
       {me}
       {pending}

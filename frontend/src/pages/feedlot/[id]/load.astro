@@ -12,7 +12,6 @@ import type { Me } from "$lib/types/user";
 
 const backendApiUrl = process.env.BACKEND_API_URL ?? "http://localhost:8000";
 const publicBackendUrl = process.env.PUBLIC_BACKEND_URL ?? "http://localhost:8000";
-const publicProjectSlug = process.env.PUBLIC_PROJECT_SLUG ?? "astro-drf-aws";
 
 const { id } = Astro.params;
 const cookie = Astro.request.headers.get("cookie");
@@ -84,7 +83,6 @@ Astro.response.headers.set("Cache-Control", "no-store");
 <Base title={`${t("feedlot_load_title")} · ${client.name}`}>
   <FeedlotLoadView
     client:load
-    projectSlug={publicProjectSlug}
     client={client}
     animals={animals}
     lots={lots}

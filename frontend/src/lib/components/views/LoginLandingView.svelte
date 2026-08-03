@@ -34,8 +34,7 @@
   } = $props();
 </script>
 
-<div class="feedlot-app relative flex min-h-screen flex-col items-center justify-center px-6 py-12"
-  style="background: var(--canvas);">
+<div class="feedlot-app relative flex min-h-screen flex-col items-center justify-center px-6 py-12">
   <!-- Session control (logout for a pending session) -->
   <div class="absolute right-5 top-5"><slot name="session" /></div>
 

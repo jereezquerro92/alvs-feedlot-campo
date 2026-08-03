@@ -55,6 +55,7 @@
     dropdownMenu: string;
     contextMenu: string;
     menubar: string;
+    breadcrumb: string;
     tableOfContents: string;
     overlay: string;
     accordion: string;
@@ -278,6 +279,10 @@
     <div class="flex flex-col gap-2">
       <SectionTitle as="h3">{copy.menubar}</SectionTitle>
       <slot name="menubar" />
+    </div>
+    <div class="flex flex-col gap-2">
+      <SectionTitle as="h3">{copy.breadcrumb}</SectionTitle>
+      <slot name="breadcrumb" />
     </div>
     <div class="flex flex-col gap-2">
       <SectionTitle as="h3">{copy.tableOfContents}</SectionTitle>

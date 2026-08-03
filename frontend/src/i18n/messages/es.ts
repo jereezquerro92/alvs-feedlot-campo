@@ -23,6 +23,8 @@ export const es = {
   nav_showcase: "Showcase",
   nav_chatui: "Chat",
   nav_profile: "Perfil",
+  nav_home: "Inicio",
+  breadcrumb_nav: "Ruta",
   m365_status: "Estado M365",
 
   // login landing (/) — the landing IS the login (redesign)
@@ -125,6 +127,7 @@ export const es = {
   gallery_dropdownmenu: "Menú desplegable",
   gallery_contextmenu: "Menú contextual",
   gallery_menubar: "Barra de menú",
+  gallery_breadcrumb: "Breadcrumb",
   gallery_toc: "Tabla de contenidos",
   gallery_feedback: "Feedback",
   gallery_progress: "Progreso",

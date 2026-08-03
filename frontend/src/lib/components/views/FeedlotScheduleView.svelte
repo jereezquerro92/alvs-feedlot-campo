@@ -18,13 +18,13 @@
   import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
   import { SectionTitle } from "$lib/components/primitives/titles";
+  import { Breadcrumb, type BreadcrumbItem } from "$lib/components/nav";
   import { MetricCard, SanitaryScheduleTable, EnrollmentForm } from "$lib/components/feedlot";
   import { t } from "../../../i18n";
 
   type Dict = Record<string, unknown> | null | undefined;
 
   let {
-    projectSlug = "",
     client = null,
     schedule = null,
     plans = [],
@@ -33,7 +33,6 @@
     today = "",
     publicBackendUrl = "",
   }: {
-    projectSlug?: string;
     client?: {
       id: number;
       name: string;
@@ -47,6 +46,18 @@
     today?: string;
     publicBackendUrl?: string;
   } = $props();
+
+  const crumbs = $derived.by((): BreadcrumbItem[] => {
+    const trail: BreadcrumbItem[] = [];
+    if (client?.id) {
+      trail.push({
+        label: client.name || t("feedlot_dash_fallback"),
+        href: `/feedlot/${client.id}/`,
+      });
+    }
+    trail.push({ label: t("feedlot_schedule_title") });
+    return trail;
+  });
 
   const KINDS: Record<string, string> = {
     boarding: "Hotelería",
@@ -68,8 +79,8 @@
 </script>
 
 <div class="min-h-screen flex flex-col">
-  <header class="flex w-full items-center justify-between gap-4 px-6 pt-8 sm:px-10">
-    <Badge variant="outline" class="text-sm font-semibold tracking-wide">{projectSlug}</Badge>
+  <header class="flex w-full items-center justify-end gap-3 px-6 pt-8 sm:px-10">
+    <Breadcrumb items={crumbs} />
     <slot name="session" />
   </header>
 

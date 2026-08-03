@@ -54,6 +54,7 @@ import {
   ContextMenuDemo,
   MenubarDemo,
   TableOfContentsDemo,
+  BreadcrumbDemo,
   DrawerDemo,
   HomeTriangleDemo,
   CornerNavTriangleDemo,
@@ -268,6 +269,7 @@ const tocItems: TableOfContentsItem[] = [
       dropdownMenu: t("gallery_dropdownmenu"),
       contextMenu: t("gallery_contextmenu"),
       menubar: t("gallery_menubar"),
+      breadcrumb: t("gallery_breadcrumb"),
       tableOfContents: t("gallery_toc"),
       overlay: t("gallery_overlay"),
       accordion: t("gallery_accordion"),
@@ -351,6 +353,13 @@ const tocItems: TableOfContentsItem[] = [
       slot="context-menu"
     />
     <MenubarDemo menus={menubarMenus} client:visible slot="menubar" />
+    <BreadcrumbDemo
+      items={[
+        { label: "Estancia La Esperanza", href: "/feedlot/1/" },
+        { label: t("feedlot_ledger_title") },
+      ]}
+      slot="breadcrumb"
+    />
     <TableOfContentsDemo
       items={tocItems}
       label={t("demo_toc_label")}
