@@ -10,12 +10,9 @@ tags: [adr, feedlot, domain, architecture]
 
 Rules only; content lives in [[FEEDLOT]] and [[FEEDLOT-DATA-MODEL]].
 
-Supersedes [[adr-24-feedlot-domain]] (issue #72). That ADR's rule 1 hardcoded a roster of
-app names, which is information an ADR must not carry ([[adr-00-adr-doctrine]] rule 1);
-the roster drifted from the code and came to name an app that no longer exists under that
-name. The roster now lives in [[FEEDLOT]] alone, and rule 1 points at it instead of
-restating it. Rule numbering is preserved so that rule-level citations carry over
-unchanged.
+Supersedes [[adr-24-feedlot-domain]] (issue #72): its rule 1 hardcoded an app-name roster,
+forbidden by [[adr-00-adr-doctrine]] rule 1. The roster lives in [[FEEDLOT]] alone; rule
+numbering is preserved unchanged.
 
 1. The domain is built as domain apps on top of the template, never by editing the
    template's spine. A new capability is a new app and its [[API]] rows ([[PRD]] "grows by
@@ -38,8 +35,7 @@ unchanged.
 5. Every fact is stated once. The business narrative is the Claude Project docs; the
    code-facing SSOTs are [[FEEDLOT]] (domain) and [[FEEDLOT-DATA-MODEL]] (entities). An
    ADR states rules and links these; it never inlines their facts
-   ([[adr-00-adr-doctrine]] rule 1). This rule binds this ADR too: the drift that
-   superseded [[adr-24-feedlot-domain]] was a breach of it.
+   ([[adr-00-adr-doctrine]] rule 1). This rule binds this ADR too.
 6. Backend work enters only through [[API]] ([[adr-03-api-and-backend]]) and is born via
    the [[TDD]] flow along the development loop ([[adr-07-development-flow]]); this ADR
    grants no exception to that path.
