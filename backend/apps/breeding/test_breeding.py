@@ -16,6 +16,8 @@ from decimal import Decimal
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 
 from apps.clients.models import Client
 from apps.genetics.models import (
@@ -167,6 +169,22 @@ def test_ai_service_rejects_insufficient_semen_stock():
     assert Service.objects.count() == 0
 
 
+def test_ai_service_locks_semen_batch_before_stock_check():
+    """#21 / #57: select_for_update on SemenBatch before check+movement."""
+    boarding = Client.objects.create(name="Hotel", kind=Client.Kind.BOARDING)
+    sire = Sire.objects.create(name="Toro A")
+    batch = _stocked_batch(sire)
+    cow = _cow(boarding)
+    with CaptureQueriesContext(connection) as ctx:
+        register_service(
+            animal=cow, date="2026-03-01", method=Method.AI, sire=sire,
+            semen_batch=batch,
+        )
+    sql = " ".join(q["sql"] for q in ctx.captured_queries).upper()
+    assert "FOR UPDATE" in sql
+    assert "GENETICS_SEMENBATCH" in sql.replace('"', "").replace("`", "")
+
+
 def test_iatf_service_rejects_inactive_protocol():
     boarding = Client.objects.create(name="Hotel", kind=Client.Kind.BOARDING)
     sire = Sire.objects.create(name="Toro A")
@@ -211,8 +229,27 @@ def test_live_individual_calving_creates_calf_animal():
     assert calf.client == boarding
     assert calf.status == Animal.Status.ACTIVE
     assert calf.entry_weight == Decimal("35")
+    assert calf.ear_tag == "V-001-C1"
     # genealogy is derived: dam is the calving target, no field added to Animal.
     assert calving.animal == cow
+
+
+def test_calving_ear_tag_locks_dam_and_sequences():
+    """#23 / #57: dam row locked; successive calves get unique -Cn tags."""
+    boarding = Client.objects.create(name="Hotel", kind=Client.Kind.BOARDING)
+    cow = _cow(boarding)
+    with CaptureQueriesContext(connection) as ctx:
+        first = register_calving(
+            animal=cow, date="2026-11-20", outcome="live", calf_sex="male",
+        )
+    sql = " ".join(q["sql"] for q in ctx.captured_queries).upper()
+    assert "FOR UPDATE" in sql
+    second = register_calving(
+        animal=cow, date="2026-11-21", outcome="live", calf_sex="female",
+    )
+    assert first.calf.ear_tag == "V-001-C1"
+    assert second.calf.ear_tag == "V-001-C2"
+    assert first.calf.ear_tag != second.calf.ear_tag
 
 
 def test_lot_calving_records_births_count_and_no_calf():

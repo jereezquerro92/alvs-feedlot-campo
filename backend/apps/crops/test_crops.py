@@ -87,3 +87,24 @@ def test_cutting_on_terminated_crop_is_rejected():
     crop.save()
     with pytest.raises(ValidationError):
         register_cutting(crop=crop, date="2026-04-15", kg_harvested="1000")
+
+
+@pytest.mark.parametrize("quantity", ["0", "-1"])
+def test_field_task_rejects_non_positive_quantity(quantity):
+    client, pivot, _ = _fixtures()
+    with pytest.raises(ValidationError):
+        register_field_task(
+            client=client, pivot=pivot, date="2026-03-01", title="X",
+            unit_price="100", quantity=quantity,
+        )
+    assert LedgerEntry.objects.filter(account=client.account).count() == 0
+
+
+def test_field_task_rejects_negative_unit_price():
+    client, pivot, _ = _fixtures()
+    with pytest.raises(ValidationError):
+        register_field_task(
+            client=client, pivot=pivot, date="2026-03-01", title="X",
+            unit_price="-5", quantity="1",
+        )
+    assert LedgerEntry.objects.filter(account=client.account).count() == 0
