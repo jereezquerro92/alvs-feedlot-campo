@@ -4,12 +4,16 @@ LIVE-DOC:END"""
 
 """Feed services — deliveries, stock balance, and the ration costing rule.
 
-The costing rule (adr-25 rule 4) is the heart of the system:
+The costing rule (adr-25 rules 4–5) is the heart of the system:
   - origin = own_stock    -> OUT movement on own stock + a DEBIT ledger entry.
-  - origin = client_stock -> OUT movement on the client's stock, NO charge.
-Both are always valued for metrics; only own stock is billed. Phase 1 does not
-auto-split a client-stock shortfall (that stays an open decision) — the origin
-determines the behavior wholesale.
+  - origin = client_stock -> OUT against client stock for what is available
+    (uncharged); any shortfall is an OUT on own stock + a DEBIT for that
+    remainder at unit_price (adr-25 rule 5). Two movements, one debit.
+Both origins are always valued for metrics; only the own-stock portion is billed.
+
+FeedingEvent.origin is single-valued. On a client_stock shortfall the event keeps
+origin=client_stock (the requested origin); the split lives in the movements and
+the ledger debit for the own-stock remainder — not in a second FeedingEvent.
 """
 
 from decimal import Decimal
@@ -21,6 +25,8 @@ from django.db.models import Sum
 from apps.feed.models import FeedDelivery, FeedingEvent, FeedStockMovement, OwnerKind
 from apps.ledger.models import Concept, Direction
 from apps.ledger.services import post_entry
+
+ZERO = Decimal("0")
 
 
 def stock_balance(*, feed_type, owner_kind, client=None):
@@ -34,6 +40,35 @@ def stock_balance(*, feed_type, owner_kind, client=None):
     }
     return totals.get(FeedStockMovement.Direction.IN, Decimal("0")) - totals.get(
         FeedStockMovement.Direction.OUT, Decimal("0")
+    )
+
+
+def _out_movement(*, owner_kind, client, feed_type, quantity, date, source_id):
+    FeedStockMovement.objects.create(
+        owner_kind=owner_kind,
+        client=client if owner_kind == OwnerKind.CLIENT else None,
+        feed_type=feed_type,
+        direction=FeedStockMovement.Direction.OUT,
+        quantity=quantity,
+        date=date,
+        source_kind="feeding_event",
+        source_id=source_id,
+    )
+
+
+def _debit_own_portion(*, client, feed_type, quantity, unit_price, date, source_id, created_by):
+    post_entry(
+        account=client.account,
+        direction=Direction.DEBIT,
+        amount=quantity * unit_price,
+        concept=Concept.FEEDING,
+        date=date,
+        source_kind="feeding_event",
+        source_id=source_id,
+        unit_price=unit_price,
+        quantity=quantity,
+        description=f"Ración {feed_type.name}",
+        created_by=created_by,
     )
 
 
@@ -60,10 +95,11 @@ def register_delivery(*, client, feed_type, quantity, date, created_by=None):
 
 @transaction.atomic
 def register_feeding(*, client, feed_type, quantity, unit_price, origin, date, animal=None, lot=None, pen=None, created_by=None):
-    """Record a ration and apply the costing rule (adr-25 rule 4).
+    """Record a ration and apply the costing rule (adr-25 rules 4–5).
 
     `pen` is an optional grouping (adr-33 decision 3): additive, never required,
-    and it changes nothing about the costing — the charge still follows `origin`.
+    and it changes nothing about the costing — the charge still follows origin /
+    the shortfall split.
     """
     quantity = Decimal(quantity)
     unit_price = Decimal(unit_price)
@@ -84,33 +120,60 @@ def register_feeding(*, client, feed_type, quantity, unit_price, origin, date, a
         created_by=created_by,
     )
 
-    owner_kind = (
-        OwnerKind.CLIENT if origin == FeedingEvent.Origin.CLIENT_STOCK else OwnerKind.OWN
-    )
-    FeedStockMovement.objects.create(
-        owner_kind=owner_kind,
-        client=client if owner_kind == OwnerKind.CLIENT else None,
-        feed_type=feed_type,
-        direction=FeedStockMovement.Direction.OUT,
-        quantity=quantity,
-        date=date,
-        source_kind="feeding_event",
-        source_id=feeding.id,
-    )
-
-    # Only own feed is billed to the client's account.
     if origin == FeedingEvent.Origin.OWN_STOCK:
-        post_entry(
-            account=client.account,
-            direction=Direction.DEBIT,
-            amount=quantity * unit_price,
-            concept=Concept.FEEDING,
-            date=date,
-            source_kind="feeding_event",
-            source_id=feeding.id,
-            unit_price=unit_price,
+        _out_movement(
+            owner_kind=OwnerKind.OWN,
+            client=client,
+            feed_type=feed_type,
             quantity=quantity,
-            description=f"Ración {feed_type.name}",
+            date=date,
+            source_id=feeding.id,
+        )
+        _debit_own_portion(
+            client=client,
+            feed_type=feed_type,
+            quantity=quantity,
+            unit_price=unit_price,
+            date=date,
+            source_id=feeding.id,
+            created_by=created_by,
+        )
+        return feeding
+
+    # client_stock — adr-25 rule 5 shortfall auto-split.
+    available = max(
+        ZERO,
+        stock_balance(feed_type=feed_type, owner_kind=OwnerKind.CLIENT, client=client),
+    )
+    from_client = min(quantity, available)
+    from_own = quantity - from_client
+
+    if from_client > ZERO:
+        _out_movement(
+            owner_kind=OwnerKind.CLIENT,
+            client=client,
+            feed_type=feed_type,
+            quantity=from_client,
+            date=date,
+            source_id=feeding.id,
+        )
+
+    if from_own > ZERO:
+        _out_movement(
+            owner_kind=OwnerKind.OWN,
+            client=client,
+            feed_type=feed_type,
+            quantity=from_own,
+            date=date,
+            source_id=feeding.id,
+        )
+        _debit_own_portion(
+            client=client,
+            feed_type=feed_type,
+            quantity=from_own,
+            unit_price=unit_price,
+            date=date,
+            source_id=feeding.id,
             created_by=created_by,
         )
 
