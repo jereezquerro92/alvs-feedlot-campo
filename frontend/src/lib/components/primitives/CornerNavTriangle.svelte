@@ -5,12 +5,12 @@
 
 <!--
   Fixed, bottom-right, isosceles-triangle nav cycling home/chat/showcase
-  (#374, mounted globally in Base.astro by
-  #377). Distinct from primitives/HomeTriangle.svelte (#255): top-left,
-  right-angle, single-target. Rounded-corner polygon has no Melt builder
-  (adr-52 r8 last resort) — drawn as an SVG path instead of clip-path.
-  Zero props is a safe default (adr-22 r1/r2): a plain, non-mutating
-  `<a href>` derived from the current route.
+  (#374; previously mounted globally in Base.astro by #377 — global
+  mount removed). Distinct from primitives/HomeTriangle.svelte (#255):
+  top-left, right-angle, single-target. Rounded-corner polygon has no
+  Melt builder (adr-52 r8 last resort) — drawn as an SVG path instead of
+  clip-path. Zero props is a safe default (adr-22 r1/r2): a plain,
+  non-mutating `<a href>` derived from the current route.
 -->
 <script lang="ts">
   import { resolveCurrentFront, nextFront, frontHref, type Front } from "$lib/corner-nav-triangle";

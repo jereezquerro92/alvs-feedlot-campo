@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- group: remove-corner-nav-triangle-global-mount
+  priority: normal
+  changes:
+    - fix(frontend): stop mounting CornerNavTriangle in Base.astro — bottom-right FAB no longer site-wide
+    - docs: COMPONENTIZATION — CornerNavTriangle recommended for showcase demo only
+
 - group: adopcion-doctrina-kodexarg-harness-default
   priority: high
   commit: d661a66

@@ -4,13 +4,10 @@
      LIVE-DOC:END -->
 
 <!--
-  Component-gallery demo of primitives/CornerNavTriangle (issue #374,
-  made global in #377). `Base.astro` mounts the real, live instance on
-  every route including this gallery page, so this demo coexists with
-  it — same containment technique as HomeTriangleDemo.svelte: `[&_a]:!absolute`
-  strips the component's own `position: fixed`, docking it inside this
-  card instead of the viewport corner, so only the global instance ever
-  occupies the real corner.
+  Component-gallery demo of primitives/CornerNavTriangle (issue #374).
+  Not mounted site-wide. Containment matches HomeTriangleDemo.svelte:
+  `[&_a]:!absolute` strips the component's own `position: fixed`,
+  docking it inside this card instead of the viewport corner.
 -->
 <script lang="ts">
   import CornerNavTriangle from "$lib/components/primitives/CornerNavTriangle.svelte";
