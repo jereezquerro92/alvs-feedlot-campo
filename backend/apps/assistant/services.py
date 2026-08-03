@@ -35,18 +35,25 @@ def send_message(*, conversation: Conversation, text: str, created_by=None):
 
     Returns the assistant `Message`. The snapshot is built from the conversation's
     own client — the per-client scope is a hard boundary, not a convention.
+
+    Prior turns are snapshotted *before* the new user row is persisted so Bedrock
+    history never ends in a user turn that `generate` then duplicates (#13 / #60).
     """
+    # Prior alternating turns only — not the question we are about to persist.
+    history = _history(conversation)
     Message.objects.create(
         conversation=conversation, role=Message.Role.USER, text=text
     )
 
-    history = _history(conversation)
     snapshot = build_snapshot(client=conversation.client)
 
     client_inference = get_assistant_client()
     answer, model_id, tokens, latency_ms = client_inference.generate(
         snapshot=snapshot, history=history, question=text
     )
+    if not (answer or "").strip():
+        # Never persist a blank answer as a successful turn (#25 / #60).
+        raise RuntimeError("assistant_unavailable")
 
     return Message.objects.create(
         conversation=conversation,

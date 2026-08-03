@@ -57,6 +57,25 @@ def test_weighing_updates_lot_total_weight():
     assert lot.total_weight == Decimal("18500.00")
 
 
+def test_partial_sample_weighing_does_not_overwrite_lot_total_weight():
+    # #18 / #59: a sample of fewer heads than the lot must not replace total_weight.
+    lot = _lot(_client(), head=50, total="16000")
+    weighing = register_weighing(
+        lot=lot, weight="3500", date="2026-03-01", head_count=10
+    )
+    lot.refresh_from_db()
+    assert weighing.head_count == 10
+    assert weighing.weight == Decimal("3500.00")
+    assert lot.total_weight == Decimal("16000.00")
+
+
+def test_full_lot_weighing_overwrites_total_weight():
+    lot = _lot(_client(), head=50, total="16000")
+    register_weighing(lot=lot, weight="18500", date="2026-03-01", head_count=50)
+    lot.refresh_from_db()
+    assert lot.total_weight == Decimal("18500.00")
+
+
 def test_weighing_on_dead_animal_is_rejected():
     client = _client()
     animal = _animal(client)
@@ -127,10 +146,31 @@ def test_partial_lot_death_reduces_head_and_weight():
     assert lot.total_weight == Decimal("15040.00")
 
 
+def test_weightless_partial_death_subtracts_proportional_weight():
+    # #32 / #59: without measured kilos, take a proportional share of total_weight.
+    lot = _lot(_client(), head=50, total="16000")
+    register_death(lot=lot, date="2026-03-01", head_count=5)
+    lot.refresh_from_db()
+    assert lot.head_count == 45
+    assert lot.total_weight == Decimal("14400.00")  # 16000 * 5/50 = 1600 removed
+
+
 def test_death_of_more_head_than_alive_is_rejected():
     lot = _lot(_client(), head=10, total="3200")
     with pytest.raises(ValidationError):
         register_death(lot=lot, date="2026-03-01", head_count=11)
+
+
+def test_death_before_entry_date_is_rejected():
+    animal = _animal(_client())
+    with pytest.raises(ValidationError, match="anterior al ingreso"):
+        register_death(animal=animal, date="2026-01-01")
+
+
+def test_lot_death_before_intake_date_is_rejected():
+    lot = _lot(_client())
+    with pytest.raises(ValidationError, match="anterior al ingreso"):
+        register_death(lot=lot, date="2026-01-01", head_count=1)
 
 
 def test_death_does_not_touch_the_ledger():
@@ -164,12 +204,34 @@ def test_partial_lot_exit_reduces_head():
     assert lot.status == Lot.Status.ACTIVE
 
 
+def test_weightless_partial_exit_subtracts_proportional_weight():
+    # #32 / #59: same proportional policy as weight-less death.
+    lot = _lot(_client(), head=50, total="16000")
+    register_exit(lot=lot, date="2026-06-01", head_count=20)
+    lot.refresh_from_db()
+    assert lot.head_count == 30
+    assert lot.total_weight == Decimal("9600.00")  # 16000 * 20/50 = 6400 removed
+    assert lot.status == Lot.Status.ACTIVE
+
+
 def test_full_lot_exit_closes_the_lot():
     lot = _lot(_client(), head=50, total="16000")
     register_exit(lot=lot, date="2026-06-01", head_count=50, weight="17500")
     lot.refresh_from_db()
     assert lot.head_count == 0
     assert lot.status == Lot.Status.CLOSED
+
+
+def test_exit_before_entry_date_is_rejected():
+    animal = _animal(_client())
+    with pytest.raises(ValidationError, match="anterior al ingreso"):
+        register_exit(animal=animal, date="2026-01-01")
+
+
+def test_lot_exit_before_intake_date_is_rejected():
+    lot = _lot(_client())
+    with pytest.raises(ValidationError, match="anterior al ingreso"):
+        register_exit(lot=lot, date="2026-01-01", head_count=1)
 
 
 def test_boarding_sale_without_commission_posts_nothing():

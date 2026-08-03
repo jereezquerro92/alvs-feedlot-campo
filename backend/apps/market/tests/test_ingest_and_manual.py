@@ -8,6 +8,7 @@ from datetime import date
 from decimal import Decimal
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from apps.market.connectors.base import ParsedPrice
 from apps.market.models import MarketPrice, MarketSource
@@ -16,6 +17,7 @@ from apps.market.services import (
     latest_price,
     persist,
     register_manual_price,
+    upsert_price,
 )
 
 pytestmark = pytest.mark.django_db
@@ -103,3 +105,12 @@ def test_ipcva_connector_is_wired_and_persists():
     again = persist(source=source, prices=prices)
     assert again.updated == len(prices)
     assert MarketPrice.objects.filter(source=source).count() == len(prices)
+
+
+def test_upsert_rejects_non_positive_price_avg():
+    source = _source()
+    with pytest.raises(ValidationError):
+        upsert_price(source=source, parsed=_price(avg="0"))
+    with pytest.raises(ValidationError):
+        upsert_price(source=source, parsed=_price(avg="-10"))
+    assert MarketPrice.objects.count() == 0
