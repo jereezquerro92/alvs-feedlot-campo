@@ -8,7 +8,6 @@ tags: [adr, feedlot, feedyard, pens, placement, phase-7b]
 
 # ADR-34 — Ubicación de hacienda en corrales (`PenPlacement`)
 
-**Estado:** activo (Fase 7b)
 **Contexto:** completa el diferimiento de [[adr-33-feedyard-operating-loop]] decisión 7
 (el cierre por corral necesita saber qué hacienda estuvo en el corral). Reusa la
 restricción XOR animal/lote de [[adr-26-livestock-individual-and-lot]] y la postura

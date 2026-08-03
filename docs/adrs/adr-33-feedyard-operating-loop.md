@@ -8,7 +8,6 @@ tags: [adr, feedlot, feedyard, pens, rations, bunk, phase-7]
 
 # ADR-33 — El loop operativo del corral (`feedyard`)
 
-**Estado:** activo (Fase 7)
 **Contexto:** extiende [[adr-24-feedlot-domain]] ("crece por adición") y
 [[adr-25-account-ledger]] (el cobro es del ledger, y de nadie más). Nace de evaluar
 software de feedlot de la competencia (Cattler): el loop diario dieta → orden de

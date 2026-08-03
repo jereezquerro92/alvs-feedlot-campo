@@ -8,7 +8,6 @@ tags: [adr, feedlot, notifications, digest, whatsapp, phase-9]
 
 # ADR-36 — Notificaciones: el digest y el canal de envío
 
-**Estado:** activo (Fase 9)
 **Contexto:** reusa las métricas de [[adr-29-metrics-derivation]] (una sola
 definición de cada número) y el patrón de cliente mock/real gateado por DEBUG de
 [[adr-31-advisors-implementation]] y [[adr-35-conversational-assistant]].

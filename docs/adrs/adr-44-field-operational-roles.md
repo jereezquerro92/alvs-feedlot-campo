@@ -3,12 +3,11 @@ title: ADR-44 — Los seis roles operativos del campo y el scoping por cliente
 type: adr
 status: active
 created: 2026-07-27
-tags: [adr, rbac, auth, roles, feedlot]
+tags: [adr, rbac, auth, roles, feedlot, phase-users]
 ---
 
 # ADR-44 — Los seis roles operativos del campo y el scoping por cliente
 
-**Estado:** activo (Fase de usuarios)
 **Contexto:** amplía [[adr-20-authorization-lobby]] regla 2 (agregar un alcance de rol
 o ampliar qué rutas alcanza una sesión exige un ADR nuevo, nunca una excepción local)
 y reusa el precedente de grupo-por-concern de [[adr-11-guardians]] y el par

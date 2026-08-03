@@ -8,7 +8,6 @@ tags: [adr, feedlot, margins, fx, currency, metrics, phase-12]
 
 # ADR-39 — Margen bruto derivado y tipo de cambio de referencia
 
-**Estado:** activo (Fase 12)
 **Contexto:** cierra el roadmap. Reusa las métricas de [[adr-29-metrics-derivation]]
 (una sola definición de cada número), el precio de mercado de [[adr-30-market-prices-connectors]]
 como valor de referencia, y no toca el ledger, que sigue en ARS con precio histórico

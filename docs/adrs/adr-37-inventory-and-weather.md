@@ -8,7 +8,6 @@ tags: [adr, feedlot, inventory, weather, stock, phase-10]
 
 # ADR-37 — Inventario general de insumos y registro de clima
 
-**Estado:** activo (Fase 10)
 **Contexto:** generaliza el patrón de stock de [[adr-25-account-ledger]] regla 4
 (`FeedStockMovement`) a insumos que no son alimento (gasoil, postes, alambre,
 sanitarios de campo) y agrega el registro de lluvia/clima. Reusa la postura
