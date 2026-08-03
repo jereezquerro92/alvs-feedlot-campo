@@ -4,10 +4,11 @@ Docs: [[BACKEND]]
 API: [[API]]
 LIVE-DOC:END"""
 
-"""Weather log (adr-37 decision 5): an immutable per-date rainfall/weather record.
+"""Weather log (adr-37 decision 5): per-(site, date) rainfall/weather record.
 
 Independent of the ledger and the domain — an environmental fact the metrics read,
-never an economic event. Immutable once written; a correction is another record.
+never an economic event. Idempotent by (site, date): re-registration updates the
+row so rainfall_summary does not double-count corrections.
 """
 
 from django.conf import settings
@@ -33,6 +34,12 @@ class WeatherLog(models.Model):
     class Meta:
         ordering = ["-date", "-id"]
         indexes = [models.Index(fields=["site", "-date"])]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["site", "date"],
+                name="weather_log_site_date_uniq",
+            ),
+        ]
 
     def __str__(self):
         return f"{self.site or 'default'} {self.date} {self.rainfall_mm}mm"

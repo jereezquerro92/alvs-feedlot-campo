@@ -87,10 +87,44 @@ def test_lot_owner_lists_only_its_own_client_threads(client):
     _bind(user, own)
     client.force_login(user)
 
-    body = client.get("/api/conversations/").json()
+    # List requires an explicit matching client (adr-45 rule 2 / #33).
+    body = client.get(f"/api/conversations/?client={own.pk}").json()
     rows = body.get("results", body) if isinstance(body, dict) else body
     client_ids = {row["client"] for row in rows}
     assert client_ids == {own.pk}  # never the other tenant's thread
+
+
+def test_lot_owner_list_without_client_fails_closed(client):
+    own = _client_row(name="Own List Missing")
+    user = _in(_user("sub-lo-list-missing"), LOT_OWNERS)
+    _bind(user, own)
+    client.force_login(user)
+    assert client.get("/api/conversations/").status_code == 403
+
+
+def test_lot_owner_create_without_client_fails_closed(client):
+    own = _client_row(name="Own Create Missing")
+    user = _in(_user("sub-lo-create-missing"), LOT_OWNERS)
+    _bind(user, own)
+    client.force_login(user)
+    res = client.post(
+        "/api/conversations/", {"title": "sin client"},
+        content_type="application/json",
+    )
+    assert res.status_code == 403
+
+
+def test_lot_owner_unparseable_client_fails_closed(client):
+    own = _client_row(name="Own Unparseable")
+    user = _in(_user("sub-lo-unparseable"), LOT_OWNERS)
+    _bind(user, own)
+    client.force_login(user)
+    assert client.get("/api/conversations/?client=abc").status_code == 403
+    res = client.post(
+        "/api/conversations/", {"client": "abc", "title": "bad"},
+        content_type="application/json",
+    )
+    assert res.status_code == 403
 
 
 def test_lot_owner_creates_a_thread_for_its_own_client(client):
@@ -178,7 +212,7 @@ def test_unbound_lot_owner_reaches_nothing(client):
 
     # The None binding is fail-closed at the permission layer: the list itself is
     # denied (403), not served as an empty page, and a create is rejected too.
-    assert client.get("/api/conversations/").status_code == 403
+    assert client.get(f"/api/conversations/?client={own.pk}").status_code == 403
     res = client.post(
         "/api/conversations/", {"client": own.pk, "title": "x"},
         content_type="application/json",

@@ -42,11 +42,21 @@ class AssistantBedrockClient:
         )
 
     def generate(self, *, snapshot, history, question):
+        """Return (text, model_id, tokens, latency_ms).
+
+        Raises on transport/IAM/model failure and on a malformed or blank
+        response — the caller owns degrading the surface, never a silent empty
+        success (#25 / #60). ``history`` must be prior turns only; a trailing
+        user turn is dropped so Converse never sees consecutive user roles (#13).
+        """
         messages = []
         for turn in history:
             messages.append(
                 {"role": turn["role"], "content": [{"text": turn["text"]}]}
             )
+        # Grounded user turn replaces any plain trailing user question.
+        while messages and messages[-1]["role"] == "user":
+            messages.pop()
         grounded = (
             "Datos del cliente (snapshot):\n"
             f"{json.dumps(snapshot, ensure_ascii=False, indent=2)}\n\n"
@@ -64,8 +74,10 @@ class AssistantBedrockClient:
         latency_ms = (time.monotonic() - started) * 1000.0
         try:
             text = response["output"]["message"]["content"][0]["text"].strip()
-        except (KeyError, IndexError, TypeError, AttributeError):
-            text = ""
+        except (KeyError, IndexError, TypeError, AttributeError) as exc:
+            raise RuntimeError("malformed bedrock response") from exc
+        if not text:
+            raise RuntimeError("empty bedrock response")
         tokens = None
         try:
             tokens = response.get("usage", {}).get("totalTokens")
