@@ -13,6 +13,8 @@ from decimal import Decimal
 
 import pytest
 from django.core.exceptions import ValidationError
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 
 from apps.clients.models import Client
 from apps.ledger.models import Concept, Direction, LedgerEntry
@@ -129,6 +131,22 @@ def test_semen_sale_rejects_insufficient_stock():
             semen_batch=batch, straws="5", unit_price="1000", date="2026-03-10",
         )
     assert LedgerEntry.objects.count() == 0
+
+
+def test_semen_sale_locks_batch_before_stock_check():
+    """#21 / #57: select_for_update on SemenBatch before check+movement."""
+    _own, _sire, batch = _fixtures()
+    register_semen_movement(
+        semen_batch=batch, direction=MoveDir.IN, straws="10",
+        reason=SemenReason.PURCHASE, date="2026-03-01",
+    )
+    with CaptureQueriesContext(connection) as ctx:
+        register_semen_sale(
+            semen_batch=batch, straws="1", unit_price="1000", date="2026-03-10",
+        )
+    sql = " ".join(q["sql"] for q in ctx.captured_queries).upper()
+    assert "FOR UPDATE" in sql
+    assert "GENETICS_SEMENBATCH" in sql.replace('"', "").replace("`", "")
 
 
 def test_semen_sale_rejects_non_positive_price():

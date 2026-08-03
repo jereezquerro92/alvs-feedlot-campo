@@ -51,6 +51,25 @@ def test_lot_placement_defaults_head_count_to_lot_size():
     assert placement.head == 80
 
 
+def test_placement_rejects_head_count_above_lot_size():
+    # #22 / #59: placement cannot claim more heads than the lot carries.
+    _, pen, lot, _ = _fixtures()
+    with pytest.raises(ValidationError, match="cabezas"):
+        register_placement(
+            pen=pen, date="2026-07-10", direction=PenPlacement.Direction.IN,
+            lot=lot, head_count=81,
+        )
+
+
+def test_placement_allows_head_count_equal_to_lot_size():
+    _, pen, lot, _ = _fixtures()
+    placement = register_placement(
+        pen=pen, date="2026-07-10", direction=PenPlacement.Direction.IN,
+        lot=lot, head_count=80,
+    )
+    assert placement.head_count == 80
+
+
 def test_animal_placement_counts_one_head():
     _, pen, _, animal = _fixtures()
     placement = register_placement(

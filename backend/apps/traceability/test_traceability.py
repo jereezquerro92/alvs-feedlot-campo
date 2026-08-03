@@ -140,7 +140,7 @@ def test_coverage_is_ratio_over_active_head():
     assert report["active_head"] == 2
     assert report["caravanned"] == 1
     assert report["ratio"] == Decimal("1") / Decimal("2")
-    assert report["not_calculable"] is None
+    assert report["not_calculable"] == ""
 
 
 def test_coverage_is_null_without_active_head():

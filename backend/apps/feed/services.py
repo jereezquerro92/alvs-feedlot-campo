@@ -14,6 +14,7 @@ determines the behavior wholesale.
 
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Sum
 
@@ -38,15 +39,18 @@ def stock_balance(*, feed_type, owner_kind, client=None):
 
 @transaction.atomic
 def register_delivery(*, client, feed_type, quantity, date, created_by=None):
+    quantity = Decimal(quantity)
+    if quantity <= 0:
+        raise ValidationError("La cantidad debe ser positiva.")
     delivery = FeedDelivery.objects.create(
-        client=client, feed_type=feed_type, quantity=Decimal(quantity), date=date, created_by=created_by
+        client=client, feed_type=feed_type, quantity=quantity, date=date, created_by=created_by
     )
     FeedStockMovement.objects.create(
         owner_kind=OwnerKind.CLIENT,
         client=client,
         feed_type=feed_type,
         direction=FeedStockMovement.Direction.IN,
-        quantity=Decimal(quantity),
+        quantity=quantity,
         date=date,
         source_kind="feed_delivery",
         source_id=delivery.id,
@@ -63,6 +67,10 @@ def register_feeding(*, client, feed_type, quantity, unit_price, origin, date, a
     """
     quantity = Decimal(quantity)
     unit_price = Decimal(unit_price)
+    if quantity <= 0:
+        raise ValidationError("La cantidad debe ser positiva.")
+    if unit_price < 0:
+        raise ValidationError("El precio unitario no puede ser negativo.")
     feeding = FeedingEvent.objects.create(
         client=client,
         animal=animal,

@@ -14,6 +14,7 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.db.models import Count
 
 from apps.ledger.models import Concept, Direction
 from apps.ledger.services import post_entry
@@ -138,13 +139,21 @@ def plan_schedule_for_client(client, *, as_of=None):
 
         # Sequential attribution: N applications of a product satisfy the N
         # earliest-due doses of that product, never every future dose (adr-40
-        # decision 3). Count the applications per product once, then consume them
-        # in offset order — the plan items already sort by day_offset.
-        applications_left = {}
-        for product_id in {item.product_id for item in enr.plan.items.all()}:
-            applications_left[product_id] = HealthEvent.objects.filter(
-                product_id=product_id, date__gte=enr.start_date, **target_filter
-            ).count()
+        # decision 3). Count applications per product in one grouped query, then
+        # consume them in offset order — the plan items already sort by day_offset.
+        product_ids = {item.product_id for item in enr.plan.items.all()}
+        applications_left = {product_id: 0 for product_id in product_ids}
+        if product_ids:
+            for row in (
+                HealthEvent.objects.filter(
+                    product_id__in=product_ids,
+                    date__gte=enr.start_date,
+                    **target_filter,
+                )
+                .values("product_id")
+                .annotate(n=Count("id"))
+            ):
+                applications_left[row["product_id"]] = row["n"]
 
         for item in enr.plan.items.all():
             due_date = enr.start_date + timedelta(days=item.day_offset)
