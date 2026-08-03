@@ -52,6 +52,7 @@ src/lib/components/
   overlay/           # Dialog, Drawer, Accordion, ConfirmDialog, Tooltip, Popover, HoverCard, ScrollArea, SidePanel — Melt builders (adr-52 r8 default), SOLID open/close primitives
   theme/             # ThemeModeToggle, QuickThemeToggle, ThemeCard — Melt-builder theme controls
   showcase/          # AlertDialogDemo, TabsDemo, DropdownMenuDemo, ContextMenuDemo, MenubarDemo, TableOfContentsDemo, TooltipDemo, PopoverDemo, HoverCardDemo, CollapsibleDemo, TreeDemo, ScrollAreaDemo, SidePanelDemo, ToastTriggerDemo — gallery-only demo compositions, not app surface
+  shell/             # ChatDrawer — layout-mounted compositions, one instance per page, never a route body
   views/             # LobbyView, ProfileView, ShowcaseView, ShowcaseGalleryView, ChatView — one zero-hydration page body per route
 ```
 
@@ -83,6 +84,7 @@ Names here are reference copies of what [[GLOSSARY]] already decided, not the po
 | `ChatUI` | `chat/` | Composed chat surface (list + composer) | [[CHATBOT]] router UI |
 | `ChatMessageList` | `chat/` | Renders structured router outcomes only, never free prose | [[CHATBOT]] router UI |
 | `ChatComposer` | `chat/` | Posts raw user text to the router endpoint | [[CHATBOT]] router UI |
+| `ChatDrawer` | `shell/` | `overlay/Drawer` + `chat/ChatUI` docked right, mounted once in `Base.astro` and role-gated | The router surface on every gated page ([[CHATBOT]]) |
 | `AuthPanel` | `auth/` | Session-aware auth actions | Any authenticated page |
 | `SessionBadge` | `auth/` | Compact current-session indicator | Any authenticated page |
 | `ProfileForm` | `auth/` | Editable profile fields (nickname, avatar visibility) with confirm-guarded save | `/profile/` |

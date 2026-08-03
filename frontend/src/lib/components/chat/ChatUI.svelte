@@ -17,20 +17,9 @@
   import SectionTitle from "$lib/components/primitives/titles/SectionTitle.svelte";
   import { routeUtterance, copyForResult } from "$lib/router-client";
   import { readCsrfTokenFromCookie } from "$lib/csrf";
-
-  type ChatUICopy = {
-    title: string;
-    emptyState: string;
-    composerPlaceholder: string;
-    composerAriaLabel: string;
-    composerSend: string;
-    /** Typewriter phrases cycled while the composer is empty. */
-    composerPlaceholderExamples?: string[];
-    messageGo: string;
-    messageConfirm: string;
-    /** Maps a `copyForResult` message key to its resolved, localized text. */
-    outcomeCopy: Record<string, string>;
-  };
+  /** The copy shape and its single assembler live in $lib/chatui-copy, so the
+   * page and the shell's ChatDrawer cannot drift into two key lists. */
+  import type { ChatUICopy } from "$lib/chatui-copy";
 
   const EMPTY_COPY: ChatUICopy = {
     title: "",
@@ -47,9 +36,14 @@
     class: className = undefined,
     publicBackendUrl = "",
     copy = EMPTY_COPY,
+    heading = true,
   }: {
     class?: string;
     publicBackendUrl?: string;
+    /** Renders `copy.title` as the surface's own heading. The dedicated
+     * /chatui/ page owns its `h1`; a host that already draws a header —
+     * the shell's ChatDrawer — passes false so the page keeps one `h1`. */
+    heading?: boolean;
     /** Rendered copy arrives resolved from the page's frontmatter (LOCALIZATION).
      * Defaults to blank strings (adr-22 rule 1) — a zero-prop mount renders the
      * chrome with no copy rather than throwing. */
@@ -103,8 +97,16 @@
   }
 </script>
 
-<div class={`mx-auto flex min-h-screen w-full max-w-2xl flex-col gap-4 px-4 py-8 ${className ?? ""}`}>
-  <SectionTitle as="h1">{copy.title}</SectionTitle>
+<!--
+  `min-h-0 flex-1` rather than `min-h-screen`: the surface fills whatever box
+  its host gives it — the full canvas on /chatui/ (ChatView is the flex column
+  that supplies the height), a docked panel inside ChatDrawer — instead of
+  claiming the viewport wherever it is mounted.
+-->
+<div class={`mx-auto flex min-h-0 w-full max-w-2xl flex-1 flex-col gap-4 px-4 py-8 ${className ?? ""}`}>
+  {#if heading}
+    <SectionTitle as="h1">{copy.title}</SectionTitle>
+  {/if}
   <div bind:this={messageContainer} class="flex flex-1 flex-col justify-end overflow-y-auto">
     {#if messages.length === 0}
       <p class="text-sm text-muted-foreground">

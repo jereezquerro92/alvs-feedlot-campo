@@ -223,7 +223,7 @@ const tocItems: TableOfContentsItem[] = [
 ];
 ---
 
-<Base title={t("gallery_title")}>
+<Base title={t("gallery_title")} me={me}>
   {/* @ts-expect-error Astro↔Svelte-5 named-slot typing limitation (@astrojs/svelte 9 / Svelte 5 legacy <slot name>): the generated TSX types the component's children as `undefined`, but the many slotted children render correctly at runtime — see the issue that gated this on a green `bun run check` */}
   <ShowcaseGalleryView
     entities={entities}

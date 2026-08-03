@@ -80,7 +80,7 @@ const pending = me !== null && !hasRole(me);
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Base title={`${client.name} · ${t("feedlot_clients_title")}`}>
+<Base title={`${client.name} · ${t("feedlot_clients_title")}`} me={me}>
   <FeedlotDashboardView
     projectSlug={publicProjectSlug}
     client={client}

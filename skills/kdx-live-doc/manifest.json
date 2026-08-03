@@ -260,6 +260,22 @@
       ]
     },
     {
+      "glob": "frontend/src/lib/components/shell/ChatDrawer.svelte",
+      "links": [
+        "adr-15-chatbot-two-tier",
+        "adr-22-showcase-ready-components",
+        "CHATBOT",
+        "COMPONENTIZATION"
+      ]
+    },
+    {
+      "glob": "frontend/src/lib/chatui-copy.ts",
+      "links": [
+        "adr-15-chatbot-two-tier",
+        "CHATBOT"
+      ]
+    },
+    {
       "glob": "frontend/src/lib/csrf.ts",
       "links": [
         "adr-10-auth",
