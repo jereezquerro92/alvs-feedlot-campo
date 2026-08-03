@@ -48,6 +48,7 @@ EXPECTED_WATCHLISTS = {
     "astro-drf-aws-api": (
         "docs/API.md",
         "*/urls.py",
+        "*/api_urls.py",
         "*/views.py",
         "*/viewsets.py",
         "*/serializers.py",

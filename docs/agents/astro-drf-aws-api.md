@@ -26,7 +26,7 @@ Read `docs/API.md` in full, then the change you were dispatched about — the in
 
 ## Watchlist
 
-Files whose change should route to you (the dispatch hook knows this list; verify it stays true): `docs/API.md`, any `urls.py`, `views.py`, `viewsets.py`, `serializers.py`, `models.py`, and anything under a `templates/` directory — Django templates carry `hx-*` attributes, and fragment routes hide there.
+Files whose change should route to you (the dispatch hook knows this list; verify it stays true): `docs/API.md`, any `urls.py`, `api_urls.py`, `views.py`, `viewsets.py`, `serializers.py`, `models.py`, and anything under a `templates/` directory — Django templates carry `hx-*` attributes, and fragment routes hide there.
 
 ## Sibling protocol
 
