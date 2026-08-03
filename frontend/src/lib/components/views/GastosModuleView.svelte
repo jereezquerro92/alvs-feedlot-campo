@@ -1,5 +1,5 @@
 <!-- LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
-     Governed by: [[adr-04-frontend-and-design-system]] · [[adr-22-showcase-ready-components]] · [[adr-24-feedlot-domain]]
+     Governed by: [[adr-04-frontend-and-design-system]] · [[adr-22-showcase-ready-components]] · [[adr-49-domain-layer-and-growth-by-addition]]
      Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]] · [[FEEDLOT]]
      LIVE-DOC:END -->
 
@@ -8,7 +8,7 @@
   charges the feedlot bills to a client's current account — labor (hours × price/hour),
   fuel (litres × price/litre), machinery, or other — each an immutable `ExpenseEvent`
   that posts a `service` DEBIT through the generic `(source_kind, source_id)` seam
-  ([[adr-24-feedlot-domain]] rule 4), never a manual ledger debit ([[adr-25-account-ledger]]
+  ([[adr-49-domain-layer-and-growth-by-addition]] rule 4), never a manual ledger debit ([[adr-25-account-ledger]]
   rule 1). Client-scoped: a charge always lands on a client's account, so you pick the
   client in the topbar first; the charge may target one lot or the whole client (lot
   null). The recent-expenses table below reflects what was posted. Mounts with zero props

@@ -8,7 +8,7 @@
   current account. Writes only through the declared endpoint `POST /api/expenses/`,
   which routes to `register_expense`: it snapshots `unit_price × quantity` and posts
   a `service` DEBIT through the generic `(source_kind, source_id)` seam
-  ([[adr-24-feedlot-domain]] rule 4, [[adr-25-account-ledger]] rule 3). This is the
+  ([[adr-49-domain-layer-and-growth-by-addition]] rule 4, [[adr-25-account-ledger]] rule 3). This is the
   field manager's "carga de deudas" via an immutable event, never a manual ledger
   debit ([[adr-44-field-operational-roles]] decision 6). The lot is optional: null
   charges the whole client. A bare mount performs NO request

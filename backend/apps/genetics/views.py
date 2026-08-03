@@ -38,7 +38,7 @@ class _EventViewSet(
     mixins.CreateModelMixin, viewsets.GenericViewSet,
 ):
     """Immutable events: list/retrieve/create only — a correction is another event
-    (adr-24 rule 3, adr-47 decision 1). The write serializer runs the service."""
+    (adr-49 rule 3, adr-47 decision 1). The write serializer runs the service."""
 
     permission_classes = [GeneticsAccess]
     read_serializer_class = None

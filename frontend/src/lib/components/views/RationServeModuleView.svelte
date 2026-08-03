@@ -1,5 +1,5 @@
 <!-- LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
-     Governed by: [[adr-04-frontend-and-design-system]] · [[adr-22-showcase-ready-components]] · [[adr-24-feedlot-domain]]
+     Governed by: [[adr-04-frontend-and-design-system]] · [[adr-22-showcase-ready-components]] · [[adr-49-domain-layer-and-growth-by-addition]]
      Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]] · [[FEEDLOT]]
      LIVE-DOC:END -->
 

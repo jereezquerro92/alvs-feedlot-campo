@@ -8,7 +8,7 @@ tags: [adr, feedlot, genetics, semen, embryo, inventory, event-sourced, phase-br
 
 # ADR-47 — Genética: semen, DEP y transferencia embrionaria (`genetics`)
 
-**Contexto:** crece por adición sobre la espina ([[adr-24-feedlot-domain]] regla 1): una app
+**Contexto:** crece por adición sobre la espina ([[adr-49-domain-layer-and-growth-by-addition]] regla 1): una app
 nueva `genetics`, sin tocar `livestock`. Reusa el patrón stock-por-movimientos de
 [[adr-25-account-ledger]] regla 4 (`FeedStockMovement`) generalizado por
 [[adr-37-inventory-and-weather]] regla 1; el precedente "la venta propia es un crédito
@@ -36,7 +36,7 @@ movimientos, y la venta de semen, sin tocar el dominio estable.
 Catálogos (datos maestros, ModelViewSet con CRUD completo): `Sire` (reproductor),
 `SemenBatch` (partida de pajuelas), `EmbryoBatch` (partida de embriones) y `BreedingValue`
 (un DEP/EPD). Hechos fechados inmutables (`list`/`retrieve`/`create`, sin `update` ni
-`destroy`, [[adr-24-feedlot-domain]] regla 3): `SemenMovement`, `EmbryoMovement`,
+`destroy`, [[adr-49-domain-layer-and-growth-by-addition]] regla 3): `SemenMovement`, `EmbryoMovement`,
 `EmbryoFlush` (colecta) y `SemenSale` (venta).
 
 *Por qué:* un toro o una partida tienen estado que se corrige (se da de baja, se renombra);
@@ -70,7 +70,7 @@ correcto. Un `Sire` externo cubre el caso real de comprar semen de un toro que n
 
 `SemenSale` postea **un `credit` `concept=sale`** a la cuenta propia (el `Client(kind=own)`)
 por el producido de la venta, vía el par genérico `(source_kind="semen_sale",
-source_id=<SemenSale.id>)` ([[adr-24-feedlot-domain]] regla 4), y descuenta un
+source_id=<SemenSale.id>)` ([[adr-49-domain-layer-and-growth-by-addition]] regla 4), y descuenta un
 `SemenMovement` `out` (`reason=sale`) del `SemenBatch`. Es el mismo precedente que la venta
 de hacienda propia ([[adr-43-sale-settlement]] decisión 3): un producido propio se registra
 como crédito en la cuenta que lleva sus costos, dejando el margen legible. Fotografía
@@ -142,7 +142,7 @@ solo en la salida renderizada del frontend.
 
 - El backend entra solo por [[API]] ([[adr-03-api-and-backend]]) y nace por el flujo [[TDD]]
   ([[adr-07-development-flow]]); este ADR no exceptúa ese camino
-  ([[adr-24-feedlot-domain]] regla 6).
+  ([[adr-49-domain-layer-and-growth-by-addition]] regla 6).
 - Migraciones: las tablas nuevas viven en `genetics` (`Sire`, `BreedingValue`, `SemenBatch`,
   `SemenMovement`, `SemenSale`, `EmbryoBatch`, `EmbryoMovement`, `EmbryoFlush`). Nada fuera
   de la app; el crédito de venta reusa `Concept.SALE` ([[adr-43-sale-settlement]]) por el

@@ -42,7 +42,7 @@ Liquidar una venta postea **un `LedgerEntry` nuevo** en la cuenta del dueño de 
 hacienda. No edita ni borra ningún asiento previo, no reabre los cargos de alimento o
 sanidad ya posteados (esos quedan cobrados) y no reescribe la salida
 ([[adr-25-account-ledger]] regla 1, intacta). El asiento se liga a la salida por el par
-genérico `(source_kind="exit", source_id=<Exit.id>)` ([[adr-24-feedlot-domain]] regla 4),
+genérico `(source_kind="exit", source_id=<Exit.id>)` ([[adr-49-domain-layer-and-growth-by-addition]] regla 4),
 para que la liquidación sea trazable al hecho que la produjo.
 
 *Por qué:* misma disciplina event-sourced de todo el sistema. Una liquidación es un hecho

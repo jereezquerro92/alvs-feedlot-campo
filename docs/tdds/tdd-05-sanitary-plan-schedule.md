@@ -48,7 +48,7 @@ exists for the same target and product dated `>= start_date`, else `pending` whe
 (no filled zero, [[adr-29-metrics-derivation]] posture). It is exposed as the
 `schedule` detail-action (`GET`) on `PlanEnrollmentViewSet`. Catalog CRUD is a plain
 `ModelViewSet`; the enrollment viewset is `list`/`retrieve`/`create` only
-([[adr-24-feedlot-domain]] rule 3). No new [[VARIABLES]]; no cache layer added
+([[adr-49-domain-layer-and-growth-by-addition]] rule 3). No new [[VARIABLES]]; no cache layer added
 ([[CACHE]], `no-store`).
 
 ## Tests (`backend/apps/sanitary/test_sanitary_plan.py`)

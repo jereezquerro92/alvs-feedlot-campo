@@ -8,7 +8,7 @@ tags: [adr, feedlot, livestock, sanitary, lifecycle, phase-2]
 
 # ADR-28 — Ciclo del animal y la app `sanitary`
 
-**Contexto:** extiende [[adr-24-feedlot-domain]], [[adr-25-account-ledger]] y [[adr-26-livestock-individual-and-lot]].
+**Contexto:** extiende [[adr-49-domain-layer-and-growth-by-addition]], [[adr-25-account-ledger]] y [[adr-26-livestock-individual-and-lot]].
 
 ## Contexto
 

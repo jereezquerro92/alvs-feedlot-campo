@@ -4,7 +4,7 @@ LIVE-DOC:END"""
 
 """Extra expenses (gastos): the field manager's "carga de deudas" as immutable
 events that post a `service` debit through the ledger's generic seam
-([[adr-44-field-operational-roles]] decision 6, [[adr-24-feedlot-domain]] rule 4).
+([[adr-44-field-operational-roles]] decision 6, [[adr-49-domain-layer-and-growth-by-addition]] rule 4).
 Never a manual ledger debit, never a mutation of an existing entry (adr-25 rule 1)."""
 
 from decimal import Decimal

@@ -1,5 +1,5 @@
 <!-- LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
-     Governed by: [[adr-04-frontend-and-design-system]] · [[adr-22-showcase-ready-components]] · [[adr-24-feedlot-domain]]
+     Governed by: [[adr-04-frontend-and-design-system]] · [[adr-22-showcase-ready-components]] · [[adr-49-domain-layer-and-growth-by-addition]]
      Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]] · [[FEEDLOT]]
      LIVE-DOC:END -->
 
@@ -10,7 +10,7 @@
   acts on that client. One island renders the whole green shell + the category's
   forms, so the new design is applied consistently instead of reverting to the old
   per-client submenu. Pure UI over existing per-client forms; the forms own the
-  writes ([[adr-24-feedlot-domain]] — backend is the authority). Mounts with zero
+  writes ([[adr-49-domain-layer-and-growth-by-addition]] — backend is the authority). Mounts with zero
   props and never throws ([[adr-22-showcase-ready-components]] rule 1). Colours are
   `.feedlot-app` tokens ([[DESIGN-SYSTEM]]); copy via i18n ([[LOCALIZATION]]).
 -->

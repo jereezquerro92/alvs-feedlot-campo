@@ -11,7 +11,7 @@ tags: [adr, feedlot, feedyard, pens, placement, phase-7b]
 **Contexto:** completa el diferimiento de [[adr-33-feedyard-operating-loop]] decisión 7
 (el cierre por corral necesita saber qué hacienda estuvo en el corral). Reusa la
 restricción XOR animal/lote de [[adr-26-livestock-individual-and-lot]] y la postura
-event-sourced de [[adr-24-feedlot-domain]]. Reglas solamente; las entidades viven en
+event-sourced de [[adr-49-domain-layer-and-growth-by-addition]]. Reglas solamente; las entidades viven en
 [[FEEDLOT-DATA-MODEL]].
 
 ## Contexto
@@ -29,7 +29,7 @@ corral, no hay base para un cierre por corral. Se agrega el hecho que faltaba �
 `PenPlacement` registra un movimiento fechado de un `Animal` o un `Lot` hacia adentro
 (`direction=in`) o hacia afuera (`direction=out`) de un `Pen`. La ubicación actual y
 la ocupación se **derivan** de esos eventos; nunca se guardan como un campo editable
-en `Pen` ni en `Animal` (misma postura que adr-24 regla 3, adr-26 regla 4).
+en `Pen` ni en `Animal` (misma postura que adr-49 regla 3, adr-26 regla 4).
 
 *Por qué:* un feedlot mueve hacienda entre corrales todo el tiempo. Un campo
 `Animal.pen` mutable perdería la historia — de qué corral vino, cuánto estuvo. El

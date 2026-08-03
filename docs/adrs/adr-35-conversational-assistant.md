@@ -71,7 +71,7 @@ setting fuerza el mock a un deploy. Los tests corren contra el mock.
 ### 6. Catálogo editable, eventos inmutables
 
 Una `Conversation` se crea y se lista; los `Message` se crean y se leen —
-list/retrieve/create, sin update ni destroy (adr-24 regla 3). Un turno es un hecho
+list/retrieve/create, sin update ni destroy (adr-49 regla 3). Un turno es un hecho
 fechado: una corrección es otro turno, no editar el pasado.
 
 ## Consecuencias

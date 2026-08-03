@@ -25,7 +25,7 @@ Rules only; content lives in [[FEEDLOT-DATA-MODEL]].
 4. Lot counters (`head_count`, `total_weight`) are maintained only by events: `Intake` adds,
    `Death`/`Exit` subtract (by their `head_count`/`weight` for partial lot operations),
    `Weighing` corrects `total_weight`. They are never hand-edited — consistent with the
-   event-sourced posture ([[adr-24-feedlot-domain]] rule 3).
+   event-sourced posture ([[adr-49-domain-layer-and-growth-by-addition]] rule 3).
 5. `Animal.current_weight` is derived from the latest `Weighing`; growth metrics (daily gain,
    lot average, feed conversion) are derived across successive `Weighing` rows and are never
    stored as editable fields.

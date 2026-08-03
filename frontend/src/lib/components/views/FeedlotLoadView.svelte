@@ -9,7 +9,7 @@
   interactivity ladder, [[adr-04-frontend-and-design-system]] rule 3): it owns the
   herd and feed/health write forms whose submit state lives client-side. Each form
   posts through a declared endpoint that routes to a domain service, never a raw
-  write ([[adr-24-feedlot-domain]] rule 3). The view holds no mutation of its own and
+  write ([[adr-49-domain-layer-and-growth-by-addition]] rule 3). The view holds no mutation of its own and
   mounts safely with zero props ([[adr-22-showcase-ready-components]] rules 1–2).
   Copy through the i18n layer, Spanish rendered / English keys ([[LOCALIZATION]]).
 -->

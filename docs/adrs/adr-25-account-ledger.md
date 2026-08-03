@@ -37,5 +37,5 @@ Rules only; content lives in [[FEEDLOT-DATA-MODEL]] and [[FEEDLOT]].
    phases do NOT imputes a payment against specific charges. Explicit payment-to-charge
    imputation, if needed, is a later addition with its own model — never by mutating entries.
 8. Every charge-bearing entry carries `(source_kind, source_id)` back to its originating
-   event ([[adr-24-feedlot-domain]] rule 4), so any charge is traceable to the fact that
+   event ([[adr-49-domain-layer-and-growth-by-addition]] rule 4), so any charge is traceable to the fact that
    produced it and vice versa.

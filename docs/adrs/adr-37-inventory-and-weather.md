@@ -11,7 +11,7 @@ tags: [adr, feedlot, inventory, weather, stock, phase-10]
 **Contexto:** generaliza el patrón de stock de [[adr-25-account-ledger]] regla 4
 (`FeedStockMovement`) a insumos que no son alimento (gasoil, postes, alambre,
 sanitarios de campo) y agrega el registro de lluvia/clima. Reusa la postura
-event-sourced de [[adr-24-feedlot-domain]] regla 3 y el precedente "producción/consumo
+event-sourced de [[adr-49-domain-layer-and-growth-by-addition]] regla 3 y el precedente "producción/consumo
 propio no toca el ledger" de [[adr-32-multi-rubro-assets]] regla 4. Reglas solamente;
 las entidades viven en [[FEEDLOT-DATA-MODEL]].
 
@@ -43,7 +43,7 @@ historia de por qué cambió; el movimiento la conserva y hace auditable el stoc
 
 `InputType` (gasoil, postes, alambre, sanitario…) es dato maestro: ModelViewSet con
 CRUD completo — "cargar insumos" es crear tipos. `InputStockMovement` es un hecho
-fechado: list/retrieve/create, sin update ni destroy (adr-24 regla 3). Una corrección
+fechado: list/retrieve/create, sin update ni destroy (adr-49 regla 3). Una corrección
 es otro movimiento.
 
 *Por qué:* un tipo de insumo tiene estado que se corrige (se da de baja, se renombra);
@@ -58,7 +58,7 @@ consumo propio, no un insumo entregado a un cliente que se cobre (mismo criterio
 
 *Por qué:* un solo camino de cobro sigue siendo el ledger vía `feed` (adr-25). Si algún
 día un insumo se factura como servicio a un tercero, entra por el par genérico
-`(source_kind, source_id)` (adr-24 regla 4) con su propio cambio, no por acá.
+`(source_kind, source_id)` (adr-49 regla 4) con su propio cambio, no por acá.
 
 ### 4. Un `InputType` inactivo rechaza movimientos nuevos, en el servicio
 

@@ -36,7 +36,7 @@ class _EventViewSet(
     viewsets.GenericViewSet,
 ):
     """Reproductive events are immutable: list/retrieve/create only, no update or
-    destroy (adr-24 rule 3). Writes route through the service via the write
+    destroy (adr-49 rule 3). Writes route through the service via the write
     serializer; reads use the model serializer."""
 
     permission_classes = [BreedingAccess]

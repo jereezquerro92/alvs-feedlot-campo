@@ -9,7 +9,7 @@ LIVE-DOC:END"""
 `ExpenseEvent` is a `CostedEvent` ([[adr-32-multi-rubro-assets]] decision 1): it
 snapshots `unit_price`×`quantity` and (via `register_expense`) posts a `service`
 `debit` through the ledger's generic `(source_kind, source_id)` seam
-([[adr-24-feedlot-domain]] rule 4) — the in-doctrine rendering of
+([[adr-49-domain-layer-and-growth-by-addition]] rule 4) — the in-doctrine rendering of
 [[adr-44-field-operational-roles]] decision 6 ("carga de deudas" via events, never
 a manual ledger debit). An optional `lot` attributes the charge to one lot of the
 client (null = the whole client). English `choices`; Spanish only in rendered output.

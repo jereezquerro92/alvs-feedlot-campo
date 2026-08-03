@@ -75,7 +75,7 @@ desincronizaría de las asignaciones.
 ### 5. La asignación es un hecho inmutable: se crea y se lee
 
 `PaymentAllocation` expone `list`/`retrieve`/`create` — sin `update` ni `destroy`
-(adr-24 regla 3). Una imputación equivocada se corrige con otra asignación (una
+(adr-49 regla 3). Una imputación equivocada se corrige con otra asignación (una
 contra-imputación con `amount` negativo compensa), nunca editando la fila. La
 contra-imputación explícita, si se necesita, es una adición futura con su propio
 cambio — esta fase entrega la imputación positiva.

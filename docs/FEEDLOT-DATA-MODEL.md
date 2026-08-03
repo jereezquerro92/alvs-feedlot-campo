@@ -10,7 +10,7 @@ tags: [feedlot, data-model, ssot]
 
 > [!note] Scope of this doc
 > SSOT for the feedlot entities. Force for the debated choices lives in
-> [[adr-24-feedlot-domain]], [[adr-25-account-ledger]], [[adr-26-livestock-individual-and-lot]].
+> [[adr-49-domain-layer-and-growth-by-addition]], [[adr-25-account-ledger]], [[adr-26-livestock-individual-and-lot]].
 > Overview: [[FEEDLOT]]. Endpoints that expose these: `API-feedlot-additions.md` → [[API]].
 
 Event-sourced: operational facts are immutable dated records; states and balances are
@@ -279,7 +279,7 @@ margin always comes back and only `margin_currency` is `null` (`no_fx_rate`) if 
   one lot; null = the whole client), `date`, `category` (`labor`|`fuel`|`machinery`|
   `other`), `unit_price`, `quantity`, `description`. On create it posts a `service`
   `debit` `LedgerEntry` through the generic `(source_kind="expense_event", source_id)`
-  seam ([[adr-24-feedlot-domain]] rule 4) — no new ledger model, `Concept`, or migration
+  seam ([[adr-49-domain-layer-and-growth-by-addition]] rule 4) — no new ledger model, `Concept`, or migration
   ([[adr-25-account-ledger]] rule 1). It snapshots `unit_price`×`quantity` at posting
   time, so a later price change never rewrites the charge (rule 3). Immutable:
   `list`/`retrieve`/`create` only. This is the in-doctrine rendering of the field
@@ -372,7 +372,7 @@ available straws, and per-sire usage — `null` + reason when there are no movem
 ## Generic costing (scalability)
 
 `LedgerEntry` references its origin by `(source_kind, source_id)`, not by a per-domain
-FK. This is the pivot that makes multi-domain costing additive ([[adr-24-feedlot-domain]]).
+FK. This is the pivot that makes multi-domain costing additive ([[adr-49-domain-layer-and-growth-by-addition]]).
 Phase 6 is the first proof: `crops` (`source_kind="field_task"`) and `machinery`
 (`source_kind="maintenance_event"`) both post `service` debits through this same door,
 and `ledger` gained no model, concept, or FK ([[adr-32-multi-rubro-assets]] decision 3).

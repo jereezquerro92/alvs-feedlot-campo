@@ -6,7 +6,7 @@
 <!--
   Create a feedlot client. Writes only through the declared endpoint
   `POST /api/clients/` (a catalog ModelViewSet — clients are master data, editable,
-  [[adr-24-feedlot-domain]] rule 3). A bare mount performs NO request
+  [[adr-49-domain-layer-and-growth-by-addition]] rule 3). A bare mount performs NO request
   ([[adr-22-showcase-ready-components]] rule 2), mounts with zero props and never
   throws (rule 1). `onsaved` receives the created client so the caller decides any
   navigation — the form itself has no side effect ([[adr-22-showcase-ready-components]]

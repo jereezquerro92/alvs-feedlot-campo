@@ -10,7 +10,7 @@ tags: [feedlot, domain, ssot]
 
 > [!note] Scope of this doc
 > The code-facing SSOT of the **domain**: which apps exist and what each owns
-> ([[adr-24-feedlot-domain]] rule 5). Entities and their relations are
+> ([[adr-49-domain-layer-and-growth-by-addition]] rule 5). Entities and their relations are
 > [[FEEDLOT-DATA-MODEL]]; endpoints are `API-feedlot-additions.md` → [[API]]; the
 > objective is [[PRD]]. Force for every rule summarized here lives in the ADRs
 > this file links — never here.
@@ -124,7 +124,7 @@ An immutable ledger. Debits from feeding/sanitary/services, credits from `Paymen
 adjustments. Sign: positive balance = client owes. No edits, no deletes — corrections
 are counter-entries. Every debit snapshots `unit_price` and `quantity` (historical price).
 
-### The costing seam ([[adr-24-feedlot-domain]] rule 4)
+### The costing seam ([[adr-49-domain-layer-and-growth-by-addition]] rule 4)
 
 A charge-bearing event reaches the account through the `(source_kind, source_id)` pair on
 `LedgerEntry`, never through a per-domain foreign key. Every domain above posts its charges

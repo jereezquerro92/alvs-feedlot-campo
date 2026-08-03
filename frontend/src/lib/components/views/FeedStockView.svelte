@@ -1,5 +1,5 @@
 <!-- LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
-     Governed by: [[adr-04-frontend-and-design-system]] · [[adr-22-showcase-ready-components]] · [[adr-24-feedlot-domain]]
+     Governed by: [[adr-04-frontend-and-design-system]] · [[adr-22-showcase-ready-components]] · [[adr-49-domain-layer-and-growth-by-addition]]
      Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]] · [[FEEDLOT]]
      LIVE-DOC:END -->
 
@@ -11,7 +11,7 @@
   shows with no client picked; the CLIENT column is that client's brought-in feed
   (`origin=client_stock` consumption draws it down, uncharged — rule 4) and appears only
   when a client is selected. Read-only: this view never writes; deliveries/feedings own
-  the movements. A stock is a derived number, never an editable field ([[adr-24-feedlot-domain]]
+  the movements. A stock is a derived number, never an editable field ([[adr-49-domain-layer-and-growth-by-addition]]
   rule 3). Mounts with zero props and never throws ([[adr-22-showcase-ready-components]]
   rule 1). Green `.feedlot-app` tokens ([[DESIGN-SYSTEM]]); copy via i18n ([[LOCALIZATION]]).
 -->

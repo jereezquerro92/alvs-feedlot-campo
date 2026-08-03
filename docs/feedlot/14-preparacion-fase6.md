@@ -2,7 +2,7 @@
 
 > No se construye ahora. Este documento deja anotado qué mirar cuando aparezca el **segundo rubro real**, para no rediseñar la columna vertebral bajo presión.
 
-**Regla que ya se respetó:** la columna vertebral (`clients`, `ledger`, `market`, `advisors`) no conoce a ningún rubro. El ganadero (`livestock`, `feed`, `sanitary`, `metrics`) postea al ledger por el par genérico (`source_kind`, `source_id`). Un rubro nuevo entra por la misma puerta sin tocar lo hecho (adr-24, adr-25).
+**Regla que ya se respetó:** la columna vertebral (`clients`, `ledger`, `market`, `advisors`) no conoce a ningún rubro. El ganadero (`livestock`, `feed`, `sanitary`, `metrics`) postea al ledger por el par genérico (`source_kind`, `source_id`). Un rubro nuevo entra por la misma puerta sin tocar lo hecho (adr-49, adr-25).
 
 ## Cuándo se dispara
 

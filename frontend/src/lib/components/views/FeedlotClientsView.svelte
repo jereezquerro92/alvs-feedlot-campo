@@ -1,5 +1,5 @@
 <!-- LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
-     Governed by: [[adr-04-frontend-and-design-system]] · [[adr-22-showcase-ready-components]] · [[adr-24-feedlot-domain]]
+     Governed by: [[adr-04-frontend-and-design-system]] · [[adr-22-showcase-ready-components]] · [[adr-49-domain-layer-and-growth-by-addition]]
      Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]]
      LIVE-DOC:END -->
 
@@ -8,7 +8,7 @@
   shared green FeedlotShell so the design is consistent with every module and the
   dashboard (redesign — no more plain-white revert). Lists clients with their
   balance, links each to its dashboard, carries the "new client" write form
-  (`POST /api/clients/`, [[adr-24-feedlot-domain]] rule 3), and offers the topbar
+  (`POST /api/clients/`, [[adr-49-domain-layer-and-growth-by-addition]] rule 3), and offers the topbar
   dropdown to jump straight into a client. One hydrated island that renders its own
   SessionBadge into the shell's session slot. Copy via i18n ([[LOCALIZATION]]).
   Mounts with zero props, never throws, no write on mount

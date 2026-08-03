@@ -58,7 +58,7 @@ role's rules ([[adr-44-field-operational-roles]] d7). `BreedingAccess` =
 `GroupMatrixPermission` area in `apps/users/roles.py`
 (`write_groups={field_managers, feed_operators}`,
 `read_groups={field_managers, feed_operators, feedlot_owners}`).
-Events are `list`/`retrieve`/`create` only — no `update`/`destroy` ([[adr-24-feedlot-domain]] r3).
+Events are `list`/`retrieve`/`create` only — no `update`/`destroy` ([[adr-49-domain-layer-and-growth-by-addition]] r3).
 
 | Method | Path | View/ViewSet | Serializer | Auth | Description |
 |---|---|---|---|---|---|

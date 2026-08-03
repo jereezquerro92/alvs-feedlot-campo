@@ -45,7 +45,7 @@ flujo.
 
 `Notification` guarda `client`, `channel`, `to_address`, `subject`, `body`, y un
 `status` ∈ {`pending`, `sent`, `failed`} con su `error` y `sent_at`. Se crea y se
-lee — list/retrieve/create, sin update ni destroy (adr-24 regla 3). Un reintento es
+lee — list/retrieve/create, sin update ni destroy (adr-49 regla 3). Un reintento es
 una notificación nueva, no editar la anterior.
 
 *Por qué:* el registro de qué se mandó, a quién y con qué resultado tiene que ser

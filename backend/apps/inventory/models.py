@@ -59,7 +59,7 @@ class InputStockMovement(models.Model):
     )
     date = models.DateField()
     note = models.CharField(max_length=255, blank=True)
-    # Generic seam for a future link to an originating event (adr-24 rule 4).
+    # Generic seam for a future link to an originating event (adr-49 rule 4).
     source_kind = models.CharField(max_length=32, blank=True)
     source_id = models.PositiveBigIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
