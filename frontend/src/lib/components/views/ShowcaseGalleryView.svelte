@@ -19,6 +19,8 @@
     recoBody: string;
     typography: string;
     typographyNote: string;
+    pageHeader: string;
+    pageHeaderSubtitle: string;
     scaleH1: string;
     scaleH2: string;
     scaleH3: string;
@@ -100,6 +102,8 @@
   <section class="flex flex-col gap-3">
     <SectionTitle as="h2">{copy.typography}</SectionTitle>
     <p class="text-sm text-muted-foreground">{copy.typographyNote}</p>
+    <SectionTitle as="h3">{copy.pageHeader}</SectionTitle>
+    <slot name="page-header" />
     <SectionTitle as="h1">{copy.scaleH1}</SectionTitle>
     <SectionTitle as="h2">{copy.scaleH2}</SectionTitle>
     <SectionTitle as="h3">{copy.scaleH3}</SectionTitle>

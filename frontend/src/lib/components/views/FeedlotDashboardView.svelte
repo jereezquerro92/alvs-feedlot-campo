@@ -20,6 +20,7 @@
   import * as Card from "$lib/components/ui/card";
   import { Button } from "$lib/components/ui/button";
   import { formatNumber } from "$lib/components/data/NumericValue.svelte";
+  import { PageHeader } from "$lib/components/primitives/titles";
   import {
     FeedlotShell,
     KpiCard,
@@ -148,6 +149,15 @@
     emptyLots: t("feedlot_empty_lots"),
     emptyAnimals: t("feedlot_empty_animals"),
   };
+
+  const pageSubtitle = $derived(
+    [
+      client?.name ?? t("feedlot_dash_fallback"),
+      client?.tax_id ? `CUIT ${client.tax_id}` : "",
+    ]
+      .filter(Boolean)
+      .join(" · "),
+  );
 </script>
 
 <FeedlotShell
@@ -158,23 +168,16 @@
   <slot name="session" slot="session" />
 
   <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
-      <!-- Page header -->
-      <div class="flex flex-wrap items-end justify-between gap-3">
-        <div class="flex flex-col gap-1">
-          <h1 class="text-2xl font-bold tracking-tight">{t("feedlot_dash_title")}</h1>
-          <p class="text-sm text-muted-foreground">
-            {client?.name ?? t("feedlot_dash_fallback")}{#if client?.tax_id} · CUIT {client.tax_id}{/if}
-          </p>
-        </div>
-        <div class="flex items-center gap-2">
+      <PageHeader title={t("feedlot_dash_title")} subtitle={pageSubtitle}>
+        {#snippet actions()}
           <Button variant="outline" size="sm" disabled title={t("feedlot_action_export_soon")}>
             {t("feedlot_action_export")}
           </Button>
           <Button href={client?.id ? `/feedlot/${client.id}/schedule/` : "#"} size="sm">
             {t("feedlot_action_analyze")}
           </Button>
-        </div>
-      </div>
+        {/snippet}
+      </PageHeader>
 
       <!-- Mobile quick-nav (the sidebar is desktop-only) -->
       {#if client?.id}

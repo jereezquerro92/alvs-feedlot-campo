@@ -78,6 +78,8 @@ export const es = {
   gallery_reco_body:
     "DataTable, NumericValue, MetricTileStrip, StatusBadge, ChipFilterBar, EntityGrid y SummaryCard son los componentes más aptos para ese dominio — es solo una guía; todos los componentes siguen siendo agnósticos del negocio.",
   gallery_typography: "Tipografía",
+  gallery_page_header: "PageHeader",
+  gallery_page_header_subtitle: "Título de página con subtítulo y acciones opcionales.",
   gallery_typography_note:
     "PageTitle renderiza el <title> del documento en el servidor, sin directiva de cliente — Base.astro ya lo usa en todas las páginas, incluida esta, así que no tiene demo visual aparte. SectionTitle provee las tres escalas de título de abajo.",
   gallery_scale_h1: "Título de sección — escala h1",
