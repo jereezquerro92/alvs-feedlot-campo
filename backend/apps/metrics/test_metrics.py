@@ -132,6 +132,18 @@ def test_conversion_is_none_when_the_animal_lost_weight():
     assert result["not_calculable"] == "no_weight_gain"
 
 
+def test_conversion_is_none_when_no_feed_recorded():
+    client = _client()
+    animal = _animal(client)
+    register_weighing(animal=animal, weight="320", date="2026-02-01")
+    register_weighing(animal=animal, weight="380", date="2026-03-03")
+    result = services.conversion(client=client)
+    assert result["conversion"] is None
+    assert result["not_calculable"] == "no_feed_recorded"
+    assert result["kilos_fed"] == Decimal("0")
+    assert result["kilos_gained"] == Decimal("60")
+
+
 # --- mortality ---------------------------------------------------------------
 
 def test_mortality_rate_over_head_entered():
@@ -161,6 +173,17 @@ def test_mortality_ignores_other_clients():
     )
     register_death(lot=foreign_lot, date="2026-02-01", head_count=2)
     assert services.mortality(client=client)["dead_head"] == 0
+
+
+def test_mortality_counts_animal_death_as_one_head():
+    client = _client()
+    animal = _animal(client)
+    create_lot_intake(client=client, date="2026-01-10", code="L-01", head_count=10, total_weight="3200")
+    register_death(animal=animal, date="2026-02-01")
+    result = services.mortality(client=client)
+    assert result["dead_head"] == 1
+    assert result["entered_head"] == 10
+    assert result["rate"] == Decimal("0.1")
 
 
 # --- cost and account --------------------------------------------------------

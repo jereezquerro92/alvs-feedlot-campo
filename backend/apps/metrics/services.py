@@ -16,7 +16,8 @@ never a zero or a guess. A missing metric is readable; a fabricated one is not.
 from datetime import date as date_cls
 from decimal import Decimal
 
-from django.db.models import Sum
+from django.db.models import Case, DecimalField, F, Q, Sum, Value, When
+from django.db.models.functions import Coalesce
 
 from apps.breeding.models import (
     Calving,
@@ -155,7 +156,8 @@ def conversion(*, client, start=None, end=None):
     """Feed conversion: kg of feed per kg gained. The metric that justifies the system.
 
     Returns `None` when there is nothing honest to divide by — no growth measured,
-    or growth that came out flat or negative.
+    growth that came out flat or negative, or no feed recorded (same guard as
+    `pen_conversion`).
     """
     fed = kilos_fed(client=client, start=start, end=end)
     growth = kilos_gained(client=client, start=start, end=end)
@@ -166,6 +168,9 @@ def conversion(*, client, start=None, end=None):
                 "kilos_fed": fed, "kilos_gained": gained, **_seg(growth)}
     if gained <= ZERO:
         return {"conversion": None, "not_calculable": "no_weight_gain",
+                "kilos_fed": fed, "kilos_gained": gained, **_seg(growth)}
+    if fed <= ZERO:
+        return {"conversion": None, "not_calculable": "no_feed_recorded",
                 "kilos_fed": fed, "kilos_gained": gained, **_seg(growth)}
 
     return {"conversion": fed / gained, "not_calculable": "",
@@ -185,11 +190,16 @@ def mortality(*, client, start=None, end=None):
     """Dead head over head that entered. Rate is `None` when nothing entered."""
     lo, hi = _bounds(start, end)
 
-    dead = 0
-    for death in Death.objects.filter(date__gte=lo, date__lte=hi).select_related("animal", "lot"):
-        target = death.animal or death.lot
-        if target and target.client_id == client.id:
-            dead += death.head_count or 1
+    # Animal deaths store null head_count; treat as 1 head (same as the prior loop).
+    dead = (
+        Death.objects.filter(
+            Q(animal__client=client) | Q(lot__client=client),
+            date__gte=lo,
+            date__lte=hi,
+        ).aggregate(
+            t=Coalesce(Sum(Coalesce(F("head_count"), Value(1))), Value(0))
+        )["t"]
+    )
 
     entered = (
         Intake.objects.filter(client=client, date__gte=lo, date__lte=hi).aggregate(
@@ -285,31 +295,41 @@ def pen_cost_summary(*, client, start=None, end=None):
     not charged, so its cost is `0` while its kilos still count.
     """
     lo, hi = _bounds(start, end)
+    cost_field = DecimalField(max_digits=16, decimal_places=4)
     rows = (
         FeedingEvent.objects.filter(
             client=client, pen__isnull=False, date__gte=lo, date__lte=hi
         )
         .values("pen", "pen__code")
-        .annotate(kilos_fed=Sum("quantity"))
+        .annotate(
+            kilos_fed=Sum("quantity"),
+            feed_cost=Coalesce(
+                Sum(
+                    Case(
+                        When(
+                            origin=FeedingEvent.Origin.OWN_STOCK,
+                            then=F("quantity") * F("unit_price"),
+                        ),
+                        default=Value(0),
+                        output_field=cost_field,
+                    )
+                ),
+                Value(0),
+                output_field=cost_field,
+            ),
+        )
         .order_by("pen__code")
     )
 
-    pens = []
-    for row in rows:
-        events = FeedingEvent.objects.filter(
-            client=client, pen_id=row["pen"], date__gte=lo, date__lte=hi,
-            origin=FeedingEvent.Origin.OWN_STOCK,
-        )
-        feed_cost = sum((e.total_cost for e in events), ZERO)
-        pens.append(
-            {
-                "pen": row["pen"],
-                "code": row["pen__code"],
-                "kilos_fed": row["kilos_fed"] or ZERO,
-                "feed_cost": feed_cost,
-            }
-        )
-    return pens
+    return [
+        {
+            "pen": row["pen"],
+            "code": row["pen__code"],
+            "kilos_fed": row["kilos_fed"] or ZERO,
+            "feed_cost": row["feed_cost"] or ZERO,
+        }
+        for row in rows
+    ]
 
 
 # --- pen occupancy (Phase 7b) ------------------------------------------------
@@ -620,7 +640,7 @@ def caravana_coverage(*, client):
         "active_head": total,
         "caravanned": caravanned,
         "ratio": Decimal(caravanned) / Decimal(total),
-        "not_calculable": None,
+        "not_calculable": "",
     }
 
 
