@@ -927,6 +927,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/advisors/snapshot.py`
 - `backend/apps/advisors/test_bedrock_gate.py`
 - `backend/apps/advisors/tests/test_advisors.py`
+- `backend/apps/advisors/tests/test_inference.py`
 - `backend/apps/advisors/urls.py`
 - `backend/apps/advisors/views.py`
 - `backend/apps/assets/apps.py`
@@ -939,6 +940,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/assistant/services.py`
 - `backend/apps/assistant/test_assistant.py`
 - `backend/apps/assistant/test_assistant_access.py`
+- `backend/apps/assistant/test_inference.py`
 - `backend/apps/assistant/urls.py`
 - `backend/apps/assistant/views.py`
 - `backend/apps/breeding/admin.py`
@@ -955,6 +957,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/clients/models.py`
 - `backend/apps/clients/serializers.py`
 - `backend/apps/clients/signals.py`
+- `backend/apps/clients/test_account_views.py`
 - `backend/apps/clients/urls.py`
 - `backend/apps/clients/views.py`
 - `backend/apps/crops/admin.py`
@@ -1021,6 +1024,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/inventory/views.py`
 - `backend/apps/ledger/admin.py`
 - `backend/apps/ledger/apps.py`
+- `backend/apps/ledger/management/commands/recompute_balances.py`
 - `backend/apps/ledger/models.py`
 - `backend/apps/ledger/serializers.py`
 - `backend/apps/ledger/services.py`

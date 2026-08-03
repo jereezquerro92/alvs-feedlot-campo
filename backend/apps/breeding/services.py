@@ -15,7 +15,7 @@ movement `out` (decision 7); a live individual calving creates the calf Animal
 from decimal import Decimal
 
 from django.core.exceptions import ValidationError
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.utils.dateparse import parse_date
 
 from apps.clients.models import Client
@@ -23,8 +23,10 @@ from apps.ledger.models import Concept, Direction
 from apps.ledger.services import post_entry
 from apps.genetics.models import (
     Direction as MoveDir,
+    EmbryoBatch,
     EmbryoMovement,
     EmbryoReason,
+    SemenBatch,
     SemenMovement,
     SemenReason,
 )
@@ -41,6 +43,7 @@ from apps.breeding.models import (
 
 ZERO = Decimal("0")
 ONE = Decimal("1")
+_CALF_EAR_TAG_ATTEMPTS = 5
 
 
 def _as_date(value):
@@ -68,6 +71,41 @@ def _resolve_target(animal, lot):
     return lot.client
 
 
+def _next_calf_ear_tag(*, client, dam):
+    """Allocate the next `{dam.ear_tag}-C{n}` under a row lock on the dam (#23)."""
+    Animal.objects.select_for_update().filter(pk=dam.pk).get()
+    base = f"{dam.ear_tag}-C"
+    max_seq = 0
+    for tag in Animal.objects.filter(client=client, ear_tag__startswith=base).values_list(
+        "ear_tag", flat=True
+    ):
+        suffix = tag[len(base) :]
+        if suffix.isdigit():
+            max_seq = max(max_seq, int(suffix))
+    return f"{base}{max_seq + 1}"
+
+
+def _create_calf(*, dam, client, date, calf_sex, calf_weight):
+    """Create the calf Animal; retry on ear_tag IntegrityError (#23 / #57)."""
+    weight = Decimal(calf_weight) if calf_weight is not None else None
+    last_error = None
+    for _ in range(_CALF_EAR_TAG_ATTEMPTS):
+        try:
+            with transaction.atomic():
+                return Animal.objects.create(
+                    client=client,
+                    ear_tag=_next_calf_ear_tag(client=client, dam=dam),
+                    category=Category.CALF,
+                    sex=calf_sex,
+                    entry_date=date,
+                    entry_weight=weight,
+                    current_weight=weight,
+                )
+        except IntegrityError as exc:
+            last_error = exc
+    raise last_error
+
+
 @transaction.atomic
 def register_service(
     *, animal=None, lot=None, date, method, sire=None, semen_batch=None,
@@ -86,6 +124,8 @@ def register_service(
     if method in (Method.AI, Method.IATF):
         if semen_batch is None:
             raise ValidationError("An ai/iatf service requires a semen batch.")
+        # Lock before stock check + out movement (#21 / #57).
+        semen_batch = SemenBatch.objects.select_for_update().get(pk=semen_batch.pk)
         if not semen_batch.is_active:
             raise ValidationError("Cannot use an inactive semen batch.")
         if current_semen_stock(semen_batch=semen_batch) < ONE:
@@ -95,6 +135,7 @@ def register_service(
     if method == Method.EMBRYO_TRANSFER:
         if embryo_batch is None:
             raise ValidationError("An embryo transfer requires an embryo batch.")
+        embryo_batch = EmbryoBatch.objects.select_for_update().get(pk=embryo_batch.pk)
         if not embryo_batch.is_active:
             raise ValidationError("Cannot use an inactive embryo batch.")
         if current_embryo_stock(embryo_batch=embryo_batch) < ONE:
@@ -197,16 +238,12 @@ def register_calving(
 
     calf = None
     if animal is not None and outcome == CalvingOutcome.LIVE:
-        base = f"{animal.ear_tag}-C"
-        seq = Animal.objects.filter(client=client, ear_tag__startswith=base).count() + 1
-        calf = Animal.objects.create(
+        calf = _create_calf(
+            dam=animal,
             client=client,
-            ear_tag=f"{base}{seq}",
-            category=Category.CALF,
-            sex=calf_sex,
-            entry_date=date,
-            entry_weight=(Decimal(calf_weight) if calf_weight is not None else None),
-            current_weight=(Decimal(calf_weight) if calf_weight is not None else None),
+            date=date,
+            calf_sex=calf_sex,
+            calf_weight=calf_weight,
         )
 
     return Calving.objects.create(

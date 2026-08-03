@@ -14,7 +14,8 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import F, Sum
+from django.utils import timezone
 
 from apps.ledger.models import (
     Concept,
@@ -68,8 +69,12 @@ def post_entry(
         created_by=created_by,
     )
     delta = amount if direction == Direction.DEBIT else -amount
-    account.balance_cached = (account.balance_cached or Decimal("0")) + delta
-    account.save(update_fields=["balance_cached", "updated_at"])
+    # Atomic RMW via F() so concurrent posts cannot lose updates (#5 / #57).
+    # Callers that need the new cache must refresh_from_db().
+    type(account).objects.filter(pk=account.pk).update(
+        balance_cached=F("balance_cached") + delta,
+        updated_at=timezone.now(),
+    )
     return entry
 
 

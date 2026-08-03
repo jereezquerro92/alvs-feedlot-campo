@@ -63,8 +63,11 @@ class AdvisorBedrockClient:
         latency_ms = (time.monotonic() - started) * 1000.0
         try:
             text = response["output"]["message"]["content"][0]["text"].strip()
-        except (KeyError, IndexError, TypeError, AttributeError):
-            text = ""
+        except (KeyError, IndexError, TypeError, AttributeError) as exc:
+            # Malformed shape is a failed generation, not a blank success (#25 / #60).
+            raise RuntimeError("malformed bedrock response") from exc
+        if not text:
+            raise RuntimeError("empty bedrock response")
         tokens = None
         try:
             usage = response.get("usage", {})

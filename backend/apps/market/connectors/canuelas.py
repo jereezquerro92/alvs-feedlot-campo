@@ -139,13 +139,19 @@ class CanuelasConnector(BaseConnector):
             avg = _to_decimal(cells[col_map["price_avg"]])
             if avg is None:
                 continue  # a row without an average is a header/spacer, skip it
+            if avg <= 0:
+                continue  # reject non-positive prices; never persist nonsense
             price = ParsedPrice(category=category, date=target_date, price_avg=avg)
             for field_name in ("price_min", "price_max", "price_median"):
                 if field_name in col_map:
                     setattr(price, field_name, _to_decimal(cells[col_map[field_name]]))
             if "head_count" in col_map:
                 head = _to_decimal(cells[col_map["head_count"]])
-                price.head_count = int(head) if head is not None else None
+                if head is not None:
+                    # Reject fractional heads — int() would truncate silently.
+                    if head != head.to_integral_value():
+                        continue
+                    price.head_count = int(head)
             price.raw = {"cells": cells}
             parsed.append(price)
         return parsed

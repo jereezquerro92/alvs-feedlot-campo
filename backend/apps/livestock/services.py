@@ -152,7 +152,9 @@ def register_weighing(
     if animal is not None:
         animal.current_weight = Decimal(weight)
         animal.save(update_fields=["current_weight"])
-    else:
+    elif head_count == lot.head_count:
+        # Partial samples record the reading but must not overwrite the lot
+        # counter — only a full-lot weighing corrects total_weight (#18 / #59).
         lot.total_weight = Decimal(weight)
         lot.save(update_fields=["total_weight"])
 
@@ -207,6 +209,10 @@ def register_death(
     target = _resolve_target(animal, lot)
     _assert_active(target)
 
+    entry_date = _entry_date(target)
+    if entry_date and str(date) < str(entry_date):
+        raise ValidationError("La baja no puede ser anterior al ingreso.")
+
     if lot is not None:
         head_count = int(head_count or 1)
         if head_count > lot.head_count:
@@ -237,6 +243,10 @@ def register_exit(
 ):
     target = _resolve_target(animal, lot)
     _assert_active(target)
+
+    entry_date = _entry_date(target)
+    if entry_date and str(date) < str(entry_date):
+        raise ValidationError("El egreso no puede ser anterior al ingreso.")
 
     if lot is not None:
         head_count = int(head_count or lot.head_count)
@@ -347,11 +357,23 @@ def _settle_sale(exit_event, *, animal, lot, created_by):
 
 
 def _reduce_lot(lot, head_count, weight):
-    """Subtract head and kilos; close the lot when it empties out."""
+    """Subtract head and kilos; close the lot when it empties out.
+
+    Weight-less reductions take a proportional share of `total_weight` so the
+    remaining avg kg/head stays consistent (#32 / #59). When `weight` is given
+    it is authoritative (same as before).
+    """
     head_count = int(head_count or 0)
-    lot.head_count = max(lot.head_count - head_count, 0)
+    prior_head = lot.head_count
     if weight is not None:
-        lot.total_weight = max(lot.total_weight - Decimal(weight), Decimal("0"))
+        weight_delta = Decimal(weight)
+    elif prior_head > 0 and head_count > 0:
+        weight_delta = lot.total_weight * Decimal(head_count) / Decimal(prior_head)
+    else:
+        weight_delta = Decimal("0")
+
+    lot.head_count = max(prior_head - head_count, 0)
+    lot.total_weight = max(lot.total_weight - weight_delta, Decimal("0"))
     if lot.head_count == 0:
         lot.status = Lot.Status.CLOSED
     lot.save(update_fields=["head_count", "total_weight", "status"])
