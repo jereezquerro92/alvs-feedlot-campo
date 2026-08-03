@@ -21,7 +21,7 @@ tags: [adr, m365, graph, backend]
 3. Two routes are exempt from the session requirement: `GET /api/m365/hello/` and `GET /api/m365/world/` are `AllowAny`, for demonstration. Every other route in the app follows normal auth, and this exemption widens RBAC doctrine nowhere else ([[adr-10-auth]] rule 2).
 4. Graph addresses — site host, site path, workbook item, worksheet — are Python constants in `graph.py`. There is no resource catalog, no mock mode and no KMS in this app.
 5. Graph REST v1.0 only. No beta endpoints.
-6. The variables this app reads are exactly the three in [[VARIABLES]] ([[adr-03-api-and-backend]] rule 7). App-only mode reads no scope variable — the `.default` scope is a constant — and no token key, because rule 2 stores nothing.
+6. The variables this app reads are exactly the three in [[VARIABLES]] ([[adr-51-api-and-backend]] rule 7). App-only mode reads no scope variable — the `.default` scope is a constant — and no token key, because rule 2 stores nothing.
 
 ## FORBIDDEN
 
@@ -29,7 +29,7 @@ tags: [adr, m365, graph, backend]
 - **NEVER** persist or cache a Graph token (rule 2). It is minted per request and discarded, which is what makes refresh-at-rest a question this app never has to answer.
 - **NEVER** extend the `AllowAny` pair to a third route (rule 3). Two demonstration routes are the whole exemption.
 - **NEVER** call a Graph beta endpoint (rule 5).
-- **NEVER** add an `MSGRAPH_` variable that no code reads (rule 6, [[adr-03-api-and-backend]] rule 7). A declared-but-unread variable is a phantom that outlives whoever added it.
+- **NEVER** add an `MSGRAPH_` variable that no code reads (rule 6, [[adr-51-api-and-backend]] rule 7). A declared-but-unread variable is a phantom that outlives whoever added it.
 
 ## REJECTED
 
@@ -41,7 +41,7 @@ tags: [adr, m365, graph, backend]
 ### related adrs
 
 - [[docs/adrs/adr-10-auth]] — rules 1 and 2, the authentication and RBAC doctrine this capability does not touch
-- [[docs/adrs/adr-03-api-and-backend]] — rule 1 for the route rows, rule 7 for the variables
+- [[docs/adrs/adr-51-api-and-backend]] — rule 1 for the route rows, rule 7 for the variables
 
 ### related files
 

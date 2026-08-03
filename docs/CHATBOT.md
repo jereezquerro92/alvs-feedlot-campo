@@ -13,7 +13,7 @@ tags: [doc, harness, chatbot, router, ai, security]
 The template's conversational surface and the architecture behind it. Ruled by [[adr-15-chatbot-two-tier]]. This file **owns the content**; the ADR states only the rules and links here.
 
 > [!note] Naming — settled
-> `chatui`, `router`, the endpoint segment `route` (`/api/router/route/`), the models `Intent` and `IntentQuery`, the reserved outcomes `NO_MATCH`/`ESCALATE`, the action field `kind`, and the env stem `ROUTER_*` are all registered in [[GLOSSARY]] ([[adr-01-glossary-and-localization]]).
+> `chatui`, `router`, the endpoint segment `route` (`/api/router/route/`), the models `Intent` and `IntentQuery`, the reserved outcomes `NO_MATCH`/`ESCALATE`, the action field `kind`, and the env stem `ROUTER_*` are all registered in [[GLOSSARY]] ([[adr-12-glossary-and-localization]]).
 
 ## The one-line split
 
@@ -134,7 +134,7 @@ The raw utterance persists in `IntentQuery`, but under a bounded retention polic
 
 ## The action descriptor — the backend chooses, the frontend acts
 
-The choosing tier's response is a **typed action descriptor**, never a performed side effect. The router selects; it does not navigate, redirect, or execute on the caller's behalf. This narrows [[adr-15-chatbot-two-tier]] rule 1's "actuator rights" to *emitting a descriptor*, not *performing an action* — content, not a rule change, so it lives here rather than in a new ADR ([[adr-00-adr-doctrine]] rule 1).
+The choosing tier's response is a **typed action descriptor**, never a performed side effect. The router selects; it does not navigate, redirect, or execute on the caller's behalf. This narrows [[adr-15-chatbot-two-tier]] rule 1's "actuator rights" to *emitting a descriptor*, not *performing an action* — content, not a rule change, so it lives here rather than in a new ADR ([[adr-00-discipline]] rule 1).
 
 The descriptor carries typed, validated slots:
 
@@ -154,5 +154,5 @@ The chatbot is the intended **future entry point for a RAG**. The template only 
 
 ## Relationship to the sibling documents
 
-- [[API]] — every endpoint this feature needs enters there first, in its own guarded act, before any code ([[adr-03-api-and-backend]]).
+- [[API]] — every endpoint this feature needs enters there first, in its own guarded act, before any code ([[adr-51-api-and-backend]]).
 - [[AUTH]] / [[adr-10-auth]] — unchanged. Cognito authenticates; Django authorizes. The router authorizes nothing; it narrows a menu Django already authorized.

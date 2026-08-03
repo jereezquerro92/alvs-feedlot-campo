@@ -19,7 +19,7 @@ tags: [adr, auth, lobby, rbac, allowlist, bootstrap]
 1. `AUTH_BOOTSTRAP_ALLOWLIST` ([[GLOSSARY]], [[VARIABLES]]) names the accounts whose `AccessRequest.role` is filled automatically in the shared login provisioning path — at first login and re-checked on every login. It is the precedent of the bootstrap superuser ([[adr-10-auth]] rule 8): an operator- and deploy-time exception, never self-service, because the requesting user cannot influence the value.
 2. The allowlist reuses the existing machinery and creates no parallel authority. It fills the same `AccessRequest.role` an admin would set by hand; the `post_save` signal of [[adr-20-authorization-lobby]] rule 3 stays the sole path from that row to a Group membership, and enforcement still reads Django Groups only ([[adr-10-auth]] rules 1–2).
 3. The allowlist never overrides an admin: it fills `role` only while `role` is null. A role granted — or cleared and re-granted — through `/admin/` is authoritative. A pair naming a Group that does not exist is skipped with a logged warning, so a config typo can neither break login nor mint a Group.
-4. Accounts arrive only through env and [[VARIABLES]], never through code. The variable's row enters [[VARIABLES]] before code reads it and its name enters [[GLOSSARY]] before first use ([[adr-01-glossary-and-localization]], [[adr-03-api-and-backend]] rule 7). The committed `.env.example` carries only the local-dev seed; real accounts live in each project's django secret.
+4. Accounts arrive only through env and [[VARIABLES]], never through code. The variable's row enters [[VARIABLES]] before code reads it and its name enters [[GLOSSARY]] before first use ([[adr-12-glossary-and-localization]], [[adr-51-api-and-backend]] rule 7). The committed `.env.example` carries only the local-dev seed; real accounts live in each project's django secret.
 5. Cognito remains authentication-only, RBAC remains exclusively Django Groups, the lobby boundary of [[adr-20-authorization-lobby]] rules 1–2 is untouched, and the bootstrap superuser exception is neither widened nor connected to this one.
 
 ## FORBIDDEN
@@ -41,8 +41,8 @@ tags: [adr, auth, lobby, rbac, allowlist, bootstrap]
 
 - [[docs/adrs/adr-20-authorization-lobby]] — rule 3, the `AccessRequest` row and the signal this reuses
 - [[docs/adrs/adr-10-auth]] — rules 1–2 and the rule 8 bootstrap-superuser precedent
-- [[docs/adrs/adr-03-api-and-backend]] — rule 7, a variable is declared before it is read
-- [[docs/adrs/adr-01-glossary-and-localization]] — a name decided before first use
+- [[docs/adrs/adr-51-api-and-backend]] — rule 7, a variable is declared before it is read
+- [[docs/adrs/adr-12-glossary-and-localization]] — a name decided before first use
 
 ### related files
 

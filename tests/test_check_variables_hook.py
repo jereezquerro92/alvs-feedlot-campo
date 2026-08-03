@@ -160,7 +160,7 @@ def test_harness_scripts_are_exempt() -> None:
         if proc.returncode != 0:
             fail(
                 "harness tooling under scripts/ is not app runtime — VARIABLES "
-                "governs what backend/frontend read (adr-03 rule 7; adr-18 rule 3 "
+                "governs what backend/frontend read (adr-51 rule 7; adr-18 rule 3 "
                 f"says so outright for the vault launcher); got {proc.returncode} "
                 f"stderr={proc.stderr!r}"
             )

@@ -33,7 +33,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Operational pin; the version policy is owned by docs/REQUIREMENTS.md.
+# Operational pin; the version policy is owned by docs/constitution/REQUIREMENTS.md.
 VERSION = "3.0.4"
 
 ROOT = Path(__file__).resolve().parents[1]

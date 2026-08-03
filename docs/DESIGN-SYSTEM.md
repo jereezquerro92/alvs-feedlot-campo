@@ -10,11 +10,11 @@ tags: [doc, harness, frontend, design-system]
 
 # DESIGN-SYSTEM
 
-Owner of every visual and component decision ([[adr-04-frontend-and-design-system]] r5): where a decision here conflicts with any component's shipped default, this file wins. Stack context: [[FRONTEND]].
+Owner of every visual and component decision ([[adr-52-frontend-and-design-system]] r5): where a decision here conflicts with any component's shipped default, this file wins. Stack context: [[FRONTEND]].
 
 ## The standing principle — variable-driven theming
 
-**Everything visual is a CSS custom property (a token); nothing is hard-coded.** Color, radius, and background are never authored as literal values inside a component or a one-off utility class — they are always a reference to a token defined once, in `frontend/src/styles/app.css`. A shadcn-svelte component still ships styled by default ([[adr-04-frontend-and-design-system]] r4), but its default *is itself expressed through the token layer* — changing a token changes every consumer, with zero component edits.
+**Everything visual is a CSS custom property (a token); nothing is hard-coded.** Color, radius, and background are never authored as literal values inside a component or a one-off utility class — they are always a reference to a token defined once, in `frontend/src/styles/app.css`. A shadcn-svelte component still ships styled by default ([[adr-52-frontend-and-design-system]] r4), but its default *is itself expressed through the token layer* — changing a token changes every consumer, with zero component edits.
 
 Bespoke component-level CSS stays close to zero: the shadcn-svelte and theme defaults are not frozen as immovable, they are expressed through tokens, so every visual value is swappable at one seam. The template does not hand-author component CSS — it authors tokens.
 
@@ -91,13 +91,13 @@ One shared pair of pure functions in `frontend/src/lib/theme.ts` — `computeThe
 
 ## Component layering — Melt UI first, shadcn-svelte second, custom last (Bits UI is upstream lineage, not installed)
 
-Three layers in this repo, in priority order ([[adr-04-frontend-and-design-system]] r8):
+Three layers in this repo, in priority order ([[adr-52-frontend-and-design-system]] r8):
 
 1. **Melt UI (pkg `melt`) is the default builder layer for a new component.** Headless builders with no shipped markup or CSS at all, wired directly onto your own markup — reached for first, before considering a vendored default. Choosing-Melt criteria and vendored examples are owned by [[MELT-UI]].
-2. **shadcn-svelte is the second choice.** Vendored components ([[adr-04-frontend-and-design-system]] r4) already speak the token layer above and need no bespoke styling to fit the theme; reach for one when a Melt builder doesn't already cover the shape needed, or a shadcn-svelte primitive is genuinely the better fit. shadcn-svelte's own components are historically and architecturally derived from Bits UI, itself built on Melt — but that lineage is upstream of this repo: the vendored components here hand-roll their state via `getContext`/`setContext`, not Bits UI primitives.
+2. **shadcn-svelte is the second choice.** Vendored components ([[adr-52-frontend-and-design-system]] r4) already speak the token layer above and need no bespoke styling to fit the theme; reach for one when a Melt builder doesn't already cover the shape needed, or a shadcn-svelte primitive is genuinely the better fit. shadcn-svelte's own components are historically and architecturally derived from Bits UI, itself built on Melt — but that lineage is upstream of this repo: the vendored components here hand-roll their state via `getContext`/`setContext`, not Bits UI primitives.
 3. **A fully hand-rolled custom component is the last resort** — only when neither a Melt builder nor a vendored shadcn-svelte component produces the behavior or visual shape a feature needs.
 
-**Bits UI is not a dependency of this repo** — no row in [[REQUIREMENTS]], zero usage. It is upstream lineage context for how shadcn-svelte itself is built, not a rung of this stack; adopting it as an active layer would require its own [[REQUIREMENTS]] row first ([[adr-02-initial-stack]] r1).
+**Bits UI is not a dependency of this repo** — no row in [[REQUIREMENTS]], zero usage. It is upstream lineage context for how shadcn-svelte itself is built, not a rung of this stack; adopting it as an active layer would require its own [[REQUIREMENTS]] row first ([[adr-50-initial-stack]] r1).
 
 How-to and the concrete choose-Melt-vs-shadcn criteria are owned by [[MELT-UI]], not restated here. The `.astro`-routes-only discipline that decides which files these layered components may live inside is owned by [[COMPONENTIZATION]].
 
@@ -108,4 +108,4 @@ How-to and the concrete choose-Melt-vs-shadcn criteria are owned by [[MELT-UI]],
 - **Hex for a literal, OKLCH for a token.** A one-off, genuinely non-token color value (a code comment showing a swap option, a third-party asset color) is written as hex, so it reads unambiguously as "not a token, don't reach for `var(--...)`"; anything that IS a token — everything a component actually consumes — stays OKLCH. "Literal" is this doc's canonical term for such a value; do not introduce "fixed value" or similar as a synonym.
 - **Light + dark, always.** Adding a token without its `.dark` pair is incomplete work, not a follow-up.
 - **User-facing theming is additive, not a redesign.** The `/profile` controls narrow a pre-existing token set; they never introduce a token that only the user-configurable path uses.
-- **This file still owns every visual decision** ([[adr-04-frontend-and-design-system]] r5): a future preset, a new user-configurable token, or a fourth component layer is recorded here before it ships, exactly as this rewrite was.
+- **This file still owns every visual decision** ([[adr-52-frontend-and-design-system]] r5): a future preset, a new user-configurable token, or a fourth component layer is recorded here before it ships, exactly as this rewrite was.

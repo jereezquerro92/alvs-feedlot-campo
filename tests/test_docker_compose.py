@@ -141,7 +141,7 @@ def test_frontend_start_clears_the_stale_dev_marker() -> None:
     if "bun run dev" not in command:
         fail("compose.yaml: the frontend must still run the bun dev server ([[FRONTEND]])")
     if "npm" in command:
-        fail("compose.yaml: npm is prohibited ([[adr-04-frontend-and-design-system]] rule 2)")
+        fail("compose.yaml: npm is prohibited ([[adr-52-frontend-and-design-system]] rule 2)")
     ok("frontend start clears the stale astro dev marker")
 
 

@@ -19,7 +19,7 @@ tags: [adr, auth, cognito, backend]
 1. AWS Cognito is the only authentication provider, and it authenticates only. There is no second IdP and no home-grown password authentication in production; the OIDC flow is owned by [[AUTH]].
 2. Authorization and RBAC live in Django. Roles are Django Groups enforced by DRF permission classes ([[BACKEND]]); Cognito groups and custom-claims-as-roles carry no authority here.
 3. After token verification Django establishes its own session. Browser auth is Django session auth backed by the database ([[CACHE]]) because HTMX requires it ([[HTMX]]); token-only SPA auth is not the default.
-4. The `/accounts/` prefix is the entire auth surface, routed to the backend by the ALB ([[INFRASTRUCTURE]]). Each of its routes is declared in [[API]] like any other ([[adr-03-api-and-backend]] rule 1).
+4. The `/accounts/` prefix is the entire auth surface, routed to the backend by the ALB ([[INFRASTRUCTURE]]). Each of its routes is declared in [[API]] like any other ([[adr-51-api-and-backend]] rule 1).
 5. User rows key on the Cognito `sub` claim; profile fields mirror Cognito standard attributes ([[GLOSSARY]], [[BD]]).
 6. A DEBUG-only development auth path exists and produces the same Django user model and session mechanics as the real flow. A deploy-time system check hard-fails if it could run in production ([[AUTH]]) — the guard is a check, never a convention.
 7. Cognito configuration enters [[VARIABLES]] before it is read and is sourced only from Secrets Manager `alvs/<env>/<project>/cognito`. The frontend receives zero Cognito variables ([[INFRASTRUCTURE]]).
@@ -29,9 +29,9 @@ tags: [adr, auth, cognito, backend]
 
 - **NEVER** read a permission decision from a Cognito token or group (rule 2). Authority is a Django Group, and a claim that looks like a role is still not one.
 - **NEVER** add a second authentication provider or a password path on `/accounts/` (rule 1). The bootstrap exception of rule 8 is one account at `/admin/` and widens nothing.
-- **NEVER** serve an `/accounts/` route that has no [[API]] row ([[adr-03-api-and-backend]] rule 1). The auth surface is a contract like every other.
+- **NEVER** serve an `/accounts/` route that has no [[API]] row ([[adr-51-api-and-backend]] rule 1). The auth surface is a contract like every other.
 - **NEVER** let the development auth path survive into production behind a convention (rule 6). The guard is a deploy-time check that hard-fails.
-- **NEVER** pass a Cognito variable or any secret to the frontend (rule 7). It receives `PUBLIC_*` only ([[adr-04-frontend-and-design-system]] rule 7).
+- **NEVER** pass a Cognito variable or any secret to the frontend (rule 7). It receives `PUBLIC_*` only ([[adr-52-frontend-and-design-system]] rule 7).
 
 ## REJECTED
 
@@ -45,7 +45,7 @@ tags: [adr, auth, cognito, backend]
 
 - [[docs/adrs/adr-20-authorization-lobby]] — what a session with zero Groups may reach, and how a Group is granted
 - [[docs/adrs/adr-44-field-operational-roles]] — the six operational roles rule 2's Groups carry
-- [[docs/adrs/adr-03-api-and-backend]] — rule 1, which rules 4's `/accounts/` surface
+- [[docs/adrs/adr-51-api-and-backend]] — rule 1, which rules 4's `/accounts/` surface
 - [[docs/adrs/adr-13-m365-graph]] — the app-only Graph capability that is not a second IdP
 
 ### related files

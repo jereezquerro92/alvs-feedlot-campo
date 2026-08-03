@@ -1,6 +1,6 @@
 # 12 · Especificación de frontend (fases 3-4-5)
 
-> Plan de ejecución para el frontend, anclado en el sistema de diseño real del template (Astro SSR + islas Svelte, componentes UI estilo shadcn, i18n). Escrito para que en Claude Code sea **ejecutar**, no rediseñar. Gobernado por adr-04 (frontend y design system).
+> Plan de ejecución para el frontend, anclado en el sistema de diseño real del template (Astro SSR + islas Svelte, componentes UI estilo shadcn, i18n). Escrito para que en Claude Code sea **ejecutar**, no rediseñar. Gobernado por adr-52 (frontend y design system).
 
 **Estado:** backend de las fases 3-4-5 en `main`. Frontend: no empezado.
 
@@ -11,9 +11,9 @@ Verificadas leyendo el repo, no supuestas:
 - **Páginas** en `src/pages/*.astro`, SSR (`output: "server"`). El fetch al backend se hace **en el server** con la cookie de sesión (`BACKEND_API_URL`), como en `profile.astro`. No se llama al backend desde el navegador salvo en islas.
 - **Interactividad** en islas Svelte (`client:load`), no en el `.astro`.
 - **Componentes UI** ya existen en `src/lib/components/ui/`: `card`, `table`, `badge`, `button`, `alert`, `input`, `label`, `separator`, `avatar`. **Usarlos**, no crear nuevos primitivos.
-- **i18n obligatorio**: todo texto visible sale de `t("clave")`; las claves son snake_case inglés en `src/i18n/messages/es.ts`, el valor es el español. Nada de strings hardcodeados en español en los componentes (adr-01).
+- **i18n obligatorio**: todo texto visible sale de `t("clave")`; las claves son snake_case inglés en `src/i18n/messages/es.ts`, el valor es el español. Nada de strings hardcodeados en español en los componentes (adr-12).
 - **Auth**: cada página usa `requireRole(me)` y redirige si falta rol, como `profile.astro`. Las vistas del feedlot necesitan su grupo RBAC (ver abajo).
-- **Cabecera LIVE-DOC** en cada archivo nuevo, con `Governed by: [[adr-04...]]`.
+- **Cabecera LIVE-DOC** en cada archivo nuevo, con `Governed by: [[adr-52...]]`.
 - **Tests**: `bun:test` únicamente, sin jsdom. Lógica de fetch/parseo en módulos DOM-free e inyectables (patrón `router-client.ts`), testeados aparte del render.
 
 ## Decisión pendiente que bloquea los gráficos

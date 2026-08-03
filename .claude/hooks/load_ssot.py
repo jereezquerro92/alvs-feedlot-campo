@@ -2,8 +2,8 @@
 """SSOT preload hook (SessionStart).
 
 Gives force to the AGENTS.md standing requirement: PRD and API MUST be held
-in memory at all times. Injects the current contents of docs/PRD.md and
-docs/API.md into context at session start (startup, resume, and clear alike),
+in memory at all times. Injects the current contents of docs/constitution/PRD.md
+and docs/API.md into context at session start (startup, resume, and clear alike),
 so the requirement is met deterministically instead of by obedience.
 Stdout is added to context; any internal error exits 0.
 """
@@ -12,7 +12,7 @@ import os
 import sys
 from pathlib import Path
 
-SSOT_FILES = ("docs/PRD.md", "docs/API.md")
+SSOT_FILES = ("docs/constitution/PRD.md", "docs/API.md")
 
 
 def project_dir():

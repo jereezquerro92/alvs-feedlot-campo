@@ -14,28 +14,28 @@ API_HOOK = ROOT / ".claude" / "hooks" / "require_api_read.py"
 PR_FLOW_HOOK = ROOT / ".claude" / "hooks" / "require_pr_flow.py"
 
 # Coverage parity: reproduces today's dispatch_guardians.py WATCHLISTS
-# glob-by-glob. adr-11 rule 5 keeps the watchlist in exactly two places
+# glob-by-glob. adr-03 rule 8 keeps the watchlist in exactly two places
 # (each guardian's Watchlist section + the hook WATCHLISTS); this test
 # guards the hook half against silent drift when the two hooks were merged.
 EXPECTED_WATCHLISTS = {
     "astro-drf-aws-prd": (
-        "docs/PRD.md",
+        "docs/constitution/PRD.md",
         "AGENTS.md",
         "CLAUDE.md",
         "README.md",
         ".github/workflows/*",
     ),
     "astro-drf-aws-adr": (
-        "agents/*",
+        "docs/agents/*",
         ".claude/rules/*",
         "docs/adrs/*",
         "docs/obsolete/*",
         ".github/workflows/*",
         "compose.yaml",
-        "docs/REQUIREMENTS.md",
+        "docs/constitution/REQUIREMENTS.md",
         "docs/GLOSSARY.md",
-        "docs/LOCALIZATION.md",
-        "docs/INFRASTRUCTURE.md",
+        "docs/constitution/LOCALIZATION.md",
+        "docs/constitution/INFRASTRUCTURE.md",
         "docs/VARIABLES.md",
         "docs/INVENTORY.md",
         "*/pyproject.toml",
@@ -180,7 +180,7 @@ def test_watchlist_coverage_parity() -> None:
         problems.append(f"unexpected guardian key {guardian!r}")
     if problems:
         fail(
-            "merged WATCHLISTS diverged from today's coverage (adr-11 rule 5): "
+            "merged WATCHLISTS diverged from today's coverage (adr-03 rule 8): "
             + "; ".join(problems)
         )
     ok("merged WATCHLISTS matches today's coverage file-by-file")

@@ -31,7 +31,7 @@ tags: [adr, cache]
 
 ### related adrs
 
-- [[docs/adrs/adr-02-initial-stack]] — rule 4, the stack-level echo of rule 1
+- [[docs/adrs/adr-50-initial-stack]] — rule 4, the stack-level echo of rule 1
 
 ### related files
 

@@ -4,13 +4,13 @@
 One prose-only PostToolUse hook, formerly two (dispatch_guardians.py and
 adr_reminder.py, merged for the nudge-dedup issue). It does two jobs in a
 single output block:
-  - maps every written file to the guardian agents watching it (agents/*.md)
+  - maps every written file to the guardian agents watching it (docs/agents/*.md)
     via WATCHLISTS and nudges a dispatch to verify the change;
   - names the ADR(s) to review when a governance-sensitive file is touched
     via RULES — wikilinks and a one-line "why review" only, never rule
     restatement (adr-00 rule 1).
 WATCHLISTS mirrors the Watchlist section of each agent file — keep them in
-sync (adr-11 rule 5: exactly two places, identical in coverage).
+sync (adr-03 rule 8: one machine copy per watchlist, identical in coverage).
 
 Both jobs dedupe per session-scoped batch: each guardian/ADR is named once
 per session, not once per file, via a gitignored seen-set at
@@ -26,23 +26,23 @@ from pathlib import Path
 
 WATCHLISTS = {
     "astro-drf-aws-prd": (
-        "docs/PRD.md",
+        "docs/constitution/PRD.md",
         "AGENTS.md",
         "CLAUDE.md",
         "README.md",
         ".github/workflows/*",
     ),
     "astro-drf-aws-adr": (
-        "agents/*",
+        "docs/agents/*",
         ".claude/rules/*",
         "docs/adrs/*",
         "docs/obsolete/*",
         ".github/workflows/*",
         "compose.yaml",
-        "docs/REQUIREMENTS.md",
+        "docs/constitution/REQUIREMENTS.md",
         "docs/GLOSSARY.md",
-        "docs/LOCALIZATION.md",
-        "docs/INFRASTRUCTURE.md",
+        "docs/constitution/LOCALIZATION.md",
+        "docs/constitution/INFRASTRUCTURE.md",
         "docs/VARIABLES.md",
         "docs/INVENTORY.md",
         "*/pyproject.toml",
@@ -70,7 +70,7 @@ RULES = (
         "Write",
         "New route: review [[adr-20-authorization-lobby]] (every route needing "
         "auth requires a Django session AND >=1 Django Group, except '/' the "
-        "lobby — declare this route's gate), [[adr-04-frontend-and-design-system]] "
+        "lobby — declare this route's gate), [[adr-52-frontend-and-design-system]] "
         "rule 9 (this file is a route/layout only — compose .svelte components, "
         "author no non-trivial markup), and [[adr-05-htmx]] (no shadow routes — "
         "any fragment route this page uses must be declared in [[API]] first).",
@@ -100,7 +100,7 @@ RULES = (
         ("*/models.py",),
         None,
         "Models touched: review [[adr-20-authorization-lobby]] (AccessRequest.role "
-        "-> Django Group only via the post_save signal) and [[adr-03-api-and-backend]] "
+        "-> Django Group only via the post_save signal) and [[adr-51-api-and-backend]] "
         "(a model change may invalidate the corresponding [[API]] / [[TDD]] entry).",
     ),
 )

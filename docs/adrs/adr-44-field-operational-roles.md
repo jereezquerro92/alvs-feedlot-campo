@@ -22,7 +22,7 @@ tags: [adr, rbac, auth, roles, feedlot]
 4. El vínculo usuario→cliente es un FK nullable `client` en `AccessRequest`, que setea un admin en `/admin/` ([[adr-20-authorization-lobby]] regla 3), nunca autoservicio. Un `lot_owners` sin cliente ligado no ve ningún cliente —falla cerrado—, jamás todos. El campo no otorga autoridad: la membresía al grupo activa el scoping y `client` sólo dice cuál.
 5. `feedlot_owners`, `field_managers` y `admins` leen sin recorte por cliente: son roles internos del feedlot, no inquilinos. El scoping de la regla 3 aplica sólo a `lot_owners`.
 6. No existe un endpoint de débito manual: "cargar deudas" se cumple con los eventos que ya postean y con `Payment`, todos escribibles por `field_managers`. Un ajuste manual, si el negocio lo pide, entra por [[API]] con su propio cambio y nunca mutando un asiento ([[adr-25-account-ledger]] regla 1).
-7. Todo endpoint declara su clase de permiso en [[API]] antes del código ([[adr-03-api-and-backend]] regla 1): la columna Auth nombra la clase, y por lo tanto los grupos, que protegen la ruta.
+7. Todo endpoint declara su clase de permiso en [[API]] antes del código ([[adr-51-api-and-backend]] regla 1): la columna Auth nombra la clase, y por lo tanto los grupos, que protegen la ruta.
 8. `/api/me/` expone el cliente ligado para que el frontend recorte la UI. Ese gateo es comodidad; la barrera es el backend.
 
 ## FORBIDDEN
@@ -47,7 +47,7 @@ tags: [adr, rbac, auth, roles, feedlot]
 - [[docs/adrs/adr-10-auth]] — reglas 1–2, Cognito autentica y Django autoriza
 - [[docs/adrs/adr-45-lot-owner-assistant-access]] — la tercera ruta que alcanza el portal
 - [[docs/adrs/adr-25-account-ledger]] — regla 1, por qué no hay débito manual
-- [[docs/adrs/adr-03-api-and-backend]] — regla 1, el gateo declarado en [[API]] antes del código
+- [[docs/adrs/adr-51-api-and-backend]] — regla 1, el gateo declarado en [[API]] antes del código
 
 ### related files
 

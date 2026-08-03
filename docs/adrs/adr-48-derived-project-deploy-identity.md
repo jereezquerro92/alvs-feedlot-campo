@@ -48,6 +48,6 @@ tags: [adr, infrastructure, github, oidc, deploy, identity]
 ### related files
 
 - [[docs/GH]] — the owning account, the live OIDC prefix, the branches
-- [[docs/INFRASTRUCTURE]] — the resources a deploy target names
+- [[docs/constitution/INFRASTRUCTURE]] — the resources a deploy target names
 - [[docs/INVENTORY]] — what this project has actually provisioned
 - [[docs/VARIABLES]] — the variables a workflow reads

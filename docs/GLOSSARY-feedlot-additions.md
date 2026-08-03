@@ -10,7 +10,7 @@ tags: [doc, harness, glossary, ssot, feedlot]
 
 # GLOSSARY — feedlot additions
 
-The feedlot domain's names, staged here per [[adr-24-feedlot-domain]] rule 2. Same table, same authority as [[GLOSSARY]]. Rules: [[adr-01-glossary-and-localization]].
+The feedlot domain's names, staged here per [[adr-24-feedlot-domain]] rule 2. Same table, same authority as [[GLOSSARY]]. Rules: [[adr-12-glossary-and-localization]].
 
 | Term | Canonical form | Applies to | Forbidden forms |
 |---|---|---|---|

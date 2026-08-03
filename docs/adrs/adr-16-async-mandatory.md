@@ -42,4 +42,4 @@ tags: [adr, async, backend, sse, streaming]
 ### related files
 
 - [[docs/BACKEND]] — the ASGI server, the SSE mechanics and the sync/async posture
-- [[docs/REQUIREMENTS]] — the `boto3` pin
+- [[docs/constitution/REQUIREMENTS]] — the `boto3` pin

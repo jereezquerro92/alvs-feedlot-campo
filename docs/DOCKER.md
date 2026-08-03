@@ -94,7 +94,7 @@ Compose is **local only** ([[adr-09-docker-compose]]); production is Fargate + E
 
 - The **anonymous volume** on `node_modules` / `.venv` is load-bearing: it keeps the image's installed deps and stops the host tree from masking them. Removing it breaks startup.
 - The **`rm -f .astro/dev.json`** is load-bearing too, and for the mirror-image reason: that file is *inside* the bind mount, so it is written to the host and outlives the container. `astro dev` uses it to record which PID owns port 4321; a container killed by `down` never cleans it up, and the next container resolves that PID inside its own namespace — where an unrelated process may hold the same low number — and refuses to start. Clearing it makes a rebuild deterministic. `astro dev --force`, which astro's own error message suggests, does not prevent the refusal (issue #60).
-- `watchfiles` is pulled dev-only through `uv run --with watchfiles==1.2.0` — pinned in [[REQUIREMENTS]] under local-dev tooling (a used package must be pinned, [[adr-02-initial-stack]]) but excluded from the production image (`uv sync --no-dev`).
+- `watchfiles` is pulled dev-only through `uv run --with watchfiles==1.2.0` — pinned in [[REQUIREMENTS]] under local-dev tooling (a used package must be pinned, [[adr-50-initial-stack]]) but excluded from the production image (`uv sync --no-dev`).
 
 **Still needs a rebuild** (bind-mount covers code, not the image): a dependency change (`bun.lock` / `uv.lock`) or a `Dockerfile` change → `docker compose --profile full up -d --build`. An env change → `up -d` recreates, no rebuild.
 

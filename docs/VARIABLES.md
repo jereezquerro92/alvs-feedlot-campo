@@ -16,7 +16,7 @@ The environment-variable **SSOT**. Every variable either backend or frontend cod
 > **A variable used in code but not declared here does not exist.** Same doctrine as [[API]]. Enforced by the hook `hooks/check_variables.py` (PostToolUse), which watches `.env*` files and env reads in code against this table. Companion skills are still stage 2 work — TBD.
 
 > [!warning]
-> **A secret's source is one path shape: `alvs/<env>/<project>/<component>`** — the fact this doc owns, per [[INFRASTRUCTURE]]. That secrets live only in AWS Secrets Manager is [[adr-02-initial-stack]] rule 6; that the frontend receives only `PUBLIC_*` and never a secret is [[adr-04-frontend-and-design-system]] rule 7. Local `.env` (git-ignored) holds dev-only values mirroring the names declared here.
+> **A secret's source is one path shape: `alvs/<env>/<project>/<component>`** — the fact this doc owns, per [[INFRASTRUCTURE]]. That secrets live only in AWS Secrets Manager is [[adr-50-initial-stack]] rule 6; that the frontend receives only `PUBLIC_*` and never a secret is [[adr-52-frontend-and-design-system]] rule 7. Local `.env` (git-ignored) holds dev-only values mirroring the names declared here.
 
 ## Declaration format
 

@@ -40,5 +40,5 @@ tags: [adr, github, oidc, ci, infra]
 ### related files
 
 - [[docs/GH]] — the subject format, the cutoff, the lookup command, the live values
-- [[docs/INFRASTRUCTURE]] — the roles the trust lives on and the recording discipline
+- [[docs/constitution/INFRASTRUCTURE]] — the roles the trust lives on and the recording discipline
 - [[docs/INVENTORY]] — where a shared-role mutation is recorded

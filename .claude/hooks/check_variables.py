@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Environment-variable SSOT hook (PostToolUse on Write|Edit).
 
-Enforces the VARIABLES doctrine (adr-03 rule 7): a variable used in code but
+Enforces the VARIABLES doctrine (adr-51 rule 7): a variable used in code but
 not declared in docs/VARIABLES.md does not exist. VARIABLES governs what the
 backend and frontend services read, so the sweep is scoped to those two trees
 plus the committed .env* templates. Harness tooling — repo-root tests/, scripts/,

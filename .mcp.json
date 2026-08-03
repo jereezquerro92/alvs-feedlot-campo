@@ -3,7 +3,9 @@
     "markdown-vault-docs": {
       "command": "python3",
       "args": ["scripts/mvmcp.py", "serve"],
-      "env": {}
+      "env": {
+        "MARKDOWN_VAULT_MCP_EXCLUDE": "agents/**,hooks/**,skills/**"
+      }
     }
   }
 }

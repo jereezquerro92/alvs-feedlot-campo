@@ -48,4 +48,4 @@ tags: [adr, feedlot, livestock]
 ### related files
 
 - [[docs/FEEDLOT-DATA-MODEL]] — `Animal`, `Lot`, `Intake` and their fields
-- [[docs/LOCALIZATION]] — English in code, Spanish only in render
+- [[docs/constitution/LOCALIZATION]] — English in code, Spanish only in render

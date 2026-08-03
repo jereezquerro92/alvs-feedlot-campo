@@ -1,0 +1,336 @@
+#!/usr/bin/env python3
+"""kwf-deps — PR REQUIREMENT labels and the defer cascade for triage-and-fix.
+
+Mechanism (labels only, per the spec in references/deps.md):
+  requires:<N>   on a PR means "this PR must not merge before PR #N".
+  deferred       on a PR means the hunt is called off, by label or by cascade.
+
+A PR counts as deferred when EITHER the `deferred` label is present OR it was
+closed without merging. The cascade walks the requirement graph transitively:
+every open PR that requires a deferred PR is itself labeled `deferred`, and so
+on down the chain.
+
+Python 3 stdlib only. All GitHub access goes through the `gh` CLI, which
+carries the user's auth. Mutating commands support --dry-run.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+
+REQUIRES_PREFIX = "requires:"
+DEFERRED = "deferred"
+
+
+def gh(*args: str, check: bool = True) -> subprocess.CompletedProcess:
+    proc = subprocess.run(["gh", *args], capture_output=True, text=True)
+    if check and proc.returncode != 0:
+        die(proc.stderr.strip() or f"gh {' '.join(args)} failed (exit {proc.returncode})")
+    return proc
+
+
+def gh_json(*args: str):
+    out = gh(*args)
+    try:
+        return json.loads(out.stdout)
+    except json.JSONDecodeError:
+        die(f"unexpected gh output for: gh {' '.join(args)}")
+
+
+def resolve_repo(explicit: str | None) -> str:
+    if explicit:
+        return explicit
+    try:
+        out = gh("repo", "view", "--json", "nameWithOwner", "-q", ".nameWithOwner")
+        repo = out.stdout.strip()
+        if repo:
+            return repo
+    except Exception:
+        pass
+    die("not in a GitHub repo — pass --repo OWNER/REPO")
+
+
+def die(msg: str, code: int = 1) -> "None":
+    print(f"kwf-deps: error: {msg}", file=sys.stderr)
+    sys.exit(code)
+
+
+def info(msg: str) -> None:
+    print(msg)
+
+
+def pr_view(repo: str, number: int) -> dict:
+    return gh_json(
+        "pr", "view", str(number), "--repo", repo,
+        "--json", "number,title,state,mergedAt,labels,url",
+    )
+
+
+def is_deferred(pr: dict) -> bool:
+    labeled = any(l["name"] == DEFERRED for l in pr.get("labels", []))
+    closed_unmerged = pr["state"] == "CLOSED" and not pr.get("mergedAt")
+    return labeled or closed_unmerged
+
+
+def requirements_of(pr: dict) -> list[int]:
+    out = []
+    for l in pr.get("labels", []):
+        if l["name"].startswith(REQUIRES_PREFIX):
+            try:
+                out.append(int(l["name"][len(REQUIRES_PREFIX):]))
+            except ValueError:
+                pass
+    return sorted(set(out))
+
+
+def open_prs(repo: str) -> list[dict]:
+    return gh_json(
+        "pr", "list", "--repo", repo, "--state", "open",
+        "--json", "number,title,labels,url", "--limit", "500",
+    )
+
+
+def ensure_labels(repo: str, names: list[str], dry_run: bool) -> None:
+    existing = {l["name"] for l in gh_json("label", "list", "--repo", repo, "--json", "name", "--limit", "500")}
+    for name in names:
+        if name in existing:
+            continue
+        if dry_run:
+            info(f"  [dry-run] would create label {name!r}")
+            continue
+        color, desc = ("ededed", "Requirement of another PR (kwf-deps)")
+        if name == DEFERRED:
+            color, desc = ("b60205", "Hunt called off — directly or by requirement cascade (kwf-deps)")
+        gh("label", "create", name, "--repo", repo, "--color", color, "--description", desc, "--force")
+        info(f"  created label {name!r}")
+
+
+def add_label(repo: str, number: int, label: str, dry_run: bool) -> None:
+    if dry_run:
+        info(f"  [dry-run] would label PR #{number} with {label!r}")
+        return
+    gh("pr", "edit", str(number), "--repo", repo, "--add-label", label)
+
+
+def remove_label(repo: str, number: int, label: str, dry_run: bool) -> None:
+    if dry_run:
+        info(f"  [dry-run] would remove label {label!r} from PR #{number}")
+        return
+    gh("pr", "edit", str(number), "--repo", repo, "--remove-label", label)
+
+
+def comment(repo: str, number: int, body: str, dry_run: bool) -> None:
+    if dry_run:
+        info(f"  [dry-run] would comment on PR #{number}: {body.splitlines()[0]}…")
+        return
+    gh("pr", "comment", str(number), "--repo", repo, "--body", body)
+
+
+# ---------------------------------------------------------------------------
+# commands
+# ---------------------------------------------------------------------------
+
+def cmd_check(repo: str, number: int) -> int:
+    """Exit 0 when every requirement of PR #number is merged. Print the unmet."""
+    pr = pr_view(repo, number)
+    reqs = requirements_of(pr)
+    if not reqs:
+        info(f"PR #{number} has no requirements.")
+        return 0
+    unmet = []
+    for r in reqs:
+        dep = pr_view(repo, r)
+        if not dep.get("mergedAt"):
+            unmet.append((r, dep["state"], is_deferred(dep)))
+    if not unmet:
+        info(f"PR #{number}: all {len(reqs)} requirement(s) merged.")
+        return 0
+    for r, state, deferred in unmet:
+        tag = " DEFERRED" if deferred else ""
+        info(f"PR #{number}: requirement PR #{r} unmet (state={state}{tag})")
+    return 2
+
+
+def cmd_requires(repo: str, number: int, deps: list[int], dry_run: bool) -> int:
+    pr = pr_view(repo, number)
+    if pr["state"] != "OPEN":
+        die(f"PR #{number} is {pr['state']} — requirements only make sense on an open PR")
+    for d in deps:
+        if d == number:
+            die(f"PR #{number} cannot require itself")
+        dep = pr_view(repo, d)
+        if dep.get("mergedAt"):
+            info(f"note: PR #{d} is already merged — a requirement on it is a no-op")
+    ensure_labels(repo, [f"{REQUIRES_PREFIX}{d}" for d in deps], dry_run)
+    for d in deps:
+        add_label(repo, number, f"{REQUIRES_PREFIX}{d}", dry_run)
+    comment(
+        repo, number,
+        "Requirement declared: this PR must not merge before "
+        + ", ".join(f"#{d}" for d in deps)
+        + ". Managed by kwf-deps — if any requirement is deferred, this PR is deferred in cascade.",
+        dry_run,
+    )
+    info(f"PR #{number} now requires: {', '.join('#' + str(d) for d in deps)}")
+    return 0
+
+
+def cmd_cascade(repo: str, root: int, dry_run: bool, force: bool) -> int:
+    root_pr = pr_view(repo, root)
+    if not is_deferred(root_pr) and not force:
+        die(
+            f"PR #{root} is neither `{DEFERRED}`-labeled nor closed-unmerged — "
+            "nothing to cascade (use --force to override)"
+        )
+    prs = open_prs(repo)
+    by_req: dict[int, list[dict]] = {}
+    for pr in prs:
+        for r in requirements_of(pr):
+            by_req.setdefault(r, []).append(pr)
+
+    # Dependents of a merged root are fine; only defer when the root is not merged.
+    frontier = [root]
+    seen = {root}
+    victims: list[tuple[dict, int]] = []  # (pr, the deferred PR that doomed it)
+    while frontier:
+        nxt = []
+        for f in frontier:
+            fpr = pr_view(repo, f)
+            if fpr.get("mergedAt"):
+                continue  # merged requirements doom nobody
+            for dep_pr in by_req.get(f, []):
+                if dep_pr["number"] in seen:
+                    continue
+                seen.add(dep_pr["number"])
+                victims.append((dep_pr, f))
+                nxt.append(dep_pr["number"])
+        frontier = nxt
+
+    if not victims:
+        info(f"PR #{root}: no open PRs require it — cascade empty.")
+        return 0
+
+    ensure_labels(repo, [DEFERRED], dry_run)
+    newly = 0
+    skipped = 0
+    for pr, cause in victims:
+        already = any(l["name"] == DEFERRED for l in pr["labels"])
+        if already:
+            skipped += 1
+            info(f"  PR #{pr['number']} already deferred (via PR #{cause}) — labeling skipped")
+            continue
+        newly += 1
+        add_label(repo, pr["number"], DEFERRED, dry_run)
+        comment(
+            repo, pr["number"],
+            f"Deferred in cascade: requirement PR #{cause} was deferred or closed unmerged, "
+            f"and this PR requires it. The hunt can resume when PR #{cause} lands — "
+            f"remove the `{DEFERRED}` label then (or run `kwf-deps lift`).",
+            dry_run,
+        )
+        info(f"  deferred PR #{pr['number']} (requires PR #{cause}): {pr['title']}")
+    info(f"Cascade from PR #{root}: {newly} PR(s) deferred"
+         + (f", {skipped} already deferred." if skipped else "."))
+    return 0
+
+
+def cmd_lift(repo: str, number: int, dry_run: bool) -> int:
+    """Remove `deferred` from every open deferred PR whose requirements are all merged."""
+    root_pr = pr_view(repo, number)
+    if root_pr["state"] == "OPEN" and not root_pr.get("mergedAt"):
+        info(f"note: PR #{number} is still open and unmerged — lifting its dependents anyway is your call")
+    prs = open_prs(repo)
+    merged_cache: dict[int, bool] = {}
+
+    def merged(n: int) -> bool:
+        if n not in merged_cache:
+            merged_cache[n] = bool(pr_view(repo, n).get("mergedAt"))
+        return merged_cache[n]
+
+    lifted = 0
+    # Single pass: the criterion is requirement merge-state, which does not
+    # change during a run — no fixpoint exists to iterate toward.
+    for pr in prs:
+        if not any(l["name"] == DEFERRED for l in pr["labels"]):
+            continue
+        reqs = requirements_of(pr)
+        if reqs and not all(merged(r) for r in reqs):
+            continue
+        remove_label(repo, pr["number"], DEFERRED, dry_run)
+        comment(
+            repo, pr["number"],
+            "Defer lifted: all declared requirements are merged. The hunt may resume. (kwf-deps lift)",
+            dry_run,
+        )
+        info(f"  lifted defer from PR #{pr['number']}: {pr['title']}")
+        lifted += 1
+    if not lifted:
+        info("Nothing to lift — no deferred PR has all requirements merged.")
+    return 0
+
+
+def cmd_status(repo: str, number: int) -> int:
+    pr = pr_view(repo, number)
+    state = "MERGED" if pr.get("mergedAt") else pr["state"]
+    deferred = " DEFERRED" if is_deferred(pr) else ""
+    info(f"PR #{number} [{state}{deferred}] {pr['title']}")
+    reqs = requirements_of(pr)
+    if not reqs:
+        info("  requires: nothing")
+        return 0
+    for r in reqs:
+        dep = pr_view(repo, r)
+        dstate = "MERGED" if dep.get("mergedAt") else dep["state"]
+        ddef = " DEFERRED" if is_deferred(dep) else ""
+        info(f"  requires PR #{r} [{dstate}{ddef}] {dep['title']}")
+    return 0
+
+
+def main() -> None:
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("--repo", default=argparse.SUPPRESS, help="OWNER/REPO (default: repo of the cwd)")
+    common.add_argument("--dry-run", action="store_true", default=argparse.SUPPRESS,
+                        help="print planned mutations without applying them")
+
+    ap = argparse.ArgumentParser(prog="kwf-deps", description=__doc__.splitlines()[0], parents=[common])
+    sub = ap.add_subparsers(dest="cmd", required=True)
+
+    p = sub.add_parser("check", parents=[common], help="exit 0 iff all requirements of a PR are merged")
+    p.add_argument("pr", type=int)
+
+    p = sub.add_parser("requires", parents=[common], help="declare that a PR requires other PRs")
+    p.add_argument("pr", type=int)
+    p.add_argument("deps", type=int, nargs="+")
+
+    p = sub.add_parser("cascade", parents=[common], help="defer every open PR that (transitively) requires a deferred PR")
+    p.add_argument("pr", type=int)
+    p.add_argument("--force", action="store_true", help="cascade even if the root does not look deferred")
+
+    p = sub.add_parser("lift", parents=[common], help="remove `deferred` where all requirements are now merged")
+    p.add_argument("pr", type=int)
+
+    p = sub.add_parser("status", parents=[common], help="show a PR's requirement chain state")
+    p.add_argument("pr", type=int)
+
+    args = ap.parse_args()
+    args.repo = getattr(args, "repo", None)
+    args.dry_run = getattr(args, "dry_run", False)
+    repo = resolve_repo(args.repo)
+
+    if args.cmd == "check":
+        sys.exit(cmd_check(repo, args.pr))
+    if args.cmd == "requires":
+        sys.exit(cmd_requires(repo, args.pr, args.deps, args.dry_run))
+    if args.cmd == "cascade":
+        sys.exit(cmd_cascade(repo, args.pr, args.dry_run, args.force))
+    if args.cmd == "lift":
+        sys.exit(cmd_lift(repo, args.pr, args.dry_run))
+    if args.cmd == "status":
+        sys.exit(cmd_status(repo, args.pr))
+
+
+if __name__ == "__main__":
+    main()

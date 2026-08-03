@@ -1,6 +1,7 @@
-<!-- LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
-     Governed by: [[adr-04-frontend-and-design-system]]
+<!-- LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
+     Governed by: [[adr-52-frontend-and-design-system]] · [[adr-53-api-membrane]]
      Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]]
+     API: [[API]]
      LIVE-DOC:END -->
 
 <!--
@@ -9,7 +10,7 @@
   4). It is an editable catalog (decision 5), not a costed item: the ración has no
   price of its own — the cost appears only when it is served as a `FeedingEvent` with
   the day's historical unit_price ([[adr-25-account-ledger]] rule 3). Writes only
-  through the declared endpoint `POST /api/rations/`, whose serializer creates the
+  through the declared endpoint `POST /api/rations/` ([[API]]), which creates the
   Ration then its nested lines. This form exists because the loading-order form needs
   raciones to choose from (task #21). "＋" adds a feed line. A bare mount performs NO
   request ([[adr-22-showcase-ready-components]] rule 2), mounts with zero props and

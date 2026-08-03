@@ -1,12 +1,12 @@
-<!-- LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
-     Governed by: [[adr-04-frontend-and-design-system]]
+<!-- LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
+     Governed by: [[adr-52-frontend-and-design-system]]
      Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]]
      LIVE-DOC:END -->
 
 <!--
   Plain anchor-link nav to in-page headings — Melt 0.44 ships no Table of
   Contents builder and none is needed: this is a hand-rolled fallback exactly
-  like nav/Pagination or overlay/ScrollArea ([[MELT-UI]], adr-04 r8 last
+  like nav/Pagination or overlay/ScrollArea ([[MELT-UI]], adr-52 r8 last
   resort). It is deliberately NOT a menu: no roving tabindex, no arrow-key
   cycling, no typeahead — every link stays natively tab-focusable in document
   order, the correct behavior for a page-scroll nav. The one piece of runtime

@@ -78,7 +78,7 @@ En cuanto haya respuesta, el trabajo entra por el flujo normal, sin excepción:
    según el modelo), **sin mutar** asientos existentes — una liquidación es un asiento
    nuevo, nunca reescribir el pasado ([[adr-25-account-ledger]] regla 1).
 3. La fila en [[API]] antes del código, y el código nace por [[TDD]]
-   ([[adr-03-api-and-backend]], [[adr-07-development-flow]]).
+   ([[adr-51-api-and-backend]], [[adr-07-development-flow]]).
 
 ## Lo que decidió el dueño (2026-07-26) — construido en [[adr-43-sale-settlement]]
 

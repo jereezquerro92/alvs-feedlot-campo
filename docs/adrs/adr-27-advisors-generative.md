@@ -20,7 +20,7 @@ tags: [adr, feedlot, advisors, ai]
 2. An advisor is read-only over data. It reasons only over an `input_snapshot` the backend assembles for one client and one period; it does not query the database, does not read another client's data, and executes nothing. The per-client scope is a hard boundary.
 3. Every run persists an `AdvisorReport` carrying its `input_snapshot`, `output`, `model_id`, `tokens` and `latency`. The report is the record — reading one never re-runs the generation.
 4. Generation follows the inference rules already in force: async ([[adr-16-async-mandatory]]), on Bedrock, cost- and rate-bounded, gated by a DRF permission and an RBAC group ([[adr-10-auth]]). Reports are generated on demand or on a schedule, never on a data write.
-5. The advisor endpoints are declared in [[API]] before code ([[adr-03-api-and-backend]]). The role prompts are configuration on the `Advisor` catalog rows, English-keyed ([[LOCALIZATION]]), with Spanish only in rendered output.
+5. The advisor endpoints are declared in [[API]] before code ([[adr-51-api-and-backend]]). The role prompts are configuration on the `Advisor` catalog rows, English-keyed ([[LOCALIZATION]]), with Spanish only in rendered output.
 
 ## FORBIDDEN
 

@@ -1,0 +1,38 @@
+# gha-kwf-deps.yml — cascade trigger for human-side deferrals
+#
+# Vendor this file into a clone as .github/workflows/kwf-deps.yml. It runs the
+# kwf-deps cascade whenever a PR is labeled `deferred` or closed without merging,
+# so deferrals made by hand in the GitHub UI propagate exactly like bard-driven ones.
+#
+# Requires: GH CLI (preinstalled on GitHub runners) and the kwf-deps script —
+# fetched pinned from kodexArg/harness-default; adjust KWF_DEPS_REF to a tag/SHA you trust.
+
+name: kwf-deps cascade
+
+on:
+  pull_request:
+    types: [closed, labeled]
+
+permissions:
+  pull-requests: write
+  issues: write # gh pr comment uses the issues API
+
+jobs:
+  cascade:
+    if: >
+      github.event.action == 'labeled' && github.event.label.name == 'deferred'
+      || github.event.action == 'closed' && github.event.pull_request.merged == false
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      KWF_DEPS_REF: v1.0.0
+    steps:
+      - name: Fetch kwf-deps
+        run: |
+          curl -fsSL \
+            "https://raw.githubusercontent.com/kodexArg/harness-default/${KWF_DEPS_REF}/docs/skills/triage-and-fix/bin/kwf-deps" \
+            -o /tmp/kwf-deps
+          chmod +x /tmp/kwf-deps
+
+      - name: Run the defer cascade
+        run: /tmp/kwf-deps cascade "${{ github.event.pull_request.number }}" --repo "${{ github.repository }}"

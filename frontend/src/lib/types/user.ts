@@ -1,5 +1,5 @@
-/* LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
- * Governed by: [[adr-04-frontend-and-design-system]] · [[adr-44-field-operational-roles]]
+/* LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
+ * Governed by: [[adr-52-frontend-and-design-system]] · [[adr-44-field-operational-roles]]
  * Docs: [[FRONTEND]]
  * LIVE-DOC:END */
 

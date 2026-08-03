@@ -21,7 +21,7 @@ app had only the point-in-time `HealthEvent` ([[adr-28-animal-lifecycle-and-sani
 it had no way to record a **plan** — what to apply and when — nor to answer "what is
 pending?". This entry adds the plan template, the immutable enrollment, and the derived
 calendar. The API rows above were declared in [[API]] before this code
-([[adr-03-api-and-backend]] rule 2).
+([[adr-51-api-and-backend]] rule 2).
 
 ## Design
 

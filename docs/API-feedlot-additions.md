@@ -10,7 +10,7 @@ tags: [doc, api, feedlot, ssot]
 
 # API — feedlot additions (rows to merge into docs/API.md)
 
-Per [[adr-03-api-and-backend]] an endpoint is valid **iff** it is a row in [[API]];
+Per [[adr-51-api-and-backend]] an endpoint is valid **iff** it is a row in [[API]];
 these enter that table before any `models.py`. All paths are under `/api/`, English,
 trailing slash ([[LOCALIZATION]]); names follow [[GLOSSARY]] (`GLOSSARY-feedlot-additions.md`).
 Auth is `session` (browser HTMX/JSON) unless noted. RBAC groups gating these are TBD in

@@ -32,6 +32,6 @@ python3 tests/test_docker_compose.py --smoke
 
 All three stages — documents & harness structure, harness construction (skills, hooks, guardian
 agents), and project construction — are **done**: backend built through TDD, frontend, deploy
-pipeline, and the ephemeral reference run all landed. The objective it serves is [docs/PRD.md](docs/PRD.md).
+pipeline, and the ephemeral reference run all landed. The objective it serves is [docs/constitution/PRD.md](docs/constitution/PRD.md).
 
 Documentation lives in [`docs/`](docs/) — Obsidian-flavored, wikilinked, one source of truth per topic. ADRs load as agent rules from [`docs/adrs/`](docs/adrs/). MIT licensed.
