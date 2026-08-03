@@ -11,21 +11,20 @@
   (decision 1): it only records which charge a payment answers. Hydrated island
   (rung 3, [[adr-04-frontend-and-design-system]] rule 3) because the form owns submit
   state; the view holds no mutation itself and mounts safely with zero props
-  ([[adr-22-showcase-ready-components]] rules 1–2). Copy Spanish, keys English
+  ([[adr-22-showcase-ready-components]] rules 1–2). Renders inside FeedlotShell so
+  chrome matches the rest of the green app. Copy Spanish, keys English
   ([[LOCALIZATION]]).
 -->
 <script lang="ts">
   import * as Card from "$lib/components/ui/card";
-  import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
-  import { SectionTitle } from "$lib/components/primitives/titles";
+  import FeedlotShell from "$lib/components/feedlot/FeedlotShell.svelte";
   import SessionBadge from "$lib/components/auth/SessionBadge.svelte";
   import { MetricCard, OutstandingTable, PaymentForm, PaymentImputationForm } from "$lib/components/feedlot";
   import type { Me } from "$lib/types/user";
   import { t } from "../../../i18n";
 
   let {
-    projectSlug = "",
     client = null,
     account = null,
     charges = [],
@@ -36,7 +35,6 @@
     me = null,
     pending = false,
   }: {
-    projectSlug?: string;
     client?: { id: number; name: string; balance?: string | number | null } | null;
     account?: Record<string, unknown> | null;
     charges?: Array<Record<string, any>>;
@@ -67,21 +65,23 @@
   }
 </script>
 
-<div class="min-h-screen flex flex-col">
-  <header class="flex w-full items-center justify-between gap-4 px-6 pt-8 sm:px-10">
-    <Badge variant="outline" class="text-sm font-semibold tracking-wide">{projectSlug}</Badge>
-    <SessionBadge
-      {me}
-      {pending}
-      {publicBackendUrl}
-      loginLabel={t("auth_login")}
-      logoutLabel={t("auth_logout")}
-    />
-  </header>
+<FeedlotShell
+  active="ledger"
+  currentClient={client}
+  breadcrumb={t("feedlot_impute_title")}
+>
+  <SessionBadge
+    slot="session"
+    {me}
+    {pending}
+    {publicBackendUrl}
+    loginLabel={t("auth_login")}
+    logoutLabel={t("auth_logout")}
+  />
 
-  <main class="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-12">
+  <div class="mx-auto flex w-full max-w-5xl flex-col gap-6">
     <div class="flex flex-col gap-2">
-      <SectionTitle as="h1">{t("feedlot_impute_title")}</SectionTitle>
+      <h1 class="text-2xl font-bold tracking-tight">{t("feedlot_impute_title")}</h1>
       <p class="text-sm font-medium text-foreground">{client?.name ?? t("feedlot_dash_fallback")}</p>
       <p class="max-w-2xl text-sm text-muted-foreground">{t("feedlot_impute_intro")}</p>
     </div>
@@ -155,5 +155,5 @@
       {/if}
       <Button href="/feedlot/" variant="secondary" size="sm">{t("feedlot_back_clients")}</Button>
     </div>
-  </main>
-</div>
+  </div>
+</FeedlotShell>

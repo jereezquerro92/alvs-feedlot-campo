@@ -4,10 +4,10 @@
      LIVE-DOC:END -->
 
 <!--
-  One client's feedlot dashboard ([[FEEDLOT]]), in the full app shell: a green
-  operational surface (sidebar + topbar + content), scoped by `.feedlot-app` so its
-  green tokens override the template's global orange without touching any component
-  class ([[adr-04-frontend-and-design-system]] rule 5, [[DESIGN-SYSTEM]]).
+  One client's feedlot dashboard ([[FEEDLOT]]), composed inside FeedlotShell so
+  sidebar + Breadcrumb/session header match every other module. `.feedlot-app`
+  green tokens override the template's global orange without touching any
+  component class ([[adr-04-frontend-and-design-system]] rule 5, [[DESIGN-SYSTEM]]).
 
   It only DISPLAYS metrics derived in the backend ([[adr-29-metrics-derivation]] rule
   1) — it computes none. Every metric that arrives null renders as "—" with its reason,
@@ -20,9 +20,9 @@
   import * as Card from "$lib/components/ui/card";
   import { Button } from "$lib/components/ui/button";
   import { formatNumber } from "$lib/components/data/NumericValue.svelte";
+  import { PageHeader } from "$lib/components/primitives/titles";
   import {
-    FeedlotSidebar,
-    FeedlotTopbar,
+    FeedlotShell,
     KpiCard,
     GrowthCostChart,
     CostDonut,
@@ -53,7 +53,7 @@
       tax_id?: string;
       balance?: string | number | null;
     } | null;
-    /** Full roster feeding the topbar client dropdown (module-first redesign). */
+    /** Roster retained for callers; shell header uses Breadcrumb only. */
     clients?: Array<{ id: number | string; name?: string; kind?: string }>;
     summary?: Dict;
     account?: Dict;
@@ -149,39 +149,35 @@
     emptyLots: t("feedlot_empty_lots"),
     emptyAnimals: t("feedlot_empty_animals"),
   };
+
+  const pageSubtitle = $derived(
+    [
+      client?.name ?? t("feedlot_dash_fallback"),
+      client?.tax_id ? `CUIT ${client.tax_id}` : "",
+    ]
+      .filter(Boolean)
+      .join(" · "),
+  );
 </script>
 
-<div class="feedlot-app flex min-h-screen" style="background: var(--canvas);">
-  <FeedlotSidebar clientId={client?.id ?? null} active="dashboard" />
+<FeedlotShell
+  active="dashboard"
+  clients={clients}
+  currentClient={client}
+>
+  <slot name="session" slot="session" />
 
-  <div class="flex min-w-0 flex-1 flex-col">
-    <FeedlotTopbar
-      breadcrumb={t("feedlot_nav_dashboard")}
-      client={client}
-      clients={clients}
-      switcherPattern={"/feedlot/{id}/"}
-    >
-      <slot name="session" slot="session" />
-    </FeedlotTopbar>
-
-    <main class="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-6 px-4 py-6 sm:px-8">
-      <!-- Page header -->
-      <div class="flex flex-wrap items-end justify-between gap-3">
-        <div class="flex flex-col gap-1">
-          <h1 class="text-2xl font-bold tracking-tight">{t("feedlot_dash_title")}</h1>
-          <p class="text-sm text-muted-foreground">
-            {client?.name ?? t("feedlot_dash_fallback")}{#if client?.tax_id} · CUIT {client.tax_id}{/if}
-          </p>
-        </div>
-        <div class="flex items-center gap-2">
+  <div class="mx-auto flex w-full max-w-6xl flex-col gap-6">
+      <PageHeader title={t("feedlot_dash_title")} subtitle={pageSubtitle}>
+        {#snippet actions()}
           <Button variant="outline" size="sm" disabled title={t("feedlot_action_export_soon")}>
             {t("feedlot_action_export")}
           </Button>
           <Button href={client?.id ? `/feedlot/${client.id}/schedule/` : "#"} size="sm">
             {t("feedlot_action_analyze")}
           </Button>
-        </div>
-      </div>
+        {/snippet}
+      </PageHeader>
 
       <!-- Mobile quick-nav (the sidebar is desktop-only) -->
       {#if client?.id}
@@ -316,6 +312,5 @@
       </Card.Root>
 
       <p class="pb-4 text-xs text-muted-foreground">{t("feedlot_dash_derivation_note")}</p>
-    </main>
   </div>
-</div>
+</FeedlotShell>

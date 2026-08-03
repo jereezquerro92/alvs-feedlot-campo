@@ -23,6 +23,8 @@ export const es = {
   nav_showcase: "Showcase",
   nav_chatui: "Chat",
   nav_profile: "Perfil",
+  nav_home: "Inicio",
+  breadcrumb_nav: "Ruta",
   m365_status: "Estado M365",
 
   // login landing (/) — the landing IS the login (redesign)
@@ -76,6 +78,8 @@ export const es = {
   gallery_reco_body:
     "DataTable, NumericValue, MetricTileStrip, StatusBadge, ChipFilterBar, EntityGrid y SummaryCard son los componentes más aptos para ese dominio — es solo una guía; todos los componentes siguen siendo agnósticos del negocio.",
   gallery_typography: "Tipografía",
+  gallery_page_header: "PageHeader",
+  gallery_page_header_subtitle: "Título de página con subtítulo y acciones opcionales.",
   gallery_typography_note:
     "PageTitle renderiza el <title> del documento en el servidor, sin directiva de cliente — Base.astro ya lo usa en todas las páginas, incluida esta, así que no tiene demo visual aparte. SectionTitle provee las tres escalas de título de abajo.",
   gallery_scale_h1: "Título de sección — escala h1",
@@ -125,6 +129,7 @@ export const es = {
   gallery_dropdownmenu: "Menú desplegable",
   gallery_contextmenu: "Menú contextual",
   gallery_menubar: "Barra de menú",
+  gallery_breadcrumb: "Breadcrumb",
   gallery_toc: "Tabla de contenidos",
   gallery_feedback: "Feedback",
   gallery_progress: "Progreso",

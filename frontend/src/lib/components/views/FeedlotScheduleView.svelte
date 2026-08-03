@@ -17,14 +17,13 @@
   import * as Card from "$lib/components/ui/card";
   import { Badge } from "$lib/components/ui/badge";
   import { Button } from "$lib/components/ui/button";
-  import { SectionTitle } from "$lib/components/primitives/titles";
+  import FeedlotShell from "$lib/components/feedlot/FeedlotShell.svelte";
   import { MetricCard, SanitaryScheduleTable, EnrollmentForm } from "$lib/components/feedlot";
   import { t } from "../../../i18n";
 
   type Dict = Record<string, unknown> | null | undefined;
 
   let {
-    projectSlug = "",
     client = null,
     schedule = null,
     plans = [],
@@ -33,7 +32,6 @@
     today = "",
     publicBackendUrl = "",
   }: {
-    projectSlug?: string;
     client?: {
       id: number;
       name: string;
@@ -67,15 +65,16 @@
   }
 </script>
 
-<div class="min-h-screen flex flex-col">
-  <header class="flex w-full items-center justify-between gap-4 px-6 pt-8 sm:px-10">
-    <Badge variant="outline" class="text-sm font-semibold tracking-wide">{projectSlug}</Badge>
-    <slot name="session" />
-  </header>
+<FeedlotShell
+  active="sanitary"
+  currentClient={client}
+  breadcrumb={t("feedlot_schedule_title")}
+>
+  <slot name="session" slot="session" />
 
-  <main class="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-8 px-6 py-12">
+  <div class="mx-auto flex w-full max-w-5xl flex-col gap-6">
     <div class="flex flex-col gap-2">
-      <SectionTitle as="h1">{t("feedlot_schedule_title")}</SectionTitle>
+      <h1 class="text-2xl font-bold tracking-tight">{t("feedlot_schedule_title")}</h1>
       <div class="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
         <span class="font-medium text-foreground">{client?.name ?? t("feedlot_dash_fallback")}</span>
         {#if client?.kind}
@@ -143,5 +142,5 @@
       {/if}
       <Button href="/feedlot/" variant="secondary" size="sm">{t("feedlot_back_clients")}</Button>
     </div>
-  </main>
-</div>
+  </div>
+</FeedlotShell>

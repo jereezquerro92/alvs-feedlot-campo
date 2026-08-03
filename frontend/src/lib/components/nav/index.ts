@@ -13,3 +13,5 @@ export { default as Menubar } from "./Menubar.svelte";
 export type { MenubarMenu } from "./Menubar.svelte";
 export { default as TableOfContents } from "./TableOfContents.svelte";
 export type { TableOfContentsItem } from "./TableOfContents.svelte";
+export { default as Breadcrumb } from "./Breadcrumb.svelte";
+export type { BreadcrumbItem } from "./Breadcrumb.svelte";
