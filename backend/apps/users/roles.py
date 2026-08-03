@@ -213,10 +213,12 @@ class AssistantAccess(GroupMatrixPermission):
     beyond its own tenant.
 
     The confinement fails closed three ways, all keyed on the bound client
-    (decision 4): here the requested ``client`` (query param or POST body) must
-    equal the bound client; ``has_object_permission`` re-checks the conversation's
-    client on a detail route; and the viewset queryset filters lists to the bound
-    client. An unbound lot-owner session reaches nothing.
+    (decision 4 / adr-45 rule 2): on list/create the requested ``client``
+    (query param or POST body) must be present, parseable, and equal the bound
+    client — missing or unparseable fails closed; ``has_object_permission``
+    re-checks the conversation's client on a detail route; and the viewset
+    queryset filters lists to the bound client. An unbound lot-owner session
+    reaches nothing.
     """
 
     read_groups = (FIELD_MANAGERS, FEEDLOT_OWNERS)
@@ -237,11 +239,20 @@ class AssistantAccess(GroupMatrixPermission):
             bound = bound_client_id(user)
             if bound is None:
                 return False  # unbound → fail closed (adr-44 decision 4)
-            target = _requested_client_id(request)
-            # A detail route (messages) carries no client key; the queryset scope
-            # and has_object_permission enforce the boundary there. On list/create
-            # the client is present and must match the binding.
-            return target is None or target == bound
+            raw = _raw_requested_client(request)
+            if raw is not None:
+                try:
+                    target = int(raw)
+                except (TypeError, ValueError):
+                    # Unparseable client is not "use my binding" — fail closed
+                    # (adr-45 rule 2, #33 / #60).
+                    return False
+                return target == bound
+            # Absent client key: detail routes ride queryset + has_object_permission;
+            # list/create must carry an explicit matching client (adr-45 rule 2).
+            if getattr(view, "detail", False) or view.kwargs.get("pk") is not None:
+                return True
+            return False
         return False
 
     def has_object_permission(self, request, view, obj):
@@ -284,19 +295,26 @@ def _route_client_id(view):
         return None
 
 
-def _requested_client_id(request):
-    """The client a request targets via ``?client=`` or a JSON ``client`` body key.
-
-    Used to confine a lot-owner portal session on the query/body-keyed surfaces
-    (the asesor), where the route pk is the conversation, not the client (adr-44
-    decision 3). Returns None when absent/unparseable — the caller decides what
-    None means (a list is scoped by the queryset; a detail route rides the object).
-    """
+def _raw_requested_client(request):
+    """Raw ``client`` from ``?client=`` or a JSON body key, or None if absent."""
     raw = request.query_params.get("client")
     if raw is None:
         data = getattr(request, "data", None)
         if isinstance(data, dict):
             raw = data.get("client")
+    return raw
+
+
+def _requested_client_id(request):
+    """The client a request targets via ``?client=`` or a JSON ``client`` body key.
+
+    Used to confine a lot-owner portal session on the query/body-keyed surfaces
+    (the asesor), where the route pk is the conversation, not the client (adr-44
+    decision 3). Returns None when absent or unparseable — callers that must fail
+    closed on unparseable values should use ``_raw_requested_client`` and parse
+    themselves (``AssistantAccess``, #33 / #60).
+    """
+    raw = _raw_requested_client(request)
     try:
         return int(raw)
     except (TypeError, ValueError):

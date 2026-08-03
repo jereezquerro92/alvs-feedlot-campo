@@ -99,3 +99,30 @@ def test_snapshot_carries_a_json_safe_balance():
     conversation.client.account.save()
     answer = send_message(conversation=conversation, text="saldo?")
     assert isinstance(answer.input_snapshot["balance"], str)
+
+
+@debug
+def test_send_message_refuses_blank_answer(monkeypatch):
+    """A blank inference result must not persist as a successful turn (#25 / #60)."""
+    from apps.assistant import services as services_mod
+
+    conversation = _conversation()
+
+    class _Blank:
+        def generate(self, *, snapshot, history, question):
+            return "", "blank-model", 0, 0.0
+
+    monkeypatch.setattr(services_mod, "get_assistant_client", lambda: _Blank())
+    with pytest.raises(RuntimeError, match="assistant_unavailable"):
+        send_message(conversation=conversation, text="hola")
+    # Atomic rollback: neither the user turn nor a blank assistant row remains.
+    assert conversation.messages.count() == 0
+
+
+def test_asend_message_seam_is_awaitable():
+    """adr-16 rule 4 seam stays importable and awaitable even without a caller (#19)."""
+    import inspect
+
+    from apps.assistant.services import asend_message
+
+    assert inspect.iscoroutinefunction(asend_message)
