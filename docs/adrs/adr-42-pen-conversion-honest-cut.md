@@ -6,105 +6,102 @@ created: 2026-07-25
 tags: [adr, feedlot, feedyard, metrics, conversion, pen, phase-4b]
 ---
 
-# ADR-42 — Conversión por corral: el corte honesto
+# ADR-42 — per-pen conversion: the honest cut
 
-**Contexto:** levanta el diferimiento explícito de [[adr-33-feedyard-operating-loop]]
-decisión 7 y [[adr-34-pen-placement]] decisión 5 (la conversión por corral quedaba
-diferida porque "atribuir pesajes al tramo que un animal pasó en un corral es un
-problema aparte"). Consume `PenPlacement` (adr-34), `growth_series`
-([[adr-28-animal-lifecycle-and-sanitary]]) y `FeedingEvent.pen` (adr-33 decisión 3).
-Es una **adición** a `apps.metrics`, no una supersesión: la regla que prohíbe el
-número inventado ([[adr-29-metrics-derivation]] regla 2) sigue intacta — este corte
-la cumple, no la relaja. Reglas solamente; las funciones viven en `apps.metrics`.
+**Context:** lifts the explicit deferral of [[adr-33-feedyard-operating-loop]] decision 7 and
+[[adr-34-pen-placement]] decision 5 (per-pen conversion stayed deferred because "attributing
+weighings to the stretch an animal spent in a pen is a separate problem"). Consumes
+`PenPlacement` (adr-34), `growth_series` ([[adr-28-animal-lifecycle-and-sanitary]]) and
+`FeedingEvent.pen` (adr-33 decision 3). It is an **addition** to `apps.metrics`, not a
+supersession: the rule forbidding the invented number ([[adr-29-metrics-derivation]] rule 2)
+stays intact — this cut complies with it, it does not relax it. Rules only; the functions live
+in `apps.metrics`.
 
-## Contexto
+## Context
 
-El cierre por corral tenía dos mitades. La del **costo** (kilos servidos y costo de
-alimento por corral) ya se entregó como `pen_cost_summary`/`pen_occupancy_report`:
-se deriva de `FeedingEvent.pen` y de los eventos de `PenPlacement`, y es afirmable.
-La de la **ganancia** —conversión = kg alimentados ÷ kg producidos en el corral— se
-difirió porque un kilo de engorde no sabe en qué corral se puso: atribuirlo sin saber
-dónde estuvo el animal fabrica el número que adr-29 regla 2 prohíbe.
+The per-pen close had two halves. The **cost** half (kilos served and feed cost per pen) was
+already delivered as `pen_cost_summary`/`pen_occupancy_report`: it derives from
+`FeedingEvent.pen` and from the `PenPlacement` events, and it is affirmable. The **gain** half
+— conversion = kg fed ÷ kg produced in the pen — was deferred because a kilo of gain does not
+know which pen it was put on: attributing it without knowing where the animal was manufactures
+the number adr-29 rule 2 forbids.
 
-La pieza que faltaba —`PenPlacement`, dónde estuvo cada cabeza y cuándo— ya existe
-desde la Fase 7b. Con ella se puede atribuir **el subconjunto honesto**: los tramos
-de pesaje que un animal o lote pasó enteros en una sola estadía en un corral. Lo
-ambiguo se declara no calculable, igual que todo el resto del sistema.
+The missing piece — `PenPlacement`, where each head was and when — has existed since Phase 7b.
+With it, **the honest subset** can be attributed: the weighing stretches an animal or lot spent
+entirely within a single stay in a pen. What is ambiguous is declared not calculable, exactly
+like everything else in the system.
 
-## Decisiones
+## Decisions
 
-### 1. La conversión por corral se deriva en `apps.metrics`, sin modelo nuevo
+### 1. Per-pen conversion is derived in `apps.metrics`, with no new model
 
-`pen_conversion(*, pen, start, end)` es una función pura sobre eventos, hermana de
-`pen_occupancy_report` (adr-34) y `pen_cost_summary` (adr-33). No hay tabla, no hay
-migración: la conversión es una afirmación derivada, no un dato almacenado
-([[adr-29-metrics-derivation]] regla 1). Una sola definición del número, la misma que
-consumirán el dashboard y el asesor.
+`pen_conversion(*, pen, start, end)` is a pure function over events, sibling to
+`pen_occupancy_report` (adr-34) and `pen_cost_summary` (adr-33). There is no table and no
+migration: conversion is a derived claim, not stored data ([[adr-29-metrics-derivation]] rule
+1). One single definition of the number, the same one the dashboard and the advisor will
+consume.
 
-*Por qué:* tres consumidores con tres definiciones de "conversión por corral" es lo
-que la doctrina de métricas existe para evitar.
+*Why:* three consumers with three definitions of "per-pen conversion" is what the metrics
+doctrine exists to prevent.
 
-### 2. Un kilo de engorde se atribuye a un corral sólo si el tramo entero se pasó ahí
+### 2. A kilo of gain is attributed to a pen only if the whole stretch was spent there
 
-Un tramo de pesaje (entre dos pesajes consecutivos de un animal o lote) se atribuye al
-corral donde el target estaba **al pesaje anterior**, y **sólo si** no hubo ningún
-evento de `PenPlacement` estrictamente dentro del intervalo —es decir, no cambió de
-corral en el medio— y ese corral es el que se está midiendo. La ubicación se deriva de
-los eventos `in`/`out` de `PenPlacement` (adr-34 decisión 1): un `in` fija el corral,
-un `out` lo libera.
+A weighing stretch (between two consecutive weighings of an animal or lot) is attributed to the
+pen where the target was **at the previous weighing**, and **only if** there was no
+`PenPlacement` event strictly inside the interval — that is, it did not change pen in between —
+and that pen is the one being measured. Placement is derived from `PenPlacement`'s `in`/`out`
+events (adr-34 decision 1): an `in` sets the pen, an `out` releases it.
 
-*Por qué:* si el animal cambió de corral entre dos pesajes, el engorde de ese tramo se
-repartió entre corrales de una forma que los datos no registran. Atribuirlo entero a
-uno cualquiera es exactamente el número inventado de adr-29 regla 2. Un tramo limpio se
-puede afirmar; uno partido, no.
+*Why:* if the animal changed pen between two weighings, that stretch's gain was split across
+pens in a way the data does not record. Attributing it whole to any one of them is exactly the
+invented number of adr-29 rule 2. A clean stretch can be affirmed; a split one cannot.
 
-### 3. Lo no atribuible se cuenta y se reporta, no se rellena
+### 3. What is not attributable is counted and reported, not filled in
 
-Un tramo cuyo ADG ya es no calculable (adr-28 regla 2: mismo día, o cambió el
-`head_count` del lote) se **saltea** (`segments_skipped`). Un tramo calculable que no se
-puede fijar a una sola estadía en el corral —porque cambió de corral, o el target no
-tiene placement que lo ubique acá— se cuenta como **no atribuido**
-(`segments_unattributed`). Los kilos sólo se suman sobre los tramos **atribuidos**
-(`segments_attributed`).
+A stretch whose ADG is already not calculable (adr-28 rule 2: same day, or the lot's
+`head_count` changed) is **skipped** (`segments_skipped`). A calculable stretch that cannot be
+pinned to a single stay in the pen — because it changed pen, or because the target has no
+placement putting it here — is counted as **unattributed** (`segments_unattributed`). Kilos are
+summed only over the **attributed** stretches (`segments_attributed`).
 
-*Por qué:* sin esos contadores no se distingue "el corral no engordó" de "no pudimos
-atribuirle el engorde". Son situaciones opuestas y la respuesta correcta a cada una es
-distinta — la misma lógica que `kilos_gained` ya aplica con `segments_skipped`
-(adr-29 regla 3).
+*Why:* without those counters there is no telling "the pen did not gain" from "we could not
+attribute the gain to it". They are opposite situations and the right answer to each is
+different — the same logic `kilos_gained` already applies with `segments_skipped` (adr-29 rule
+3).
 
-### 4. Sin nada honesto que dividir, devuelve `null` con el motivo
+### 4. With nothing honest to divide, it returns `null` with the reason
 
-`pen_conversion` devuelve `conversion=None` con un `not_calculable` cuando no hay tramo
-atribuible (`no_attributable_growth`), cuando el engorde atribuido salió plano o
-negativo (`no_weight_gain`), o cuando no hay alimento registrado al corral en el período
-(`no_feed_recorded`). Nunca un cero de relleno: un cero se grafica igual que un cero
-real ([[adr-29-metrics-derivation]] regla 2).
+`pen_conversion` returns `conversion=None` with a `not_calculable` when there is no attributable
+stretch (`no_attributable_growth`), when the attributed gain came out flat or negative
+(`no_weight_gain`), or when no feed was recorded to the pen in the period (`no_feed_recorded`).
+Never a filler zero: a zero is charted exactly like a real zero
+([[adr-29-metrics-derivation]] rule 2).
 
-*Por qué:* una conversión inventada sobre un corral sin pesajes atribuibles se lee como
-un dato de gestión y puede justificar una decisión de compra. El hueco explícito le dice
-al operador qué falta medir.
+*Why:* an invented conversion over a pen with no attributable weighings reads as a management
+figure and can justify a purchasing decision. The explicit gap tells the operator what is
+missing to measure.
 
-### 5. No toca el ledger ni ninguna otra app
+### 5. It touches neither the ledger nor any other app
 
-`pen_conversion` es lectura pura: no postea asiento, no muta nada, no agrega variables de
-entorno ni endpoints en este cut. Se entrega como función de servicio testeada, con la
-misma exposición que sus hermanas `pen_occupancy_report`/`pen_cost_summary` —service-only
-hasta que exista un dashboard de corrales que las consuma, que es una adición posterior
-por [[adr-07-development-flow]] y [[API]].
+`pen_conversion` is a pure read: it posts no entry, mutates nothing, and adds no environment
+variables and no endpoints in this cut. It is delivered as a tested service function, with the
+same exposure as its siblings `pen_occupancy_report`/`pen_cost_summary` — service-only until a
+pen dashboard exists to consume them, which is a later addition through
+[[adr-07-development-flow]] and [[API]].
 
-*Por qué:* el cobro sigue siendo exclusivamente del ledger vía `feed` (adr-25). Exponer
-un endpoint para una sola de las tres métricas de corral, sin frontend que lo use, sería
-asimétrico y agregaría una ruta sin consumidor.
+*Why:* charging remains exclusively the ledger's via `feed` (adr-25). Exposing an endpoint for
+only one of the three pen metrics, with no frontend using it, would be asymmetric and would add
+a route with no consumer.
 
-## Consecuencias
+## Consequences
 
-- El backend entra por el flujo [[TDD]] (adr-07); los tests corren a nivel de servicio,
-  igual que `test_placement.py`.
-- `pen_closeout(*, pen, start, end)` compone la mitad de ocupación
-  (`pen_occupancy_report`) con la de conversión (`pen_conversion`) en un solo cierre
-  honesto por corral; cada mitad carga su propio `not_calculable`.
-- La conversión **por cliente** (`conversion`, adr-29) no cambia: sigue siendo el total
-  del cliente. Esta métrica es su desagregado por corral, con el hueco honesto donde la
-  atribución no alcanza.
-- Cualquier cambio a las reglas 1–4 es semántico y DEBE superseder este ADR
-  ([[adr-00-adr-doctrine]] regla 4).
+- The backend enters through the [[TDD]] flow (adr-07); the tests run at service level, just
+  like `test_placement.py`.
+- `pen_closeout(*, pen, start, end)` composes the occupancy half (`pen_occupancy_report`) with
+  the conversion half (`pen_conversion`) into a single honest per-pen close; each half carries
+  its own `not_calculable`.
+- **Per-client** conversion (`conversion`, adr-29) does not change: it remains the client's
+  total. This metric is its per-pen breakdown, with the honest gap where the attribution does
+  not reach.
+- Any change to rules 1–4 is semantic and MUST supersede this ADR
+  ([[adr-00-adr-doctrine]] rule 4).

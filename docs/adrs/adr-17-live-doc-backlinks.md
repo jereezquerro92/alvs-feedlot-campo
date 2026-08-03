@@ -1,5 +1,5 @@
 ---
-title: ADR-17 — live-doc backlinks
+title: adr-17-live-doc-backlinks
 type: adr
 status: active
 created: 2026-07-14

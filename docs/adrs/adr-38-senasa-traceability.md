@@ -6,81 +6,81 @@ created: 2026-07-25
 tags: [adr, feedlot, traceability, senasa, renspa, dte, caravana, phase-11]
 ---
 
-# ADR-38 — Trazabilidad SENASA: RENSPA, DT-e y caravana
+# ADR-38 — SENASA traceability: RENSPA, DT-e and ear tag
 
-**Contexto:** crece por adición ([[adr-49-domain-layer-and-growth-by-addition]]): una app nueva
-`traceability` sobre la espina, sin tocar `livestock` ni el ledger. Reusa la postura
-event-sourced de [[adr-49-domain-layer-and-growth-by-addition]] regla 3 y el precedente "un catálogo se
-edita, un evento es inmutable" de [[adr-33-feedyard-operating-loop]] decisión 5.
-Reglas solamente; las entidades viven en [[FEEDLOT-DATA-MODEL]].
+**Context:** grows by addition ([[adr-49-domain-layer-and-growth-by-addition]]): a new
+`traceability` app on top of the spine, without touching `livestock` or the ledger. Reuses the
+event-sourced posture of [[adr-49-domain-layer-and-growth-by-addition]] rule 3 and the "a
+catalog is edited, an event is immutable" precedent of [[adr-33-feedyard-operating-loop]]
+decision 5. Rules only; the entities live in [[FEEDLOT-DATA-MODEL]].
 
-## Contexto
+## Context
 
-El movimiento de hacienda en Argentina se documenta ante SENASA: cada
-establecimiento tiene un **RENSPA**, cada traslado de animales viaja con un **DT-e**
-(Documento de Tránsito electrónico) que liga un RENSPA de origen a uno de destino, y
-cada animal lleva su **caravana** oficial de identificación individual. Hoy el sistema
-sabe qué come y cuánto pesa un animal, pero no de dónde vino ni con qué documento —
-no hay trazabilidad sanitaria. Se agrega la app `traceability` con esos tres hechos.
+Cattle movement in Argentina is documented before SENASA: every establishment has a
+**RENSPA**, every transfer of animals travels with a **DT-e** (electronic transit document)
+linking an origin RENSPA to a destination one, and every animal carries its official
+individual identification **ear tag** (`Caravana`). Today the system knows what an animal eats
+and how much it weighs, but not where it came from nor under which document — there is no
+sanitary traceability. The `traceability` app is added with those three facts.
 
-## Decisiones
+## Decisions
 
-### 1. El RENSPA es un catálogo editable; el DT-e y la caravana son inmutables
+### 1. The RENSPA is an editable catalog; the DT-e and the ear tag are immutable
 
-`Establishment` (un establecimiento con su `renspa`) es dato maestro: ModelViewSet con
-CRUD completo — "cargar establecimientos" es crear filas. `TransitDocument` (el DT-e) y
-`Caravana` son hechos fechados: list/retrieve/create, sin update ni destroy (adr-49
-regla 3). Una corrección de un DT-e o una re-identificación es un registro nuevo.
+`Establishment` (an establishment with its `renspa`) is master data: a ModelViewSet with full
+CRUD — "loading establishments" is creating rows. `TransitDocument` (the DT-e) and `Caravana`
+are dated facts: list/retrieve/create, without update or destroy (adr-49 rule 3). A correction
+to a DT-e or a re-identification is a new record.
 
-*Por qué:* un establecimiento tiene estado que se corrige (se da de baja, se renombra);
-un documento de tránsito emitido y una caravana colocada son hechos que no se reescriben.
+*Why:* an establishment has state that gets corrected (it is retired, it is renamed); an
+issued transit document and a placed ear tag are facts that are not rewritten.
 
-### 2. El DT-e liga dos establecimientos por su RENSPA, no toca el ledger
+### 2. The DT-e links two establishments by their RENSPA, and does not touch the ledger
 
-`TransitDocument` registra `dte_number`, `origin`/`destination` (FK a `Establishment`),
-fecha, `category`, `head_count` y opcionalmente el `lot` que viajó. No postea asiento:
-un tránsito es un hecho documental sanitario, no un cargo. El cobro sigue siendo
-exclusivamente del ledger vía `feed` (adr-25).
+`TransitDocument` records `dte_number`, `origin`/`destination` (FK to `Establishment`), date,
+`category`, `head_count` and optionally the `lot` that travelled. It posts no entry: a transit
+is a sanitary documentary fact, not a charge. Charging remains exclusively the ledger's via
+`feed` (adr-25).
 
-*Por qué:* un solo camino de cobro. El DT-e es trazabilidad, no economía; ligarlo al
-ledger confundiría dos preguntas distintas.
+*Why:* a single charging path. The DT-e is traceability, not economics; tying it to the ledger
+would conflate two distinct questions.
 
-### 3. El DT-e valida en el servicio, no en la vista
+### 3. The DT-e validates in the service, not in the view
 
-`register_transit` rechaza en el **servicio** un `Establishment` inactivo en origen o
-destino, un `head_count` no positivo, un origen igual al destino y un `dte_number`
-duplicado. La carga tardía con fecha retroactiva se acepta (misma norma de campo que
-adr-28).
+`register_transit` rejects, in the **service**, an inactive `Establishment` at origin or
+destination, a non-positive `head_count`, an origin equal to the destination and a duplicate
+`dte_number`. Late entry with a retroactive date is accepted (the same field norm as adr-28).
 
-*Por qué:* las reglas de negocio viven en el servicio, único punto de escritura, para
-que vista, admin y comando compartan la misma validación.
+*Why:* business rules live in the service, the single write point, so that view, admin and
+command share the same validation.
 
-### 4. La caravana identifica un animal individual y es única
+### 4. The ear tag identifies an individual animal and is unique
 
-`Caravana` liga un `official_number` único a un `Animal` con su `assigned_date`. Se
-registra al colocarla sobre un animal activo; un animal muerto/vendido/egresado no se
-caravanea. La unicidad de `official_number` es a nivel base de datos.
+`Caravana` links a unique `official_number` to an `Animal` with its `assigned_date`. It is
+recorded when placed on an active animal; a dead/sold/departed animal is not tagged. The
+uniqueness of `official_number` is enforced at the database level.
 
-*Por qué:* la caravana oficial es identidad individual permanente; duplicarla rompería
-la trazabilidad que existe para garantizar. Un re-caravaneo físico (pérdida de tag) es
-una adición futura explícita, no parte de esta fase.
+*Why:* the official ear tag is permanent individual identity; duplicating it would break the
+traceability it exists to guarantee. A physical re-tagging (lost tag) is an explicit future
+addition, not part of this phase.
 
-### 5. La cobertura de caravana es una métrica derivada, honesta con el hueco
+### 5. Ear-tag coverage is a derived metric, honest about the gap
 
-`apps.metrics` gana `caravana_coverage`: sobre la hacienda **activa** de un cliente,
-cuántas cabezas tienen caravana oficial y cuántas no. Sin animales activos la cobertura
-es `null` con su motivo, nunca un cero de relleno (adr-29 regla 2).
+`apps.metrics` gains `caravana_coverage`: over a client's **active** cattle, how many head
+have an official ear tag and how many do not. With no active animals the coverage is `null`
+with its reason, never a filler zero (adr-29 rule 2).
 
-*Por qué:* "0% de cobertura" y "no hay hacienda que caravanear" son situaciones
-opuestas; un cero las confunde, el hueco explícito las distingue.
+*Why:* "0% coverage" and "there is no cattle to tag" are opposite situations; a zero conflates
+them, the explicit gap distinguishes them.
 
-## Consecuencias
+## Consequences
 
-- El backend entra solo por [[API]] (adr-03) y nace por el flujo [[TDD]] (adr-07).
-- No se agregan variables de entorno: la app es datos internos, sin integración con el
-  sistema de SENASA en esta fase — la emisión/consulta real del DT-e ante SENASA es una
-  adición futura explícita, no parte de este cut.
-- `livestock` no se refactoriza: la `Caravana` referencia al `Animal` existente, no
-  agrega un campo a `Animal` (la extracción mira hacia adelante, adr-32 regla 2).
-- Cualquier cambio a las reglas 1–5 es semántico y DEBE superseder este ADR
-  ([[adr-00-adr-doctrine]] regla 4).
+- The backend enters only through [[API]] (adr-03) and is born through the [[TDD]] flow
+  (adr-07).
+- No environment variables are added: the app is internal data, with no integration with
+  SENASA's system in this phase — real DT-e issuance/lookup against SENASA is an explicit
+  future addition, not part of this cut.
+- `livestock` is not refactored: the `Caravana` references the existing `Animal`, it does not
+  add a field to `Animal` (the extraction looks forward, adr-32 rule 2).
+- Any change to rules 1–5 is semantic and MUST supersede this ADR
+  ([[adr-00-adr-doctrine]] rule 4).

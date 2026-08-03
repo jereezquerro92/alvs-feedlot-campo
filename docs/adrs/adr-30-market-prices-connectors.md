@@ -6,99 +6,96 @@ created: 2026-07-23
 tags: [adr, feedlot, market, prices, connectors, phase-4]
 ---
 
-# ADR-30 — Precios de referencia y conectores de fuentes
+# ADR-30 — reference prices and source connectors
 
-**Contexto:** implementa [[06-precios-hacienda]] con las correcciones de [[06b-verificacion-fuentes-precios]] y [[06c-segunda-fuente-automatica]].
+**Context:** implements [[06-precios-hacienda]] with the corrections of [[06b-verificacion-fuentes-precios]] and [[06c-segunda-fuente-automatica]].
 
-## Contexto
+## Context
 
-El sistema necesita precios de hacienda de referencia para métricas y para el
-asesor financiero. No son la moneda de la cuenta —esa sigue en ARS con precio
-histórico— sino un valor de mercado externo. El documento 06 asumió fuentes que,
-verificadas, resultaron distintas de lo esperado.
+The system needs reference cattle prices for metrics and for the finance advisor. They
+are not the account's currency — that stays in ARS at the historical price — but an
+external market value. Document 06 assumed sources that, once verified, turned out to be
+different from what was expected.
 
-## Decisiones
+## Decisions
 
-### 1. Cañuelas es la fuente primaria, no datos.gob.ar
+### 1. Cañuelas is the primary source, not datos.gob.ar
 
-La serie oficial de novillo de datos.gob.ar terminó en 2019 (verificado). El
-Mercado Agroganadero de Cañuelas publica precios diarios por categoría y está
-vivo. Se invierte la estrategia del documento 06: Cañuelas primaria, datos.gob.ar
-descartada.
+The official steer series on datos.gob.ar ended in 2019 (verified). The Mercado
+Agroganadero de Cañuelas publishes daily prices by category and is alive. Document 06's
+strategy is inverted: Cañuelas primary, datos.gob.ar discarded.
 
-### 2. IPCVA es la segunda fuente automática; ROSGAN queda manual
+### 2. IPCVA is the second automatic source; ROSGAN stays manual
 
-IPCVA sirve páginas renderizadas en servidor (scrapeables); ROSGAN arma su tabla
-con JavaScript y publica remates periódicos, no un precio diario. IPCVA da
-redundancia mensual de un proveedor independiente; ROSGAN queda como índice de
-carga manual. Detalle en [[06c-segunda-fuente-automatica]].
+IPCVA serves server-rendered pages (scrapeable); ROSGAN builds its table with JavaScript
+and publishes periodic auctions, not a daily price. IPCVA gives monthly redundancy from an
+independent provider; ROSGAN stays as a manually loaded index. Detail in
+[[06c-segunda-fuente-automatica]].
 
-### 3. `fetch` y `parse` son pasos separados
+### 3. `fetch` and `parse` are separate steps
 
-Cada conector separa el traer bytes (`fetch`, con red) del interpretarlos
-(`parse`, puro). Así el parser se testea contra un fixture fijo sin depender del
-sitio real, que se cae y cambia. Los tests apuntan a `parse`.
+Every connector separates fetching the bytes (`fetch`, with network) from interpreting
+them (`parse`, pure). The parser is therefore tested against a fixed fixture without
+depending on the real site, which goes down and changes. The tests target `parse`.
 
-### 4. El parser lee el encabezado para mapear columnas
+### 4. The parser reads the header to map columns
 
-El conector de Cañuelas no asume el orden de las columnas: lee la fila de
-encabezado y mapea nombre→índice. Si el sitio reordena columnas, los valores no
-se deslizan en silencio al campo equivocado; y si el encabezado desaparece, falla
-con error en vez de guardar basura.
+The Cañuelas connector does not assume the column order: it reads the header row and maps
+name→index. If the site reorders columns, values do not silently slide into the wrong
+field; and if the header disappears, it fails with an error instead of storing garbage.
 
-### 5. Tres estados distintos, tres respuestas distintas
+### 5. Three distinct states, three distinct responses
 
-- **Página provisoria** (mismo día, datos sin cerrar) → devuelve vacío, no es error.
-- **Tabla presente sin filas** (día sin operaciones) → devuelve vacío.
-- **Tabla ausente** (el HTML cambió) → `ConnectorError`.
+- **Provisional page** (same day, data not closed) → returns empty, not an error.
+- **Table present with no rows** (a day with no trading) → returns empty.
+- **Table absent** (the HTML changed) → `ConnectorError`.
 
-Confundirlos haría que un cambio de la web se lea como "no hubo precios" y pase
-inadvertido durante días.
+Confusing them would make a change to the website read as "there were no prices" and go
+unnoticed for days.
 
-### 6. Ingesta idempotente por (fuente, categoría, fecha)
+### 6. Idempotent ingestion by (source, category, date)
 
-Reingerir una fecha actualiza la fila, no la duplica. Misma disciplina que el
-resto del sistema: la fuente es la verdad, la fila es cache de la última lectura.
-El payload crudo se guarda en `raw` para rehacer el parseo sin volver a pedir.
+Re-ingesting a date updates the row, it does not duplicate it. The same discipline as the
+rest of the system: the source is the truth, the row is a cache of the last read. The raw
+payload is stored in `raw` so the parse can be redone without fetching again.
 
-### 7. Falla de una fuente no frena a las demás
+### 7. One source failing does not stop the others
 
-El comando `ingest_prices` aísla cada fuente: si una se cae o cambió su HTML, lo
-registra y sigue con las otras. Ninguna métrica depende de que una fuente externa
-esté siempre arriba; ante un hueco, `latest_price` devuelve el último valor conocido.
+The `ingest_prices` command isolates each source: if one goes down or changed its HTML, it
+logs that and carries on with the others. No metric depends on an external source always
+being up; when there is a gap, `latest_price` returns the last known value.
 
-### 8. Dos fuentes automáticas no se promedian
+### 8. Two automatic sources are not averaged
 
-Cañuelas (diaria, mercado físico) e IPCVA (mensual, índice) miden cosas distintas
-con distinto rezago. Van a diferir. El sistema guarda ambas con su `source` y deja
-que el dashboard o el asesor elijan según el uso. Promediarlas fabricaría un número
-que no publica ninguna fuente.
+Cañuelas (daily, physical market) and IPCVA (monthly, index) measure different things with
+different lag. They will differ. The system stores both with their `source` and lets the
+dashboard or the advisor choose according to the use. Averaging them would manufacture a
+number that no source publishes.
 
-## Puntos de integración — resueltos contra el sitio vivo
+## Integration points — resolved against the live site
 
-Los dos que quedaban abiertos se cerraron verificando el sitio real (2026-07):
+The two that were still open were closed by verifying the real site (2026-07):
 
-1. **Cañuelas — formulario de fechas.** Confirmado: el reporte lo maneja un POST
-   a la misma URL (`hacienda1.dll/haciinfo000502`) con `txtFechaIni`/`txtFechaFin`
-   en `DD/MM/YYYY` más campos ocultos. Un GET pelado devuelve el día en curso, aún
-   provisorio. El `fetch` postea el día cerrado; el POST se aísla en `build_form`
-   (puro, testeado) porque `fetch` es red. Verificado en vivo: 22/07 → 18 filas,
-   21/07 → 19 filas, un día sin operaciones → 0 filas.
-2. **IPCVA — endpoint de datos.** Corregido: "Precios en Pie" NO es un armador de
-   gráficos — es `vista_precios.php?id=1`, una tabla HTML renderizada en servidor
-   (la ruta previa `vista_precios2.php` era la vista internacional distinta). El
-   `fetch` postea un rango (`mes_desde`/`ano_desde`/`mes_hasta`/`ano_hasta` +
-   `categorias[]`/`paises[]`) y `parse` lee la tabla, mapeando columnas por su
-   encabezado (regla 4). **Salvedad de unidad:** esta serie es el índice Novillos
-   **internacional en USD/kg**, no ARS como Cañuelas — distinta por diseño, separada
-   por `source` y nunca promediada con Cañuelas (regla 8). Cada fila registra
-   `currency: "USD"` en `raw`. El test corre contra `fixture_ipcva.html`, una página
-   real de la serie Novillos/Argentina (ene–jun 2025).
+1. **Cañuelas — the date form.** Confirmed: the report is handled by a POST to the same
+   URL (`hacienda1.dll/haciinfo000502`) with `txtFechaIni`/`txtFechaFin` in `DD/MM/YYYY`
+   plus hidden fields. A bare GET returns the current day, still provisional. `fetch`
+   posts the closed day; the POST is isolated in `build_form` (pure, tested) because
+   `fetch` is network. Verified live: 22/07 → 18 rows, 21/07 → 19 rows, a day with no
+   trading → 0 rows.
+2. **IPCVA — the data endpoint.** Corrected: "Precios en Pie" is NOT a chart builder — it
+   is `vista_precios.php?id=1`, a server-rendered HTML table (the earlier path
+   `vista_precios2.php` was the different international view). `fetch` posts a range
+   (`mes_desde`/`ano_desde`/`mes_hasta`/`ano_hasta` + `categorias[]`/`paises[]`) and
+   `parse` reads the table, mapping columns by their header (rule 4). **Unit caveat:**
+   this series is the **international** Novillos index **in USD/kg**, not ARS like
+   Cañuelas — different by design, separated by `source` and never averaged with Cañuelas
+   (rule 8). Every row records `currency: "USD"` in `raw`. The test runs against
+   `fixture_ipcva.html`, a real page of the Novillos/Argentina series (Jan–Jun 2025).
 
-## Consecuencias
+## Consequences
 
-- El scraper de Cañuelas es el único camino automático diario: necesita monitoreo
-  real (alerta ante N días vacíos o valores fuera de rango), no un `try/except`
-  silencioso. El aislamiento por fuente lo habilita; la alerta se suma al operarlo.
-- El modelo `MarketPrice` guarda min/max/promedio/mediana/cabezas, no solo el
-  promedio, porque las fuentes los dan y el asesor podría usarlos.
+- The Cañuelas scraper is the only automatic daily path: it needs real monitoring (an
+  alert on N empty days or on out-of-range values), not a silent `try/except`. Per-source
+  isolation enables it; the alert is added when it is operated.
+- The `MarketPrice` model stores min/max/average/median/head, not only the average,
+  because the sources give them and the advisor might use them.

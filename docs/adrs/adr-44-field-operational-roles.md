@@ -1,141 +1,132 @@
 ---
-title: ADR-44 — Los seis roles operativos del campo y el scoping por cliente
+title: adr-44-field-operational-roles
 type: adr
 status: active
 created: 2026-07-27
 tags: [adr, rbac, auth, roles, feedlot, phase-users]
 ---
 
-# ADR-44 — Los seis roles operativos del campo y el scoping por cliente
+# ADR-44 — the six field operational roles and per-client scoping
 
-**Contexto:** amplía [[adr-20-authorization-lobby]] regla 2 (agregar un alcance de rol
-o ampliar qué rutas alcanza una sesión exige un ADR nuevo, nunca una excepción local)
-y reusa el precedente de grupo-por-concern de [[adr-11-guardians]] y el par
-`AccessRequest` + señal `post_save` de [[adr-20-authorization-lobby]] regla 3. No
-supersede nada: Cognito sigue autenticando y los Django Groups siguen siendo la única
-autoridad de RBAC ([[adr-10-auth]] reglas 1–2, intactas). Reglas solamente; los nombres
-entran en [[GLOSSARY]] antes de su primer uso ([[adr-01-glossary-and-localization]]).
+**Context:** widens [[adr-20-authorization-lobby]] rule 2 (adding a role scope or widening which
+routes a session reaches requires a new ADR, never a local exception) and reuses the
+group-per-concern precedent of [[adr-11-guardians]] and the `AccessRequest` + `post_save` signal
+pair of [[adr-20-authorization-lobby]] rule 3. It supersedes nothing: Cognito still
+authenticates and Django Groups remain the sole RBAC authority ([[adr-10-auth]] rules 1–2,
+intact). Rules only; the names enter [[GLOSSARY]] before their first use
+([[adr-01-glossary-and-localization]]).
 
-## Contexto
+## Context
 
-El template dejó dos grupos: `admins` (superset) y `ai_operators` (solo router). El
-dueño pidió los roles reales del campo: seis funciones distintas, cada una con su
-recorte de lo que puede ver y cargar. Uno de ellos —los dueños de lotes— es un
-**portal de cliente**: ve datos de UN cliente y de ningún otro. Ese recorte es una
-frontera de aislamiento entre inquilinos, no una comodidad de UI, y por eso se decide y
-se enforcea en el backend.
+The template left two groups: `admins` (superset) and `ai_operators` (router only). The owner
+asked for the real field roles: six distinct functions, each with its own cut of what it can see
+and load. One of them — the lot owners — is a **client portal**: it sees ONE client's data and
+nobody else's. That cut is a tenant isolation boundary, not a UI convenience, and that is why it
+is decided and enforced in the backend.
 
-## Los seis roles (grupos Django)
+## The six roles (Django groups)
 
-| Rol (negocio) | Grupo Django | Naturaleza |
+| Role (business) | Django group | Nature |
 |---|---|---|
-| Encargado del campo | `field_managers` | staff; ve todo lo operativo; carga deudas (cuentas) |
-| Operativo (mixer) | `feed_operators` | staff; prepara el mixer (órdenes de carga, feeding, lectura de comedero) |
-| Dueños de lotes | `lot_owners` | portal de cliente; **read-only**; acotado a SU cliente |
-| Administrativo del campo | `field_admins` | staff; carga ingresos de mercadería a stocks (campo y propios por contrato) |
-| Dueño del campo | `feedlot_owners` | staff/dueño; **read** sobre todos los clientes (hacienda por contrato y propia) |
-| Usuarios de taller | `workshop` | staff; carga maquinaria, mantenimiento, combustible, alfalfa (cultivos) |
+| Field manager | `field_managers` | staff; sees everything operational; loads debts (accounts) |
+| Feed operator (mixer) | `feed_operators` | staff; prepares the mixer (loading orders, feeding, bunk reading) |
+| Lot owners | `lot_owners` | client portal; **read-only**; bounded to THEIR client |
+| Field administrative | `field_admins` | staff; loads goods receipts into stocks (field and own-by-contract) |
+| Feedlot owner | `feedlot_owners` | staff/owner; **read** across all clients (cattle by contract and own) |
+| Workshop users | `workshop` | staff; loads machinery, maintenance, fuel, alfalfa (crops) |
 
-`admins` conserva el superset: puede todo, es aceptado por toda clase de permiso
-(cortocircuito en la clase base). `ai_operators` sigue siendo solo del router y no se
-agrega a ninguna otra clase ([[adr-11-guardians]], [[GLOSSARY]]).
+`admins` keeps the superset: it can do everything and is accepted by every permission class
+(short-circuited in the base class). `ai_operators` remains router-only and is added to no other
+class ([[adr-11-guardians]], [[GLOSSARY]]).
 
-## Decisiones
+## Decisions
 
-### 1. Un rol es un Django Group; la matriz vive en un solo archivo
+### 1. A role is a Django Group; the matrix lives in a single file
 
-Cada rol es un `auth.Group` creado por migración (mismo patrón que `admins`,
-[[adr-10-auth]]). La autorización se decide por membresía de Group, leída en Django,
-nunca en un claim de Cognito ([[adr-10-auth]] regla 2). Toda la matriz rol→área→método
-vive centralizada en `apps/users/roles.py` (`GroupMatrixPermission` con `read_groups` /
-`write_groups` por área funcional); un viewset solo referencia su clase de área. Ajustar
-quién puede qué es editar ese único archivo, no cazar permisos por cada app.
+Each role is an `auth.Group` created by migration (the same pattern as `admins`,
+[[adr-10-auth]]). Authorization is decided by Group membership, read in Django, never from a
+Cognito claim ([[adr-10-auth]] rule 2). The whole role→area→method matrix lives centralized in
+`apps/users/roles.py` (`GroupMatrixPermission` with `read_groups` / `write_groups` per
+functional area); a viewset only references its area class. Adjusting who can do what is editing
+that single file, not hunting permissions across every app.
 
-*Por qué:* una matriz dispersa por 50 viewsets se desincroniza. Centralizarla la hace
-auditable de un vistazo y barata de corregir cuando el dueño la afina.
+*Why:* a matrix scattered across 50 viewsets drifts out of sync. Centralizing it makes it
+auditable at a glance and cheap to correct when the owner tunes it.
 
-### 2. `read`/`write` se separan por método HTTP dentro de cada área
+### 2. `read`/`write` are separated by HTTP method within each area
 
-`GroupMatrixPermission` acepta métodos seguros (GET/HEAD/OPTIONS) si el usuario está en
-`read_groups` y métodos de escritura (POST/PUT/PATCH/DELETE) si está en `write_groups`.
-`admins` pasa siempre. Un rol puede leer un área sin poder escribirla (p.ej. el dueño
-del campo lee stocks pero no los carga).
+`GroupMatrixPermission` accepts safe methods (GET/HEAD/OPTIONS) if the user is in `read_groups`
+and write methods (POST/PUT/PATCH/DELETE) if they are in `write_groups`. `admins` always passes.
+A role can read an area without being able to write it (e.g. the feedlot owner reads stocks but
+does not load them).
 
-*Por qué:* casi todos los roles son "ver esto, cargar aquello". Modelar lectura y
-escritura como conjuntos separados por área cubre el pedido sin una clase por
-combinación.
+*Why:* almost every role is "see this, load that". Modelling read and write as separate sets per
+area covers the request without a class per combination.
 
-### 3. Los dueños de lotes se confinan a una superficie por-cliente, gateada por el `client_id` de la ruta
+### 3. Lot owners are confined to a per-client surface, gated by the route's `client_id`
 
-`lot_owners` es **read-only** y su alcance es exactamente las rutas keyed por un cliente:
-las métricas (`/api/metrics/{client_id}/…`) y la cuenta del cliente
-(`/api/clients/{id}/account|ledger|outstanding`). `ClientScopedReadPermission` compara el
-`client_id`/`pk` de la ruta contra el cliente ligado a la sesión
-(`AccessRequest.client`, decisión 4) y **rechaza (404/403) si no coincide**. No se les
-expone la lista cruda de animales/feedings/etc.: ven **métricas agregadas de sus vacas y
-su saldo** —exactamente lo pedido— y ninguna tabla que pudiera mezclar clientes.
+`lot_owners` is **read-only** and its scope is exactly the routes keyed by a client: the metrics
+(`/api/metrics/{client_id}/…`) and the client's account
+(`/api/clients/{id}/account|ledger|outstanding`). `ClientScopedReadPermission` compares the
+route's `client_id`/`pk` against the client bound to the session (`AccessRequest.client`,
+decision 4) and **rejects (404/403) on a mismatch**. The raw list of animals/feedings/etc. is not
+exposed to them: they see **aggregated metrics of their cattle and their balance** — exactly what
+was asked — and no table that could mix clients.
 
-*Por qué:* aislar por queryset a través de ~15 modelos (cada uno con su camino al
-cliente) es donde un solo error filtra datos de otro inquilino. Confinar el portal a las
-rutas ya keyed por `client_id` reduce la superficie a **una** comparación, testeable y
-sin ambigüedad. Un cero de exposición por defecto es preferible a un filtro amplio y
-frágil.
+*Why:* isolating by queryset across ~15 models (each with its own path to the client) is where a
+single mistake leaks another tenant's data. Confining the portal to the routes already keyed by
+`client_id` reduces the surface to **one** comparison, testable and unambiguous. Zero exposure by
+default is preferable to a broad, fragile filter.
 
-### 4. El vínculo usuario→cliente es un campo en `AccessRequest`, puesto por un admin
+### 4. The user→client link is a field on `AccessRequest`, set by an admin
 
-`AccessRequest` gana un FK nullable `client` → `clients.Client`. Lo setea un admin en
-`/admin/` (misma postura que [[adr-20-authorization-lobby]] regla 3: un grant es acción
-de admin, jamás autoservicio). Un `lot_owners` sin `client` ligado no ve **ningún**
-cliente —falla cerrado—, nunca "todos por defecto". El campo no otorga autoridad por sí
-mismo: la membresía al grupo `lot_owners` es lo que activa el scoping; `client` solo dice
-*cuál*.
+`AccessRequest` gains a nullable `client` FK → `clients.Client`. An admin sets it in `/admin/`
+(the same posture as [[adr-20-authorization-lobby]] rule 3: a grant is an admin action, never
+self-service). A `lot_owners` with no linked `client` sees **no** client — it fails closed —
+never "all by default". The field grants no authority by itself: membership in the `lot_owners`
+group is what activates the scoping; `client` only says *which one*.
 
-*Por qué:* reusa la maquinaria de grants existente y mantiene la decisión de acceso en
-Django y en manos de un admin. Fallar cerrado ante un vínculo faltante es la única opción
-segura para una frontera entre inquilinos.
+*Why:* it reuses the existing grant machinery and keeps the access decision in Django and in an
+admin's hands. Failing closed on a missing link is the only safe option for a tenant boundary.
 
-### 5. El dueño del campo y el encargado ven todos los clientes; no se scopean
+### 5. The feedlot owner and the field manager see all clients; they are not scoped
 
-`feedlot_owners` y `field_managers` (y `admins`) leen sin recorte por cliente: el pedido
-del dueño del campo es agregar "cuántos animales tengo, por contrato y propios", que es
-una vista cross-cliente. El scoping por cliente de la decisión 3 aplica **solo** a
-`lot_owners`.
+`feedlot_owners` and `field_managers` (and `admins`) read with no per-client cut: the feedlot
+owner's request is to aggregate "how many animals I have, by contract and own", which is a
+cross-client view. Decision 3's per-client scoping applies **only** to `lot_owners`.
 
-*Por qué:* son roles internos del feedlot, no inquilinos. Recortarlos por cliente
-contradiría su función.
+*Why:* they are internal feedlot roles, not tenants. Cutting them by client would contradict
+their function.
 
-### 6. "Carga de deudas" del encargado son eventos y pagos, no un débito manual
+### 6. The manager's "loading debts" is events and payments, not a manual debit
 
-El ledger es event-sourced e inmutable ([[adr-25-account-ledger]] regla 1): no existe un
-endpoint de "débito manual". "Cargar deudas en cuentas corrientes" se cumple con lo que
-ya postea al ledger —eventos que cobran (feeding de stock propio, sanidad) y `Payment`
-(crédito)— todos escribibles por `field_managers`. Un endpoint de ajuste manual, si el
-negocio lo pide, entra como su propio cambio por [[API]] y [[adr-07-development-flow]],
-nunca mutando un asiento.
+The ledger is event-sourced and immutable ([[adr-25-account-ledger]] rule 1): there is no
+"manual debit" endpoint. "Loading debts into current accounts" is served by what already posts to
+the ledger — events that charge (feeding from own stock, sanitary) and `Payment` (credit) — all
+writable by `field_managers`. A manual adjustment endpoint, if the business asks for it, enters
+as its own change through [[API]] and [[adr-07-development-flow]], never by mutating an entry.
 
-*Por qué:* honramos la doctrina del ledger. La comodidad de un débito arbitrario no
-justifica abrir una escritura directa al asiento que [[adr-25-account-ledger]] cerró.
+*Why:* we honour the ledger doctrine. The convenience of an arbitrary debit does not justify
+opening a direct write to the entry that [[adr-25-account-ledger]] closed.
 
-### 7. Todo endpoint feedlot declara su clase de permiso en [[API]] antes del código
+### 7. Every feedlot endpoint declares its permission class in [[API]] before the code
 
-La columna Auth de [[API]] deja de decir `session` genérico para las rutas gateadas: dice
-la clase de permiso (y por lo tanto los grupos) que las protege
-([[adr-03-api-and-backend]] regla 1). Cambiar el gateo de una ruta es cambiar su fila
-primero.
+[[API]]'s Auth column stops saying a generic `session` for the gated routes: it states the
+permission class (and therefore the groups) protecting them ([[adr-03-api-and-backend]] rule 1).
+Changing a route's gating is changing its row first.
 
-*Por qué:* [[API]] es el SSOT del contrato de rutas; el gateo es parte del contrato.
+*Why:* [[API]] is the SSOT of the route contract; the gating is part of the contract.
 
-## Consecuencias
+## Consequences
 
-- El backend entra solo por [[API]] ([[adr-03-api-and-backend]]) y nace por el flujo
-  [[TDD]] ([[adr-07-development-flow]]); este ADR no exceptúa ese camino.
-- Migraciones: una crea los seis grupos; otra agrega `AccessRequest.client`. Ningún
-  modelo de dominio se refactoriza —la extracción mira hacia adelante
-  ([[adr-32-multi-rubro-assets]] regla 2).
-- `/api/me/` gana el cliente ligado (id + nombre) para que el frontend scopee la UI; el
-  backend sigue siendo la frontera de seguridad, el frontend es solo UX.
-- El frontend gatea navegación y rutas por `me.groups` y usa `me.client` para el portal
-  del dueño de lote; ese gateo es conveniencia, no la barrera (la barrera es el backend).
-- La matriz de la decisión 1 es una superficie de iteración pre-v1: el dueño la afina
-  editando `roles.py` y esta tabla; cambios de las reglas 1–7 son semánticos y DEBEN
-  superseder este ADR ([[adr-00-adr-doctrine]] regla 4).
+- The backend enters only through [[API]] ([[adr-03-api-and-backend]]) and is born through the
+  [[TDD]] flow ([[adr-07-development-flow]]); this ADR grants no exception to that path.
+- Migrations: one creates the six groups; another adds `AccessRequest.client`. No domain model is
+  refactored — the extraction looks forward ([[adr-32-multi-rubro-assets]] rule 2).
+- `/api/me/` gains the linked client (id + name) so the frontend can scope the UI; the backend
+  remains the security boundary, the frontend is only UX.
+- The frontend gates navigation and routes by `me.groups` and uses `me.client` for the lot
+  owner's portal; that gating is convenience, not the barrier (the barrier is the backend).
+- Decision 1's matrix is a pre-v1 iteration surface: the owner tunes it by editing `roles.py` and
+  this table; changes to rules 1–7 are semantic and MUST supersede this ADR
+  ([[adr-00-adr-doctrine]] rule 4).

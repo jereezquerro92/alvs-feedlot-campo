@@ -6,92 +6,92 @@ created: 2026-07-21
 tags: [adr, feedlot, livestock, sanitary, lifecycle, phase-2]
 ---
 
-# ADR-28 — Ciclo del animal y la app `sanitary`
+# ADR-28 — the animal lifecycle and the `sanitary` app
 
-**Contexto:** extiende [[adr-49-domain-layer-and-growth-by-addition]], [[adr-25-account-ledger]] y [[adr-26-livestock-individual-and-lot]].
+**Context:** extends [[adr-49-domain-layer-and-growth-by-addition]], [[adr-25-account-ledger]] and [[adr-26-livestock-individual-and-lot]].
 
-## Contexto
+## Context
 
-La Fase 1 dejó el animal entrando al sistema y comiendo, pero sin forma de
-registrar qué le pasó después: cuánto engordó, si se murió, cuándo salió, ni qué
-sanidad recibió. Sin eso no hay trazabilidad ni conversión alimenticia, que es la
-métrica que justifica el sistema.
+Phase 1 left the animal entering the system and eating, but with no way to record
+what happened to it afterwards: how much it gained, whether it died, when it left, or
+what health treatment it received. Without that there is no traceability and no feed
+conversion — the metric that justifies the system.
 
-## Decisiones
+## Decisions
 
-### 1. Los eventos de ciclo de vida comparten forma, no tabla
+### 1. Lifecycle events share a shape, not a table
 
-`Weighing`, `Death` y `Exit` heredan de un modelo abstracto `LifecycleEvent` que
-aporta el par `animal`/`lot` y la restricción XOR de [[adr-26-livestock-individual-and-lot]].
-Cada uno mantiene su propia tabla.
+`Weighing`, `Death` and `Exit` inherit from an abstract `LifecycleEvent` model that
+supplies the `animal`/`lot` pair and the XOR constraint of [[adr-26-livestock-individual-and-lot]].
+Each keeps its own table.
 
-*Por qué:* los tres necesitan idénticamente "exactamente un target", y una tabla
-única de eventos polimórficos obliga a campos nulables por todos lados y a filtrar
-por tipo en cada consulta. El abstracto evita que las tres restricciones se
-desincronicen sin fusionar dominios distintos.
+*Why:* all three need "exactly one target" identically, and a single polymorphic event
+table forces nullable fields everywhere and a filter by type on every query. The abstract
+model keeps the three constraints from drifting apart without merging distinct domains.
 
-### 2. El GDP de lotes se calcula por cabeza, y se declara no calculable cuando cambia el rodeo
+### 2. Lot ADG is computed per head, and declared not calculable when the herd changes
 
-Entre dos pesajes de un lote, el peso comparado es `total_weight / head_count`.
-Si el `head_count` difiere entre ambos pesajes, el período se reporta con
-`adg = null` y `not_calculable = "head_count_changed"`.
+Between two weighings of a lot, the compared weight is `total_weight / head_count`.
+If `head_count` differs between the two weighings, the period is reported with
+`adg = null` and `not_calculable = "head_count_changed"`.
 
-*Por qué:* el total de un lote se mueve por ingresos, muertes y salidas, no solo
-por engorde. Un GDP calculado sobre el total mide cualquier cosa menos crecimiento.
-La alternativa —estimar contra un peso teórico— produce un número plausible y
-falso; un hueco explícito es preferible a un dato que nadie puede auditar.
+*Why:* a lot's total moves through intakes, deaths and exits, not only through weight
+gain. An ADG computed over the total measures anything but growth. The alternative —
+estimating against a theoretical weight — produces a plausible and false number; an
+explicit gap is preferable to a figure nobody can audit.
 
-### 3. Las muertes no tocan el ledger; la salida-venta se liquida por [[adr-43-sale-settlement]]
+### 3. Deaths do not touch the ledger; the sale-exit is settled by [[adr-43-sale-settlement]]
 
-Una **muerte** (`Death`) no genera asiento: el alimento y la sanidad ya consumidos
-quedan cobrados y una muerte no los revierte. Una **salida** (`Exit`) tampoco revierte
-esos cargos; y en su tipo `transfer`/`other` (retiro sin venta) sigue sin postear nada.
-La **salida-venta** (`Exit.kind=sale`) **sí liquida**, según el modelo comercial que fijó
-el dueño y que rige [[adr-43-sale-settlement]]: hacienda de cliente (`kind=boarding`)
-cobra una comisión de engorde (débito de servicio); hacienda propia (`kind=own`) registra
-el producido como crédito en la cuenta propia. El `sale_price_per_kg` de la salida dejó de
-ser meramente informativo: es el precio que la liquidación fotografía
-([[adr-25-account-ledger]] regla 3).
+A **death** (`Death`) posts no entry: the feed and health inputs already consumed stay
+charged, and a death does not reverse them. An **exit** (`Exit`) does not reverse those
+charges either; and in its `transfer`/`other` kind (withdrawal without sale) it still
+posts nothing. The **sale-exit** (`Exit.kind=sale`) **does settle**, under the commercial
+model the owner set and which [[adr-43-sale-settlement]] rules: a client's cattle
+(`kind=boarding`) is charged a fattening commission (a service debit); own cattle
+(`kind=own`) records the proceeds as a credit in the own account. The exit's
+`sale_price_per_kg` stopped being merely informative: it is the price the settlement
+snapshots ([[adr-25-account-ledger]] rule 3).
 
-*Por qué:* el ledger cobra insumos entregados, y por eso una muerte no revierte cargos —
-hacerlo convertiría al feedlot en asegurador del cliente, decisión comercial y no técnica;
-si algún día se toma, entra como un `adjustment` explícito y auditable, no como efecto
-colateral automático. La venta es distinta: el dueño definió que la hotelería cobra por el
-engorde y que la hacienda propia produce un ingreso propio, y esa liquidación llega como su
-propio ADR ([[adr-25-account-ledger]] regla 6), sin mutar ningún asiento existente.
+*Why:* the ledger charges inputs delivered, and that is why a death does not reverse
+charges — doing so would turn the feedlot into the client's insurer, a commercial
+decision and not a technical one; if it is ever taken, it enters as an explicit and
+auditable `adjustment`, not as an automatic side effect. The sale is different: the owner
+defined that boarding charges for the fattening and that own cattle produces its own
+income, and that settlement arrives as its own ADR ([[adr-25-account-ledger]] rule 6),
+without mutating any existing entry.
 
-### 4. La app se llama `sanitary`, no `health`
+### 4. The app is called `sanitary`, not `health`
 
-El template ya usa `apps.health` para el liveness probe (`/api/health/`).
+The template already uses `apps.health` for the liveness probe (`/api/health/`).
 
-*Por qué:* colisión de nombre. Se renombra el dominio nuevo, no la infraestructura
-existente, porque el probe es contrato con el orquestador. La documentación previa
-(`02-modelo-de-datos.md`, `07-arquitectura-escalable-y-roadmap.md`) menciona
-`health` y queda desactualizada en ese punto.
+*Why:* a name collision. The new domain is renamed, not the existing infrastructure,
+because the probe is a contract with the orchestrator. The earlier documentation
+(`02-modelo-de-datos.md`, `07-arquitectura-escalable-y-roadmap.md`) mentions `health`
+and is out of date on that point.
 
-### 5. Toda aplicación sanitaria se cobra
+### 5. Every health application is charged
 
-`register_health_event` siempre postea un débito. No existe el equivalente al
-`origin = client_stock` de la alimentación.
+`register_health_event` always posts a debit. There is no equivalent to feeding's
+`origin = client_stock`.
 
-*Por qué:* los productos sanitarios los pone siempre el feedlot. Modelar un origen
-que nunca se usa es complejidad especulativa. Si mañana un cliente trae su propia
-vacuna, se agrega el campo entonces.
+*Why:* health products are always supplied by the feedlot. Modelling an origin that is
+never used is speculative complexity. If a client brings their own vaccine tomorrow, the
+field is added then.
 
-### 6. No se lleva stock sanitario en esta fase
+### 6. No health stock is tracked in this phase
 
-Se registran aplicaciones, no existencias. El patrón de `FeedStockMovement` está
-disponible para replicar si hace falta.
+Applications are recorded, not holdings. The `FeedStockMovement` pattern is available to
+replicate if it becomes necessary.
 
-*Por qué:* el volumen es bajo y el problema real de las vacunas es el vencimiento y
-la cadena de frío, no el saldo. Resolver mal el problema fácil ahora complica
-resolver bien el difícil después.
+*Why:* the volume is low and the real problem with vaccines is expiry and the cold chain,
+not the balance. Solving the easy problem badly now makes solving the hard one well later
+harder.
 
-## Consecuencias
+## Consequences
 
-- Los eventos de ciclo de vida son inmutables: los viewsets exponen list/retrieve/create,
-  deliberadamente sin update ni destroy.
-- Un animal muerto o vendido rechaza pesajes y sanidad posteriores. La carga tardía
-  con fecha retroactiva **sí** se acepta mientras el target siga activo.
-- El consumo de un animal muerto queda cobrado. Si el negocio decide lo contrario,
-  entra por contra-asiento manual.
+- Lifecycle events are immutable: the viewsets expose list/retrieve/create, deliberately
+  without update or destroy.
+- A dead or sold animal rejects later weighings and health events. Late entry with a
+  retroactive date **is** accepted while the target is still active.
+- The consumption of a dead animal stays charged. If the business decides otherwise, it
+  enters through a manual counter-entry.

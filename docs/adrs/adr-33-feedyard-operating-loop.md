@@ -6,104 +6,101 @@ created: 2026-07-25
 tags: [adr, feedlot, feedyard, pens, rations, bunk, phase-7]
 ---
 
-# ADR-33 — El loop operativo del corral (`feedyard`)
+# ADR-33 — the pen operating loop (`feedyard`)
 
-**Contexto:** extiende [[adr-49-domain-layer-and-growth-by-addition]] ("crece por adición") y
-[[adr-25-account-ledger]] (el cobro es del ledger, y de nadie más). Nace de evaluar
-software de feedlot de la competencia (Cattler): el loop diario dieta → orden de
-carga → alimentar → leer comedero → ajustar es el corazón de un feedlot y hoy nos
-falta. Reglas solamente; las entidades viven en [[FEEDLOT-DATA-MODEL]].
+**Context:** extends [[adr-49-domain-layer-and-growth-by-addition]] ("grows by addition") and
+[[adr-25-account-ledger]] (charging belongs to the ledger, and to nobody else). It is born
+from evaluating a competitor's feedlot software (Cattler): the daily loop diet → loading
+order → feed → read the bunk → adjust is the heart of a feedlot and today we lack it. Rules
+only; the entities live in [[FEEDLOT-DATA-MODEL]].
 
-## Contexto
+## Context
 
-Hasta la Fase 6 el sistema sabía *qué* comió un animal o lote (`FeedingEvent`) y
-*cuánto* costó, pero no conocía el **corral** físico, la **receta** de la dieta, ni
-el ciclo de planificación y control que un feedlot corre todos los días. Sin corral
-no hay cierre por corral; sin receta no hay materia seca; sin lectura de comedero no
-hay ajuste de ración. Se agrega una app `feedyard` que aporta esa capa **operativa y
-de monitoreo**, sin tocar cómo se cobra.
+Up to Phase 6 the system knew *what* an animal or lot ate (`FeedingEvent`) and *how much* it
+cost, but it did not know the physical **pen**, the diet's **recipe**, nor the planning and
+control cycle a feedlot runs every day. Without a pen there is no per-pen close; without a
+recipe there is no dry matter; without a bunk reading there is no ration adjustment. A
+`feedyard` app is added, supplying that **operational and monitoring** layer, without
+touching how charging works.
 
-## Decisiones
+## Decisions
 
-### 1. `feedyard` es planificación y monitoreo; NO cobra
+### 1. `feedyard` is planning and monitoring; it does NOT charge
 
-Ningún modelo de `feedyard` postea un asiento. El cobro de alimento sigue siendo
-exclusivamente de `feed` vía `register_feeding` (adr-25 regla 4). `feedyard` planea
-(`LoadingOrder`), describe (`Ration`) y mide (`BunkScore`); el cargo lo hace `feed`
-cuando la ración se ejecuta.
+No `feedyard` model posts an entry. Charging for feed remains exclusively `feed`'s, via
+`register_feeding` (adr-25 rule 4). `feedyard` plans (`LoadingOrder`), describes (`Ration`)
+and measures (`BunkScore`); the charge is made by `feed` when the ration is executed.
 
-*Por qué:* un solo camino de cobro. Dos apps que puedan debitar la misma cuenta por
-el mismo alimento reabren la puerta al doble cargo que la doctrina cerró (un hecho se
-afirma una vez, adr-49 regla 5).
+*Why:* a single charging path. Two apps able to debit the same account for the same feed
+reopen the door to the double charge doctrine closed (a fact is stated once, adr-49 rule 5).
 
-### 2. La orden de carga es el PLAN; el `FeedingEvent` es lo EJECUTADO
+### 2. The loading order is the PLAN; the `FeedingEvent` is what was EXECUTED
 
-`LoadingOrder` registra lo que el mixer **debía** llevar a un corral para una ración
-(kg como-servido planificados). `FeedingEvent` (extendido con un `pen` opcional)
-sigue siendo lo que **realmente** se sirvió, con peso y precio reales, y es lo único
-que cobra. No son el mismo hecho duplicado: son plan y ejecución, y su diferencia es
-justamente el dato de gestión (¿se cargó de más o de menos que lo planeado?).
+`LoadingOrder` records what the mixer **was supposed** to deliver to a pen for a ration
+(planned as-fed kg). `FeedingEvent` (extended with an optional `pen`) remains what was
+**actually** served, with real weight and price, and is the only thing that charges. They
+are not the same fact duplicated: they are plan and execution, and their difference is
+precisely the management figure (was more or less loaded than planned?).
 
-*Por qué:* Cattler y cualquier feedlot serio distinguen la orden de carga de la
-pesada real del mixer. Fusionarlas pierde el desvío plan-vs-real, que es la métrica
-que dice si el comedero se está leyendo bien.
+*Why:* Cattler and any serious feedlot distinguish the loading order from the mixer's real
+weighing. Merging them loses the plan-vs-actual deviation, which is the metric that says
+whether the bunk is being read well.
 
-### 3. El `pen` en `FeedingEvent` es aditivo y opcional
+### 3. The `pen` on `FeedingEvent` is additive and optional
 
-Se agrega una FK nullable `pen` a `feed.FeedingEvent`. Los feedings existentes y los
-por-animal/lote sin corral siguen siendo válidos; nada se vuelve obligatorio.
+A nullable `pen` FK is added to `feed.FeedingEvent`. Existing feedings and per-animal/lot
+ones without a pen stay valid; nothing becomes mandatory.
 
-*Por qué:* no se reescribe el dominio estable (mismo criterio que adr-32 regla 2). El
-corral es información que enriquece el feeding, no una condición nueva para poder
-alimentar.
+*Why:* the stable domain is not rewritten (the same criterion as adr-32 rule 2). The pen is
+information that enriches the feeding, not a new condition for being able to feed.
 
-### 4. La ración es una receta, no un ítem costeado
+### 4. The ration is a recipe, not a costed item
 
-`Ration` + `RationLine` describen la **composición** (qué `FeedType`, en qué
-`proportion`, con qué `dry_matter_pct`). La ración no tiene precio propio: el costo
-aparece recién cuando se sirve, con el `unit_price` histórico del `FeedingEvent`
-(adr-25 regla 3). La materia seca vive en la receta porque el consumo técnico se mide
-en materia seca, no en tal-cual.
+`Ration` + `RationLine` describe the **composition** (which `FeedType`, in what
+`proportion`, with what `dry_matter_pct`). The ration has no price of its own: the cost
+appears only when it is served, with the `FeedingEvent`'s historical `unit_price`
+(adr-25 rule 3). Dry matter lives in the recipe because technical consumption is measured in
+dry matter, not as-fed.
 
-*Por qué:* separar la fórmula (estable, editable) del precio (histórico, por evento)
-evita que editar una receta reescriba el pasado. El `FeedType` es un insumo; la
-`Ration` es cómo se combinan — son cosas distintas y no se colapsan.
+*Why:* separating the formula (stable, editable) from the price (historical, per event)
+keeps editing a recipe from rewriting the past. The `FeedType` is an input; the `Ration` is
+how inputs are combined — they are different things and are not collapsed.
 
-### 5. Los catálogos se editan; los eventos son inmutables
+### 5. Catalogs are edited; events are immutable
 
-`Pen`, `Ration` y `RationLine` son datos maestros: CRUD completo. `LoadingOrder` y
-`BunkScore` son hechos fechados: list/retrieve/create, sin update ni destroy
-(adr-49 regla 3). Una corrección de un evento es otro evento.
+`Pen`, `Ration` and `RationLine` are master data: full CRUD. `LoadingOrder` and `BunkScore`
+are dated facts: list/retrieve/create, without update or destroy (adr-49 rule 3). A
+correction to an event is another event.
 
-*Por qué:* misma postura event-sourced del resto del sistema. Un corral se corrige
-(se desactiva, se renombra); una lectura de comedero de ayer no se reescribe.
+*Why:* the same event-sourced posture as the rest of the system. A pen is corrected (it is
+deactivated, it is renamed); yesterday's bunk reading is not rewritten.
 
-### 6. Un corral inactivo y una ración inactiva rechazan eventos nuevos
+### 6. An inactive pen and an inactive ration reject new events
 
-`register_loading_order` y `register_bunk_score` rechazan en el **servicio** (no en la
-vista) un `Pen` con `status=inactive`; una `LoadingOrder` rechaza una `Ration`
-inactiva. La carga tardía con fecha retroactiva se acepta mientras el corral siga
-activo (mismo criterio que adr-28 para animales).
+`register_loading_order` and `register_bunk_score` reject a `Pen` with `status=inactive` in
+the **service** (not in the view); a `LoadingOrder` rejects an inactive `Ration`. Late entry
+with a retroactive date is accepted while the pen is still active (the same criterion as
+adr-28 for animals).
 
-### 7. El cierre por corral, en esta fase, es del lado costo
+### 7. The per-pen close, in this phase, is on the cost side
 
-`apps.metrics` gana un resumen por corral: kilos servidos y costo de alimento por
-corral en el período, leídos de `FeedingEvent.pen`. El cierre por **ganancia**
-(kg producidos y conversión por corral) necesita placement animal/lote → corral con
-movimientos, y se difiere explícitamente a la Fase 7b junto con el mapa de corrales.
+`apps.metrics` gains a per-pen summary: kilos served and feed cost per pen in the period,
+read from `FeedingEvent.pen`. The close by **gain** (kg produced and conversion per pen)
+needs animal/lot → pen placement with movements, and is explicitly deferred to Phase 7b
+along with the pen map.
 
-*Por qué:* un cierre por ganancia sin saber qué animales estuvieron en el corral y
-cuánto pesaron sería un número inventado — exactamente lo que adr-29 prohíbe. Se
-entrega lo que se puede afirmar con honestidad (el costo) y se difiere lo que no.
+*Why:* a close by gain without knowing which animals were in the pen and how much they
+weighed would be an invented number — exactly what adr-29 forbids. What can be stated
+honestly is delivered (the cost) and what cannot is deferred.
 
-## Consecuencias
+## Consequences
 
-- El backend entra sólo por [[API]] (adr-03) y nace por el flujo [[TDD]] (adr-07);
-  este ADR no exceptúa ese camino (adr-49 regla 6).
-- `feedyard` no gana migraciones que toquen `ledger`; la única migración fuera de la
-  app nueva es la FK aditiva `pen` en `feed`.
-- La escala 0–4 de `BunkScore` es el estándar de lectura de comedero; su
-  interpretación (subir/bajar/mantener ración) es lógica de la Fase 7b/frontend, no
-  se hardcodea como cobro ni como acción automática acá.
-- Cualquier cambio a las reglas 1–5 es semántico y DEBE superseder este ADR
-  ([[adr-00-adr-doctrine]] regla 4).
+- The backend enters only through [[API]] (adr-03) and is born through the [[TDD]] flow
+  (adr-07); this ADR grants no exception to that path (adr-49 rule 6).
+- `feedyard` gains no migrations that touch `ledger`; the only migration outside the new app
+  is the additive `pen` FK in `feed`.
+- The 0–4 scale of `BunkScore` is the standard bunk-reading scale; its interpretation
+  (raise/lower/hold the ration) is Phase 7b/frontend logic, and is not hardcoded here as a
+  charge nor as an automatic action.
+- Any change to rules 1–5 is semantic and MUST supersede this ADR
+  ([[adr-00-adr-doctrine]] rule 4).

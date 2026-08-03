@@ -6,90 +6,87 @@ created: 2026-07-25
 tags: [adr, feedlot, ledger, payment, allocation, imputation, phase-4a]
 ---
 
-# ADR-41 — Imputación de pagos a cargos
+# ADR-41 — allocation of payments to charges
 
-**Contexto:** implementa el ítem que [[adr-25-account-ledger]] regla 7 dejó
-explícitamente diferido ("Explicit payment-to-charge imputation, if needed, is a
-later addition with its own model — never by mutating entries"). Es una **adición**,
-no una supersesión: la regla 7 sigue siendo verdad — la imputación llega con su
-propio modelo y jamás muta un asiento. Reglas solamente; las entidades viven en
-[[FEEDLOT-DATA-MODEL]].
+**Context:** implements the item [[adr-25-account-ledger]] rule 7 explicitly deferred
+("Explicit payment-to-charge imputation, if needed, is a later addition with its own model —
+never by mutating entries"). It is an **addition**, not a supersession: rule 7 remains true —
+the allocation arrives with its own model and never mutates an entry. Rules only; the entities
+live in [[FEEDLOT-DATA-MODEL]].
 
-## Contexto
+## Context
 
-El ledger (adr-25) registra débitos (cargos) y créditos (pagos) y deriva el saldo
-total como Σ débitos − Σ créditos. Un `Payment` postea un crédito que baja el saldo
-**total**, pero hasta acá nada dice *qué cargos* saldó ese pago. La regla 7 previó
-que si algún día se necesita esa imputación, entra con su propio modelo, sin tocar
-los asientos. Esta fase la construye.
+The ledger (adr-25) records debits (charges) and credits (payments) and derives the total
+balance as Σ debits − Σ credits. A `Payment` posts a credit that lowers the **total** balance,
+but so far nothing says *which charges* that payment settled. Rule 7 foresaw that if one day
+that allocation is needed, it enters with its own model, without touching the entries. This
+phase builds it.
 
-## Decisiones
+## Decisions
 
-### 1. La imputación es su propio modelo y NO toca ningún asiento
+### 1. The allocation is its own model and does NOT touch any entry
 
-`PaymentAllocation` liga un `Payment` a un `LedgerEntry` **débito** con un `amount`.
-No es un `LedgerEntry`, no postea al ledger y no mueve el saldo total — ese ya se
-movió cuando el pago posteó su crédito (adr-25 regla 7). Es una anotación de
-bookkeeping que dice "de este pago, tanto salda este cargo". Ningún `LedgerEntry`
-se edita ni se borra jamás (adr-25 regla 1, intacta).
+`PaymentAllocation` links a `Payment` to a **debit** `LedgerEntry` with an `amount`. It is not
+a `LedgerEntry`, it posts nothing to the ledger and it does not move the total balance — that
+already moved when the payment posted its credit (adr-25 rule 7). It is a bookkeeping note
+saying "of this payment, this much settles this charge". No `LedgerEntry` is ever edited or
+deleted (adr-25 rule 1, intact).
 
-*Por qué:* el saldo total es una cosa (Σ débitos − Σ créditos, adr-25 regla 2) y la
-imputación a cargos es otra. Mezclarlas —por ejemplo bajando el `amount` de un
-débito al cobrarlo— reescribiría el pasado, exactamente lo que la doctrina del ledger
-prohíbe.
+*Why:* the total balance is one thing (Σ debits − Σ credits, adr-25 rule 2) and allocation to
+charges is another. Mixing them — for instance by lowering a debit's `amount` when it is
+collected — would rewrite the past, exactly what the ledger doctrine forbids.
 
-### 2. La asignación se valida, nunca sobre-imputa
+### 2. The allocation is validated, and never over-allocates
 
-`impute_payment` rechaza en el **servicio**: un `entry` que no sea un débito de la
-misma cuenta del pago; un `amount` no positivo; una asignación que haga que lo
-imputado de un pago supere su `amount`; o que lo imputado contra un débito supere el
-`amount` del débito. Un `LedgerEntry` y un `Payment` de cuentas distintas no se
-imputan.
+`impute_payment` rejects, in the **service**: an `entry` that is not a debit of the payment's
+own account; a non-positive `amount`; an allocation that would make a payment's allocated total
+exceed its `amount`; or one that would make the amount allocated against a debit exceed the
+debit's `amount`. A `LedgerEntry` and a `Payment` from different accounts are not allocated to
+each other.
 
-*Por qué:* un pago no puede saldar más de lo que es, ni un cargo puede quedar
-saldado por encima de su valor. La validación vive en el servicio, único punto de
-escritura, para que vista, admin y comando compartan la misma regla.
+*Why:* a payment cannot settle more than it is, nor can a charge end up settled beyond its
+value. The validation lives in the service, the single write point, so that view, admin and
+command share the same rule.
 
-### 3. La política por defecto es FIFO; la explícita manda
+### 3. The default policy is FIFO; an explicit one wins
 
-`auto_impute_payment_fifo` imputa un pago contra los débitos pendientes de la cuenta,
-del más viejo al más nuevo, hasta agotar el pago o los cargos. Es la política por
-defecto y se declara acá (no queda "pendiente de confirmación" como el reparto de
-alimento de adr-25 regla 5). Una imputación explícita —una lista de `(entry, amount)`—
-tiene prioridad y se usa cuando el operador decide otro reparto.
+`auto_impute_payment_fifo` allocates a payment against the account's outstanding debits, oldest
+to newest, until the payment or the charges run out. It is the default policy and it is
+declared here (it is not left "pending confirmation" like the feed split of adr-25 rule 5). An
+explicit allocation — a list of `(entry, amount)` — takes priority and is used when the
+operator decides a different split.
 
-*Por qué:* fijar la política por defecto en el ADR evita que cada llamador invente la
-suya. FIFO es la convención contable habitual (el cargo más antiguo se salda primero)
-y es auditable; la explícita cubre el caso en que el negocio quiere otra cosa.
+*Why:* fixing the default policy in the ADR keeps each caller from inventing its own. FIFO is
+the usual accounting convention (the oldest charge is settled first) and it is auditable; the
+explicit path covers the case where the business wants something else.
 
-### 4. El pendiente por cargo es una derivación, no un campo
+### 4. The outstanding amount per charge is a derivation, not a field
 
-`outstanding_charges(account)` deriva, por cada débito de la cuenta, cuánto se le
-imputó (Σ `PaymentAllocation.amount`) y cuánto queda pendiente (`amount` − imputado).
-No se guarda un campo `paid` ni `outstanding` en `LedgerEntry`.
+`outstanding_charges(account)` derives, for each debit of the account, how much was allocated
+to it (Σ `PaymentAllocation.amount`) and how much remains outstanding (`amount` − allocated).
+No `paid` or `outstanding` field is stored on `LedgerEntry`.
 
-*Por qué:* misma disciplina que el saldo (adr-25 regla 2): el pendiente se deriva de
-los hechos, nunca se denormaliza como verdad editable. Un campo `paid` mutable se
-desincronizaría de las asignaciones.
+*Why:* the same discipline as the balance (adr-25 rule 2): the outstanding amount is derived
+from the facts, never denormalized as editable truth. A mutable `paid` field would drift out of
+sync with the allocations.
 
-### 5. La asignación es un hecho inmutable: se crea y se lee
+### 5. The allocation is an immutable fact: it is created and read
 
-`PaymentAllocation` expone `list`/`retrieve`/`create` — sin `update` ni `destroy`
-(adr-49 regla 3). Una imputación equivocada se corrige con otra asignación (una
-contra-imputación con `amount` negativo compensa), nunca editando la fila. La
-contra-imputación explícita, si se necesita, es una adición futura con su propio
-cambio — esta fase entrega la imputación positiva.
+`PaymentAllocation` exposes `list`/`retrieve`/`create` — without `update` or `destroy` (adr-49
+rule 3). A mistaken allocation is corrected with another allocation (a counter-allocation with
+a negative `amount` offsets it), never by editing the row. The explicit counter-allocation, if
+needed, is a future addition with its own change — this phase delivers the positive allocation.
 
-*Por qué:* misma postura event-sourced del resto del sistema. Un hecho fechado no se
-reescribe.
+*Why:* the same event-sourced posture as the rest of the system. A dated fact is not rewritten.
 
-## Consecuencias
+## Consequences
 
-- El backend entra solo por [[API]] (adr-03) y nace por el flujo [[TDD]] (adr-07).
-- `PaymentAllocation` es el único modelo nuevo; `LedgerEntry`, `Payment` y el saldo
-  no se refactorizan. La imputación compone sobre el ledger, no lo reforma.
-- El saldo total del cliente **no cambia** por imputar: imputar es clasificar un
-  crédito ya posteado contra cargos, no cobrar de nuevo. Un cliente con saldo 0 y
-  todos sus cargos imputados, y uno con saldo 0 y nada imputado, deben el mismo total.
-- Cualquier cambio a las reglas 1–5 es semántico y DEBE superseder este ADR
-  ([[adr-00-adr-doctrine]] regla 4).
+- The backend enters only through [[API]] (adr-03) and is born through the [[TDD]] flow
+  (adr-07).
+- `PaymentAllocation` is the only new model; `LedgerEntry`, `Payment` and the balance are not
+  refactored. The allocation composes on top of the ledger, it does not reform it.
+- The client's total balance does **not** change by allocating: allocating is classifying an
+  already-posted credit against charges, not charging again. A client with balance 0 and all
+  their charges allocated, and one with balance 0 and nothing allocated, owe the same total.
+- Any change to rules 1–5 is semantic and MUST supersede this ADR
+  ([[adr-00-adr-doctrine]] rule 4).

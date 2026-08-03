@@ -6,104 +6,103 @@ created: 2026-07-24
 tags: [adr, feedlot, multi-rubro, assets, crops, machinery, phase-6]
 ---
 
-# ADR-32 — Multi-rubro: la extracción de `assets` y los rubros `crops` y `machinery`
+# ADR-32 — multiple business lines: extracting `assets` and the `crops` and `machinery` lines
 
-**Contexto:** primer segundo-rubro real; dispara la extracción prevista en
-[[14-preparacion-fase6]]. Extiende [[adr-49-domain-layer-and-growth-by-addition]] ("crece por adición"),
-reusa el ledger de [[adr-25-account-ledger]] sin tocarlo y la restricción XOR de
-[[adr-26-livestock-individual-and-lot]] como precedente de forma.
+**Context:** the first real second business line; it triggers the extraction foreseen in
+[[14-preparacion-fase6]]. Extends [[adr-49-domain-layer-and-growth-by-addition]] ("grows by addition"),
+reuses the ledger of [[adr-25-account-ledger]] without touching it, and takes the XOR constraint of
+[[adr-26-livestock-individual-and-lot]] as a precedent of shape.
 
-## Contexto
+## Context
 
-Hasta la Fase 5 el sistema conocía un solo rubro: la hacienda. El feedlot también
-produce su propia alfalfa sobre pivotes de riego (círculos), la corta varias veces
-por temporada, y sostiene maquinaria con sus mantenimientos. Cargar círculos,
-cortes, tareas, máquinas y mantenimientos es el pedido de esta fase.
+Up to Phase 5 the system knew a single business line: cattle. The feedlot also produces its
+own alfalfa on irrigation pivots (circles), cuts it several times a season, and maintains
+machinery with its services. Recording circles, cuttings, tasks, machines and maintenance is
+what this phase asks for.
 
-Construir crops y machinery copiando `Animal`/`Lot` y sus eventos habría duplicado
-tres modelos casi iguales — la señal de alarma que [[14-preparacion-fase6]] fija
-para extraer las abstracciones compartidas. Dos rubros nuevos a la vez es
-exactamente el disparador: se saca lo común a una app `assets`, y recién ahí, no
-antes (YAGNI: no se extrajo en la Fase 1 con un solo rubro).
+Building crops and machinery by copying `Animal`/`Lot` and their events would have
+duplicated three near-identical models — the alarm signal [[14-preparacion-fase6]] sets for
+extracting the shared abstractions. Two new business lines at once is exactly the trigger:
+what is common is pulled into an `assets` app, and only then, not before (YAGNI: it was not
+extracted in Phase 1 with a single line).
 
-## Decisiones
+## Decisions
 
-### 1. `assets` aporta abstracciones, no tablas
+### 1. `assets` supplies abstractions, not tables
 
-`assets` no tiene modelos concretos ni migraciones de tablas propias: expone dos
-bases abstractas — `AssetBase` (identidad + ciclo de vida de un activo) y
-`CostedEvent` (un evento que fotografía `unit_price`×`quantity` y postea un débito
-`service`). `crops` y `machinery` heredan de ellas.
+`assets` has no concrete models and no table migrations of its own: it exposes two abstract
+bases — `AssetBase` (an asset's identity + lifecycle) and `CostedEvent` (an event that
+snapshots `unit_price`×`quantity` and posts a `service` debit). `crops` and `machinery`
+inherit from them.
 
-*Por qué:* es el mismo idiom que ya usa `LifecycleEvent` en `livestock` (adr-28
-regla 1): compartir la forma sin fusionar dominios. Un activo concreto vive en la
-app de su rubro y mantiene su propia tabla; lo común no se paga dos veces.
+*Why:* it is the same idiom `LifecycleEvent` already uses in `livestock` (adr-28 rule 1):
+share the shape without merging domains. A concrete asset lives in its own line's app and
+keeps its own table; what is common is not paid for twice.
 
-### 2. `Animal`/`Lot` NO se refactorizan hacia atrás
+### 2. `Animal`/`Lot` are NOT refactored backwards
 
-La hacienda existente no se reescribe para heredar de `AssetBase`. La extracción
-mira hacia adelante: cubre los rubros nuevos, no migra el que ya funciona.
+The existing cattle domain is not rewritten to inherit from `AssetBase`. The extraction
+looks forward: it covers the new lines, it does not migrate the one that already works.
 
-*Por qué:* reescribir modelos con datos, migraciones y tests que ya pasan, sólo por
-simetría, es riesgo sin retorno. El precedente de forma (adr-26) alcanza; la
-herencia literal no aporta nada que justifique tocar el dominio estable.
+*Why:* rewriting models with data, migrations and passing tests purely for symmetry is risk
+with no return. The precedent of shape (adr-26) is enough; literal inheritance adds nothing
+that would justify touching the stable domain.
 
-### 3. El costeo entra por el par genérico, sin cambiar `ledger`
+### 3. Costing enters through the generic pair, without changing `ledger`
 
-`FieldTask` (tarea) y `MaintenanceEvent` (mantenimiento) postean un `debit` con el
-`Concept.SERVICE` **ya existente**, vía `post_entry(...)` con
-`source_kind ∈ {"field_task","maintenance_event"}` y `source_id` del evento — el par
-`(source_kind, source_id)` de [[adr-49-domain-layer-and-growth-by-addition]] regla 4. `ledger` no gana
-un modelo, un concepto ni un FK por rubro.
+`FieldTask` and `MaintenanceEvent` post a `debit` with the **already existing**
+`Concept.SERVICE`, via `post_entry(...)` with
+`source_kind ∈ {"field_task","maintenance_event"}` and the event's `source_id` — the
+`(source_kind, source_id)` pair of [[adr-49-domain-layer-and-growth-by-addition]] rule 4. `ledger` gains
+no model, no concept and no per-line FK.
 
-*Por qué:* es la costura de escalabilidad que la doctrina reservó justo para esto.
-Un rubro nuevo que cobra no toca `ledger`; el seam ya estaba puesto desde la Fase 1.
+*Why:* it is the scalability seam doctrine reserved for exactly this. A new line that
+charges does not touch `ledger`; the seam has been in place since Phase 1.
 
-### 4. El corte no toca el ledger; la tarea y el mantenimiento sí
+### 4. The cutting does not touch the ledger; the task and the maintenance do
 
-`Cutting` (corte) es un evento de producción inmutable: registra kilos cosechados,
-no postea asiento. `FieldTask` y `MaintenanceEvent` son costos: siempre postean.
+`Cutting` is an immutable production event: it records harvested kilos, it posts no entry.
+`FieldTask` and `MaintenanceEvent` are costs: they always post.
 
-*Por qué:* un corte no es un insumo entregado a un cliente, es cosecha propia — no
-hay a quién cobrarle. El ledger cobra insumos entregados (adr-25 regla 6, mismo
-criterio que deja a `Weighing`/`Death` sin asiento). Puentear un corte al stock de
-alimento propio (`FeedStockMovement`) es una adición futura explícita, no parte de
-esta fase: se agrega cuando el negocio lo pida, con su propio cambio.
+*Why:* a cutting is not an input delivered to a client, it is one's own harvest — there is
+nobody to charge. The ledger charges inputs delivered (adr-25 rule 6, the same criterion
+that leaves `Weighing`/`Death` without an entry). Bridging a cutting into own feed stock
+(`FeedStockMovement`) is an explicit future addition, not part of this phase: it is added
+when the business asks for it, with its own change.
 
-### 5. Toda tarea y todo mantenimiento cobran a un cliente
+### 5. Every task and every maintenance charges a client
 
-`FieldTask` y `MaintenanceEvent` llevan `client` obligatorio y siempre postean.
-El feedlot propio es un `Client(kind=own)`; sus costos internos se acumulan en esa
-cuenta, igual que su hacienda propia ya lo hace.
+`FieldTask` and `MaintenanceEvent` carry a mandatory `client` and always post. The feedlot
+itself is a `Client(kind=own)`; its internal costs accumulate in that account, exactly as
+its own cattle already does.
 
-*Por qué:* modelar un origen "sin cliente / sin cargo" que hoy no se usa es
-complejidad especulativa (mismo criterio que adr-28 regla 5 para sanidad). Si mañana
-una tarea se hace como servicio a un tercero, el `client` ya lo contempla sin
-cambiar el modelo.
+*Why:* modelling a "no client / no charge" origin that is not used today is speculative
+complexity (the same criterion as adr-28 rule 5 for health). If tomorrow a task is done as
+a service for a third party, `client` already covers it without changing the model.
 
-### 6. Los activos son catálogos editables; los eventos son inmutables
+### 6. Assets are editable catalogs; events are immutable
 
-`Pivot`, `Machine` y `Crop` son datos maestros: ModelViewSet con CRUD completo
-("cargar círculos" es crear pivotes). `Cutting`, `FieldTask` y `MaintenanceEvent`
-son eventos operativos: list/retrieve/create, sin update ni destroy (adr-49 regla 3).
+`Pivot`, `Machine` and `Crop` are master data: a ModelViewSet with full CRUD ("recording
+circles" is creating pivots). `Cutting`, `FieldTask` and `MaintenanceEvent` are operational
+events: list/retrieve/create, without update or destroy (adr-49 rule 3).
 
-*Por qué:* un activo tiene estado que se corrige (se da de baja un pivote, se
-renombra una máquina); un evento operativo es un hecho fechado que sólo se corrige
-con otro evento, nunca editando el pasado.
+*Why:* an asset has state that gets corrected (a pivot is retired, a machine is renamed);
+an operational event is a dated fact that is only corrected with another event, never by
+editing the past.
 
-### 7. Categorías, estados y especies son `choices` en inglés
+### 7. Categories, statuses and species are `choices` in English
 
-`species`, `category`, `kind`, `status` son enums en inglés ([[LOCALIZATION]]); el
-español vive sólo en el render del frontend.
+`species`, `category`, `kind`, `status` are English enums ([[LOCALIZATION]]); Spanish lives
+only in the frontend's render.
 
-## Consecuencias
+## Consequences
 
-- Las métricas de costo existentes (`cost_breakdown` suma débitos por `concept`) ya
-  recogen las tareas y mantenimientos como `service` sin tocar `apps.metrics`: el
-  rubro nuevo compone, no reforma.
-- Un pivote o máquina dado de baja (`status=retired`) rechaza eventos nuevos en el
-  servicio, no en la vista — misma postura que un animal muerto (adr-28).
-- `assets` queda como el hogar de la próxima abstracción compartida (equinos u otro
-  rubro entran heredando, no copiando). La extracción se hizo una vez y para todos.
-- Cualquier cambio a las reglas 1–5 es semántico y DEBE superseder este ADR
-  ([[adr-00-adr-doctrine]] regla 4).
+- The existing cost metrics (`cost_breakdown` sums debits by `concept`) already pick up
+  tasks and maintenance as `service` without touching `apps.metrics`: the new line composes,
+  it does not reform.
+- A retired pivot or machine (`status=retired`) rejects new events in the service, not in
+  the view — the same posture as a dead animal (adr-28).
+- `assets` remains the home of the next shared abstraction (horses or another line enter by
+  inheriting, not by copying). The extraction was done once and for all.
+- Any change to rules 1–5 is semantic and MUST supersede this ADR
+  ([[adr-00-adr-doctrine]] rule 4).
