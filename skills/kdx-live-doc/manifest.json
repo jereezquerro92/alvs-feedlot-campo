@@ -704,6 +704,13 @@
       ]
     },
     {
+      "glob": "frontend/src/pages/healthz.ts",
+      "links": [
+        "adr-09-docker-compose",
+        "DOCKER"
+      ]
+    },
+    {
       "glob": "frontend/src/pages/feedlot/alimentacion.astro",
       "links": [
         "adr-53-api-membrane",
