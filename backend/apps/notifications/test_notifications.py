@@ -101,6 +101,25 @@ def test_sender_failure_is_recorded_not_raised():
 
 
 @debug
+def test_unexpected_send_exception_keeps_failed_audit_row():
+    """Non-SenderError must not roll back the Notification audit (adr-36 rule 3)."""
+    from unittest import mock
+
+    client = _client()
+    with mock.patch(
+        "apps.notifications.services.get_sender",
+        return_value=mock.Mock(send=mock.Mock(side_effect=RuntimeError("boom"))),
+    ):
+        notification = send_notification(
+            client=client, channel=Notification.Channel.WHATSAPP,
+            to_address=client.contact, subject="s", body="b",
+        )
+    assert Notification.objects.count() == 1
+    assert notification.status == Notification.Status.FAILED
+    assert "boom" in notification.error
+
+
+@debug
 def test_a_retry_is_a_new_record_not_an_edit():
     client = _client()
     first = send_weekly_digest(
