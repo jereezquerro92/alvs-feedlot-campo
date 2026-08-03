@@ -8,7 +8,6 @@ tags: [feedlot, breeding, livestock, reproduction, event-sourced]
 
 # ADR-46 — Cría y recría: los eventos reproductivos (`breeding`)
 
-**Estado:** activo (Fase de cría)
 **Contexto:** crece por adición sobre la espina ([[adr-24-feedlot-domain]] regla 1): una app
 nueva `breeding`, sin tocar `livestock` ni el ledger salvo el único cargo que el dueño
 definió. Reusa la restricción XOR animal/lote de [[adr-26-livestock-individual-and-lot]] y

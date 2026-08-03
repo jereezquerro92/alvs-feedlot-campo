@@ -8,7 +8,6 @@ tags: [adr, feedlot, ledger, payment, allocation, imputation, phase-4a]
 
 # ADR-41 — Imputación de pagos a cargos
 
-**Estado:** activo (Fase 4a)
 **Contexto:** implementa el ítem que [[adr-25-account-ledger]] regla 7 dejó
 explícitamente diferido ("Explicit payment-to-charge imputation, if needed, is a
 later addition with its own model — never by mutating entries"). Es una **adición**,

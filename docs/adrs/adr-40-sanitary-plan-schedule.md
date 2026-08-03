@@ -8,7 +8,6 @@ tags: [adr, feedlot, sanitary, vaccination, plan, schedule, phase-13]
 
 # ADR-40 — El plan sanitario y el calendario de vacunación
 
-**Estado:** activo (Fase 13)
 **Contexto:** crece por adición sobre `sanitary` ([[adr-24-feedlot-domain]] regla 1),
 reusa la restricción XOR animal/lote de [[adr-26-livestock-individual-and-lot]] y la
 postura event-sourced de [[adr-24-feedlot-domain]] regla 3. Extiende

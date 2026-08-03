@@ -8,7 +8,6 @@ tags: [feedlot, genetics, semen, embryo, inventory, event-sourced]
 
 # ADR-47 — Genética: semen, DEP y transferencia embrionaria (`genetics`)
 
-**Estado:** activo (Fase de cría)
 **Contexto:** crece por adición sobre la espina ([[adr-24-feedlot-domain]] regla 1): una app
 nueva `genetics`, sin tocar `livestock`. Reusa el patrón stock-por-movimientos de
 [[adr-25-account-ledger]] regla 4 (`FeedStockMovement`) generalizado por

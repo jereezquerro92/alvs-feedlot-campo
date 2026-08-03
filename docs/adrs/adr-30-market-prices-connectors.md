@@ -8,7 +8,6 @@ tags: [adr, feedlot, market, prices, connectors]
 
 # ADR-30 — Precios de referencia y conectores de fuentes
 
-**Estado:** propuesto (Fase 4)
 **Contexto:** implementa [[06-precios-hacienda]] con las correcciones de [[06b-verificacion-fuentes-precios]] y [[06c-segunda-fuente-automatica]].
 
 ## Contexto

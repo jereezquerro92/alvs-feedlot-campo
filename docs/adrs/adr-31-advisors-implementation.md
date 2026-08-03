@@ -1,6 +1,13 @@
+---
+title: adr-31-advisors-implementation
+type: adr
+status: active
+created: 2026-07-23
+tags: [adr, feedlot, advisors, ai, implementation, phase-5]
+---
+
 # ADR-31 — Implementación de los asesores
 
-**Estado:** propuesto (Fase 5)
 **Contexto:** implementa [[adr-27-advisors-generative]]; reusa el patrón de [[adr-15-chatbot-two-tier]] (inference clients) y respeta [[adr-16-async-mandatory]].
 
 ## Contexto

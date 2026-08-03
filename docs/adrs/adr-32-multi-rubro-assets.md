@@ -8,7 +8,6 @@ tags: [adr, feedlot, multi-rubro, assets, crops, machinery]
 
 # ADR-32 — Multi-rubro: la extracción de `assets` y los rubros `crops` y `machinery`
 
-**Estado:** propuesto (Fase 6)
 **Contexto:** primer segundo-rubro real; dispara la extracción prevista en
 [[14-preparacion-fase6]]. Extiende [[adr-24-feedlot-domain]] ("crece por adición"),
 reusa el ledger de [[adr-25-account-ledger]] sin tocarlo y la restricción XOR de
