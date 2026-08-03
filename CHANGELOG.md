@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+- group: fix-require-pr-flow-cursor-json
+  priority: normal
+  issue: 78
+  changes:
+    - fix(hooks): require_pr_flow emits Cursor PreToolUse JSON (allow + additionalContext) instead of plain text that fail-closed shell tools
+
 - group: primer-deploy-productivo
   priority: high
   issue: 69

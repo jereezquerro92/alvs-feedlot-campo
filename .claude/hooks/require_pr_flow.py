@@ -69,8 +69,9 @@ def main():
     try:
         payload = json.load(sys.stdin)
         cmd = payload.get("tool_input", {}).get("command", "")
+        messages = []
         if COMMIT.search(cmd) or PUSH_PROTECTED.search(cmd):
-            print(
+            messages.append(
                 "PR-flow nudge (adr-19-issue-worktree-pr): every change is "
                 "issue -> (worktree optional) -> PR; main is reached only by merging a "
                 "PR, never by a direct hand-commit. Integrate as the owning gh "
@@ -79,7 +80,7 @@ def main():
             )
         if WORKTREE_REMOVE.search(cmd):
             note = _open_pr_note(cmd)
-            print(
+            messages.append(
                 "Worktree-removal nudge (adr-19-issue-worktree-pr rule 5): a "
                 "worktree is removed only AFTER its PR has merged, never before "
                 "— no worktree outlives its PR, but neither does it die ahead of "
@@ -87,6 +88,16 @@ def main():
                 + (" " + note if note else "")
                 + " This is a reminder, not a gate."
             )
+        if messages:
+            # stdout must be JSON for Cursor/Claude PreToolUse; plain text is
+            # treated as invalid and fail-closes the tool call.
+            print(json.dumps({
+                "hookSpecificOutput": {
+                    "hookEventName": "PreToolUse",
+                    "permissionDecision": "allow",
+                    "additionalContext": " ".join(messages),
+                }
+            }))
     except Exception:
         return 0
     return 0
