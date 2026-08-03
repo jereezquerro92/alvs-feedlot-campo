@@ -11,7 +11,7 @@ tags: [tdd, router, bedrock, chatui]
 
 ## Context
 
-Closes #253. The router's choosing tier ([[CHATBOT]], [[adr-15-chatbot-two-tier]]) shipped wired to `MockInferenceClient` — a deterministic echo, so "behind the login we always have AI" was an appearance, not a property. This entry wires the real Bedrock call behind the existing [[API]] row `POST /api/router/route/` (no new route, no new variable — `BEDROCK_REGION` and `ROUTER_BEDROCK_MODEL_ID` already have their [[VARIABLES]] rows) and adds the blocking connectivity gate the issue requires. Feeds [[bdd-04-chatui-router]] (backend half).
+Closes #253. The router's choosing tier ([[CHATBOT]], [[adr-15-chatbot-two-tier]]) shipped wired to `MockInferenceClient` — a deterministic echo, so "behind the login we always have AI" was an appearance, not a property. This entry wires the real Bedrock call behind the existing [[API]] row `POST /api/router/route/` (no new route, no new variable — `BEDROCK_REGION` and `ROUTER_BEDROCK_MODEL_ID` already have their [[VARIABLES]] rows) and adds the blocking connectivity gate the issue requires.
 
 ## Design
 

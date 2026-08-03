@@ -1,9 +1,11 @@
 ---
 title: FEEDLOT
 type: reference
-status: proposed
+category: project
+use_case: understanding what the feedlot does and which app owns which fact
 created: 2026-07-21
-tags: [feedlot, domain, ssot]
+modified: 2026-08-02
+tags: [doc, feedlot, domain, ssot]
 ---
 
 # FEEDLOT — the farm-traceability domain

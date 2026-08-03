@@ -195,7 +195,7 @@ export function readThemeCookie(): ThemeConfig {
 }
 
 /** Client-only mirror of the cookie the backend refreshes on a successful
- * `PATCH /api/me/` ([[API]]). Per docs/bdds/bdd-06-profile-theming.md's
+ * `PATCH /api/me/` ([[API]]). Per the feature's
  * error-handling clause, this is called ONLY after a `200` save response —
  * never speculatively from the live-preview path, which uses `applyTheme`
  * alone. The browser's own `Set-Cookie` handling already does this; calling

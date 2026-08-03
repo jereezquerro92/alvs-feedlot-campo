@@ -1,14 +1,11 @@
 ---
-created: '2026-07-10'
-status: active
-tags:
-- prd
-- ssot
-- feedlot
-- livestock
-- traceability
 title: PRD
 type: prd
+category: project
+use_case: checking a change against the product objective
+created: 2026-07-10
+modified: 2026-08-02
+tags: [doc, prd, ssot, feedlot, livestock, traceability]
 ---
 
 # PRD — feedlot operations
@@ -40,7 +37,7 @@ The operational scope. The spine is shared by every domain; the domains stand on
 | other domains | `crops`, `machinery` | alfalfa on irrigation pivots with its cuttings and field tasks, and the machine fleet with its maintenance |
 | across all | `metrics`, `expenses`, `inventory`, `weather`, `notifications`, `advisors`, `assistant` | the derived reading of everything above, the costs that are not an input, stock and conditions, what gets pushed to whom, and the AI layers over a client's own numbers |
 
-This table states scope, not specification. Each domain's depth — how a debit is priced, what a lifecycle event forbids, how a metric is derived — belongs to [[FEEDLOT]], [[FEEDLOT-DATA-MODEL]], the ADRs that rule them, and the domain's [[BDD]] and [[TDD]] entries.
+This table states scope, not specification. Each domain's depth — how a debit is priced, what a lifecycle event forbids, how a metric is derived — belongs to [[FEEDLOT]], [[FEEDLOT-DATA-MODEL]], the ADRs that rule them, and the domain's [[TDD]] entries.
 
 ## Who uses it
 

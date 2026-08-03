@@ -2,8 +2,8 @@
 """ADR conformance hook (PostToolUse on Write|Edit).
 
 Enforces adr-00-adr-doctrine on every file written under .claude/rules/ or
-docs/adrs/: filename pattern, required frontmatter, the intentional `defered`
-spelling (GLOSSARY forbids `deferred`), and an empty body when defered.
+docs/adrs/: filename pattern, required frontmatter, the `category` enum, and
+the intentional `defered` spelling (GLOSSARY forbids `deferred`).
 Exit 2 feeds the violation back to the agent; any internal error exits 0.
 """
 
@@ -14,7 +14,8 @@ import sys
 from pathlib import Path
 
 FILENAME = re.compile(r"^adr-\d{2}-[a-z0-9]+(?:-[a-z0-9]+)*\.md$")
-REQUIRED_KEYS = ("title", "type", "status", "created")
+REQUIRED_KEYS = ("title", "type", "category", "use_case", "created", "modified")
+CATEGORIES = ("frontend", "backend", "devops", "harness", "project")
 
 
 def project_dir():
@@ -66,15 +67,21 @@ def check(path):
             problems.append(f"{path.name}: frontmatter lacks '{key}' (adr-00-adr-doctrine).")
     if fm.get("type") and fm["type"] != "adr":
         problems.append(f"{path.name}: frontmatter 'type' must be 'adr', found '{fm['type']}'.")
-    status = fm.get("status")
-    if status and status not in ("active", "defered"):
+    if "status" in fm:
         problems.append(
-            f"{path.name}: status must be 'active' or 'defered', found '{status}'."
+            f"{path.name}: frontmatter carries 'status'; adr-00 rule 6 removed it — "
+            "presence in docs/adrs/ is what makes a rule binding."
         )
-    if status == "defered" and body.strip():
+    category = fm.get("category")
+    if category and category not in CATEGORIES:
         problems.append(
-            f"{path.name}: a defered ADR keeps ONLY its frontmatter; move the body "
-            "to docs/obsolete/defered-adr-NN-slug.md (adr-00-adr-doctrine)."
+            f"{path.name}: category must be one of {'|'.join(CATEGORIES)}, "
+            f"found '{category}'."
+        )
+    if not body.strip():
+        problems.append(
+            f"{path.name}: empty body; a superseded ADR moves whole to docs/obsolete/ "
+            "(adr-00 rule 7), it is never left hollow."
         )
     return problems
 

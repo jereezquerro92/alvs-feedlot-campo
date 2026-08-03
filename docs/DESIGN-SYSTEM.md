@@ -1,9 +1,11 @@
 ---
 title: DESIGN-SYSTEM
 type: reference
-status: active
+category: frontend
+use_case: choosing a visual value, a token, or theme behaviour
 created: 2026-07-10
-tags: [harness, frontend, design-system]
+modified: 2026-08-02
+tags: [doc, harness, frontend, design-system]
 ---
 
 # DESIGN-SYSTEM
@@ -12,12 +14,9 @@ Owner of every visual and component decision ([[adr-04-frontend-and-design-syste
 
 ## The standing principle — variable-driven theming
 
-> [!important] Supersedes "zero custom styling" (owner override, 2026-07-14)
-> The prior standing principle — **zero custom styling, defaults win** — is superseded, in place, by kodex's explicit 2026-07-14 decision. It no longer holds and MUST NOT be read as current truth. The replacement is below.
-
 **Everything visual is a CSS custom property (a token); nothing is hard-coded.** Color, radius, and background are never authored as literal values inside a component or a one-off utility class — they are always a reference to a token defined once, in `frontend/src/styles/app.css`. A shadcn-svelte component still ships styled by default ([[adr-04-frontend-and-design-system]] r4), but its default *is itself expressed through the token layer* — changing a token changes every consumer, with zero component edits.
 
-This is not "more custom CSS than before" — it is the same amount of bespoke, component-level styling as the prior principle (still close to zero), redirected: instead of freezing the shadcn-svelte/theme defaults as immovable, the template makes every visual value swappable at one seam. The template still does not hand-author component CSS; it authors tokens.
+Bespoke component-level CSS stays close to zero: the shadcn-svelte and theme defaults are not frozen as immovable, they are expressed through tokens, so every visual value is swappable at one seam. The template does not hand-author component CSS — it authors tokens.
 
 ## The token layer (SSOT)
 
@@ -75,7 +74,7 @@ One shared pair of pure functions in `frontend/src/lib/theme.ts` — `computeThe
 
 ## The Melt preset — dotted background
 
-`bgPreset: "melt"` is now the **default** preset ([[bdd-07-melt-theme-sitewide]]) — every route without a `theme` cookie renders it — activated by `[data-bg-preset="melt"]` on the `<html>` element (set by `computeThemeSSRAttrs`/`applyTheme` — see "Theme application mechanism" above). It reproduces melt-ui.com's **actual** construction, matched to its own scraped CSS: a **neutral field** (the existing `--canvas` token — NOT a separate amber-tinted background), a **dot-grid layer**, and a **top-fade highlight** layered above the dots, on a **2rem grid**. It is fully variable-driven; the rule itself — selectors, gradients, both mode pairs — lives once, as the SSOT, in `frontend/src/styles/app.css` (`[data-bg-preset="melt"]` / `.dark[data-bg-preset="melt"]`), and is not repeated here:
+`bgPreset: "melt"` is now the **default** preset (issue #202) — every route without a `theme` cookie renders it — activated by `[data-bg-preset="melt"]` on the `<html>` element (set by `computeThemeSSRAttrs`/`applyTheme` — see "Theme application mechanism" above). It reproduces melt-ui.com's **actual** construction, matched to its own scraped CSS: a **neutral field** (the existing `--canvas` token — NOT a separate amber-tinted background), a **dot-grid layer**, and a **top-fade highlight** layered above the dots, on a **2rem grid**. It is fully variable-driven; the rule itself — selectors, gradients, both mode pairs — lives once, as the SSOT, in `frontend/src/styles/app.css` (`[data-bg-preset="melt"]` / `.dark[data-bg-preset="melt"]`), and is not repeated here:
 
 | Token | Tunes |
 |---|---|
@@ -88,7 +87,7 @@ One shared pair of pure functions in `frontend/src/lib/theme.ts` — `computeThe
 - The token declarations sit on `[data-bg-preset="melt"]`/`.dark[data-bg-preset="melt"]` (the `<html>` element); the painted `background` is scoped to `[data-bg-preset="melt"] body`, overriding the plain `body { background: ... }` rule above by specificity.
 - Tuned to match melt-ui.com's own `.dotted-bg`/`.dotted-bg:after` rule pair (scraped ground truth: a dot-grid radial gradient plus a top-fade), widened to a `2rem` grid for this template, so a project drawing its interactive primitives from Melt ([[MELT-UI]]) gets a background that reads as the same family, not an approximation.
 - **One-line adjustable, in `app.css`**: dot density is `--melt-dots-size`, dot color/opacity is `--melt-dots-color` (per mode), the fade highlight is `--melt-fade-color` — changing the preset never means touching the gradient rules themselves, only their tokens.
-- `default` (no `data-bg-preset`, or `data-bg-preset="default"`) is now the **non-default, alternate** preset — the existing `--canvas` + spotlight background already in `app.css`, unchanged by this section. A visitor with no saved preference sees `melt`, in dark mode, by default ([[bdd-07-melt-theme-sitewide]]); `default` is reached only by an explicit user choice on `/profile`.
+- `default` (no `data-bg-preset`, or `data-bg-preset="default"`) is now the **non-default, alternate** preset — the existing `--canvas` + spotlight background already in `app.css`, unchanged by this section. A visitor with no saved preference sees `melt`, in dark mode, by default; `default` is reached only by an explicit user choice on `/profile`.
 
 ## Component layering — Melt UI first, shadcn-svelte second, custom last (Bits UI is upstream lineage, not installed)
 

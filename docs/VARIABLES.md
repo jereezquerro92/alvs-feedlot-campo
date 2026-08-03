@@ -1,9 +1,11 @@
 ---
 title: VARIABLES
 type: reference
-status: active
+category: harness
+use_case: reading or adding an environment variable
 created: 2026-07-10
-tags: [harness, variables, ssot]
+modified: 2026-08-02
+tags: [doc, harness, variables, ssot]
 ---
 
 # VARIABLES
@@ -14,7 +16,7 @@ The environment-variable **SSOT**. Every variable either backend or frontend cod
 > **A variable used in code but not declared here does not exist.** Same doctrine as [[API]]. Enforced by the hook `hooks/check_variables.py` (PostToolUse), which watches `.env*` files and env reads in code against this table. Companion skills are still stage 2 work — TBD.
 
 > [!warning]
-> **Every secret value lives in AWS Secrets Manager, always** — `alvs/<env>/<project>/*`, per [[INFRASTRUCTURE]]. Never committed in `.env`, never plain env in task definitions, never in the frontend at all. The frontend receives only `PUBLIC_*` non-secret variables. Local `.env` (git-ignored) holds dev-only values mirroring the names declared here.
+> **A secret's source is one path shape: `alvs/<env>/<project>/<component>`** — the fact this doc owns, per [[INFRASTRUCTURE]]. That secrets live only in AWS Secrets Manager is [[adr-02-initial-stack]] rule 6; that the frontend receives only `PUBLIC_*` and never a secret is [[adr-04-frontend-and-design-system]] rule 7. Local `.env` (git-ignored) holds dev-only values mirroring the names declared here.
 
 ## Declaration format
 
@@ -105,7 +107,6 @@ All frontend variables are **plain, non-secret** — task env in cloud, `.env` l
 | `HOST` | frontend | dev/prod/local | no | plain task env; `.env` local | Bind host, `0.0.0.0` |
 | `NODE_ENV` | frontend | dev/prod/local | no | plain task env; `.env` local | Build/runtime mode |
 | `PUBLIC_SITE_URL` | frontend | dev/prod/local | no | plain task env; `.env` local | Public site URL, client-visible |
-| `PUBLIC_API_URL` | frontend | dev/prod/local | no | plain task env; `.env` local | Public API URL, client-visible ([[API]]) |
 | `PUBLIC_BACKEND_URL` | frontend | dev/prod/local | no | plain task env; `.env` local | Public backend URL, client-visible |
 | `BACKEND_API_URL` | frontend | dev/prod/local | no | plain task env; `.env` local | Internal Cloud Map URL, **server-side only** ([[INFRASTRUCTURE]]) |
 | `PUBLIC_PROJECT_SLUG` | frontend | dev/prod/local | no | plain task env; `.env` local | Frontend-visible copy of `PROJECT_SLUG` above ([[GLOSSARY]]) — derived, never independently set. Passed through by `compose.yaml` (locally, `${PROJECT_SLUG:-astro-drf-aws}`) and by `.github/workflows/deploy-prod.yml`'s frontend task definition (`"value": "${PROJECT_SLUG}"`), so the two names stay one source at every hop |

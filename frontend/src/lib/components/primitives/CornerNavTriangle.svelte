@@ -5,7 +5,7 @@
 
 <!--
   Fixed, bottom-right, isosceles-triangle nav cycling home/chat/showcase
-  (bdd-11-corner-nav-triangle, #374, mounted globally in Base.astro by
+  (#374, mounted globally in Base.astro by
   #377). Distinct from primitives/HomeTriangle.svelte (#255): top-left,
   right-angle, single-target. Rounded-corner polygon has no Melt builder
   (adr-04 r8 last resort) — drawn as an SVG path instead of clip-path.

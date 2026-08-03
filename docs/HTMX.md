@@ -1,14 +1,16 @@
 ---
 title: HTMX
 type: reference
-status: active
+category: frontend
+use_case: making a server-owned interaction interactive
 created: 2026-07-10
-tags: [harness, frontend, htmx, backend]
+modified: 2026-08-02
+tags: [doc, harness, frontend, htmx, backend]
 ---
 
 # HTMX
 
-HTMX is **in the stack** (pin in [[REQUIREMENTS]]: `htmx.org@2.0.10`). It is rung 2 of the interactivity ladder in [[FRONTEND]]: preferred over a Svelte island whenever state is server-owned. Using HTMX on a given feature is still a per-feature decision in [[BDD]]; the library itself is not optional scaffolding.
+HTMX is **in the stack** (pin in [[REQUIREMENTS]]: `htmx.org@2.0.10`). It is rung 2 of the interactivity ladder in [[FRONTEND]]: preferred over a Svelte island whenever state is server-owned. Using HTMX on a given feature is still a per-feature decision, made against the criteria below; the library itself is not optional scaffolding.
 
 ## Core doctrine — Django owns the HTML
 
@@ -37,7 +39,7 @@ Full backend rules: [[BACKEND]]. Ladder criteria: below. Enforcement: [[adr-05-h
 
 1. **No shadow routes** ([[adr-05-htmx]]): every fragment path is a row in [[API]]. A path that exists only inside an `hx-get` / `hx-post` string is invalid.
 2. **Version pin** lives only in [[REQUIREMENTS]] (`htmx.org` **2.0.10**). Do not restate the number elsewhere as a second SSOT.
-3. **Adoption per feature** via [[BDD]] — HTMX is available; each feature still chooses ladder rung 2 vs 3.
+3. **Adoption per feature** — HTMX is available; each feature still chooses ladder rung 2 vs 3.
 4. Fragment bodies are **HTML** (`text/html`), English identifiers/paths ([[LOCALIZATION]]); user-visible copy may localize at render time.
 5. Caching of fragments follows [[CACHE]]; authenticated fragments default `Cache-Control: no-store`.
 6. Prefer **dedicated fragment views** (or explicit branch on `HX-Request`) designed for partial HTML — do not bolt fragments onto a JSON viewset as an afterthought without an [[API]] row and tests.

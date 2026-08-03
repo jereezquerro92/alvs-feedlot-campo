@@ -6,24 +6,24 @@ import { t } from "../src/i18n";
 import { DENIED_REDIRECT } from "../src/lib/authGate";
 
 // Smoke tests for the SSR routes ([[FRONTEND]] T5): / renders a Showcase
-// button and a Card carrying the two backend words (bdd-01); /showcase/components/
+// button and a Card carrying the two backend words; /showcase/components/
 // and /healthz respond 200; each carries an explicit Cache-Control. Runs
 // against the built standalone server (`bun run build` first). No backend is
 // required — no cookie is sent, so /showcase/components/ renders the
 // anonymous auth section without a live /api/me/ call; / tolerates either a
 // live backend or its per-word error-code fallback.
 //
-// bdd-02: the / session badge (avatar + display name / "Log in") is covered
+// The / session badge (avatar + display name / "Log in") is covered
 // by a second describe block below, each with its own SSR server instance
 // pointed at a stub /api/me/ backend (Bun.serve) — BACKEND_API_URL is read
 // once per server process, so the authenticated and anonymous branches need
 // separate processes to exercise both without a live Cognito dependency.
 //
-// bdd-07: the site-wide melt dark theme default. With no `theme` cookie,
+// The site-wide melt dark theme default. With no `theme` cookie,
 // every route renders `<html class="dark" data-bg-preset="melt">` — proven
 // here for `/` without a browser/computed-style layer.
 //
-// bdd-08 / adr-20: the authorization lobby. Every route but `/` requires
+// adr-20: the authorization lobby. Every route but `/` requires
 // a Group-holding session — a role-less (`groups: []`) session is confined
 // to `/`, where it sees the `lobby_pending` legend instead of the nav/M365
 // content. An anonymous visitor is likewise redirected to `/` from every
@@ -80,14 +80,14 @@ test("/ renders a Showcase button, with an explicit Cache-Control, and hides the
   expect(body).not.toContain('data-testid="m365-word"');
 });
 
-test("/ with no theme cookie renders the flipped defaults on <html> — dark mode + melt background (docs/bdds/bdd-07-melt-theme-sitewide.md)", async () => {
+test("/ with no theme cookie renders the flipped defaults on <html> — dark mode + melt background", async () => {
   const res = await fetch(`${BASE}/`);
   expect(res.status).toBe(200);
   const body = await res.text();
   expect(body).toContain('<html lang="en" class="dark" data-bg-preset="melt"');
 });
 
-test("/ with no session cookie renders the anonymous Log in affordance (bdd-02)", async () => {
+test("/ with no session cookie renders the anonymous Log in affordance", async () => {
   const res = await fetch(`${BASE}/`);
   expect(res.status).toBe(200);
   const body = await res.text();
@@ -95,19 +95,19 @@ test("/ with no session cookie renders the anonymous Log in affordance (bdd-02)"
   expect(body).toContain("/accounts/login/");
 });
 
-test("/showcase/components/ redirects an anonymous visitor to / (bdd-08, adr-20 lobby)", async () => {
+test("/showcase/components/ redirects an anonymous visitor to / (adr-20 lobby)", async () => {
   const res = await fetch(`${BASE}/showcase/components/`, { redirect: "manual" });
   expect(res.status).toBe(302);
   expect(res.headers.get("location")).toBe(DENIED_REDIRECT);
 });
 
-test("/chatui/ redirects an anonymous visitor to / (bdd-08, adr-20 lobby)", async () => {
+test("/chatui/ redirects an anonymous visitor to / (adr-20 lobby)", async () => {
   const res = await fetch(`${BASE}/chatui/`, { redirect: "manual" });
   expect(res.status).toBe(302);
   expect(res.headers.get("location")).toBe(DENIED_REDIRECT);
 });
 
-test("/profile/ redirects an anonymous visitor to / (bdd-08, adr-20 lobby)", async () => {
+test("/profile/ redirects an anonymous visitor to / (adr-20 lobby)", async () => {
   const res = await fetch(`${BASE}/profile/`, { redirect: "manual" });
   expect(res.status).toBe(302);
   expect(res.headers.get("location")).toBe(DENIED_REDIRECT);
@@ -130,7 +130,7 @@ test("404 on an undeclared route still carries an explicit Cache-Control (issue 
   expect(res.headers.get("cache-control")).toBeTruthy();
 });
 
-describe("/ session badge, authenticated branch (bdd-02); lobby gating (bdd-08, adr-20)", () => {
+describe("/ session badge, authenticated branch; lobby gating (adr-20)", () => {
   const STUB_PORT = 43218;
   const SSR_PORT = 43219;
   const SSR_BASE = `http://127.0.0.1:${SSR_PORT}`;
@@ -213,7 +213,7 @@ describe("/ session badge, authenticated branch (bdd-02); lobby gating (bdd-08, 
     expect(body).toContain('name="csrfmiddlewaretoken"');
   });
 
-  test("with a session cookie and zero groups (pending), the lobby legend renders and the nav buttons + M365 Card are hidden (bdd-08)", async () => {
+  test("with a session cookie and zero groups (pending), the lobby legend renders and the nav buttons + M365 Card are hidden", async () => {
     const res = await fetch(`${SSR_BASE}/`, {
       headers: { cookie: "sessionid=stub" },
     });
@@ -225,7 +225,7 @@ describe("/ session badge, authenticated branch (bdd-02); lobby gating (bdd-08, 
     expect(body).not.toContain('data-testid="m365-word"');
   });
 
-  test("with a session cookie and a role-holding group (groups: [admins]), / redirects to the feedlot, which carries the nav links and no legend (bdd-08)", async () => {
+  test("with a session cookie and a role-holding group (groups: [admins]), / redirects to the feedlot, which carries the nav links and no legend", async () => {
     // The module-first redesign made `/` the login landing: a session that
     // already holds a role never renders it, it is sent straight to the app
     // (src/pages/index.astro). Assert that hop explicitly — following it
@@ -271,7 +271,7 @@ describe("/ session badge, authenticated branch (bdd-02); lobby gating (bdd-08, 
     expect(body).toContain(t("auth_login"));
   });
 
-  test("/showcase/components/ redirects a role-less (pending) session to / (bdd-08, adr-20)", async () => {
+  test("/showcase/components/ redirects a role-less (pending) session to / (adr-20)", async () => {
     const res = await fetch(`${SSR_BASE}/showcase/components/`, {
       headers: { cookie: "sessionid=stub" },
       redirect: "manual",
@@ -298,7 +298,7 @@ describe("/ session badge, authenticated branch (bdd-02); lobby gating (bdd-08, 
     expect(body).toContain("&quot;name&quot;:&quot;ThemeModeToggle&quot;");
   });
 
-  test("/chatui/ redirects a role-less (pending) session to / (bdd-08, adr-20)", async () => {
+  test("/chatui/ redirects a role-less (pending) session to / (adr-20)", async () => {
     const res = await fetch(`${SSR_BASE}/chatui/`, {
       headers: { cookie: "sessionid=stub" },
       redirect: "manual",
@@ -315,7 +315,7 @@ describe("/ session badge, authenticated branch (bdd-02); lobby gating (bdd-08, 
     expect(res.headers.get("cache-control")).toBe("no-store");
   });
 
-  test("/profile/ redirects a role-less (pending) session to / (bdd-08, adr-20)", async () => {
+  test("/profile/ redirects a role-less (pending) session to / (adr-20)", async () => {
     const res = await fetch(`${SSR_BASE}/profile/`, {
       headers: { cookie: "sessionid=stub" },
       redirect: "manual",

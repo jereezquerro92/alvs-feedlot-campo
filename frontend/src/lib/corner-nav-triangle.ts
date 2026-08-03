@@ -4,10 +4,10 @@
  * LIVE-DOC:END */
 
 // Pure resolver for CornerNavTriangle's route -> next-front mapping
-// (bdd-11-corner-nav-triangle). The fixed cycle is home -> chat ->
+// The fixed cycle is home -> chat ->
 // showcase -> home; the icon shown is always the DESTINATION of the next
 // click, derived from the current route, never from persisted client
-// state (bdd-11 "Chosen cycle semantics"). An unrecognized route falls
+// state ("Chosen cycle semantics"). An unrecognized route falls
 // back to the same default as the zero-props case: "currently home",
 // so the next stop is chat.
 

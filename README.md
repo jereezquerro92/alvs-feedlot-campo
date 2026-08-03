@@ -1,6 +1,6 @@
 # astro-drf-aws
 
-Template. The only expected outcome is a working deploy. Owner: **kodexArg**.
+Owner: **`jereezquerro92`** ([docs/GH.md](docs/GH.md) is the record); built on `kodexArg`'s `astro-drf-aws` template.
 
 - Custom AI harness + live documentation — agents enter through [AGENTS.md](AGENTS.md)
 - Astro 7 (SSR) + Svelte + shadcn-svelte + Tailwind 4
@@ -15,7 +15,7 @@ Template. The only expected outcome is a working deploy. Owner: **kodexArg**.
 | `main` | Integration (default PR target) |
 | `prod` | **Production** (not `main`) |
 
-Issues + PRs by default. Direct push to `main`/`prod`: **kodexArg only**. Labels, tags, detail: [docs/GH.md](docs/GH.md) · [adr-08](docs/adrs/adr-08-github-and-git.md).
+Issues + PRs by default. Direct push to `main`/`prod`: **the owning account only**. Labels, tags, detail: [docs/GH.md](docs/GH.md) · [adr-08](docs/adrs/adr-08-github-and-git.md).
 
 ## Local Docker
 

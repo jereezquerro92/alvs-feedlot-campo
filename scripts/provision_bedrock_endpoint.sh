@@ -3,9 +3,9 @@
 #
 # Mirrors this repo's existing provisioning mechanism: raw AWS CLI calls run
 # manually by an operator with the correct account/profile, then recorded in
-# docs/INVENTORY.md in the same batch (adr-12-ephemeral-run rule 5). There is
-# no Terraform/CDK in this repo — see docs/INVENTORY.md for every other
-# resource created the same way.
+# docs/INVENTORY.md in the same batch (docs/INFRASTRUCTURE.md, "Inventory").
+# There is no Terraform/CDK in this repo — see docs/INVENTORY.md for every
+# other resource created the same way.
 #
 # Prerequisites:
 #   - AWS CLI configured with a profile that resolves to account 789650504128
@@ -64,5 +64,5 @@ VPCE_ID=$(aws ec2 create-vpc-endpoint \
 
 echo "Created VPC endpoint: $VPCE_ID"
 echo
-echo "Next step (adr-12 rule 5, same batch): update docs/INVENTORY.md —"
+echo "Next step (docs/INFRASTRUCTURE.md \"Inventory\", same batch): update docs/INVENTORY.md —"
 echo "  flip both 'planned' rows to 'ephemeral' with SG=$SG_ID, VPCE=$VPCE_ID."

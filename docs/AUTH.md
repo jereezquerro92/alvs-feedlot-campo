@@ -1,9 +1,11 @@
 ---
 title: AUTH
 type: reference
-status: active
+category: backend
+use_case: wiring login, a session, or a permission class
 created: 2026-07-10
-tags: [harness, auth, cognito, backend]
+modified: 2026-08-02
+tags: [doc, harness, auth, cognito, backend]
 ---
 
 # AUTH

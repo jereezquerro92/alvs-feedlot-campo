@@ -1,8 +1,16 @@
-# GLOSSARY — feedlot additions (rows to merge into docs/GLOSSARY.md)
+---
+title: GLOSSARY-feedlot-additions
+type: reference
+category: project
+use_case: naming anything in the feedlot domain
+created: 2026-07-15
+modified: 2026-08-02
+tags: [doc, harness, glossary, ssot, feedlot]
+---
 
-Per [[adr-01-glossary-and-localization]] a term is decided here before its first use.
-Merge these rows into the table in [[GLOSSARY]]; the format is
-`Term | Canonical form | Applies to | Forbidden forms`.
+# GLOSSARY — feedlot additions
+
+The feedlot domain's names, staged here per [[adr-24-feedlot-domain]] rule 2. Same table, same authority as [[GLOSSARY]]. Rules: [[adr-01-glossary-and-localization]].
 
 | Term | Canonical form | Applies to | Forbidden forms |
 |---|---|---|---|

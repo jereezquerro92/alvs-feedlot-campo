@@ -1,16 +1,16 @@
 ---
 title: GLOSSARY
 type: reference
-status: active
+category: harness
+use_case: naming anything, or finding one thing called two ways
 created: 2026-07-10
-tags: [harness, glossary, ssot]
+modified: 2026-08-02
+tags: [doc, harness, glossary, ssot]
 ---
 
 # GLOSSARY — naming authority
 
-A name is decided here before its first use ([[adr-01-glossary-and-localization]]). Every identifier-worthy term — model names, endpoint segments, env var stems, service names, UI labels, doc names — uses the canonical form below. A new term gets its row here first; the ABC gate ([[AGENTS]]) applies to naming like to everything else.
-
-Format: Term | Canonical form | Applies to | Forbidden forms.
+The names. Rules: [[adr-01-glossary-and-localization]]. Feedlot domain terms: [[GLOSSARY-feedlot-additions]].
 
 | Term | Canonical form | Applies to | Forbidden forms |
 |---|---|---|---|
@@ -22,7 +22,7 @@ Format: Term | Canonical form | Applies to | Forbidden forms.
 | backend | `backend` | service name, ECR suffix, repo path `backend/`, docs | `server`, `api-server`, `api/` as the Django root path |
 | frontend | `frontend` | service name, ECR suffix, repo path `frontend/`, docs | `web`, `client`, `ui`, `app/` as the Astro root path |
 | environments | `dev`, `prod`, `local` | infra, secrets paths, docs | `staging` (does not exist here), `development`, `production` |
-| adr, tdd, bdd | lowercase in filenames (`adr-NN-slug.md`); uppercase only for the manuals [[TDD]] / [[BDD]] | files, wikilinks | mixed case in filenames |
+| adr, tdd | lowercase in filenames (`adr-NN-slug.md`); uppercase only for the manual [[TDD]] | files, wikilinks | mixed case in filenames |
 | defered | `defered` | ADR lifecycle status token ([[adr-00-adr-doctrine]]) | `deferred` — the token's spelling is intentional and machine-checked |
 | infrastructure | `INFRASTRUCTURE` (doc name), `infrastructure` (prose) | doc names, wikilinks, prose | `INFRAESTRUCTURE`, `infraestructure` — misspelling, corrected repo-wide |
 | package manager (frontend) | `bun` | everything JavaScript ([[FRONTEND]]) | `npm` (prohibited), `pnpm`, `yarn` |
@@ -31,9 +31,10 @@ Format: Term | Canonical form | Applies to | Forbidden forms.
 | fragment | `fragment` | HTMX HTML-over-the-wire responses ([[HTMX]]) | `partial`, `snippet` |
 | island | `island` | Svelte interactive components ([[FRONTEND]]) | `widget`, `component` (for this meaning) |
 | live-doc block | `live-doc block`, delimited `LIVE-DOC:START … LIVE-DOC:END` | the wikilinks-only region stamped at the top of every matched code file, linking it to the ADRs and docs that govern it ([[adr-17-live-doc-backlinks]], [[HARNESS]]); stamped only by the linker `kdx-live-doc`, never by hand | `docstring header`, `backlink header`, `doclink`, `frontmatter` (for this meaning); any block carrying prose instead of links |
-| shadow test | `shadow test` | BDD browser validation ([[BDD]]) | `e2e test`, `smoke test` |
+| shadow test | `shadow test` | browser validation of a feature's flows against the rendered UI ([[FRONTEND]]) | `e2e test`, `smoke test` |
 | endpoint | `endpoint` | any route declared in [[API]] | `route` (in API context) |
 | project slug | `astro-drf-aws` (this template's reference project; `PROJECT_SLUG` backend/CI, `PUBLIC_PROJECT_SLUG` frontend-derived form) | AWS resource names, secrets paths, hosts ([[INFRASTRUCTURE]]); frontend-visible copy via `PUBLIC_PROJECT_SLUG` ([[VARIABLES]]) | `astro_drf_aws`, `astrodrfaws`; a literal `astro-drf-aws` typed outside the sanctioned single-source points ([[VARIABLES]], issue #133) |
+| client-visible backend URL | `PUBLIC_BACKEND_URL` | the frontend's browser-visible backend origin ([[VARIABLES]]); the only name code reads | `PUBLIC_API_URL` — declared but never read, dropped repo-wide under [[adr-01-glossary-and-localization]] rule 7 |
 | base domain | `grupoalvs.com` (`BASE_DOMAIN`) | project hosts `<slug>[.dev].grupoalvs.com` | hardcoding the host instead of composing it |
 | view | Django server code only — views and viewsets ([[BACKEND]]) | backend code | calling Astro pages or Svelte files "views" |
 | page | `page` — an Astro `src/pages/` route ([[FRONTEND]]) | frontend routes | `view` (Django's word), `screen` |
@@ -56,15 +57,15 @@ Format: Term | Canonical form | Applies to | Forbidden forms.
 | markdown-vault env stem | `MARKDOWN_VAULT_MCP_` | launcher env for the vault MCP; harness-dev tooling, not app runtime, never in [[VARIABLES]] ([[adr-18-markdown-vault-mcp]] rule 3) | `MVMCP_`, `VAULT_`, declaring it as an app variable |
 | vault MCP profile | `full` / `keyword` | which vault MCP the launcher installs and serves — `full` with semantic search, `keyword` without; selected by `MARKDOWN_VAULT_MCP_PROFILE`, table owned by [[markdown-vault-mcp]] | `embeddings`/`no-embeddings`, `lite`, `degraded`, `offline` as the profile names |
 | kdx-bot-token secret env | `KDX_BOT_TOKEN_SECRET_ID` | the AWS Secrets Manager secret id the `kdx-bot-token` Telegram token resolver reads as its durable lane; harness-dev tooling, not app runtime, never in [[VARIABLES]] (precedent [[adr-18-markdown-vault-mcp]] rule 3) | hardcoding a bot token in an `.env` or in code; declaring it an app variable; `TELEGRAM_TOKEN_SECRET`, `KDX_BOT_TOKEN` as the secret-id name |
-| inventory document | `docs/INVENTORY.md` | committed record of every created AWS resource ([[INFRASTRUCTURE]], [[adr-12-ephemeral-run]]) | `resources.md`, `assets.md` |
-| resource tag keys | `project`, `env`, `lifecycle` | the mandatory AWS tag set on every ephemeral-run resource ([[INFRASTRUCTURE]], [[adr-12-ephemeral-run]]) | capitalized `Project`/`Env`/`Lifecycle`; `environment` as the key; ad-hoc `owner`/`team` keys |
+| inventory document | `docs/INVENTORY.md` | committed record of every created AWS resource ([[INFRASTRUCTURE]]) | `resources.md`, `assets.md` |
+| resource tag keys | `project`, `env`, `lifecycle` | the mandatory AWS tag set on every ephemeral-run resource ([[INFRASTRUCTURE]]) | capitalized `Project`/`Env`/`Lifecycle`; `environment` as the key; ad-hoc `owner`/`team` keys |
 | issue branch | `issue-<n>-<slug>` | git branch that resolves a GitHub issue ([[GH]]); `<n>` = issue number, kebab-case English `<slug>` | `feature/*`, `fix/*`, a bare `<slug>` without the issue number |
 | Django project package | `config` | the single Django project/settings package ([[BACKEND]]) | `settings`, `project`, the project slug, or naming it after an app |
 | Django app (health) | `health` | health/liveness domain app ([[BACKEND]]); serves `/api/health/` | `healthcheck`, `status`, `ping` |
 | Django app (users) | `users` | user/identity domain app ([[BACKEND]], [[AUTH]]); owns the `sub`-keyed user model | `accounts` (that is the URL prefix, not the app), `auth`, `core` |
 | RBAC group | `admins` | Django Group for the elevated role ([[AUTH]], [[adr-10-auth]]); RBAC is Django Groups, never Cognito | singular `admin` (collides with Django's `/admin/`), `superusers`, any Cognito group |
-| model field (users) | `nickname` | optional user-chosen display name, shown in place of the Cognito-derived given/family name when set ([[API]] `PATCH /api/me/`, [[adr-10-auth]] rule 5) | `display_name`, `alias`, `handle` |
-| model field (users) | `avatar_visible` | boolean; when false, the frontend renders two-letter initials instead of `picture` ([[API]]) | `show_avatar` (inverted polarity reads worse at the call site), `hide_avatar` |
+| model field (user nickname) | `nickname` | optional user-chosen display name, shown in place of the Cognito-derived given/family name when set ([[API]] `PATCH /api/me/`, [[adr-10-auth]] rule 5) | `display_name`, `alias`, `handle` |
+| model field (user avatar visibility) | `avatar_visible` | boolean; when false, the frontend renders two-letter initials instead of `picture` ([[API]]) | `show_avatar` (inverted polarity reads worse at the call site), `hide_avatar` |
 | endpoint segment (me) | `me` — `/api/me/` | current-session identity endpoint ([[API]]) | `profile`, `self`, `current-user` |
 | endpoint segment (restricted) | `restricted` — `/api/restricted/` | RBAC probe endpoint, group-gated ([[API]]) | `admin-only`, `protected`, `secure` |
 | endpoint segment (login) | `login` — `/accounts/login/` | OIDC login kickoff endpoint ([[AUTH]], [[API]]) | `signin`, `log-in`, `auth` |
@@ -73,12 +74,12 @@ Format: Term | Canonical form | Applies to | Forbidden forms.
 | endpoint segment (logout) | `logout` — `/accounts/logout/` | session-flush + Cognito-logout endpoint ([[AUTH]], [[API]]) | `signout`, `log-out` |
 | endpoint segment (dev-login) | `dev-login` — `/accounts/dev-login/` | DEBUG-only dev login endpoint ([[AUTH]], [[adr-10-auth]], [[API]]) | `devlogin`, `dev_login`, `fake-login`, `test-login` |
 | frontend page (showcase) | `showcase` — `/showcase/components/` | Astro SSR visual smoke-test page, vendored shadcn-svelte components ([[FRONTEND]]); frontend-owned, never an [[API]] row; the bare `/showcase/` landing was retired (issue #249), this is the sole surviving showcase route | `demo`, `gallery`, `kitchen-sink`, bare `/showcase/` as a distinct route |
-| infra test file | `tests/test_aws_infra.py` | infrastructure assertions + tag audit ([[INFRASTRUCTURE]], [[adr-12-ephemeral-run]]) | `test_infra.py`, `test_aws.py` |
-| CI workflow (prod) | `.github/workflows/deploy-prod.yml` | the prod-only deploy workflow ([[INFRASTRUCTURE]], [[adr-12-ephemeral-run]]) | `deploy.yml`, `main.yml`; a `deploy-dev.yml` in this run |
+| infra test file | `tests/test_aws_infra.py` | infrastructure assertions + tag audit ([[INFRASTRUCTURE]]) | `test_infra.py`, `test_aws.py` |
+| CI workflow (prod) | `.github/workflows/deploy-prod.yml` | the prod-only deploy workflow ([[INFRASTRUCTURE]]) | `deploy.yml`, `main.yml`; a `deploy-dev.yml` in this run |
 | Cognito user pool | `alvs-prod-astro-drf-aws` | the run's only user pool ([[AUTH]], B2.2) | per-app pools; names without the `alvs-prod-` prefix |
 | Cognito hosted-UI prefix | `alvs-astro-drf` | hosted-UI domain prefix ([[AUTH]]); `alvs-astro-drf-aws` was frozen at B1 but rejected by `CreateUserPoolDomain` — `aws` is a reserved word in hosted-UI domain prefixes, so B2.2 fell back to this value | the full pool name as prefix; ad-hoc abbreviations; any prefix containing the word `aws` |
 | Cognito test users | `test-admin@grupoalvs.com`, `test-plain@grupoalvs.com` | the B2 RBAC pair; Django group `admins` assigned to the first in C1 fixtures, never in Cognito ([[adr-10-auth]]) | real personal emails; `admin@…`; Cognito groups as roles |
-| RDS instance | `alvs-prod-astro-drf-aws-pg` | the dedicated ephemeral instance ([[BD]], [[adr-12-ephemeral-run]] r4) | using shared `alvs-prod-pg` in this run |
+| RDS instance | `alvs-prod-astro-drf-aws-pg` | the dedicated ephemeral instance ([[BD]]) | using shared `alvs-prod-pg` in this run |
 | database name | `app` | the SQL database on that instance ([[BD]]) | the hyphenated project slug inside SQL identifiers |
 | S3 media bucket | `alvs-astro-drf-aws-media-prod` | private media bucket, no CDN — Django-presigned URLs only ([[INFRASTRUCTURE]]) | public buckets; per-service buckets |
 | ECR repositories | `alvs/astro-drf-aws-backend`, `alvs/astro-drf-aws-frontend` | container images, immutable tags `prod-<full-git-sha>` ([[INFRASTRUCTURE]]) | `latest` tags; mutable tags |
@@ -92,7 +93,7 @@ Format: Term | Canonical form | Applies to | Forbidden forms.
 | Django app (m365) | `m365` | app-only Microsoft Graph capability app ([[BACKEND]], [[adr-13-m365-graph]]); no models, owns the two demo Graph read endpoints | `graph`, `microsoft`, `sharepoint` |
 | endpoint segment (hello) | `hello` — `/api/m365/hello/` | live Graph read of workbook cell A1, demo endpoint ([[API]], [[adr-13-m365-graph]]) | `cell-a1`, `test-a1` |
 | endpoint segment (world) | `world` — `/api/m365/world/` | live Graph read of workbook cell C3, demo endpoint ([[API]], [[adr-13-m365-graph]]) | `cell-c3`, `test-c3` |
-| chatbot UI | `chatui` — `/chatui/` | frontend half of the chatbot capability layer — island, page segments, BDD entries; top-level product page, deliberately outside `/showcase/` (owner decision 2026-07-14, issue 101) because it fronts a real API surface while showcase pages never do | `chat-ui`, `chatbox`, `chat-widget`, `chat` as an identifier; `/showcase/chatui` as its route |
+| chatbot UI | `chatui` — `/chatui/` | frontend half of the chatbot capability layer — island, page segments; top-level product page, deliberately outside `/showcase/` (owner decision 2026-07-14, issue 101) because it fronts a real API surface while showcase pages never do | `chat-ui`, `chatbox`, `chat-widget`, `chat` as an identifier; `/showcase/chatui` as its route |
 | chatbot router | `router` | backend half of the chatbot capability layer — app, model, endpoint and env var stems; distinct from DRF's router classes, which keep their own name | `chatrouter`, `dispatcher`, `classifier` |
 | router endpoint segment | `route` — `/api/router/route/` | the phase-1 routing endpoint ([[API]], [[CHATBOT]]) | `intent`, `interpret`, `ask` |
 | router env stem | `ROUTER_` | env vars for the router app, e.g. `ROUTER_ENABLED` ([[VARIABLES]], [[CHATBOT]]) | `CHATBOT_`, `INTENT_`, `AI_` |
@@ -106,13 +107,13 @@ Format: Term | Canonical form | Applies to | Forbidden forms.
 | router rate-abuse guard | `evaluate_rate_abuse`, `is_rate_blocked` (`backend/apps/router/rate_abuse.py`) | async, DB-cache-backed silent block on the router's `POST /api/router/route/` when a user's average messages-per-minute crosses a threshold (#371, [[API]], [[adr-16-async-mandatory]], [[adr-06-cache]]) — enforcement only, never authorization | `RateLimiter`, `RouterThrottle` (collides with `CooldownThrottle`'s naming axis) |
 | library | Melt UI (pkg `melt`) | headless builder layer under Bits UI/shadcn-svelte ([[MELT-UI]]) | `@melt-ui/svelte` (legacy pkg), MeltUI |
 | component layering posture | `posture` | this template's standing default for which component layer to reach for first — Melt builder, then shadcn-svelte, then custom ([[MELT-UI]], [[DESIGN-SYSTEM]], [[adr-04-frontend-and-design-system]] r8) | `priority`, `preference`, `strategy` for this meaning |
-| model field (users) | `theme_config` | per-user appearance blob `{mode,bgPreset,colors,radius}`, mirrored to the `theme` cookie ([[API]], [[DESIGN-SYSTEM]]) | `theme_settings`, `prefs`, `appearance_config` |
+| model field (user theme config) | `theme_config` | per-user appearance blob `{mode,bgPreset,colors,radius}`, mirrored to the `theme` cookie ([[API]], [[DESIGN-SYSTEM]]) | `theme_settings`, `prefs`, `appearance_config` |
 | cookie | `theme` | non-HttpOnly cookie mirroring `theme_config` for no-flash SSR ([[DESIGN-SYSTEM]], [[CACHE]]) | `theme_cookie` |
-| theme value | `mode` (`light`\|`dark`) | appearance mode ([[DESIGN-SYSTEM]]) | `dark_mode`, `color_scheme` |
-| theme value | `bgPreset` (`default`\|`melt`) | background preset; `melt` = amber dotted field ([[DESIGN-SYSTEM]]) | `background_style`, `wallpaper` |
-| color token (financial) | `--success` / `--success-foreground` | positive financial state, distinct from any UI success/validation meaning ([[DESIGN-SYSTEM]]) | `--positive`, `--green` |
-| color token (financial) | `--warning` / `--warning-foreground` | equilibrium/neutral financial state ([[DESIGN-SYSTEM]]) | `--neutral-state`, `--yellow` |
-| color token (financial) | `--negative` / `--negative-foreground` | danger financial state — a separate token name from `--destructive` even where the value is shared ([[DESIGN-SYSTEM]]) | `--danger`, `--red`, reusing `--destructive` directly instead of the named token |
+| theme value (mode) | `mode` (`light`\|`dark`) | appearance mode ([[DESIGN-SYSTEM]]) | `dark_mode`, `color_scheme` |
+| theme value (background preset) | `bgPreset` (`default`\|`melt`) | background preset; `melt` = amber dotted field ([[DESIGN-SYSTEM]]) | `background_style`, `wallpaper` |
+| color token (financial positive) | `--success` / `--success-foreground` | positive financial state, distinct from any UI success/validation meaning ([[DESIGN-SYSTEM]]) | `--positive`, `--green` |
+| color token (financial neutral) | `--warning` / `--warning-foreground` | equilibrium/neutral financial state ([[DESIGN-SYSTEM]]) | `--neutral-state`, `--yellow` |
+| color token (financial negative) | `--negative` / `--negative-foreground` | danger financial state — a separate token name from `--destructive` even where the value is shared ([[DESIGN-SYSTEM]]) | `--danger`, `--red`, reusing `--destructive` directly instead of the named token |
 | model (access) | `AccessRequest` | Django model for an admin-managed role-grant record, one per user ([[AUTH]], [[adr-20-authorization-lobby]]) | `Grant`, `RoleRequest`, `AccessGrant` |
 | model field (access) | `role` | nullable `ForeignKey` to Django's own `Group` on `AccessRequest`; `null` = pending/unassigned — RBAC roles ARE Django Groups, never a parallel role table ([[adr-20-authorization-lobby]], [[adr-10-auth]] rule 2) | `group`, `assigned_role`, `role_name` |
 | UX term (lobby) | `lobby` | the route `/`, admitting BOTH an anonymous visitor and a role-less authenticated session — the only page reachable before a role is granted ([[adr-20-authorization-lobby]]) | `waiting room`, `landing`, `landing page` |
@@ -133,7 +134,7 @@ Format: Term | Canonical form | Applies to | Forbidden forms.
 | showcase component (tabs) | `Tabs` | Tier-1 tabbed navigation component, `nav/`, Melt Tabs builder ([[COMPONENTIZATION]], [[MELT-UI]], issue #178) | `TabGroup`, `TabBar` |
 | showcase component (toast) | `Toast` | Tier-1 toast notification component, `feedback/`, Melt Toaster builder; its module-level singleton instance is `toaster` ([[COMPONENTIZATION]], [[MELT-UI]], issue #178) | `Notification`, `Snackbar`, `Toaster` as the component name (that is the singleton instance, not the component) |
 | showcase component (tooltip) | `Tooltip` | Tier-1 hover/focus hint component, `overlay/`, Melt Tooltip builder ([[COMPONENTIZATION]], [[MELT-UI]], issue #178) | `Hint`, `Popover` (reserved for the distinct Melt Popover builder) |
-| showcase component (dropdown menu) | `Dropdown Menu` (prose), `DropdownMenu` (code identifier) | Tier-2 nav component — user menu, row actions — `nav/`, Melt Popover primitive + hand-rolled roving-focus/typeahead menu semantics (no Melt Dropdown Menu builder in melt 0.44) ([[COMPONENTIZATION]], [[MELT-UI]], [[bdd-09-dropdown-menu-showcase]], issue #178) | `DropdownMenu` in prose without the space, `ContextMenu`, `ActionMenu` |
+| showcase component (dropdown menu) | `Dropdown Menu` (prose), `DropdownMenu` (code identifier) | Tier-2 nav component — user menu, row actions — `nav/`, Melt Popover primitive + hand-rolled roving-focus/typeahead menu semantics (no Melt Dropdown Menu builder in melt 0.44) ([[COMPONENTIZATION]], [[MELT-UI]], issue #178) | `DropdownMenu` in prose without the space, `ContextMenu`, `ActionMenu` |
 | showcase component (popover) | `Popover` | Tier-2 overlay component, `overlay/`, Melt Popover builder used bare (float/anchor/dismiss shell, no menu semantics) — the exact reservation made at the `Tooltip` row above (COMPONENTIZATION, MELT-UI, issue #213) | `ContextMenu`, `Flyout` |
 | showcase component (pagination) | `Pagination` | Tier-2 data component, `data/`, hand-rolled prev/next + numbered page controls (no Melt Pagination builder in melt 0.44, same absence recorded at the `Dropdown Menu` row above); pairs with `DataTable` ([[COMPONENTIZATION]], [[MELT-UI]], issue #219) | `Pager`, `PageNav` |
 | showcase component (PIN Input) | `PIN Input` (prose), `PinInput` (code identifier) | Tier-2 form component, `form/`, Melt PinInput builder — a second-factor confirmation-code field ([[COMPONENTIZATION]], [[MELT-UI]], issue #221) | `Otp`, `OtpInput`, `PinCode` |

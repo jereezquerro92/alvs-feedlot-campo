@@ -7,7 +7,7 @@ plus skills, hooks, and guardian agents; application code follows it, never the 
 around. It runs as an Astro 7 SSR frontend and a Django 6 + DRF backend, two Fargate services
 on AWS us-east-1.
 
-Owner: **kodexArg**. Region: **us-east-1**. Account: ALVS `789650504128`.
+Owner: **`jereezquerro92`** ([docs/GH.md](docs/GH.md) is the record). AWS layout and account: [docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md).
 
 ## Read these two first — and keep them open
 
@@ -29,11 +29,10 @@ Every change, no matter how small, passes three questions:
 ## How we work
 
 - **Development loop** ([adr-07](docs/adrs/adr-07-development-flow.md)):
-  `idea → user-facing? → BDD → needs backend? → enter through API`.
+  `idea → user-facing? → agreed in the issue → needs backend? → enter through API`.
   The backend zone is entered and exited **only through [API.md](docs/API.md)**: an endpoint
   is valid if and only if it has a row there. Undeclared route in code = defect.
-- **TDD** for every backend piece ([docs/TDD.md](docs/TDD.md), `docs/tdds/`);
-  **BDD** for every user-facing feature ([docs/BDD.md](docs/BDD.md), `docs/bdds/`).
+- **TDD** for every backend piece ([docs/TDD.md](docs/TDD.md), `docs/tdds/`).
 - **Guardians** ([adr-11](docs/adrs/adr-11-guardians.md)) — three subagents gate the SSOTs:
   `astro-drf-aws-prd`, `astro-drf-aws-adr`, `astro-drf-aws-api`. Engage the matching guardian
   **before** touching PRD, the ADRs, or API; the dispatch hook is the safety net, not the trigger.
@@ -70,8 +69,8 @@ gate; they never waive it or a guardian verdict.
 | `main` | Integration — default PR target |
 | `prod` | **Production** (never treat `main` as live) |
 
-Issues + PRs are the default surface. Direct push to `main`/`prod`: **kodexArg only** — everyone
-else uses feature branches and PRs into `main`. Release tags are semver `v*`, cut from `prod`.
+Issues + PRs are the default surface. Direct push to `main`/`prod`: **the owning account only** —
+everyone else uses feature branches and PRs into `main`. Release tags are semver `v*`, cut from `prod`.
 Detail: [docs/GH.md](docs/GH.md) · [adr-08](docs/adrs/adr-08-github-and-git.md).
 
 ## Local setup
@@ -88,7 +87,7 @@ Detail: [docs/GH.md](docs/GH.md) · [adr-08](docs/adrs/adr-08-github-and-git.md)
 All three stages are done — docs, harness, and project construction.
 The backend scaffold, custom user keyed on Cognito `sub`, `/accounts/` auth, RBAC, cache discipline,
 and containerization all landed. The reference deploy is **prod-only and ephemeral — born dead,
-user-gated on teardown** ([adr-12](docs/adrs/adr-12-ephemeral-run.md)); its provisioned resources
+user-gated on teardown** ([docs/INFRASTRUCTURE.md](docs/INFRASTRUCTURE.md)); its provisioned resources
 are tracked in [docs/INVENTORY.md](docs/INVENTORY.md), from which Phase E teardown executes.
 
 ## Doc map
@@ -96,6 +95,6 @@ are tracked in [docs/INVENTORY.md](docs/INVENTORY.md), from which Phase E teardo
 - **Product**: [PRD](docs/PRD.md) · [GLOSSARY](docs/GLOSSARY.md) · [LOCALIZATION](docs/LOCALIZATION.md)
 - **Contracts**: [API](docs/API.md) · [VARIABLES](docs/VARIABLES.md) · [REQUIREMENTS](docs/REQUIREMENTS.md) · [GH](docs/GH.md)
 - **Stack**: [BACKEND](docs/BACKEND.md) · [AUTH](docs/AUTH.md) · [FRONTEND](docs/FRONTEND.md) · [HTMX](docs/HTMX.md) · [CACHE](docs/CACHE.md) · [BD](docs/BD.md) · [INFRASTRUCTURE](docs/INFRASTRUCTURE.md) · [DOCKER](docs/DOCKER.md)
-- **Method**: [TDD](docs/TDD.md) · [BDD](docs/BDD.md)
+- **Method**: [TDD](docs/TDD.md)
 - **Harness**: [HARNESS](docs/HARNESS.md) — required skills, vendored
 - **Infra state**: [INVENTORY](docs/INVENTORY.md)

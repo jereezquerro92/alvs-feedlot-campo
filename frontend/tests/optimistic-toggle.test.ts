@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { optimisticToggle } from "../src/lib/optimistic-toggle";
 
-// Unit coverage for ProfileForm's avatar-visibility toggle (bdd-05: "the
+// Unit coverage for ProfileForm's avatar-visibility toggle ("the
 // toggle reverts to its prior state on avatar failure"). DOM-free, matching
 // this template's bun:test conventions (no jsdom).
 

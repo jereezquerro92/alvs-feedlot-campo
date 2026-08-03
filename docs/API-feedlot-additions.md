@@ -1,3 +1,13 @@
+---
+title: API-feedlot-additions
+type: reference
+category: backend
+use_case: merging the feedlot's endpoint rows into API
+created: 2026-07-21
+modified: 2026-08-02
+tags: [doc, api, feedlot, ssot]
+---
+
 # API — feedlot additions (rows to merge into docs/API.md)
 
 Per [[adr-03-api-and-backend]] an endpoint is valid **iff** it is a row in [[API]];

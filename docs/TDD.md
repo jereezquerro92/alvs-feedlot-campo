@@ -1,9 +1,11 @@
 ---
 title: TDD
 type: reference
-status: active
+category: harness
+use_case: writing a new backend piece
 created: 2026-07-10
-tags: [harness, tdd, backend]
+modified: 2026-08-02
+tags: [doc, harness, tdd, backend]
 ---
 
 # TDD — instruction manual for `docs/tdds/`
@@ -56,6 +58,6 @@ Status transitions:
 
 Every entry follows the frontmatter contract and flow above; a project's first entry sets the section layout that the rest reuse. Do not invent divergent layouts.
 
-## Relationship to BDD
+## Where an entry comes from
 
-Features arriving from users enter via [[BDD]] first. The backend half of a BDD entry lands here as one or more TDD entries; link the originating BDD entry from each.
+A feature arriving from a user is agreed in its issue first ([[GH]]). Its backend half lands here as one or more TDD entries; link the originating issue from each.

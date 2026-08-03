@@ -1,73 +1,52 @@
 ---
 title: adr-36-notifications-digest
 type: adr
-status: active
+category: backend
+use_case: armar o cambiar el digest semanal, agregar un canal de envío, mandar una notificación, testear el envío sin credenciales
 created: 2026-07-25
+modified: 2026-08-02
 tags: [adr, feedlot, notifications, digest, whatsapp, phase-9]
 ---
 
 # ADR-36 — Notificaciones: el digest y el canal de envío
 
-**Estado:** activo (Fase 9)
-**Contexto:** reusa las métricas de [[adr-29-metrics-derivation]] (una sola
-definición de cada número) y el patrón de cliente mock/real gateado por DEBUG de
-[[adr-31-advisors-implementation]] y [[adr-35-conversational-assistant]].
+## CONTEXT
 
-## Contexto
+> Empujarle al cliente un resumen sin que entre a mirar: cabezas, saldo y conversión, por WhatsApp. `notifications` arma el texto desde las métricas y lo manda; no calcula nada propio y no opera sobre el dominio.
 
-Todo competidor empuja resúmenes al cliente sin que el cliente entre a mirar:
-un digest semanal por WhatsApp con las cabezas, el saldo y la conversión. Falta la
-capa que **arma un resumen y lo manda por un canal**. Esa es la app `notifications`.
+## ASSERTIONS
 
-## Decisiones
+1. `build_weekly_digest` lee `apps.metrics.services.summary` para un cliente y lo renderiza a texto. No define ninguna métrica nueva: el número del digest es el mismo del dashboard y del asesor ([[adr-29-metrics-derivation]] regla 1).
+2. `get_sender(channel)` es el único punto de selección: en DEBUG devuelve `MockSender` —sin red, registra lo enviado— y fuera de DEBUG el sender real del canal. Ningún setting fuerza el mock a un deploy, mismo gate que los clientes de inferencia; los tests corren contra el mock.
+3. `Notification` guarda `client`, `channel`, `to_address`, `subject`, `body` y un `status` ∈ {`pending`, `sent`, `failed`} con su `error` y `sent_at`. Se crea y se lee, sin `update` ni `destroy` ([[adr-24-feedlot-domain]] regla 3): un reintento es una notificación nueva.
+4. `notifications` es read-only sobre los datos del cliente: lee métricas, arma texto y manda. No postea asiento ni cambia estado de dominio — es una capa de salida, no un actuador.
+5. `WHATSAPP_TOKEN` y `WHATSAPP_PHONE_NUMBER_ID` entran en [[VARIABLES]] antes de leerse ([[adr-03-api-and-backend]] regla 7) y sólo los lee el sender real. Viven en `.env` local o en Secrets Manager, nunca en git.
+6. El comando `send_weekly_digests` arma y manda por cliente, y una falla de envío de un cliente no frena a los demás — misma disciplina de aislamiento que `ingest_prices` ([[adr-30-market-prices-connectors]] regla 7).
 
-### 1. El digest se arma desde las métricas, no se recalcula
+## FORBIDDEN
 
-`build_weekly_digest` lee `apps.metrics.services.summary` para UN cliente y lo
-renderiza a texto. No define ninguna métrica nueva: el número que ve el cliente en
-el digest es el mismo del dashboard y del asesor (adr-29 regla 1, adr-31 regla 3).
+- **NEVER** recalcular una métrica dentro del digest (regla 1). El cliente leería en el mensaje un número distinto del que ve en pantalla.
+- **NEVER** seleccionar el sender fuera de `get_sender` (regla 2). Dos puntos de selección son dos políticas y una se olvida del gate.
+- **NEVER** dejar que un setting fuerce el mock fuera de DEBUG (regla 2). Un deploy que "manda" sin mandar parece sano.
+- **NEVER** sobrescribir el estado de una notificación (regla 3). Se perdería el historial de intentos, que es justamente lo que hay que auditar.
+- **NEVER** postear un asiento desde `notifications` (regla 4). Informar no es operar; el cobro sigue siendo del ledger vía `feed`.
 
-*Por qué:* tres consumidores con tres definiciones de "conversión" es exactamente
-lo que la doctrina de métricas existe para evitar.
+## REJECTED
 
-### 2. El envío es una abstracción con mock y real, gateada por DEBUG
+- **Reintentar editando la notificación fallida** — un contador de intentos sobre la misma fila. Rechazado por la regla 3: el registro de qué se mandó y con qué resultado se pierde en cuanto se reescribe.
+- **Un `try/except` global en el comando** — una sola captura para todo el lote. Perdió contra la regla 6: la falla de un cliente frenaría o silenciaría a los demás.
 
-`get_sender(channel)` es el único punto de selección: en DEBUG devuelve
-`MockSender` (sin red, registra lo enviado); fuera de DEBUG devuelve el sender real
-del canal (`WhatsAppSender`). Ningún setting fuerza el mock a un deploy — mismo gate
-que los clientes de inferencia (adr-31 regla 4, adr-35 decisión 5). Los tests corren
-contra el mock.
+## RELATED
 
-*Por qué:* el envío externo depende de credenciales vivas que no existen en test ni
-en dev; el mock deja la lógica testeable y el real queda enchufable sin tocar el
-flujo.
+### related adrs
 
-### 3. Una notificación es un registro inmutable con su estado
+- [[docs/adrs/adr-29-metrics-derivation]] — la única definición de cada número del digest
+- [[docs/adrs/adr-31-advisors-implementation]] — regla 4, el gate mock/real por DEBUG
+- [[docs/adrs/adr-30-market-prices-connectors]] — regla 7, el aislamiento por ítem del comando
+- [[docs/adrs/adr-24-feedlot-domain]] — regla 3, el registro inmutable
 
-`Notification` guarda `client`, `channel`, `to_address`, `subject`, `body`, y un
-`status` ∈ {`pending`, `sent`, `failed`} con su `error` y `sent_at`. Se crea y se
-lee — list/retrieve/create, sin update ni destroy (adr-24 regla 3). Un reintento es
-una notificación nueva, no editar la anterior.
+### related files
 
-*Por qué:* el registro de qué se mandó, a quién y con qué resultado tiene que ser
-auditable; sobrescribir el estado perdería el historial de intentos.
-
-### 4. Notificar no toca el ledger ni actúa sobre el dominio
-
-`notifications` es read-only sobre los datos del cliente: lee métricas, arma texto,
-manda. No postea asiento, no cambia estado de dominio. Es una capa de salida, no un
-actuador (misma postura que `feedyard`/adr-33 respecto del cobro).
-
-*Por qué:* mandar un resumen es informar, no operar. Un solo camino de cobro sigue
-siendo el ledger vía `feed` (adr-25).
-
-## Consecuencias
-
-- El backend entra solo por [[API]] (adr-03) y nace por el flujo [[TDD]] (adr-07).
-- `WHATSAPP_TOKEN` y `WHATSAPP_PHONE_NUMBER_ID` entran en [[VARIABLES]] antes de
-  leerse ([[adr-03-api-and-backend]] regla 7); sólo los lee `WhatsAppSender`, nunca
-  el mock. No son secretos en git — viven en `.env` local o Secrets Manager.
-- El comando `send_weekly_digests` arma y manda por cliente; una falla de envío de un
-  cliente no frena a los demás (misma disciplina de aislamiento que `ingest_prices`).
-- Cualquier cambio a las reglas 1–4 es semántico y DEBE superseder este ADR
-  ([[adr-00-adr-doctrine]] regla 4).
+- [[docs/VARIABLES]] — `WHATSAPP_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID`
+- [[docs/FEEDLOT-DATA-MODEL]] — `Notification`
+- [[docs/API]] — las rutas de notificaciones

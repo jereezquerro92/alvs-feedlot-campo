@@ -4,7 +4,7 @@
      LIVE-DOC:END -->
 
 <!--
-  Rung 3 of the interactivity ladder (docs/bdds/bdd-06-profile-theming.md):
+  Rung 3 of the interactivity ladder:
   five continuously-varying, client-owned controls that must repaint the
   page's CSS custom properties before any server round trip. Mode uses
   ThemeModeToggle ([[MELT-UI]]); bgPreset uses a second melt/builders
@@ -103,7 +103,7 @@
 
   const draftBlob = $derived.by(buildDraftBlob);
 
-  // Live preview (bdd-06 "Live preview before save"): every control change
+  // Live preview ("Live preview before save"): every control change
   // repaints the page immediately, client-local — no request fires here.
   $effect(() => {
     applyTheme(draftBlob);
@@ -146,7 +146,7 @@
       const data = (await res.json()) as Me;
       const confirmed = sanitizeThemeConfig(data.theme_config);
       saved = snapshotFromConfig(confirmed);
-      // Cookie mirror fires only on this confirmed 200 (bdd-06's
+      // Cookie mirror fires only on this confirmed 200 (the feature's
       // error-handling clause) — never speculatively from the live-preview
       // effect above.
       writeThemeCookie(confirmed);

@@ -1,15 +1,11 @@
 ---
-created: '2026-07-14'
-status: active
-tags:
-- harness
-- workflow
-- development-loop
-- bdd
-- tdd
-- api
 title: DEVELOPMENT-LOOP
 type: reference
+category: harness
+use_case: starting any change — the sequence and the tool at each step
+created: 2026-07-14
+modified: 2026-08-02
+tags: [doc, harness, workflow, development-loop, tdd, api]
 ---
 
 > [!important] This file owns the loop — definition and operational rendering
@@ -24,7 +20,7 @@ A general definition, not a rigid script; [[adr-07-development-flow]] gives it f
 
 **The development loop:**
 
-`idea → user-facing? → [[BDD]] → … → needs backend? → enter through [[API]]`
+`idea → user-facing? → agreed in the issue → … → needs backend? → enter through [[API]]`
 
 The backend zone is entered only through [[API]]:
 
@@ -41,8 +37,8 @@ The checkpoint is what defines the loop: the backend zone is exited only when [[
 
 **New user-facing feature:**
 
-`[[BDD]] → backend half → [[TDD]] → …`
-`         → frontend half → tests per [[FRONTEND]] → implementation`
+`issue ([[GH]]) → backend half → [[TDD]] → …`
+`               → frontend half → tests per [[FRONTEND]] → implementation`
 
 Both are active: every gate binds now, wherever its subject exists ([[adr-07-development-flow]] rule 6). The sections below render each one step by step.
 
@@ -93,8 +89,8 @@ The master loop, gated by [[adr-07-development-flow]]. Its ladder decision resol
 flowchart TD
     I(["Idea"]) --> UF{"User-facing?"}
     UF -->|no| BE["Backend zone — see §2"]
-    UF -->|yes| BDD["BDD entry in docs/bdds/<br/>author: obsidian-markdown"]
-    BDD --> LAD{"Interactivity ladder<br/>decided in the BDD"}
+    UF -->|yes| SPEC["Behavior agreed in the issue<br/>author: obsidian-markdown"]
+    SPEC --> LAD{"Interactivity ladder<br/>criteria: HTMX"}
     LAD -->|server-owned state| HTMX["HTMX fragment: Django template + hx-attrs"]
     LAD -->|rich client state| ISL["Svelte island — skill: kdx-astro-7"]
     HTMX --> NB{"Needs backend?"}
@@ -111,7 +107,7 @@ flowchart TD
     GUARD --> PR
 ```
 
-SSOTs per step: [[BDD]] · [[FRONTEND]] · [[DESIGN-SYSTEM]] · [[MELT-UI]] · [[HTMX]] · [[API]] · verification in [[FRONTEND]]/[[BDD]] · [[adr-17-live-doc-backlinks]] · guardians [[adr-11-guardians]] · [[GH]].
+SSOTs per step: [[GH]] · [[FRONTEND]] · [[DESIGN-SYSTEM]] · [[MELT-UI]] · [[HTMX]] · [[API]] · verification in [[FRONTEND]] · [[adr-17-live-doc-backlinks]] · guardians [[adr-11-guardians]] · [[GH]].
 
 ## 2 · Use case — a new backend endpoint
 
@@ -167,5 +163,5 @@ SSOTs per step: [[adr-00-adr-doctrine]] · [[adr-18-markdown-vault-mcp]] · [[ad
 ## Variants
 
 - **Frontend-only** change → the `Needs backend? = no` branch of §1; [[API]] is never entered. The `bun run build` gate still runs headless before merge (see the §1 callout): this branch carries the fewest gates, so the bundle is where a broken import or SSR error surfaces.
-- **Infra / AWS** change → the shape of §2 with the `kdx-aws-*` skills in place of [[API]]/[[TDD]]; the resource row lands in [[INVENTORY]] and carries the mandatory tag set ([[INFRASTRUCTURE]], [[adr-12-ephemeral-run]]).
+- **Infra / AWS** change → the shape of §2 with the `kdx-aws-*` skills in place of [[API]]/[[TDD]]; the resource row lands in [[INVENTORY]] and carries the mandatory tag set ([[INFRASTRUCTURE]]).
 - **Smoke tests** are `kodex`-only and interactive; an agent routine that reaches a smoke step stops and defers ([[AGENTS]]).

@@ -4,7 +4,7 @@
      LIVE-DOC:END -->
 
 <!--
-  Quick toggle housed in SessionBadge's ☰ menu (docs/bdds/bdd-07-melt-theme-sitewide.md):
+  Quick toggle housed in SessionBadge's ☰ menu:
   cookie-only mode persistence, deliberately decoupled from `/profile`'s ThemeCard, which
   is the only control that writes `theme_config` via `PATCH /api/me/`. Wraps
   ThemeModeToggle ([[MELT-UI]]) with zero edits to it — every other themed

@@ -1,9 +1,11 @@
 ---
 title: FRONTEND
 type: reference
-status: active
+category: frontend
+use_case: writing or changing Astro SSR + Svelte code
 created: 2026-07-10
-tags: [harness, frontend]
+modified: 2026-08-02
+tags: [doc, harness, frontend]
 ---
 
 # FRONTEND
@@ -25,7 +27,7 @@ Rules for the frontend service: Astro SSR + Svelte islands, one of the two Farga
 
 ## Toolchain
 
-bun is mandatory for everything ([[adr-04-frontend-and-design-system]]): install, run, scripts, tests, and the lockfile (`bun.lock`) all go through bun. **npm is PROHIBITED. Node is not part of the stack.** The SSR build runs under bun itself, and the container base image is `oven/bun`. Why: one runtime end to end removes a whole class of "works locally, breaks in the image" drift.
+Everything JavaScript goes through bun ([[adr-04-frontend-and-design-system]] rule 2): install, run, scripts, tests and the lockfile (`bun.lock`). The SSR build runs under bun itself and the container base image is `oven/bun`. Why one runtime end to end: it removes a whole class of "works locally, breaks in the image" drift.
 
 > [!note] Adapter caveat
 > The Astro node adapter officially targets Node. bun compatibility is therefore re-verified on every Astro major upgrade. Node LTS is the documented fallback ONLY if a real incompatibility surfaces — never a convenience choice.
@@ -38,15 +40,16 @@ Escalate in order, never skip a rung ([[adr-04-frontend-and-design-system]]):
 2. **[[HTMX]]** for dynamic fragments — hypermedia over the wire; **Django** returns the HTML (Astro only loads the client and places `hx-*`).
 3. **A Svelte island** ONLY when genuine client-side state demands it.
 
-Escalating this ladder is a per-feature decision made in [[BDD]]. Why: every rung up adds client-side complexity that the server cannot see or test.
+Escalating this ladder is a per-feature decision, made against [[HTMX]]'s criteria. Why: every rung up adds client-side complexity that the server cannot see or test.
 
 HTMX is **in the stack** (pin in [[REQUIREMENTS]]). The client is bundled with bun and loaded once in the root layout. The HTMX-vs-Svelte decision criteria and the Django-as-producer doctrine are owned by [[HTMX]].
 
 ## Testing
 
 - Frontend tests live HERE and are explicitly EXCLUDED from [[TDD]] — that flow is backend-only.
-- The regime is laxer: tests are created per-feature as part of the [[BDD]] flow, using bun's built-in test runner.
+- The regime is laxer: tests are created per feature alongside its implementation, using bun's built-in test runner.
 - Coverage shape: component tests for Svelte islands, smoke tests for SSR routes. No more is required.
+- **Browser verification is the last layer and it uses a real browser.** A feature's user flows are replayed against the rendered UI — never against components or API responses — with Chromium driven over the Chrome DevTools Protocol at `127.0.0.1:9222` ([[AGENTS]]). It is a `kodex`-only interactive action and never runs in an agent context.
 
 ### Verification layers — `check` ≠ `build` ≠ `smoke`
 
@@ -72,6 +75,6 @@ Three distinct gates catch different failures; a change runs each where it appli
 
 ## Localization and caching
 
-- Rendered text may be localized; all code, keys, and variables stay English. Rules in [[LOCALIZATION]].
+- Rendered text is localized through the i18n layer below; a message key is English and its value is the rendering ([[adr-01-glossary-and-localization]] rule 6, [[LOCALIZATION]]).
 - **Rendering context — the i18n layer.** `frontend/src/i18n/` is the catalog module: locale config (`config.ts`), one message file per locale under `messages/`, and a render helper `t(key, locale?)` exported from `i18n/index.ts`. A `.astro` page under `src/pages/` imports it with a relative path (`import { t } from "../i18n";`) and calls `t("some_key")` in its frontmatter or template. The output is a plain string — rung 1 of the interactivity ladder ([[adr-04-frontend-and-design-system]]): no client JS, no HTMX round trip, no island, just server-rendered text. Locale identity itself comes from Astro's native `i18n` config in `astro.config.mjs` (`defaultLocale`, `locales`), which also powers `Astro.currentLocale` and the `astro:i18n` helpers for any future locale-aware routing — the catalog module never re-implements URL/locale parsing itself.
-- Caching of SSR responses follows [[CACHE]]. Redis is prohibited; [[CACHE]] owns all caching decisions.
+- Caching of SSR responses follows [[CACHE]], which owns every caching decision.

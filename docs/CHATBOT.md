@@ -1,9 +1,11 @@
 ---
 title: CHATBOT
 type: reference
-status: active
+category: backend
+use_case: building or changing the router surface
 created: 2026-07-14
-tags: [harness, chatbot, router, ai, security]
+modified: 2026-08-02
+tags: [doc, harness, chatbot, router, ai, security]
 ---
 
 # CHATBOT

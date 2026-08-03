@@ -1,96 +1,51 @@
 ---
 title: adr-41-payment-allocation
 type: adr
-status: active
+category: backend
+use_case: imputar un pago contra cargos, leer el pendiente por cargo, corregir una imputación equivocada
 created: 2026-07-25
+modified: 2026-08-02
 tags: [adr, feedlot, ledger, payment, allocation, imputation, phase-4a]
 ---
 
 # ADR-41 — Imputación de pagos a cargos
 
-**Estado:** activo (Fase 4a)
-**Contexto:** implementa el ítem que [[adr-25-account-ledger]] regla 7 dejó
-explícitamente diferido ("Explicit payment-to-charge imputation, if needed, is a
-later addition with its own model — never by mutating entries"). Es una **adición**,
-no una supersesión: la regla 7 sigue siendo verdad — la imputación llega con su
-propio modelo y jamás muta un asiento. Reglas solamente; las entidades viven en
-[[FEEDLOT-DATA-MODEL]].
+## CONTEXT
 
-## Contexto
+> Qué cargos saldó un pago. El crédito ya movió el saldo total cuando se posteó; la imputación es una anotación aparte que clasifica ese crédito contra los débitos, sin tocar ni un asiento.
 
-El ledger (adr-25) registra débitos (cargos) y créditos (pagos) y deriva el saldo
-total como Σ débitos − Σ créditos. Un `Payment` postea un crédito que baja el saldo
-**total**, pero hasta acá nada dice *qué cargos* saldó ese pago. La regla 7 previó
-que si algún día se necesita esa imputación, entra con su propio modelo, sin tocar
-los asientos. Esta fase la construye.
+## ASSERTIONS
 
-## Decisiones
+1. `PaymentAllocation` liga un `Payment` a un `LedgerEntry` débito con un `amount`. No es un asiento, no postea al ledger y no mueve el saldo total —ese ya se movió con el crédito del pago ([[adr-25-account-ledger]] regla 7)—. Ningún `LedgerEntry` se edita ni se borra ([[adr-25-account-ledger]] regla 1).
+2. `impute_payment` rechaza en el servicio: un `entry` que no sea un débito de la misma cuenta del pago, un `amount` no positivo, una asignación que haga que lo imputado de un pago supere su monto, y una que haga que lo imputado contra un débito supere el suyo.
+3. La política por defecto es FIFO: `auto_impute_payment_fifo` imputa contra los débitos pendientes del más viejo al más nuevo, hasta agotar el pago o los cargos. Una imputación explícita —una lista de `(entry, amount)`— tiene prioridad cuando el operador decide otro reparto.
+4. `outstanding_charges(account)` deriva por cada débito cuánto se le imputó y cuánto queda pendiente. No se guarda un campo `paid` ni `outstanding` en `LedgerEntry`, misma disciplina que el saldo ([[adr-25-account-ledger]] regla 2).
+5. `PaymentAllocation` expone `list`/`retrieve`/`create`, sin `update` ni `destroy` ([[adr-24-feedlot-domain]] regla 3). Una imputación equivocada se corrige con otra asignación, nunca editando la fila.
+6. Imputar no cambia el saldo total: es clasificar un crédito ya posteado, no cobrar de nuevo. Un cliente con saldo cero y todos sus cargos imputados y otro con saldo cero y nada imputado deben exactamente lo mismo.
 
-### 1. La imputación es su propio modelo y NO toca ningún asiento
+## FORBIDDEN
 
-`PaymentAllocation` liga un `Payment` a un `LedgerEntry` **débito** con un `amount`.
-No es un `LedgerEntry`, no postea al ledger y no mueve el saldo total — ese ya se
-movió cuando el pago posteó su crédito (adr-25 regla 7). Es una anotación de
-bookkeeping que dice "de este pago, tanto salda este cargo". Ningún `LedgerEntry`
-se edita ni se borra jamás (adr-25 regla 1, intacta).
+- **NEVER** bajar el `amount` de un débito al cobrarlo (regla 1). Reescribe el pasado, que es justo lo que la doctrina del ledger prohíbe.
+- **NEVER** imputar entre cuentas distintas (regla 2). El pago de un cliente no salda el cargo de otro.
+- **NEVER** sobre-imputar un pago ni un cargo (regla 2). Un pago no puede saldar más de lo que es, ni un cargo quedar saldado por encima de su valor.
+- **NEVER** guardar un campo `paid` u `outstanding` (regla 4). Se desincroniza de las asignaciones en cuanto se agrega una.
+- **NEVER** editar una asignación (regla 5). La corrección es otra asignación.
 
-*Por qué:* el saldo total es una cosa (Σ débitos − Σ créditos, adr-25 regla 2) y la
-imputación a cargos es otra. Mezclarlas —por ejemplo bajando el `amount` de un
-débito al cobrarlo— reescribiría el pasado, exactamente lo que la doctrina del ledger
-prohíbe.
+## REJECTED
 
-### 2. La asignación se valida, nunca sobre-imputa
+- **Imputar mutando el débito** — descontar del cargo lo que se va pagando. Rechazado de plano por la regla 1: sería el ledger reescribiéndose.
+- **Dejar la política por defecto sin fijar** — que cada llamador elija su orden de imputación. Rechazado por la regla 3: fijar FIFO en el ADR evita que aparezcan varias políticas implícitas y no auditables.
+- **La contra-imputación explícita en este cut** — un modo de anular una asignación con un monto negativo dedicado. Postergado: esta fase entrega la imputación positiva y la corrección entra con su propio cambio.
 
-`impute_payment` rechaza en el **servicio**: un `entry` que no sea un débito de la
-misma cuenta del pago; un `amount` no positivo; una asignación que haga que lo
-imputado de un pago supere su `amount`; o que lo imputado contra un débito supere el
-`amount` del débito. Un `LedgerEntry` y un `Payment` de cuentas distintas no se
-imputan.
+## RELATED
 
-*Por qué:* un pago no puede saldar más de lo que es, ni un cargo puede quedar
-saldado por encima de su valor. La validación vive en el servicio, único punto de
-escritura, para que vista, admin y comando compartan la misma regla.
+### related adrs
 
-### 3. La política por defecto es FIFO; la explícita manda
+- [[docs/adrs/adr-25-account-ledger]] — reglas 1, 2 y 7, el asiento inmutable, el saldo derivado y el pago
+- [[docs/adrs/adr-24-feedlot-domain]] — regla 3, el hecho inmutable
+- [[docs/adrs/adr-29-metrics-derivation]] — regla 4, por qué un pago no es un costo
 
-`auto_impute_payment_fifo` imputa un pago contra los débitos pendientes de la cuenta,
-del más viejo al más nuevo, hasta agotar el pago o los cargos. Es la política por
-defecto y se declara acá (no queda "pendiente de confirmación" como el reparto de
-alimento de adr-25 regla 5). Una imputación explícita —una lista de `(entry, amount)`—
-tiene prioridad y se usa cuando el operador decide otro reparto.
+### related files
 
-*Por qué:* fijar la política por defecto en el ADR evita que cada llamador invente la
-suya. FIFO es la convención contable habitual (el cargo más antiguo se salda primero)
-y es auditable; la explícita cubre el caso en que el negocio quiere otra cosa.
-
-### 4. El pendiente por cargo es una derivación, no un campo
-
-`outstanding_charges(account)` deriva, por cada débito de la cuenta, cuánto se le
-imputó (Σ `PaymentAllocation.amount`) y cuánto queda pendiente (`amount` − imputado).
-No se guarda un campo `paid` ni `outstanding` en `LedgerEntry`.
-
-*Por qué:* misma disciplina que el saldo (adr-25 regla 2): el pendiente se deriva de
-los hechos, nunca se denormaliza como verdad editable. Un campo `paid` mutable se
-desincronizaría de las asignaciones.
-
-### 5. La asignación es un hecho inmutable: se crea y se lee
-
-`PaymentAllocation` expone `list`/`retrieve`/`create` — sin `update` ni `destroy`
-(adr-24 regla 3). Una imputación equivocada se corrige con otra asignación (una
-contra-imputación con `amount` negativo compensa), nunca editando la fila. La
-contra-imputación explícita, si se necesita, es una adición futura con su propio
-cambio — esta fase entrega la imputación positiva.
-
-*Por qué:* misma postura event-sourced del resto del sistema. Un hecho fechado no se
-reescribe.
-
-## Consecuencias
-
-- El backend entra solo por [[API]] (adr-03) y nace por el flujo [[TDD]] (adr-07).
-- `PaymentAllocation` es el único modelo nuevo; `LedgerEntry`, `Payment` y el saldo
-  no se refactorizan. La imputación compone sobre el ledger, no lo reforma.
-- El saldo total del cliente **no cambia** por imputar: imputar es clasificar un
-  crédito ya posteado contra cargos, no cobrar de nuevo. Un cliente con saldo 0 y
-  todos sus cargos imputados, y uno con saldo 0 y nada imputado, deben el mismo total.
-- Cualquier cambio a las reglas 1–5 es semántico y DEBE superseder este ADR
-  ([[adr-00-adr-doctrine]] regla 4).
+- [[docs/FEEDLOT-DATA-MODEL]] — `PaymentAllocation`, `Payment`, `LedgerEntry`
+- [[docs/API]] — las rutas de imputación y de pendiente por cargo

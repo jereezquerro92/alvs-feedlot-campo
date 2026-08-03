@@ -1,9 +1,11 @@
 ---
 title: MELT-UI
 type: reference
-status: active
+category: frontend
+use_case: building a new component and choosing its builder layer
 created: 2026-07-14
-tags: [frontend, melt, design-system]
+modified: 2026-08-02
+tags: [doc, frontend, melt, design-system]
 ---
 
 # MELT-UI
@@ -26,7 +28,7 @@ Melt is not a replacement for shadcn-svelte — it is what you reach for when sh
 
 ## How to create a Melt component
 
-1. **Install**: `bun add melt` ([[FRONTEND]] — bun is the only package manager; npm is prohibited).
+1. **Install**: `bun add melt` ([[FRONTEND]]).
 2. **Choose a method** — Melt ships two:
    - **Builders** — `import { Toggle } from "melt/builders"`; instantiate a class, spread its attribute objects onto your own markup. Full control over the DOM structure.
    - **Components** — `import { Toggle } from "melt/components"`; a render-prop snippet component. Less markup control, faster to wire.
@@ -107,4 +109,4 @@ This doc is the content home for this list; [[adr-04-frontend-and-design-system]
 - you like shadcn's visual style and want to tweak it
 - you're fine using pre-built components
 
-Default posture in this template: Melt-first ([[adr-04-frontend-and-design-system]] r8, [[DESIGN-SYSTEM]]'s component layering). A new component reaches for a Melt builder before considering a vendored shadcn-svelte default; shadcn-svelte is the second choice, reached for when a Melt builder doesn't already cover the needed shape, and a fully custom component is the last resort — decided per-feature, same spirit as the [[HTMX]] ladder decision in [[BDD]].
+Default posture in this template: Melt-first ([[adr-04-frontend-and-design-system]] r8, [[DESIGN-SYSTEM]]'s component layering). A new component reaches for a Melt builder before considering a vendored shadcn-svelte default; shadcn-svelte is the second choice, reached for when a Melt builder doesn't already cover the needed shape, and a fully custom component is the last resort — decided per feature, same spirit as the [[HTMX]] ladder decision.

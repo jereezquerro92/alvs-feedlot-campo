@@ -262,7 +262,7 @@ def test_rds_spec() -> None:
         f"RDS PostgreSQL {inst['EngineVersion']} db.t4g.micro "
         "single-AZ, not public"
     )
-    skip("RDS live connection — EICE tunnel not automated (adr-12 / BD.md)")
+    skip("RDS live connection — EICE tunnel not automated (BD.md)")
 
 
 def test_cost_no_nat() -> None:

@@ -8,7 +8,7 @@ import {
   sanitizeThemeConfig,
 } from "../src/lib/theme";
 
-// Unit coverage for the theme contract's DOM-free helpers (bdd-06:
+// Unit coverage for the theme contract's DOM-free helpers (
 // "Persistence across login — no flash", "Invalid custom value is
 // rejected"). Mirrors docs/API.md's PATCH /api/me/ `theme_config`
 // validation exactly — these are the same rules Django enforces
@@ -116,7 +116,7 @@ describe("computeThemeSSRAttrs", () => {
     // even though DEFAULTS is now dark/melt — resolving by `=== "dark"` /
     // `=== "melt"` equality instead of by presence (`??`) would silently
     // discard an explicitly-saved light/default choice back to the new
-    // DEFAULTS, regressing bdd-06's user-configurable-theme guarantee.
+    // DEFAULTS, regressing the user-configurable-theme guarantee.
     expect(computeThemeSSRAttrs({ mode: "light" }).htmlClass).toBe("");
     expect(computeThemeSSRAttrs({ bgPreset: "default" }).dataBgPreset).toBe("default");
   });

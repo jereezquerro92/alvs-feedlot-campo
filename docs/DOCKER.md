@@ -1,9 +1,11 @@
 ---
 title: DOCKER
 type: reference
-status: active
+category: devops
+use_case: running or changing the local Compose stack
 created: 2026-07-10
-tags: [harness, docker, local]
+modified: 2026-08-02
+tags: [doc, harness, docker, local]
 ---
 
 # DOCKER — local containers
@@ -13,19 +15,19 @@ Local Docker doctrine for this template. Cloud layout stays in [[INFRASTRUCTURE]
 > [!note] Stage now
 > Stage 3 landed: the `backend/` and `frontend/` app trees exist and their services run from this file. Local dev **bind-mounts the source and runs dev servers with hot reload** (see [[#Live reload local dev]]) — code edits reflect with no rebuild. Run `db` alone via its profile when only Postgres is needed.
 
-## Target layout (when apps exist)
+## Layout
 
 ```
-backend/                 Django 6 + DRF — image build context (stage 3)
+backend/                 Django 6 + DRF — image build context
   Dockerfile
-frontend/                Astro 7 SSR — image build context (stage 3)
+frontend/                Astro 7 SSR — image build context
   Dockerfile
-compose.yaml             ONLY local orchestrator (repo root) — exists now
+compose.yaml             ONLY local orchestrator (repo root)
 .env.example             committed local name template
 ```
 
 - **One compose file at the repo root.** No per-app compose as the template default.
-- **Dockerfiles will live next to each app** — same boundary as two ECR images / two Fargate services.
+- **Dockerfiles live next to each app** — same boundary as two ECR images / two Fargate services.
 - Path names **`backend/`** and **`frontend/`** are canonical ([[GLOSSARY]]) even before the directories exist.
 
 ## Services
@@ -46,13 +48,13 @@ docker compose --profile db up -d
 
 # Config check
 docker compose --profile db config --quiet
-# also valid profile names reserved for later:
+# full stack:
 docker compose --profile full config --quiet
 ```
 
 Stop / wipe: `docker compose --profile db down -v`.
 
-When stage 3 lands, the same file grows `backend` / `frontend` services; preferred full stack becomes:
+The preferred full stack:
 
 ```bash
 docker compose --profile full up --build
@@ -119,7 +121,6 @@ Local dev is **split-origin**: frontend `http://localhost:4321`, backend `http:/
 
 - Not production deploy (Fargate + ECR — [[INFRASTRUCTURE]]).
 - Not Redis ([[CACHE]]).
-- Not a reason to scaffold Django/Astro early — app code is stage 3.
 
 ## Verification
 

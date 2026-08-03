@@ -1,9 +1,11 @@
 ---
 title: INVENTORY
 type: reference
-status: active
+category: devops
+use_case: checking what is provisioned, or tearing it down
 created: 2026-07-11
-tags: [infrastructure, aws, inventory, ephemeral]
+modified: 2026-08-02
+tags: [doc, infrastructure, aws, inventory, ephemeral]
 ---
 
 # INVENTORY
@@ -11,11 +13,11 @@ tags: [infrastructure, aws, inventory, ephemeral]
 > [!important] This project now owns real, provisioned AWS resources (since 2026-07-31)
 > `alvs-feedlot-campo` provisioned its own AWS footprint in account `789650504128` / `us-east-1` on 2026-07-31 — its own ECR repos, RDS instance, IAM roles, secrets, ECS task defs/services, target groups, listener rules, and Route 53 record. That real "Provisioned resources (`feedlot-campo`)" section is below, distinct from the template's inherited reference run further down this file. The template's `astro-drf-aws` rows are **not** this project's resources and are kept only because this repo was spawned from that template and inherited the file with the code ([[adr-48-derived-project-deploy-identity]] rule 3) — they are never a fallback deploy target for this project.
 >
-> The deploy-role/OIDC trust decision is now made (2026-08-02, [[GH]]): `gha-deploy-prod` is reused, with an additive trust entry for `kodexArg/alvs-feedlot-campo` (the project's owning repo as of the same date, [[adr-08-github-and-git]] rule 11). All 11 required `deploy-prod.yml` repository variables are set on that repo; `deploy-prod.yml`'s preflight now passes rather than hard-failing ([[adr-48-derived-project-deploy-identity]] rules 1–2, satisfied).
+> The deploy-role/OIDC trust decision is now made (2026-08-02, [[GH]]): `gha-deploy-prod` is reused, with an additive trust entry for `kodexArg/alvs-feedlot-campo` (the project's owning repo as of the same date, recorded in [[adr-08-github-and-git]]'s REJECTED section). All 11 required `deploy-prod.yml` repository variables are set on that repo; `deploy-prod.yml`'s preflight now passes rather than hard-failing ([[adr-48-derived-project-deploy-identity]] rules 1–2, satisfied).
 
 ## Provisioned resources (`feedlot-campo`) — this project's own footprint
 
-Account `789650504128`, region `us-east-1`. Created 2026-07-31 in a single batch (steward dispatch); all rows below carry the mandatory tag set `project=feedlot-campo`, `env=prod` and the `lifecycle` value shown ([[adr-12-ephemeral-run]] rule 3, [[adr-48-derived-project-deploy-identity]] rule 6). `lifecycle=persistent` marks a resource of this project's own standing production footprint (not the template's `ephemeral`-and-torn-down reference run posture) — these are meant to serve production, not to be torn down at the end of a reference exercise.
+Account `789650504128`, region `us-east-1`. Created 2026-07-31 in a single batch (steward dispatch); all rows below carry the mandatory tag set `project=feedlot-campo`, `env=prod` and the `lifecycle` value shown (tag discipline owned by [[INFRASTRUCTURE]], [[adr-48-derived-project-deploy-identity]] rule 6). `lifecycle=persistent` marks a resource of this project's own standing production footprint (not the template's `ephemeral`-and-torn-down reference run posture) — these are meant to serve production, not to be torn down at the end of a reference exercise.
 
 > [!note] Two divergences from the original plan, discovered by reading live sibling state, not guessed
 > 1. **RDS is dedicated**, by explicit owner directive (2026-07-31) — see [[adr-49-feedlot-campo-dedicated-rds]] and [[BD]]. This diverges from `docs/BD.md`'s general shared-instance-per-env prescription; that same discovery found the sibling `alvs-financial-gateway` is itself on the shared legacy `alvs-prod-pg`, contradicting the plan's premise that siblings uniformly have dedicated instances.
@@ -73,11 +75,11 @@ Never destroyed on this project's behalf; only this project's attachment to each
 
 - **`gha-deploy-prod` IAM role** — additive trust-policy entry `repo:kodexArg@47777332/alvs-feedlot-campo@1320290142:ref:refs/heads/prod`; no existing entry touched.
 - **12 GitHub Actions repository variables** — all set on `kodexArg/alvs-feedlot-campo`: `AWS_REGION`, `AWS_ACCOUNT_ID`, `DEPLOY_ROLE_ARN` (`arn:aws:iam::789650504128:role/gha-deploy-prod`), `PROJECT_SLUG`, `CLUSTER`, `ECR_REGISTRY`, `PUBLIC_SUBNET_A`/`B`, `TASK_SG_ID`, `SECRET_DJANGO`, `SECRET_DB`, `SECRET_COGNITO`. `SECRET_MSGRAPH` is deliberately unset (no M365 Graph integration wired).
-- Full decision record: [[GH]], [[adr-08-github-and-git]] rule 11.
+- Full decision record: [[GH]], [[adr-08-github-and-git]] (REJECTED — the 2026-08-02 ownership rotation).
 
 ## Template reference run (`astro-drf-aws`) — inherited, not ours
 
-The committed resource inventory for the `astro-drf-aws` stage-3 run. Every AWS resource this run touches has a row here, updated **in the same batch** as its creation ([[adr-12-ephemeral-run]] Article III). Phase E teardown executes from the `ephemeral` rows and verifies against the Resource Groups Tagging API; `shared` rows are never destroyed.
+The committed resource inventory for the `astro-drf-aws` stage-3 run. Every AWS resource this run touches has a row here, updated **in the same batch** as its creation ([[INFRASTRUCTURE]]). Phase E teardown executes from the `ephemeral` rows and verifies against the Resource Groups Tagging API; `shared` rows are never destroyed.
 
 - Account `789650504128`, region `us-east-1`, profile `kodex` ([[INFRASTRUCTURE]]).
 - `shared` = pre-existing ALVS resource, never mutated beyond this project's own attachments; `ephemeral` = created by this run, carries the mandatory tag set (`project=astro-drf-aws`, `env=prod`, `lifecycle=ephemeral`) and dies in Phase E.
@@ -136,7 +138,7 @@ Filled at B2, one row per resource in the same batch as its creation; each carri
 | ACM cert `astro-drf-aws.grupoalvs.com` (+SAN `origin-astro-drf-aws.grupoalvs.com`) | `arn:aws:acm:us-east-1:789650504128:certificate/26dc1f46-9e54-4196-9d00-ecaedfd56873` — ISSUED | ephemeral | B2.7 (2026-07-12) — the `origin-astro-drf-aws.grupoalvs.com` SAN is unused as of 2026-07-12 (issue #33 resolved: no CDN, so no origin host is needed); kept as-is, not reissued, since it's the same cert validating the live host name |
 | Route 53 record — ACM validation CNAME (host) | `_67bb9ac886bb6b2a2ff29012394bad6b.astro-drf-aws.grupoalvs.com` → `_3796774987649ffc5fb5072e07bf37f0.jkddzztszm.acm-validations.aws` | shared-attachment | B2.7 (2026-07-12) |
 | Route 53 record — ACM validation CNAME (origin) + `origin-astro-drf-aws.grupoalvs.com` CNAME → `alvs-prod-alb` | destroyed | destroyed 2026-07-12 | B2.7 (2026-07-12) — removed 2026-07-12: CloudFront permanently out of scope (issue #33), so the origin host and its validation record serve no purpose |
-| Route 53 A-alias `astro-drf-aws.grupoalvs.com` → `alvs-prod-alb` | zone `Z0653783OJDM9CPZYK6Z` | shared-attachment | 2026-07-12 — permanent routing per the owner's ruling on issue #33 (adr-02 r5 / adr-12): this template ships without CloudFront; private S3 + Django-issued presigned URLs is the media architecture. No longer "interim" |
+| Route 53 A-alias `astro-drf-aws.grupoalvs.com` → `alvs-prod-alb` | zone `Z0653783OJDM9CPZYK6Z` | shared-attachment | 2026-07-12 — permanent routing per the owner's ruling on issue #33 (adr-02 rule 5): this template ships without CloudFront; private S3 + Django-issued presigned URLs is the media architecture. No longer "interim" |
 | CloudFront OAC `astro-drf-aws-media-oac` | `E38F7J8Z7HXKBG` | destroyed 2026-07-12 | B2.7 (2026-07-12) — created for the media distribution that never shipped; deleted 2026-07-12 when issue #33 resolved CloudFront permanently out of scope |
 | Target group `tg-astro-drf-aws-backend-prod` | `arn:…:targetgroup/tg-astro-drf-aws-backend-prod/c6a103483a928fcc` (HTTP 8000, hc `/api/health/`) | ephemeral | B2.8 (2026-07-12) — ALB `:443` rule prio 110 (host + `/api/*` `/admin/*` `/static/*` `/media/*`) added interim (2026-07-12, issue #33 ruling, mirrors `sroa` 100/101); rule prio 109 (host + `/accounts/*`) added 2026-07-12 (issue #37) so the Cognito login/callback surface reaches the backend instead of falling through to the frontend |
 | Target group `tg-astro-drf-aws-frontend-prod` | `arn:…:targetgroup/tg-astro-drf-aws-frontend-prod/12fc282614fc74ad` (HTTP 4321, hc `/healthz`) | ephemeral | B2.8 (2026-07-12) — ALB `:443` rule prio 111 (host) added interim (2026-07-12, issue #33 ruling) |
@@ -149,7 +151,7 @@ Filled at B2, one row per resource in the same batch as its creation; each carri
 | Security group `alvs-prod-bedrock-vpce-sg` | not yet created — see note below | **planned** | issue #95 (2026-07-14) — ingress tcp/443 from `sg-027b8d1f3fe41007a` (`alvs-prod-task-sg`) only |
 
 > [!warning] Not provisioned live — owner action required (issue #95)
-> This worker's AWS credentials resolve to account `393022986836` (`arn:aws:iam::393022986836:user/pykodex`), not the reference run's account `789650504128`. Per [[adr-12-ephemeral-run]] rule 2 ("born dead", never faked), the endpoint and its SG are **prepared, not created**. Run `scripts/provision_bedrock_endpoint.sh` with credentials for account `789650504128` (profile `kodex`, per this file's header) to create both resources; then flip these two rows from `planned` to `ephemeral` with the returned `vpce-*`/`sg-*` IDs, in the same batch as creation, per adr-12 rule 5.
+> This worker's AWS credentials resolve to account `393022986836` (`arn:aws:iam::393022986836:user/pykodex`), not the reference run's account `789650504128`. Per [[INFRASTRUCTURE]]'s born-dead discipline (never faked), the endpoint and its SG are **prepared, not created**. Run `scripts/provision_bedrock_endpoint.sh` with credentials for account `789650504128` (profile `kodex`, per this file's header) to create both resources; then flip these two rows from `planned` to `ephemeral` with the returned `vpce-*`/`sg-*` IDs, in the same batch as creation, per [[INFRASTRUCTURE]].
 
 > [!note] Permanent no-CDN routing (issue #33, resolved)
-> Issue #33 is resolved as a permanent architecture decision, not an interim workaround: this template ships without CloudFront (adr-02 r5 / adr-12). `astro-drf-aws.grupoalvs.com` A-aliases directly to `alvs-prod-alb` (rows above), HTTPS terminated at the ALB with the existing ACM cert, rule prio 110/111 routing to the backend/frontend target groups. Media stays private S3 with Django-issued presigned URLs; the CloudFront OAC created during B2.7 was deleted, and the unused origin host + its Route 53 records were removed. Verified 2026-07-12: DNS resolves, `http` → 301 `https`, `https /` and `/api/health/` → 503 `awselb` (expected — target groups are empty until the ECS services deploy). No reversal is planned.
+> Issue #33 is resolved as a permanent architecture decision, not an interim workaround: this template ships without CloudFront (adr-02 rule 5). `astro-drf-aws.grupoalvs.com` A-aliases directly to `alvs-prod-alb` (rows above), HTTPS terminated at the ALB with the existing ACM cert, rule prio 110/111 routing to the backend/frontend target groups. Media stays private S3 with Django-issued presigned URLs; the CloudFront OAC created during B2.7 was deleted, and the unused origin host + its Route 53 records were removed. Verified 2026-07-12: DNS resolves, `http` → 301 `https`, `https /` and `/api/health/` → 503 `awselb` (expected — target groups are empty until the ECS services deploy). No reversal is planned.

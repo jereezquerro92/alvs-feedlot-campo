@@ -1,9 +1,11 @@
 ---
 title: HARNESS
 type: reference
-status: active
+category: harness
+use_case: adding, removing or locating a vendored skill or agent
 created: 2026-07-13
-tags: [harness, skills, agents, ssot]
+modified: 2026-08-02
+tags: [doc, harness, skills, agents, ssot]
 ---
 
 # HARNESS — the skills and agents this template requires

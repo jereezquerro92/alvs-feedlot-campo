@@ -75,7 +75,7 @@ button:disabled,
   --warning-foreground: oklch(0.25 0.030 85);
   --negative: oklch(0.577 0.245 27.325);
   --negative-foreground: oklch(0.99 0 0);
-  /* CornerNavTriangle (bdd-11): a fixed near-black glyph color, intentionally
+  /* CornerNavTriangle: a fixed near-black glyph color, intentionally
      NOT --primary-foreground (that pair is tuned near-white in light mode,
      the wrong contrast direction for a black icon on the orange --primary
      fill). Same near-black value in both themes — the orange fill is what

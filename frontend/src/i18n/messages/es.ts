@@ -447,7 +447,7 @@ export const es = {
   feedlot_schedule_enroll_desc:
     "Inscribí un animal o lote en un plan a partir de una fecha. No genera cargo.",
 
-  // Data-entry (bdd-13)
+  // Data-entry
   feedlot_load_cta: "Cargar datos",
   feedlot_load_title: "Cargar datos",
   feedlot_load_intro:

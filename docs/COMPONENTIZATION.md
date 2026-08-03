@@ -1,9 +1,11 @@
 ---
 title: COMPONENTIZATION
 type: reference
-status: active
+category: frontend
+use_case: deciding where a piece of UI lives and which layer it resolves to
 created: 2026-07-15
-tags: [frontend, componentization, design-system]
+modified: 2026-08-02
+tags: [doc, frontend, componentization, design-system]
 ---
 
 # COMPONENTIZATION

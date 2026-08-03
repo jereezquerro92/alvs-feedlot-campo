@@ -1,9 +1,11 @@
 ---
 title: TRIAGE-TEAMMATES
 type: reference
-status: active
+category: harness
+use_case: running the triage-and-fix party
 created: 2026-07-17
-tags: [harness, workflow, agents, triage]
+modified: 2026-08-02
+tags: [doc, harness, workflow, agents, triage]
 ---
 
 # TRIAGE-TEAMMATES — the party that hunts an issue
@@ -229,8 +231,8 @@ would leave N half-hunts.
 This workflow is generic. **This repo's mandatory gates are not in it**, and no node enforces
 them:
 
-- **No [[BDD]] or [[TDD]] entry is written.** [[adr-07-development-flow]] rule 1 requires the
-  BDD entry to exist before the code does; [[adr-03-api-and-backend]] rule 2 requires
+- **No [[TDD]] entry is written.** [[adr-07-development-flow]] rule 1 requires the behavior to
+  be agreed before the code exists; [[adr-03-api-and-backend]] rule 2 requires
   `plan → API → TDD → models.py`. No schema field carries either.
 - **No guardian is engaged.** [[adr-11-guardians]] rule 3 — *guardians are sought, not only
   triggered*. Seven `agent()` calls and none is a guardian.
