@@ -81,3 +81,76 @@ def test_feeding_requires_exactly_one_target():
     assert not FeedingEventSerializer(data={**base, "animal": animal.id, "lot": lot.id}).is_valid()
     # Exactly one target set.
     assert FeedingEventSerializer(data={**base, "lot": lot.id}).is_valid()
+
+
+def test_client_stock_shortfall_splits_and_charges_remainder():
+    """adr-25 rule 5: available from client (uncharged), remainder own + debit."""
+    client, feed, lot = _fixtures()
+    register_delivery(client=client, feed_type=feed, quantity="300", date="2026-07-20")
+    feeding = register_feeding(
+        client=client, feed_type=feed, quantity="1000", unit_price="100",
+        origin=FeedingEvent.Origin.CLIENT_STOCK, date="2026-07-21", lot=lot,
+    )
+
+    assert feeding.origin == FeedingEvent.Origin.CLIENT_STOCK
+    assert feeding.quantity == Decimal("1000")
+
+    client_outs = FeedStockMovement.objects.filter(
+        owner_kind=OwnerKind.CLIENT, direction="out", source_id=feeding.id,
+    )
+    own_outs = FeedStockMovement.objects.filter(
+        owner_kind=OwnerKind.OWN, direction="out", source_id=feeding.id,
+    )
+    assert client_outs.count() == 1
+    assert client_outs.get().quantity == Decimal("300.00")
+    assert own_outs.count() == 1
+    assert own_outs.get().quantity == Decimal("700.00")
+
+    entries = LedgerEntry.objects.filter(account=client.account)
+    assert entries.count() == 1
+    entry = entries.get()
+    assert entry.direction == Direction.DEBIT
+    assert entry.quantity == Decimal("700.00")
+    assert entry.amount == Decimal("70000.00")
+    assert entry.source_kind == "feeding_event"
+    assert entry.source_id == feeding.id
+
+    assert stock_balance(feed_type=feed, owner_kind=OwnerKind.CLIENT, client=client) == Decimal("0.00")
+    assert stock_balance(feed_type=feed, owner_kind=OwnerKind.OWN) == Decimal("-700.00")
+
+
+def test_client_stock_exact_balance_no_charge():
+    """When quantity equals available client stock: one client OUT, no debit."""
+    client, feed, lot = _fixtures()
+    register_delivery(client=client, feed_type=feed, quantity="1000", date="2026-07-20")
+    feeding = register_feeding(
+        client=client, feed_type=feed, quantity="1000", unit_price="100",
+        origin=FeedingEvent.Origin.CLIENT_STOCK, date="2026-07-21", lot=lot,
+    )
+
+    assert FeedStockMovement.objects.filter(owner_kind=OwnerKind.CLIENT, direction="out").count() == 1
+    assert FeedStockMovement.objects.filter(owner_kind=OwnerKind.OWN, direction="out").count() == 0
+    assert LedgerEntry.objects.filter(account=client.account).count() == 0
+    assert stock_balance(feed_type=feed, owner_kind=OwnerKind.CLIENT, client=client) == Decimal("0.00")
+    assert feeding.origin == FeedingEvent.Origin.CLIENT_STOCK
+
+
+def test_client_stock_zero_available_full_charge_from_own():
+    """No client delivery: full quantity from own stock + debit; no client OUT."""
+    client, feed, lot = _fixtures()
+    feeding = register_feeding(
+        client=client, feed_type=feed, quantity="1000", unit_price="100",
+        origin=FeedingEvent.Origin.CLIENT_STOCK, date="2026-07-21", lot=lot,
+    )
+
+    assert feeding.origin == FeedingEvent.Origin.CLIENT_STOCK
+    assert FeedStockMovement.objects.filter(owner_kind=OwnerKind.CLIENT, direction="out").count() == 0
+    own_outs = FeedStockMovement.objects.filter(owner_kind=OwnerKind.OWN, direction="out")
+    assert own_outs.count() == 1
+    assert own_outs.get().quantity == Decimal("1000.00")
+
+    entry = LedgerEntry.objects.get(account=client.account)
+    assert entry.quantity == Decimal("1000.00")
+    assert entry.amount == Decimal("100000.00")
+    assert entry.source_id == feeding.id
+    assert stock_balance(feed_type=feed, owner_kind=OwnerKind.OWN) == Decimal("-1000.00")
