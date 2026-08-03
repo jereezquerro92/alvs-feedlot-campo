@@ -11,6 +11,7 @@ import { hasRole } from "$lib/auth";
 import { requireRole, denyPortalSession } from "$lib/authGate";
 import { t } from "../../i18n";
 import type { Me } from "$lib/types/user";
+import { ssrFetch } from "$lib/ssrFetch";
 
 const backendApiUrl = process.env.BACKEND_API_URL ?? "http://localhost:8000";
 const publicBackendUrl = process.env.PUBLIC_BACKEND_URL ?? "http://localhost:8000";
@@ -21,7 +22,7 @@ const headers: Record<string, string> = cookie ? { cookie } : {};
 let me: Me | null = null;
 if (cookie) {
   try {
-    const res = await fetch(`${backendApiUrl}/api/me/`, { headers });
+    const res = await ssrFetch(`${backendApiUrl}/api/me/`, { headers });
     if (res.ok) me = (await res.json()) as Me;
   } catch (err) {
     console.error("SSR /api/me/ failed:", err);
@@ -39,7 +40,7 @@ if (denied) return Astro.redirect(denied);
 
 async function getJson(path: string): Promise<any> {
   try {
-    const res = await fetch(`${backendApiUrl}${path}`, { headers });
+    const res = await ssrFetch(`${backendApiUrl}${path}`, { headers });
     if (!res.ok) return null;
     return await res.json();
   } catch (err) {
