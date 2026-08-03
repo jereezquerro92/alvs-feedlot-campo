@@ -6,64 +6,63 @@ created: 2026-07-23
 tags: [adr, feedlot, advisors, ai, implementation, phase-5]
 ---
 
-# ADR-31 — Implementación de los asesores
+# ADR-31 — the advisors implementation
 
-**Contexto:** implementa [[adr-27-advisors-generative]]; reusa el patrón de [[adr-15-chatbot-two-tier]] (inference clients) y respeta [[adr-16-async-mandatory]].
+**Context:** implements [[adr-27-advisors-generative]]; reuses the pattern of [[adr-15-chatbot-two-tier]] (inference clients) and respects [[adr-16-async-mandatory]].
 
-## Contexto
+## Context
 
-El ADR-27 fijó las reglas de los asesores; esto es cómo se construyeron. La pieza
-delicada no es la generación —es fácil pedirle texto a un modelo— sino garantizar
-que ese texto sea **auditable y acotado a un cliente**.
+ADR-27 fixed the advisors' rules; this is how they were built. The delicate piece is not
+the generation — asking a model for text is easy — but guaranteeing that the text is
+**auditable and bounded to one client**.
 
-## Decisiones
+## Decisions
 
-### 1. El snapshot es lo único que lee datos
+### 1. The snapshot is the only thing that reads data
 
-`apps.advisors.snapshot.build_snapshot` es el único punto que toca la base de un
-cliente. El asesor recibe un dict y nada más. No hay, dentro del asesor, ningún
-camino hacia la base ni hacia otro cliente (adr-27 regla 2).
+`apps.advisors.snapshot.build_snapshot` is the single point that touches a client's
+database. The advisor receives a dict and nothing else. Inside the advisor there is no
+path to the database nor to another client (adr-27 rule 2).
 
-### 2. El snapshot se arma en el servicio, no se recibe
+### 2. The snapshot is assembled in the service, not received
 
-`generate_report` construye el snapshot con el `client` que se le pasa; no acepta
-un snapshot armado desde afuera. Así un llamador no puede colar datos de otro
-cliente en el paquete. El scope por cliente es una barrera dura, no una convención.
+`generate_report` builds the snapshot with the `client` it is given; it does not accept a
+snapshot assembled from outside. That way a caller cannot slip another client's data into
+the package. Per-client scope is a hard barrier, not a convention.
 
-### 3. Una sola definición de cada métrica
+### 3. One single definition of each metric
 
-El snapshot se arma desde `apps.metrics` (Fase 3). El asesor y el gráfico que ve
-el cliente leen los mismos números — no pueden contradecirse porque son la misma
-fuente. Si la conversión sale "no calculable" en el dashboard, sale igual para el
-asesor.
+The snapshot is assembled from `apps.metrics` (Phase 3). The advisor and the chart the
+client sees read the same numbers — they cannot contradict each other because they are the
+same source. If conversion comes out "not calculable" on the dashboard, it comes out the
+same for the advisor.
 
-### 4. Cliente de inferencia calcado del router
+### 4. An inference client traced from the router
 
-`AdvisorBedrockClient` (real) y `MockAdvisorClient` (determinista) con
-`get_advisor_client` como único punto de selección, gateado por DEBUG igual que el
-router (adr-15). Un proceso no-DEBUG solo puede construir el cliente real; ningún
-setting fuerza el mock a un deploy. Diferencia con el router: este tier **genera
-prosa** (temperatura 0.3, no 0) — es la excepción generativa acotada del adr-27.
+`AdvisorBedrockClient` (real) and `MockAdvisorClient` (deterministic) with
+`get_advisor_client` as the single selection point, gated by DEBUG exactly as the router
+is (adr-15). A non-DEBUG process can only build the real client; no setting forces the
+mock into a deploy. The difference from the router: this tier **generates prose**
+(temperature 0.3, not 0) — it is adr-27's bounded generative exception.
 
-### 5. El reporte es el registro
+### 5. The report is the record
 
-Cada generación persiste un `AdvisorReport` con snapshot, output, model_id, tokens
-y latencia. Leer un reporte **no** vuelve a inferir (adr-27 regla 3). Esto es lo
-que hace auditable una sugerencia económica: se puede ver exactamente qué datos vio
-el modelo.
+Every generation persists an `AdvisorReport` with its snapshot, output, model_id, tokens
+and latency. Reading a report does **not** re-run inference (adr-27 rule 3). This is what
+makes an economic suggestion auditable: one can see exactly what data the model saw.
 
-## Punto de integración pendiente (Claude Code, contra AWS)
+## Pending integration point (Claude Code, against AWS)
 
-`AdvisorBedrockClient` sigue el patrón del router pero necesita, contra AWS real:
-el `ADVISOR_BEDROCK_MODEL_ID` y la región en `VARIABLES`, el permiso IAM, el gate
-de conectividad Bedrock (como `bedrock_live` del router), y el envoltorio async
-(adr-16 regla 4: `sync_to_async`, nunca `aiobotocore`). Los tests corren contra
-`MockAdvisorClient`, igual que el router prueba su tier con su propio mock.
+`AdvisorBedrockClient` follows the router's pattern but needs, against real AWS: the
+`ADVISOR_BEDROCK_MODEL_ID` and the region in `VARIABLES`, the IAM permission, the Bedrock
+connectivity gate (like the router's `bedrock_live`), and the async wrapper (adr-16 rule 4:
+`sync_to_async`, never `aiobotocore`). The tests run against `MockAdvisorClient`, just as
+the router tests its tier with its own mock.
 
-## Consecuencias
+## Consequences
 
-- La generación es a demanda o programada, nunca en cada escritura de datos
-  (adr-27 regla 4). El endpoint POST dispara una; no hay señal que genere sola.
-- El asesor es read-only: los viewsets exponen list/retrieve/create de reportes,
-  jamás una mutación de datos del cliente.
-- Un asesor inactivo rechaza la generación en el servicio, no en la vista.
+- Generation is on demand or scheduled, never on every data write (adr-27 rule 4). The
+  POST endpoint triggers one; there is no signal that generates on its own.
+- The advisor is read-only: the viewsets expose list/retrieve/create of reports, never a
+  mutation of the client's data.
+- An inactive advisor rejects the generation in the service, not in the view.

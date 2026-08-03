@@ -6,110 +6,108 @@ created: 2026-07-25
 tags: [adr, feedlot, sanitary, vaccination, plan, schedule, phase-13]
 ---
 
-# ADR-40 — El plan sanitario y el calendario de vacunación
+# ADR-40 — the sanitary plan and the vaccination schedule
 
-**Contexto:** crece por adición sobre `sanitary` ([[adr-49-domain-layer-and-growth-by-addition]] regla 1),
-reusa la restricción XOR animal/lote de [[adr-26-livestock-individual-and-lot]] y la
-postura event-sourced de [[adr-49-domain-layer-and-growth-by-addition]] regla 3. Extiende
-[[adr-28-animal-lifecycle-and-sanitary]] sin tocar el cobro que ese ADR fijó. Reglas
-solamente; las entidades viven en [[FEEDLOT-DATA-MODEL]].
+**Context:** grows by addition on top of `sanitary`
+([[adr-49-domain-layer-and-growth-by-addition]] rule 1), reuses the animal/lot XOR constraint
+of [[adr-26-livestock-individual-and-lot]] and the event-sourced posture of
+[[adr-49-domain-layer-and-growth-by-addition]] rule 3. Extends
+[[adr-28-animal-lifecycle-and-sanitary]] without touching the charging that ADR fixed. Rules
+only; the entities live in [[FEEDLOT-DATA-MODEL]].
 
-## Contexto
+## Context
 
-La Fase 2 dejó el `HealthEvent`: una aplicación puntual que ya ocurrió y que siempre
-se cobra ([[adr-28-animal-lifecycle-and-sanitary]] decisión 5). Falta lo otro que todo
-feedlot maneja: el **plan sanitario** — el calendario de qué vacuna/tratamiento toca
-aplicar y cuándo, contra el cual se controla qué está **pendiente**. Un plan es
-intención a futuro; un `HealthEvent` es un hecho pasado. Son cosas distintas y no se
-colapsan. Se agrega la capa de planificación sanitaria a la app `sanitary`, sin tocar
-cómo se cobra.
+Phase 2 left the `HealthEvent`: a one-off application that already happened and that is always
+charged ([[adr-28-animal-lifecycle-and-sanitary]] decision 5). What is missing is the other
+thing every feedlot manages: the **sanitary plan** — the schedule of which vaccine/treatment is
+due and when, against which what is **pending** is controlled. A plan is future intent; a
+`HealthEvent` is a past fact. They are distinct things and are not collapsed. The sanitary
+planning layer is added to the `sanitary` app, without touching how charging works.
 
-## Decisiones
+## Decisions
 
-### 1. El plan es una plantilla reusable editable; la inscripción es un evento inmutable
+### 1. The plan is a reusable editable template; the enrollment is an immutable event
 
-`SanitaryPlan` + `SanitaryPlanItem` son datos maestros: ModelViewSet con CRUD completo
-— "cargar un plan" es crear el plan y sus dosis. `PlanEnrollment` (inscribir un animal
-o lote a un plan con una fecha de inicio) es un hecho fechado: list/retrieve/create,
-sin update ni destroy ([[adr-49-domain-layer-and-growth-by-addition]] regla 3).
+`SanitaryPlan` + `SanitaryPlanItem` are master data: a ModelViewSet with full CRUD — "loading a
+plan" is creating the plan and its doses. `PlanEnrollment` (enrolling an animal or lot in a
+plan with a start date) is a dated fact: list/retrieve/create, without update or destroy
+([[adr-49-domain-layer-and-growth-by-addition]] rule 3).
 
-*Por qué:* un plan tiene composición que se corrige (se agrega una dosis, se ajusta un
-día); una inscripción es un hecho —"a este lote se le arrancó este plan tal día"— que
-no se reescribe. Mismo idiom que `Ration`/`LoadingOrder` (adr-33): la receta se edita,
-la ejecución es inmutable.
+*Why:* a plan has composition that gets corrected (a dose is added, a day is adjusted); an
+enrollment is a fact — "this lot was started on this plan on this day" — that is not rewritten.
+The same idiom as `Ration`/`LoadingOrder` (adr-33): the recipe is edited, the execution is
+immutable.
 
-### 2. El calendario es relativo; el vencimiento se deriva, nunca se guarda
+### 2. The schedule is relative; the due date is derived, never stored
 
-Cada `SanitaryPlanItem` fija un `HealthProduct` y un `day_offset` (días desde el
-`start_date` de la inscripción). El vencimiento de una dosis se **deriva**
-(`start_date + day_offset`) por inscripción; no se guarda una fecha absoluta en el
-plan. Así un plan sirve para muchos targets, cada uno con su propia fecha de arranque.
+Each `SanitaryPlanItem` fixes a `HealthProduct` and a `day_offset` (days from the enrollment's
+`start_date`). A dose's due date is **derived** (`start_date + day_offset`) per enrollment; no
+absolute date is stored in the plan. That way one plan serves many targets, each with its own
+start date.
 
-*Por qué:* un calendario de vacunación es "a los N días de entrar"; guardar fechas
-absolutas en la plantilla la ataría a un solo animal. El offset relativo hace el plan
-reusable, que es todo el punto de una plantilla.
+*Why:* a vaccination schedule is "N days after entering"; storing absolute dates in the
+template would tie it to a single animal. The relative offset makes the plan reusable, which is
+the whole point of a template.
 
-### 3. El estado de cada dosis se deriva cruzando el calendario con los `HealthEvent`
+### 3. Each dose's status is derived by crossing the schedule with the `HealthEvent`s
 
-`applied` / `pending` / `upcoming` no se persiste en ningún lado. Se deriva: una dosis
-está **aplicada** cuando existe un `HealthEvent` del mismo target y mismo producto con
-fecha ≥ `start_date`; si no, está **pendiente** cuando su vencimiento ya pasó
-(`due_date ≤ as_of`) y **próxima** cuando todavía no. Sin inscripciones, el calendario
-es una lista vacía — nunca un cero de relleno ni un estado inventado (postura de
-[[adr-29-metrics-derivation]] regla 2).
+`applied` / `pending` / `upcoming` is not persisted anywhere. It is derived: a dose is
+**applied** when a `HealthEvent` exists for the same target and the same product with a date ≥
+`start_date`; otherwise it is **pending** when its due date has already passed (`due_date ≤
+as_of`) and **upcoming** when it has not. With no enrollments, the schedule is an empty list —
+never a filler zero nor an invented status (the posture of [[adr-29-metrics-derivation]] rule
+2).
 
-*Por qué:* el pendiente es una afirmación sobre la sanidad real del rodeo, y tiene que
-salir de los hechos (los `HealthEvent`), no de un flag editable que alguien se olvida
-de tildar. Derivarlo garantiza que el calendario y lo efectivamente aplicado no puedan
-contradecirse — son la misma fuente.
+*Why:* the pending set is a claim about the herd's real sanitary state, and it has to come out
+of the facts (the `HealthEvent`s), not out of an editable flag someone forgets to tick.
+Deriving it guarantees that the schedule and what was actually applied cannot contradict each
+other — they are the same source.
 
-### 4. Ni el plan ni la inscripción tocan el ledger
+### 4. Neither the plan nor the enrollment touches the ledger
 
-Ningún modelo de esta fase postea un asiento. El cobro sanitario sigue siendo
-exclusivamente del `HealthEvent` vía `register_health_event`
-([[adr-28-animal-lifecycle-and-sanitary]] decisión 5, [[adr-25-account-ledger]]). Un
-plan es intención; una inscripción es un compromiso de calendario; ninguno es un insumo
-entregado. El cargo aparece recién cuando la dosis se aplica de verdad y eso es un
-`HealthEvent`.
+No model in this phase posts an entry. Sanitary charging remains exclusively the
+`HealthEvent`'s via `register_health_event` ([[adr-28-animal-lifecycle-and-sanitary]] decision
+5, [[adr-25-account-ledger]]). A plan is intent; an enrollment is a schedule commitment;
+neither is an input delivered. The charge appears only when the dose is actually applied, and
+that is a `HealthEvent`.
 
-*Por qué:* un solo camino de cobro. Cobrar al inscribir cobraría una vacuna que quizás
-nunca se aplica, y reabriría la puerta al doble cargo que la doctrina cerró (un hecho se
-afirma una vez, adr-49 regla 5).
+*Why:* a single charging path. Charging on enrollment would charge a vaccine that may never be
+applied, and would reopen the door to the double charge the doctrine closed (a fact is stated
+once, adr-49 rule 5).
 
-### 5. La inscripción valida en el servicio, no en la vista
+### 5. The enrollment validates in the service, not in the view
 
-`enroll_in_plan` rechaza en el **servicio** un plan inactivo, un target que no pertenece
-al cliente, un target no activo (muerto/vendido/egresado no se inscribe) y la ausencia
-del XOR exacto animal/lote. La carga tardía con fecha retroactiva se acepta mientras el
-target siga activo — misma norma de campo que adr-28.
+`enroll_in_plan` rejects, in the **service**, an inactive plan, a target that does not belong
+to the client, a non-active target (dead/sold/departed is not enrolled) and the absence of the
+exact animal/lot XOR. Late entry with a retroactive date is accepted while the target is still
+active — the same field norm as adr-28.
 
-*Por qué:* las reglas de negocio viven en el servicio, único punto de escritura, para
-que vista, admin y comando compartan la misma validación.
+*Why:* business rules live in the service, the single write point, so that view, admin and
+command share the same validation.
 
-### 6. Un solo target por inscripción, a nivel base de datos
+### 6. One single target per enrollment, at the database level
 
-Una `PlanEnrollment` apunta a un `Animal` O a un `Lot`, nunca ambos ni ninguno — `CHECK`
-constraint con dos FK nulables, idéntico al de los eventos de ciclo de vida
-([[adr-26-livestock-individual-and-lot]] regla 3, [[adr-28-animal-lifecycle-and-sanitary]]
-decisión 1).
+A `PlanEnrollment` points to an `Animal` OR a `Lot`, never both and never neither — a `CHECK`
+constraint with two nullable FKs, identical to the one on lifecycle events
+([[adr-26-livestock-individual-and-lot]] rule 3, [[adr-28-animal-lifecycle-and-sanitary]]
+decision 1).
 
-*Por qué:* reusar la forma ya probada evita una tabla polimórfica y mantiene la consulta
-directa.
+*Why:* reusing the already-proven shape avoids a polymorphic table and keeps the query direct.
 
-## Consecuencias
+## Consequences
 
-- El backend entra solo por [[API]] ([[adr-03-api-and-backend]]) y nace por el flujo
-  [[TDD]] ([[adr-07-development-flow]]); este ADR no exceptúa ese camino.
-- Las migraciones son tres tablas nuevas en `sanitary` (`SanitaryPlan`,
-  `SanitaryPlanItem`, `PlanEnrollment`); nada fuera de la app, nada en `ledger`.
-- El calendario derivado es un `GET` de solo lectura (acción `schedule` del viewset de
-  inscripciones); se computa en la lectura, nunca se materializa como campo editable
-  ([[adr-49-domain-layer-and-growth-by-addition]] regla 3).
-- No se agregan variables de entorno: es dato interno, sin servicios externos.
-- `HealthEvent` no se refactoriza: el estado "aplicada" se deriva mirando los eventos
-  existentes, no se agrega un campo ni un FK al `HealthEvent` (la extracción mira hacia
-  adelante, [[adr-32-multi-rubro-assets]] regla 2).
-- No se lleva stock sanitario en esta fase (sigue vigente adr-28 decisión 6): el plan
-  programa aplicaciones, no existencias.
-- Cualquier cambio a las reglas 1–6 es semántico y DEBE superseder este ADR
-  ([[adr-00-adr-doctrine]] regla 4).
+- The backend enters only through [[API]] ([[adr-03-api-and-backend]]) and is born through the
+  [[TDD]] flow ([[adr-07-development-flow]]); this ADR grants no exception to that path.
+- The migrations are three new tables in `sanitary` (`SanitaryPlan`, `SanitaryPlanItem`,
+  `PlanEnrollment`); nothing outside the app, nothing in `ledger`.
+- The derived schedule is a read-only `GET` (the `schedule` action of the enrollments viewset);
+  it is computed on read, never materialized as an editable field
+  ([[adr-49-domain-layer-and-growth-by-addition]] rule 3).
+- No environment variables are added: it is internal data, with no external services.
+- `HealthEvent` is not refactored: the "applied" status is derived by looking at the existing
+  events; no field and no FK is added to `HealthEvent` (the extraction looks forward,
+  [[adr-32-multi-rubro-assets]] rule 2).
+- No sanitary stock is kept in this phase (adr-28 decision 6 stands): the plan schedules
+  applications, not holdings.
+- Any change to rules 1–6 is semantic and MUST supersede this ADR
+  ([[adr-00-adr-doctrine]] rule 4).

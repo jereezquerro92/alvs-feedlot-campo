@@ -6,83 +6,81 @@ created: 2026-07-25
 tags: [adr, feedlot, feedyard, pens, placement, phase-7b]
 ---
 
-# ADR-34 — Ubicación de hacienda en corrales (`PenPlacement`)
+# ADR-34 — cattle placement in pens (`PenPlacement`)
 
-**Contexto:** completa el diferimiento de [[adr-33-feedyard-operating-loop]] decisión 7
-(el cierre por corral necesita saber qué hacienda estuvo en el corral). Reusa la
-restricción XOR animal/lote de [[adr-26-livestock-individual-and-lot]] y la postura
-event-sourced de [[adr-49-domain-layer-and-growth-by-addition]]. Reglas solamente; las entidades viven en
+**Context:** completes the deferral of [[adr-33-feedyard-operating-loop]] decision 7 (the
+per-pen close needs to know which cattle were in the pen). Reuses the animal/lot XOR
+constraint of [[adr-26-livestock-individual-and-lot]] and the event-sourced posture of
+[[adr-49-domain-layer-and-growth-by-addition]]. Rules only; the entities live in
 [[FEEDLOT-DATA-MODEL]].
 
-## Contexto
+## Context
 
-La Fase 7 dio el corral (`Pen`), la receta (`Ration`), el plan (`LoadingOrder`) y la
-lectura de comedero (`BunkScore`), pero no dónde está cada animal. Sin eso, el corral
-es un rótulo sobre el `FeedingEvent` y nada más: no hay ocupación, no hay cabezas por
-corral, no hay base para un cierre por corral. Se agrega el hecho que faltaba —
-**dónde está la hacienda** — sin tocar cómo se cobra ni reescribir el dominio estable.
+Phase 7 gave the pen (`Pen`), the recipe (`Ration`), the plan (`LoadingOrder`) and the bunk
+reading (`BunkScore`), but not where each animal is. Without that, the pen is a label on the
+`FeedingEvent` and nothing more: there is no occupancy, no head per pen, no basis for a
+per-pen close. The missing fact is added — **where the cattle are** — without touching how
+charging works and without rewriting the stable domain.
 
-## Decisiones
+## Decisions
 
-### 1. La ubicación es un evento inmutable, no un campo de estado
+### 1. Placement is an immutable event, not a state field
 
-`PenPlacement` registra un movimiento fechado de un `Animal` o un `Lot` hacia adentro
-(`direction=in`) o hacia afuera (`direction=out`) de un `Pen`. La ubicación actual y
-la ocupación se **derivan** de esos eventos; nunca se guardan como un campo editable
-en `Pen` ni en `Animal` (misma postura que adr-49 regla 3, adr-26 regla 4).
+`PenPlacement` records a dated movement of an `Animal` or a `Lot` into (`direction=in`) or
+out of (`direction=out`) a `Pen`. Current placement and occupancy are **derived** from those
+events; they are never stored as an editable field on `Pen` or on `Animal` (the same posture
+as adr-49 rule 3, adr-26 rule 4).
 
-*Por qué:* un feedlot mueve hacienda entre corrales todo el tiempo. Un campo
-`Animal.pen` mutable perdería la historia — de qué corral vino, cuánto estuvo. El
-evento la conserva y hace auditable el cierre por corral.
+*Why:* a feedlot moves cattle between pens all the time. A mutable `Animal.pen` field would
+lose the history — which pen it came from, how long it stayed. The event preserves it and
+makes the per-pen close auditable.
 
-### 2. Exactamente un target, a nivel base de datos
+### 2. Exactly one target, at the database level
 
-Un `PenPlacement` apunta a un `Animal` O a un `Lot`, nunca ambos ni ninguno —
-`CHECK` constraint con dos FK nulables, idéntico al de los eventos de ciclo de vida
-(adr-26 regla 3). Para un animal individual el movimiento es de una cabeza; para un
-lote, `head_count` permite mover una parte.
+A `PenPlacement` points to an `Animal` OR a `Lot`, never both and never neither — a `CHECK`
+constraint with two nullable FKs, identical to the one on lifecycle events (adr-26 rule 3).
+For an individual animal the movement is one head; for a lot, `head_count` allows moving a
+part.
 
-*Por qué:* reusar la forma ya probada evita una tabla polimórfica y mantiene la
-consulta directa. Un lote se mueve parcialmente en la práctica; el animal no se
-fracciona.
+*Why:* reusing the already-proven shape avoids a polymorphic table and keeps the query
+direct. A lot is moved partially in practice; an animal is not fractioned.
 
-### 3. No toca el ledger
+### 3. It does not touch the ledger
 
-`PenPlacement` no postea ningún asiento. Mover hacienda de corral no es un insumo
-entregado ni un cargo — es logística interna. El cobro sigue exclusivamente en `feed`
-(adr-25 regla 4), como todo el resto de `feedyard` (adr-33 decisión 1).
+`PenPlacement` posts no entry. Moving cattle between pens is neither an input delivered nor
+a charge — it is internal logistics. Charging stays exclusively in `feed` (adr-25 rule 4),
+like all the rest of `feedyard` (adr-33 decision 1).
 
-*Por qué:* un solo camino de cobro. La ubicación es información de gestión, no un
-hecho económico.
+*Why:* a single charging path. Placement is management information, not an economic fact.
 
-### 4. Un corral inactivo y un animal no-activo rechazan el ingreso, en el servicio
+### 4. An inactive pen and a non-active animal reject the entry, in the service
 
-`register_placement` rechaza en el **servicio** (no en la vista) un `Pen` con
-`status=inactive` y un `Animal` que no esté `active` (muerto/vendido/salido no se
-ubica). La carga tardía con fecha retroactiva se acepta mientras el corral siga
-activo — misma regla que adr-28 para pesajes y sanidad.
+`register_placement` rejects, in the **service** (not in the view), a `Pen` with
+`status=inactive` and an `Animal` that is not `active` (dead/sold/departed is not placed).
+Late entry with a retroactive date is accepted while the pen is still active — the same rule
+as adr-28 for weighings and sanitary events.
 
-*Por qué:* las reglas de negocio viven en el servicio, único punto de escritura, para
-que la vista, el admin y un comando compartan la misma validación.
+*Why:* business rules live in the service, the single write point, so that the view, the
+admin and a command share the same validation.
 
-### 5. El cierre por corral de esta fase es ocupación, no ganancia
+### 5. This phase's per-pen close is occupancy, not gain
 
-`apps.metrics` gana un reporte por corral: ocupación actual (cabezas), cabezas
-ingresadas/egresadas en el período y kilos alimentados al corral. La **conversión por
-corral** (kg producidos ÷ kg alimentados) sigue diferida: atribuir pesajes al tramo
-que un animal pasó en un corral es un problema aparte, y un número sin esa atribución
-sería inventado (adr-29 regla 2). Se entrega lo afirmable hoy; la conversión por
-corral entra cuando la atribución exista.
+`apps.metrics` gains a per-pen report: current occupancy (head), head in/out in the period
+and kilos fed to the pen. **Per-pen conversion** (kg produced ÷ kg fed) stays deferred:
+attributing weighings to the stretch an animal spent in a pen is a separate problem, and a
+number without that attribution would be invented (adr-29 rule 2). What is affirmable today
+is delivered; per-pen conversion enters when the attribution exists.
 
-*Por qué:* honestidad de la métrica. La ocupación se puede afirmar desde los eventos
-de placement; la conversión por corral no, todavía.
+*Why:* metric honesty. Occupancy can be affirmed from the placement events; per-pen
+conversion cannot, yet.
 
-## Consecuencias
+## Consequences
 
-- El backend entra sólo por [[API]] (adr-03) y nace por el flujo [[TDD]] (adr-07).
-- La única migración es la tabla nueva `PenPlacement` en `feedyard`; nada fuera de la
-  app, nada en `ledger`.
-- `Pen` sigue sin FK a cliente: un corral puede alojar hacienda de varios clientes, y
-  el placement es quien liga cada cabeza a su corral y su dueño (vía el animal/lote).
-- Cualquier cambio a las reglas 1–5 es semántico y DEBE superseder este ADR
-  ([[adr-00-adr-doctrine]] regla 4).
+- The backend enters only through [[API]] (adr-03) and is born through the [[TDD]] flow
+  (adr-07).
+- The only migration is the new `PenPlacement` table in `feedyard`; nothing outside the app,
+  nothing in `ledger`.
+- `Pen` still has no client FK: a pen may host cattle from several clients, and it is the
+  placement that ties each head to its pen and its owner (via the animal/lot).
+- Any change to rules 1–5 is semantic and MUST supersede this ADR
+  ([[adr-00-adr-doctrine]] rule 4).

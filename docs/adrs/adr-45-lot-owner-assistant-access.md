@@ -1,106 +1,103 @@
 ---
-title: ADR-45 — El portal del dueño de lote alcanza el asesor conversacional, acotado a su cliente
+title: adr-45-lot-owner-assistant-access
 type: adr
 status: active
 created: 2026-07-28
 tags: [adr, rbac, assistant, tenant-isolation, lot-owners, feedlot, phase-module-first-redesign]
 ---
 
-# ADR-45 — El portal del dueño de lote alcanza el asesor conversacional, acotado a su cliente
+# ADR-45 — the lot owner's portal reaches the conversational assistant, bounded to their client
 
-**Contexto:** amplía [[adr-44-field-operational-roles]] decisión 3 (qué rutas alcanza
-una sesión `lot_owners`) por el camino que esa misma decisión exige — un ADR nuevo,
-nunca una excepción local ([[adr-20-authorization-lobby]] regla 2, precedente de las
-excepciones acotadas de [[adr-13-m365-graph]] regla 3). Reusa la barrera per-cliente
-read-only de [[adr-27-advisors-generative]] regla 2 y la disjunción permanente
-generar/elegir de [[adr-15-chatbot-two-tier]] regla 1. Reglas solamente; el mecanismo
-vive en [[AUTH]], la matriz en `apps/users/roles.py` y el contrato de rutas en [[API]].
+**Context:** widens [[adr-44-field-operational-roles]] decision 3 (which routes a `lot_owners`
+session reaches) through the path that same decision requires — a new ADR, never a local
+exception ([[adr-20-authorization-lobby]] rule 2, the precedent of the bounded exceptions of
+[[adr-13-m365-graph]] rule 3). Reuses the read-only per-client barrier of
+[[adr-27-advisors-generative]] rule 2 and the permanent generate/choose disjunction of
+[[adr-15-chatbot-two-tier]] rule 1. Rules only; the mechanism lives in [[AUTH]], the matrix in
+`apps/users/roles.py` and the route contract in [[API]].
 
-## Contexto
+## Context
 
-[[adr-44-field-operational-roles]] decisión 3 confinó al `lot_owners` (portal de
-cliente, read-only) a **exactamente dos** superficies keyed por cliente: las métricas
-(`/api/metrics/{client_id}/…`) y la cuenta (`/api/clients/{id}/account|ledger|outstanding`),
-ambas gateadas por `ClientScopedReadPermission`. El rediseño module-first agrega el
-**asesor conversacional** (`assistant`, [[adr-35-conversational-assistant]]) como un
-módulo del portal: el dueño de lote pregunta en lenguaje natural sobre **su propia**
-hacienda y su saldo, y recibe una respuesta fundada.
+[[adr-44-field-operational-roles]] decision 3 confined `lot_owners` (client portal, read-only)
+to **exactly two** client-keyed surfaces: the metrics (`/api/metrics/{client_id}/…`) and the
+account (`/api/clients/{id}/account|ledger|outstanding`), both gated by
+`ClientScopedReadPermission`. The module-first redesign adds the **conversational assistant**
+(`assistant`, [[adr-35-conversational-assistant]]) as a portal module: the lot owner asks in
+natural language about **their own** cattle and their balance, and gets a grounded answer.
 
-Esa lectura es exactamente la que el `lot_owners` ya tiene autorizada sobre sus
-métricas — el asesor no ve ni un dato más que los que ya arma el snapshot per-cliente
-([[adr-27-advisors-generative]] regla 2). Pero es una **tercera** ruta alcanzable, y
-[[adr-44-field-operational-roles]] fijó su lista con la palabra "exactamente" y mandó
-que ampliarla exige un ADR (decisión 3 y consecuencia final, reglas 1–7 semánticas).
-Este ADR es ese vehículo. No toca el cuerpo de adr-44; lo amplía por adición.
+That read is exactly the one `lot_owners` already has authorized over their metrics — the
+assistant sees not one datum more than the per-client snapshot already assembles
+([[adr-27-advisors-generative]] rule 2). But it is a **third** reachable route, and
+[[adr-44-field-operational-roles]] fixed its list with the word "exactly" and mandated that
+widening it requires an ADR (decision 3 and the final consequence, rules 1–7 semantic). This ADR
+is that vehicle. It does not touch adr-44's body; it widens it by addition.
 
-## Decisiones
+## Decisions
 
-### 1. El asesor es una tercera superficie alcanzable por `lot_owners`, acotada a su cliente
+### 1. The assistant is a third surface reachable by `lot_owners`, bounded to their client
 
-Una sesión `lot_owners` alcanza `GET/POST /api/conversations/…`
-([[adr-35-conversational-assistant]], [[API]]) **únicamente** sobre el cliente ligado a
-su `AccessRequest` ([[adr-44-field-operational-roles]] decisión 4). La lista de rutas
-per-cliente que la decisión 3 de adr-44 declaró "exactamente" pasa a ser **tres**:
-métricas, cuenta y **asesor**. Ninguna otra ruta se abre; esta ampliación es aditiva y
-enumerada, no un ensanche general del portal.
+A `lot_owners` session reaches `GET/POST /api/conversations/…`
+([[adr-35-conversational-assistant]], [[API]]) **only** for the client bound to their
+`AccessRequest` ([[adr-44-field-operational-roles]] decision 4). The per-client route list that
+adr-44's decision 3 declared "exactly" becomes **three**: metrics, account and **assistant**. No
+other route is opened; this widening is additive and enumerated, not a general broadening of the
+portal.
 
-*Por qué:* preguntarle al asesor por la propia hacienda es la misma lectura que el
-portal ya autoriza sobre las métricas, servida en forma conversacional. Negarla sería
-arbitrario; abrirla sin enumerarla reabriría la puerta a un portal de alcance difuso
-que adr-44 decisión 3 cerró a propósito.
+*Why:* asking the assistant about one's own cattle is the same read the portal already
+authorizes over the metrics, served conversationally. Denying it would be arbitrary; opening it
+without enumerating it would reopen the door to a portal of diffuse scope that adr-44 decision 3
+closed on purpose.
 
-### 2. La confinación es idéntica a la del portal y falla cerrada
+### 2. The confinement is identical to the portal's and fails closed
 
-`AssistantAccess` aplica la misma barrera per-cliente que `ClientScopedReadPermission`,
-por las tres vías keyed en el cliente ligado ([[adr-44-field-operational-roles]]
-decisión 4): en list/create el `client` pedido (query param o body) debe igualar al
-ligado; `has_object_permission` re-verifica el cliente de la conversación en una ruta de
-detalle; y el queryset del viewset filtra las listas al cliente ligado. Una sesión
-`lot_owners` sin cliente ligado no alcanza **nada** — 403, nunca "todos los clientes".
+`AssistantAccess` applies the same per-client barrier as `ClientScopedReadPermission`, through
+the three routes keyed on the bound client ([[adr-44-field-operational-roles]] decision 4): on
+list/create the requested `client` (query param or body) must equal the bound one;
+`has_object_permission` re-verifies the conversation's client on a detail route; and the
+viewset's queryset filters the lists to the bound client. A `lot_owners` session with no bound
+client reaches **nothing** — 403, never "all clients".
 
-*Por qué:* una frontera entre inquilinos se define una vez y se enforcea igual en cada
-puerta. Reusar el mecanismo exacto del portal (no uno paralelo) evita que las dos
-superficies se desincronicen y deja una sola definición de "mi cliente".
+*Why:* a tenant boundary is defined once and enforced identically at every door. Reusing the
+portal's exact mechanism (not a parallel one) keeps the two surfaces from drifting apart and
+leaves a single definition of "my client".
 
-### 3. El asesor sigue read-only sobre el dominio; preguntar no es actuar
+### 3. The assistant stays read-only over the domain; asking is not acting
 
-El asesor genera prosa analítica y **jamás** ejecuta una acción, postea un asiento ni
-cambia estado de dominio ([[adr-35-conversational-assistant]] decisión 1,
-[[adr-15-chatbot-two-tier]] regla 1). Que un `lot_owners` pueda **escribir** un turno
-(`POST`) no viola su naturaleza read-only del portal: el POST crea un mensaje sobre su
-propia conversación y dispara una lectura generativa sobre su propio snapshot — no muta
-ni un registro de dominio del cliente. La disjunción permanente elegir/generar de adr-15
-queda intacta: el asesor no es el router y no gana derechos de actuador.
+The assistant generates analytical prose and **never** executes an action, posts an entry or
+changes domain state ([[adr-35-conversational-assistant]] decision 1,
+[[adr-15-chatbot-two-tier]] rule 1). That a `lot_owners` can **write** a turn (`POST`) does not
+violate the portal's read-only nature: the POST creates a message on their own conversation and
+triggers a generative read over their own snapshot — it mutates not one domain record of the
+client. Adr-15's permanent choose/generate disjunction stays intact: the assistant is not the
+router and gains no actuator rights.
 
-*Por qué:* la regla read-only de adr-44 protege los **datos de dominio** del inquilino,
-no prohíbe registrar la pregunta del propio inquilino. El turno es un registro auditable
-([[adr-35-conversational-assistant]] decisión 4), no una escritura de dominio.
+*Why:* adr-44's read-only rule protects the tenant's **domain data**; it does not forbid
+recording the tenant's own question. The turn is an auditable record
+([[adr-35-conversational-assistant]] decision 4), not a domain write.
 
-### 4. Autorización en Django, por Group, per-request
+### 4. Authorization in Django, by Group, per request
 
-Quién alcanza el asesor se decide leyendo Django Groups en el backend, por request, sin
-caché en el camino ([[adr-10-auth]] regla 2, [[adr-20-authorization-lobby]] regla 4). El
-frontend gatea la navegación al módulo por comodidad de UX; la barrera es el backend. El
-vínculo usuario→cliente lo pone un admin en `/admin/`, nunca es autoservicio
-([[adr-44-field-operational-roles]] decisión 4).
+Who reaches the assistant is decided by reading Django Groups in the backend, per request, with
+no cache in the path ([[adr-10-auth]] rule 2, [[adr-20-authorization-lobby]] rule 4). The
+frontend gates navigation to the module for UX convenience; the barrier is the backend. The
+user→client link is set by an admin in `/admin/`, never self-service
+([[adr-44-field-operational-roles]] decision 4).
 
-*Por qué:* misma doctrina que todo el RBAC del sistema. El portal es una frontera de
-seguridad y vive donde vive la autoridad, en Django.
+*Why:* the same doctrine as all the system's RBAC. The portal is a security boundary and lives
+where the authority lives, in Django.
 
-## Consecuencias
+## Consequences
 
-- El backend entra solo por [[API]] ([[adr-03-api-and-backend]]): las filas de
-  `/api/conversations/…` nombran `AssistantAccess` y su celda de auth documenta la
-  confinación `lot_owners`. La clase vive en `apps/users/roles.py`, hogar único de la
-  matriz ([[adr-44-field-operational-roles]] decisión 1).
-- No hay modelo, migración ni variable de entorno nuevos: esto es una regla de
-  autorización sobre rutas ya declaradas ([[adr-35-conversational-assistant]]).
-- Las superficies staff-only no cambian: el roster de clientes
-  (`ClientDirectoryAccess`) y los informes generativos del asesor de un tiro
-  (`AdvisorAccess`) siguen cerrados a `lot_owners` — este ADR abre el asesor
-  conversacional per-cliente y nada más.
-- Cognito sigue autenticando solamente y el RBAC sigue siendo exclusivamente Django
-  Groups ([[adr-10-auth]] reglas 1–2, intactas); el cuerpo de
-  [[adr-44-field-operational-roles]] no se edita.
-- Cualquier cambio a las reglas 1–4 es semántico y DEBE superseder este ADR
-  ([[adr-00-adr-doctrine]] regla 4).
+- The backend enters only through [[API]] ([[adr-03-api-and-backend]]): the `/api/conversations/…`
+  rows name `AssistantAccess` and their auth cell documents the `lot_owners` confinement. The
+  class lives in `apps/users/roles.py`, the matrix's single home
+  ([[adr-44-field-operational-roles]] decision 1).
+- There is no new model, migration or environment variable: this is an authorization rule over
+  already-declared routes ([[adr-35-conversational-assistant]]).
+- The staff-only surfaces do not change: the client roster (`ClientDirectoryAccess`) and the
+  one-shot generative advisor reports (`AdvisorAccess`) stay closed to `lot_owners` — this ADR
+  opens the per-client conversational assistant and nothing else.
+- Cognito still authenticates only and RBAC remains exclusively Django Groups ([[adr-10-auth]]
+  rules 1–2, intact); [[adr-44-field-operational-roles]]'s body is not edited.
+- Any change to rules 1–4 is semantic and MUST supersede this ADR
+  ([[adr-00-adr-doctrine]] rule 4).

@@ -6,67 +6,66 @@ created: 2026-07-25
 tags: [adr, feedlot, notifications, digest, whatsapp, phase-9]
 ---
 
-# ADR-36 — Notificaciones: el digest y el canal de envío
+# ADR-36 — notifications: the digest and the delivery channel
 
-**Contexto:** reusa las métricas de [[adr-29-metrics-derivation]] (una sola
-definición de cada número) y el patrón de cliente mock/real gateado por DEBUG de
-[[adr-31-advisors-implementation]] y [[adr-35-conversational-assistant]].
+**Context:** reuses the metrics of [[adr-29-metrics-derivation]] (one single definition of
+each number) and the DEBUG-gated mock/real client pattern of
+[[adr-31-advisors-implementation]] and [[adr-35-conversational-assistant]].
 
-## Contexto
+## Context
 
-Todo competidor empuja resúmenes al cliente sin que el cliente entre a mirar:
-un digest semanal por WhatsApp con las cabezas, el saldo y la conversión. Falta la
-capa que **arma un resumen y lo manda por un canal**. Esa es la app `notifications`.
+Every competitor pushes summaries to the client without the client having to come and look:
+a weekly WhatsApp digest with head, balance and conversion. What is missing is the layer that
+**assembles a summary and sends it over a channel**. That is the `notifications` app.
 
-## Decisiones
+## Decisions
 
-### 1. El digest se arma desde las métricas, no se recalcula
+### 1. The digest is assembled from the metrics, not recomputed
 
-`build_weekly_digest` lee `apps.metrics.services.summary` para UN cliente y lo
-renderiza a texto. No define ninguna métrica nueva: el número que ve el cliente en
-el digest es el mismo del dashboard y del asesor (adr-29 regla 1, adr-31 regla 3).
+`build_weekly_digest` reads `apps.metrics.services.summary` for ONE client and renders it to
+text. It defines no new metric: the number the client sees in the digest is the same one on
+the dashboard and in the advisor (adr-29 rule 1, adr-31 rule 3).
 
-*Por qué:* tres consumidores con tres definiciones de "conversión" es exactamente
-lo que la doctrina de métricas existe para evitar.
+*Why:* three consumers with three definitions of "conversion" is exactly what the metrics
+doctrine exists to prevent.
 
-### 2. El envío es una abstracción con mock y real, gateada por DEBUG
+### 2. Delivery is an abstraction with mock and real, gated by DEBUG
 
-`get_sender(channel)` es el único punto de selección: en DEBUG devuelve
-`MockSender` (sin red, registra lo enviado); fuera de DEBUG devuelve el sender real
-del canal (`WhatsAppSender`). Ningún setting fuerza el mock a un deploy — mismo gate
-que los clientes de inferencia (adr-31 regla 4, adr-35 decisión 5). Los tests corren
-contra el mock.
+`get_sender(channel)` is the single selection point: in DEBUG it returns `MockSender` (no
+network, records what was sent); outside DEBUG it returns the channel's real sender
+(`WhatsAppSender`). No setting forces the mock into a deploy — the same gate as the inference
+clients (adr-31 rule 4, adr-35 decision 5). The tests run against the mock.
 
-*Por qué:* el envío externo depende de credenciales vivas que no existen en test ni
-en dev; el mock deja la lógica testeable y el real queda enchufable sin tocar el
-flujo.
+*Why:* external delivery depends on live credentials that exist neither in test nor in dev;
+the mock keeps the logic testable and the real one stays pluggable without touching the flow.
 
-### 3. Una notificación es un registro inmutable con su estado
+### 3. A notification is an immutable record with its status
 
-`Notification` guarda `client`, `channel`, `to_address`, `subject`, `body`, y un
-`status` ∈ {`pending`, `sent`, `failed`} con su `error` y `sent_at`. Se crea y se
-lee — list/retrieve/create, sin update ni destroy (adr-49 regla 3). Un reintento es
-una notificación nueva, no editar la anterior.
+`Notification` stores `client`, `channel`, `to_address`, `subject`, `body`, and a `status` ∈
+{`pending`, `sent`, `failed`} with its `error` and `sent_at`. It is created and read —
+list/retrieve/create, without update or destroy (adr-49 rule 3). A retry is a new
+notification, not an edit of the previous one.
 
-*Por qué:* el registro de qué se mandó, a quién y con qué resultado tiene que ser
-auditable; sobrescribir el estado perdería el historial de intentos.
+*Why:* the record of what was sent, to whom and with what result has to be auditable;
+overwriting the status would lose the history of attempts.
 
-### 4. Notificar no toca el ledger ni actúa sobre el dominio
+### 4. Notifying touches neither the ledger nor the domain
 
-`notifications` es read-only sobre los datos del cliente: lee métricas, arma texto,
-manda. No postea asiento, no cambia estado de dominio. Es una capa de salida, no un
-actuador (misma postura que `feedyard`/adr-33 respecto del cobro).
+`notifications` is read-only over the client's data: it reads metrics, assembles text, sends.
+It posts no entry, changes no domain state. It is an output layer, not an actuator (the same
+posture as `feedyard`/adr-33 with respect to charging).
 
-*Por qué:* mandar un resumen es informar, no operar. Un solo camino de cobro sigue
-siendo el ledger vía `feed` (adr-25).
+*Why:* sending a summary is informing, not operating. A single charging path remains the
+ledger via `feed` (adr-25).
 
-## Consecuencias
+## Consequences
 
-- El backend entra solo por [[API]] (adr-03) y nace por el flujo [[TDD]] (adr-07).
-- `WHATSAPP_TOKEN` y `WHATSAPP_PHONE_NUMBER_ID` entran en [[VARIABLES]] antes de
-  leerse ([[adr-03-api-and-backend]] regla 7); sólo los lee `WhatsAppSender`, nunca
-  el mock. No son secretos en git — viven en `.env` local o Secrets Manager.
-- El comando `send_weekly_digests` arma y manda por cliente; una falla de envío de un
-  cliente no frena a los demás (misma disciplina de aislamiento que `ingest_prices`).
-- Cualquier cambio a las reglas 1–4 es semántico y DEBE superseder este ADR
-  ([[adr-00-adr-doctrine]] regla 4).
+- The backend enters only through [[API]] (adr-03) and is born through the [[TDD]] flow
+  (adr-07).
+- `WHATSAPP_TOKEN` and `WHATSAPP_PHONE_NUMBER_ID` enter [[VARIABLES]] before they are read
+  ([[adr-03-api-and-backend]] rule 7); only `WhatsAppSender` reads them, never the mock. They
+  are not secrets in git — they live in local `.env` or Secrets Manager.
+- The `send_weekly_digests` command assembles and sends per client; a delivery failure for
+  one client does not stop the others (the same isolation discipline as `ingest_prices`).
+- Any change to rules 1–4 is semantic and MUST supersede this ADR
+  ([[adr-00-adr-doctrine]] rule 4).

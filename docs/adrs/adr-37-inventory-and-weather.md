@@ -6,91 +6,90 @@ created: 2026-07-25
 tags: [adr, feedlot, inventory, weather, stock, phase-10]
 ---
 
-# ADR-37 — Inventario general de insumos y registro de clima
+# ADR-37 — general input inventory and weather logging
 
-**Contexto:** generaliza el patrón de stock de [[adr-25-account-ledger]] regla 4
-(`FeedStockMovement`) a insumos que no son alimento (gasoil, postes, alambre,
-sanitarios de campo) y agrega el registro de lluvia/clima. Reusa la postura
-event-sourced de [[adr-49-domain-layer-and-growth-by-addition]] regla 3 y el precedente "producción/consumo
-propio no toca el ledger" de [[adr-32-multi-rubro-assets]] regla 4. Reglas solamente;
-las entidades viven en [[FEEDLOT-DATA-MODEL]].
+**Context:** generalizes the stock pattern of [[adr-25-account-ledger]] rule 4
+(`FeedStockMovement`) to inputs that are not feed (diesel, posts, wire, field sanitary
+products) and adds rainfall/weather logging. Reuses the event-sourced posture of
+[[adr-49-domain-layer-and-growth-by-addition]] rule 3 and the "own production/consumption does
+not touch the ledger" precedent of [[adr-32-multi-rubro-assets]] rule 4. Rules only; the
+entities live in [[FEEDLOT-DATA-MODEL]].
 
-## Contexto
+## Context
 
-El feedlot mueve insumos que no son alimento —gasoil para la maquinaria, postes y
-alambre para los corrales, sanitarios de campo— y hoy no tiene dónde anotarlos. Y
-sostiene decisiones (siembra, pastoreo, sanidad) sobre la lluvia, que tampoco se
-registra. Faltan dos hechos: **cuánto insumo hay** y **cuánto llovió**.
+The feedlot moves inputs that are not feed — diesel for the machinery, posts and wire for the
+pens, field sanitary products — and today it has nowhere to record them. And it sustains
+decisions (sowing, grazing, sanitary work) on rainfall, which is not recorded either. Two
+facts are missing: **how much input there is** and **how much it rained**.
 
-Copiar `FeedStockMovement` por cada insumo habría duplicado el mismo modelo — la
-señal de extraer la abstracción. Se agrega una app `inventory` con el stock genérico
-por movimientos, y una app `weather` con el registro de clima. Ninguna toca el
-alimento existente ni el ledger.
+Copying `FeedStockMovement` per input would have duplicated the same model — the signal to
+extract the abstraction. An `inventory` app is added with generic stock by movements, and a
+`weather` app with the weather log. Neither touches the existing feed nor the ledger.
 
-## Decisiones
+## Decisions
 
-### 1. El stock de insumos es la suma de movimientos, nunca un número editable
+### 1. Input stock is the sum of movements, never an editable number
 
-`InputStockMovement` registra entradas y salidas fechadas de un `InputType` por
-`(owner_kind, client)`. El stock actual se **deriva** — Σ entradas − Σ salidas —
-exactamente como `FeedStockMovement` (adr-25 regla 4). Nunca se guarda un campo
-`stock` editable en `InputType`.
+`InputStockMovement` records dated ins and outs of an `InputType` per `(owner_kind, client)`.
+Current stock is **derived** — Σ ins − Σ outs — exactly like `FeedStockMovement` (adr-25 rule
+4). An editable `stock` field is never stored on `InputType`.
 
-*Por qué:* misma disciplina que todo el sistema. Un saldo editable pierde la
-historia de por qué cambió; el movimiento la conserva y hace auditable el stock.
+*Why:* the same discipline as the whole system. An editable balance loses the history of why
+it changed; the movement preserves it and makes the stock auditable.
 
-### 2. `InputType` es catálogo editable; el movimiento es inmutable
+### 2. `InputType` is an editable catalog; the movement is immutable
 
-`InputType` (gasoil, postes, alambre, sanitario…) es dato maestro: ModelViewSet con
-CRUD completo — "cargar insumos" es crear tipos. `InputStockMovement` es un hecho
-fechado: list/retrieve/create, sin update ni destroy (adr-49 regla 3). Una corrección
-es otro movimiento.
+`InputType` (diesel, posts, wire, sanitary product…) is master data: a ModelViewSet with full
+CRUD — "loading inputs" is creating types. `InputStockMovement` is a dated fact:
+list/retrieve/create, without update or destroy (adr-49 rule 3). A correction is another
+movement.
 
-*Por qué:* un tipo de insumo tiene estado que se corrige (se da de baja, se renombra);
-un movimiento de ayer no se reescribe.
+*Why:* an input type has state that gets corrected (it is retired, it is renamed);
+yesterday's movement is not rewritten.
 
-### 3. El inventario NO toca el ledger
+### 3. Inventory does NOT touch the ledger
 
-Ningún `InputStockMovement` postea asiento. Un insumo comprado para el feedlot es
-consumo propio, no un insumo entregado a un cliente que se cobre (mismo criterio que
-`Cutting`/adr-32 regla 4 y el harvest propio). El `unit_price` de una entrada es
-**informativo** —permite valuar el stock— y no genera cargo.
+No `InputStockMovement` posts an entry. An input bought for the feedlot is own consumption,
+not an input delivered to a client that gets charged (the same criterion as `Cutting`/adr-32
+rule 4 and one's own harvest). An entry's `unit_price` is **informative** — it allows valuing
+the stock — and generates no charge.
 
-*Por qué:* un solo camino de cobro sigue siendo el ledger vía `feed` (adr-25). Si algún
-día un insumo se factura como servicio a un tercero, entra por el par genérico
-`(source_kind, source_id)` (adr-49 regla 4) con su propio cambio, no por acá.
+*Why:* a single charging path remains the ledger via `feed` (adr-25). If one day an input is
+invoiced as a service to a third party, it enters through the generic `(source_kind,
+source_id)` pair (adr-49 rule 4) with its own change, not through here.
 
-### 4. Un `InputType` inactivo rechaza movimientos nuevos, en el servicio
+### 4. An inactive `InputType` rejects new movements, in the service
 
-`register_input_movement` rechaza en el **servicio** (no en la vista) un `InputType`
-con `is_active=False` y una `quantity` no positiva. La carga tardía con fecha
-retroactiva se acepta. Un stock que quede negativo por carga parcial **no se bloquea**:
-se muestra como inconsistencia (postura de adr-29 regla 5 — mostrar, no bloquear), no
-se falsea la fecha para poder cargar.
+`register_input_movement` rejects, in the **service** (not in the view), an `InputType` with
+`is_active=False` and a non-positive `quantity`. Late entry with a retroactive date is
+accepted. A stock left negative by partial loading is **not blocked**: it is shown as an
+inconsistency (the posture of adr-29 rule 5 — show, do not block), rather than falsifying the
+date in order to be able to load.
 
-*Por qué:* las reglas de negocio viven en el servicio, único punto de escritura, para
-que vista, admin y comando compartan la misma validación.
+*Why:* business rules live in the service, the single write point, so that view, admin and
+command share the same validation.
 
-### 5. El clima es un evento inmutable independiente del ledger y del dominio
+### 5. Weather is an immutable event, independent of the ledger and of the domain
 
-`WeatherLog` registra por fecha la lluvia (`rainfall_mm`) y, opcional, temperatura
-mín/máx y una nota, por `site`. Es un hecho fechado inmutable: list/retrieve/create.
-No postea asiento, no referencia hacienda ni cuenta — es un dato ambiental que las
-métricas leen, no un hecho económico.
+`WeatherLog` records per date the rainfall (`rainfall_mm`) and, optionally, min/max
+temperature and a note, per `site`. It is an immutable dated fact: list/retrieve/create. It
+posts no entry, references neither cattle nor account — it is environmental data the metrics
+read, not an economic fact.
 
-*Por qué:* la lluvia es contexto para decidir, no una transacción. Modelarla como
-evento inmutable la deja auditable y agregable sin acoplarla a ningún dominio.
+*Why:* rainfall is context for deciding, not a transaction. Modelling it as an immutable
+event keeps it auditable and aggregatable without coupling it to any domain.
 
-## Consecuencias
+## Consequences
 
-- El backend entra solo por [[API]] (adr-03) y nace por el flujo [[TDD]] (adr-07).
-- `apps.metrics` gana dos lecturas puras: stock actual por insumo y resumen de lluvia
-  del período. No define un número nuevo del negocio, sólo agrega sobre los eventos
-  nuevos (adr-29 regla 1).
-- No se agregan variables de entorno: ambas apps son datos internos, sin credenciales
-  ni servicios externos.
-- `Animal`/`Lot` y `feed` no se refactorizan: la extracción mira hacia adelante, cubre
-  los insumos nuevos, no migra el alimento que ya funciona (mismo criterio que adr-32
-  regla 2).
-- Cualquier cambio a las reglas 1–5 es semántico y DEBE superseder este ADR
-  ([[adr-00-adr-doctrine]] regla 4).
+- The backend enters only through [[API]] (adr-03) and is born through the [[TDD]] flow
+  (adr-07).
+- `apps.metrics` gains two pure reads: current stock per input and the period's rainfall
+  summary. It defines no new business number, it only aggregates over the new events (adr-29
+  rule 1).
+- No environment variables are added: both apps are internal data, with no credentials and no
+  external services.
+- `Animal`/`Lot` and `feed` are not refactored: the extraction looks forward, it covers the
+  new inputs, it does not migrate the feed that already works (the same criterion as adr-32
+  rule 2).
+- Any change to rules 1–5 is semantic and MUST supersede this ADR
+  ([[adr-00-adr-doctrine]] rule 4).

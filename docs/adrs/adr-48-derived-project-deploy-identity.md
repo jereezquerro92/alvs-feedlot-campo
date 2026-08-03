@@ -1,5 +1,5 @@
 ---
-title: ADR-48 — the derived project's deploy identity
+title: adr-48-derived-project-deploy-identity
 type: adr
 status: active
 created: 2026-07-30
