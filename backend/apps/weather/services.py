@@ -23,18 +23,25 @@ def register_weather_log(
     *, date, rainfall_mm=ZERO, site="", temp_min=None, temp_max=None, note="",
     created_by=None,
 ):
-    """Record an immutable per-date weather log."""
+    """Record a weather log, idempotent by (site, date).
+
+    Re-registration updates the existing row (adr-37 rule 5 amendment) so a
+    correction replaces values instead of adding another Sum() entry.
+    """
     if rainfall_mm is not None and Decimal(rainfall_mm) < ZERO:
         raise ValidationError("Rainfall cannot be negative.")
     if temp_min is not None and temp_max is not None and Decimal(temp_max) < Decimal(temp_min):
         raise ValidationError("temp_max cannot be below temp_min.")
 
-    return WeatherLog.objects.create(
+    log, _created = WeatherLog.objects.update_or_create(
+        site=site or "",
         date=date,
-        rainfall_mm=rainfall_mm if rainfall_mm is not None else ZERO,
-        site=site,
-        temp_min=temp_min,
-        temp_max=temp_max,
-        note=note,
-        created_by=created_by,
+        defaults={
+            "rainfall_mm": rainfall_mm if rainfall_mm is not None else ZERO,
+            "temp_min": temp_min,
+            "temp_max": temp_max,
+            "note": note,
+            "created_by": created_by,
+        },
     )
+    return log

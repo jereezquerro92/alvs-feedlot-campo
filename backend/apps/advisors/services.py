@@ -31,6 +31,9 @@ def generate_report(*, advisor: Advisor, client, start=None, end=None, created_b
     text, model_id, tokens, latency_ms = client_inference.generate(
         system_prompt=advisor.system_prompt, snapshot=snapshot
     )
+    if not (text or "").strip():
+        # Never persist a blank report as a successful generation (#25 / #60).
+        raise RuntimeError("advisor_unavailable")
 
     return AdvisorReport.objects.create(
         advisor=advisor,

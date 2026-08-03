@@ -167,6 +167,8 @@ class IpcvaConnector(BaseConnector):
                 avg = _to_decimal(row[col])
                 if avg is None:
                     continue
+                if avg <= 0:
+                    continue  # reject non-positive prices; never persist nonsense
                 band = bands[col - 1] if col - 1 < len(bands) else f"col{col}"
                 category = f"{_CATEGORY_LABEL} {band}"[:60]
                 parsed.append(
