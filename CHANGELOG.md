@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- group: remove-corner-nav-triangle-global-mount
+  priority: normal
+  issue: 77
+  changes:
+    - fix(frontend): stop mounting CornerNavTriangle in Base.astro — bottom-right FAB no longer site-wide
+    - docs: COMPONENTIZATION — CornerNavTriangle recommended for showcase demo only
+
 - group: fix-require-pr-flow-cursor-json
   priority: normal
   issue: 78
