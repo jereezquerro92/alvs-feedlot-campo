@@ -76,6 +76,14 @@
     expanded = expanded === key ? null : key;
   }
 
+  function onRowKeydown(e: KeyboardEvent, key: string): void {
+    if (!detail) return;
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      toggleRow(key);
+    }
+  }
+
   const sortedRows = $derived.by(() => {
     if (!sortKey) return rows;
     const key = sortKey;
@@ -122,6 +130,9 @@
         class={cn(detail && "cursor-pointer", expanded === rowKey && "bg-muted/50")}
         onclick={() => toggleRow(rowKey)}
         aria-expanded={detail ? expanded === rowKey : undefined}
+        tabindex={detail ? 0 : undefined}
+        role={detail ? "button" : undefined}
+        onkeydown={(e) => onRowKeydown(e, rowKey)}
       >
         {#each columns as col (col.key)}
           <Table.Cell class={col.align === "right" ? "text-right tabular-nums" : undefined}>
