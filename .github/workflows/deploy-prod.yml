@@ -264,7 +264,10 @@ jobs:
                   {"name": "COGNITO_CLIENT_ID", "valueFrom": "${SECRET_COGNITO}:COGNITO_CLIENT_ID::"},
                   {"name": "COGNITO_CLIENT_SECRET", "valueFrom": "${SECRET_COGNITO}:COGNITO_CLIENT_SECRET::"},
                   {"name": "COGNITO_DOMAIN", "valueFrom": "${SECRET_COGNITO}:COGNITO_DOMAIN::"},
-                  {"name": "COGNITO_REGION", "valueFrom": "${SECRET_COGNITO}:COGNITO_REGION::"}
+                  {"name": "COGNITO_REGION", "valueFrom": "${SECRET_COGNITO}:COGNITO_REGION::"},
+                  {"name": "AUTH_BOOTSTRAP_ALLOWLIST", "valueFrom": "${SECRET_DJANGO}:AUTH_BOOTSTRAP_ALLOWLIST::"},
+                  {"name": "DJANGO_SUPERUSER_EMAIL", "valueFrom": "${SECRET_DJANGO}:DJANGO_SUPERUSER_EMAIL::"},
+                  {"name": "DJANGO_SUPERUSER_PASSWORD", "valueFrom": "${SECRET_DJANGO}:DJANGO_SUPERUSER_PASSWORD::"}
                 ],
                 "logConfiguration": {
                   "logDriver": "awslogs",
@@ -372,7 +375,8 @@ jobs:
                   {"name": "COGNITO_CLIENT_ID", "valueFrom": "${SECRET_COGNITO}:COGNITO_CLIENT_ID::"},
                   {"name": "COGNITO_CLIENT_SECRET", "valueFrom": "${SECRET_COGNITO}:COGNITO_CLIENT_SECRET::"},
                   {"name": "COGNITO_DOMAIN", "valueFrom": "${SECRET_COGNITO}:COGNITO_DOMAIN::"},
-                  {"name": "COGNITO_REGION", "valueFrom": "${SECRET_COGNITO}:COGNITO_REGION::"}${MSGRAPH_SECRETS}
+                  {"name": "COGNITO_REGION", "valueFrom": "${SECRET_COGNITO}:COGNITO_REGION::"},
+                  {"name": "AUTH_BOOTSTRAP_ALLOWLIST", "valueFrom": "${SECRET_DJANGO}:AUTH_BOOTSTRAP_ALLOWLIST::"}${MSGRAPH_SECRETS}
                 ],
                 "logConfiguration": {
                   "logDriver": "awslogs",
