@@ -1,14 +1,14 @@
 ---
 title: FEEDLOT-DATA-MODEL
 type: reference
-status: proposed
+status: active
 created: 2026-07-21
 tags: [feedlot, data-model, ssot]
 ---
 
 # FEEDLOT-DATA-MODEL — entities and relations
 
-> [!note] Proposed
+> [!note] Scope of this doc
 > SSOT for the feedlot entities. Force for the debated choices lives in
 > [[adr-24-feedlot-domain]], [[adr-25-account-ledger]], [[adr-26-livestock-individual-and-lot]].
 > Overview: [[FEEDLOT]]. Endpoints that expose these: `API-feedlot-additions.md` → [[API]].
