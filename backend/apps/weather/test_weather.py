@@ -59,3 +59,15 @@ def test_rainfall_summary_is_scoped_by_site():
     register_weather_log(date=date(2026, 7, 1), rainfall_mm=Decimal("4"), site="B")
     summary = rainfall_summary(start=date(2026, 7, 1), end=date(2026, 7, 31), site="A")
     assert summary["total_mm"] == Decimal("10")
+
+
+def test_register_weather_log_is_idempotent_by_site_and_date():
+    first = register_weather_log(date=date(2026, 7, 1), rainfall_mm=Decimal("10"), site="A")
+    second = register_weather_log(date=date(2026, 7, 1), rainfall_mm=Decimal("4"), site="A")
+    assert WeatherLog.objects.filter(site="A", date=date(2026, 7, 1)).count() == 1
+    assert first.pk == second.pk
+    assert second.rainfall_mm == Decimal("4")
+    # Correction replaces — it must not inflate the period Sum().
+    summary = rainfall_summary(start=date(2026, 7, 1), end=date(2026, 7, 31), site="A")
+    assert summary["total_mm"] == Decimal("4")
+    assert summary["days_logged"] == 1

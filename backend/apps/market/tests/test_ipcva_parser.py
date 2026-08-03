@@ -78,6 +78,23 @@ def test_no_price_table_raises_connector_error():
         IpcvaConnector().parse(b"<html><body>sin tablas</body></html>", target_date=date(2025, 6, 30))
 
 
+def test_non_positive_price_avg_is_rejected():
+    html = (
+        b"<html><body><table>"
+        b"<tr><td>Precios Internacionales</td></tr>"
+        b"<tr><td>Fecha</td><td>Novillos</td></tr>"
+        b"<tr><td>ARGENTINA</td></tr>"
+        b"<tr><td>390-430</td></tr>"
+        b"<tr><td>07-ene-25</td><td>0,00</td></tr>"
+        b"<tr><td>14-ene-25</td><td>2,37</td></tr>"
+        b"</table></body></html>"
+    )
+    prices = IpcvaConnector().parse(html, target_date=date(2025, 6, 30))
+    assert len(prices) == 1
+    assert prices[0].date == date(2025, 1, 14)
+    assert prices[0].price_avg == Decimal("2.37")
+
+
 def test_raw_payload_is_kept_for_audit():
     assert "cells" in _prices()[0].raw
 

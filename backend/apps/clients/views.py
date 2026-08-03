@@ -4,6 +4,7 @@ Docs: [[BACKEND]]
 API: [[API]]
 LIVE-DOC:END"""
 
+from django.shortcuts import get_object_or_404
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -30,7 +31,7 @@ class ClientViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def account(self, request, pk=None):
-        account = Account.objects.get(client_id=pk)
+        account = get_object_or_404(Account, client_id=pk)
         return Response(AccountSerializer(account).data)
 
     @action(detail=True, methods=["get"])
@@ -44,5 +45,5 @@ class ClientViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["get"])
     def outstanding(self, request, pk=None):
         """Per-charge outstanding, derived on read (adr-41 decision 4)."""
-        account = Account.objects.get(client_id=pk)
+        account = get_object_or_404(Account, client_id=pk)
         return Response(outstanding_charges(account))

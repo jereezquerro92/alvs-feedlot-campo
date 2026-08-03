@@ -113,6 +113,23 @@ def test_inactive_advisor_is_rejected():
 
 
 @override_settings(DEBUG=True)
+def test_generate_report_refuses_blank_output(monkeypatch):
+    """A blank inference result must not persist as a successful report (#25 / #60)."""
+    from apps.advisors import services as services_mod
+
+    client = _client()
+
+    class _Blank:
+        def generate(self, *, system_prompt, snapshot):
+            return "", "blank-model", 0, 0.0
+
+    monkeypatch.setattr(services_mod, "get_advisor_client", lambda: _Blank())
+    with pytest.raises(RuntimeError, match="advisor_unavailable"):
+        generate_report(advisor=_advisor(), client=client)
+    assert AdvisorReport.objects.count() == 0
+
+
+@override_settings(DEBUG=True)
 def test_report_is_read_only_no_reinference_on_read():
     client = _client()
     _animal(client)

@@ -32,6 +32,10 @@ def register_maintenance(
 
     quantity = Decimal(quantity)
     unit_price = Decimal(unit_price)
+    if quantity <= 0:
+        raise ValidationError("La cantidad debe ser positiva.")
+    if unit_price < 0:
+        raise ValidationError("El precio unitario no puede ser negativo.")
 
     event = MaintenanceEvent.objects.create(
         client=client,
