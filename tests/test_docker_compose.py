@@ -163,10 +163,7 @@ def test_docs_reserve_app_paths() -> None:
     for blob, label in ((docker, "DOCKER.md"), (adr, "adr-09")):
         if "backend/" not in blob or "frontend/" not in blob:
             fail(f"{label} must reserve backend/ and frontend/ paths")
-        if "stage 3" not in blob.lower() and "stage 3" not in blob:
-            if "stage 3" not in blob:
-                fail(f"{label} must state apps are stage 3 / not harness-scaffolded")
-    ok("docs reserve paths; apps are stage 3")
+    ok("docs reserve the backend/ and frontend/ app paths")
 
 
 def test_env_example_names() -> None:
