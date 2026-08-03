@@ -98,7 +98,7 @@
   <div
     class="flex items-center gap-2 rounded-full border border-border bg-card py-1 pl-1 pr-2 text-card-foreground shadow-sm"
   >
-    <Avatar class="size-7">
+    <Avatar class="size-7!">
       {#if me.picture}
         <AvatarImage src={me.picture} alt={username} />
       {:else}
