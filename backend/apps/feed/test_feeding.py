@@ -7,6 +7,7 @@ LIVE-DOC:END"""
 from decimal import Decimal
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from apps.clients.models import Client
 from apps.feed.models import FeedingEvent, FeedStockMovement, FeedType, OwnerKind
@@ -81,3 +82,34 @@ def test_feeding_requires_exactly_one_target():
     assert not FeedingEventSerializer(data={**base, "animal": animal.id, "lot": lot.id}).is_valid()
     # Exactly one target set.
     assert FeedingEventSerializer(data={**base, "lot": lot.id}).is_valid()
+
+
+@pytest.mark.parametrize("quantity", ["0", "-10"])
+def test_register_delivery_rejects_non_positive_quantity(quantity):
+    client, feed, _ = _fixtures()
+    with pytest.raises(ValidationError):
+        register_delivery(client=client, feed_type=feed, quantity=quantity, date="2026-07-20")
+    assert FeedStockMovement.objects.count() == 0
+
+
+@pytest.mark.parametrize("quantity", ["0", "-10"])
+def test_register_feeding_rejects_non_positive_quantity(quantity):
+    client, feed, lot = _fixtures()
+    with pytest.raises(ValidationError):
+        register_feeding(
+            client=client, feed_type=feed, quantity=quantity, unit_price="285",
+            origin=FeedingEvent.Origin.OWN_STOCK, date="2026-07-21", lot=lot,
+        )
+    assert FeedingEvent.objects.count() == 0
+    assert LedgerEntry.objects.filter(account=client.account).count() == 0
+
+
+def test_register_feeding_rejects_negative_unit_price():
+    client, feed, lot = _fixtures()
+    with pytest.raises(ValidationError):
+        register_feeding(
+            client=client, feed_type=feed, quantity="100", unit_price="-1",
+            origin=FeedingEvent.Origin.OWN_STOCK, date="2026-07-21", lot=lot,
+        )
+    assert FeedingEvent.objects.count() == 0
+    assert LedgerEntry.objects.filter(account=client.account).count() == 0

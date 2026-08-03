@@ -5,6 +5,10 @@ LIVE-DOC:END"""
 from decimal import Decimal
 
 import pytest
+from django.core.exceptions import ValidationError
+from django.core.management import call_command
+from django.db import connection
+from django.test.utils import CaptureQueriesContext
 
 from apps.clients.models import Client
 from apps.ledger.models import Concept, Direction, LedgerEntry, Payment
@@ -59,3 +63,52 @@ def test_correction_is_a_counter_entry_not_an_edit():
     assert LedgerEntry.objects.filter(account=account).count() == 2
     original.refresh_from_db()
     assert original.amount == Decimal("1000.00")  # untouched
+
+
+def test_post_entry_updates_balance_via_f_expression():
+    """#5 / #57: F() update leaves the in-memory instance stale until refresh."""
+    account = _account()
+    assert account.balance_cached == Decimal("0.00")
+    with CaptureQueriesContext(connection) as ctx:
+        post_entry(
+            account=account,
+            direction=Direction.DEBIT,
+            amount="1000",
+            concept=Concept.FEEDING,
+            date="2026-07-01",
+        )
+    # In-memory cache is not Python-RMW'd — callers must refresh.
+    assert account.balance_cached == Decimal("0.00")
+    account.refresh_from_db()
+    assert account.balance_cached == Decimal("1000.00")
+    sql = " ".join(q["sql"] for q in ctx.captured_queries).upper()
+    assert "BALANCE_CACHED" in sql
+    # F("balance_cached") + delta renders as column self-reference in UPDATE.
+    assert sql.count("BALANCE_CACHED") >= 2
+
+
+def test_recompute_balances_command_repairs_drifted_cache():
+    """#14 / #57: operational entrypoint for recompute_balance."""
+    account = _account()
+    post_entry(
+        account=account,
+        direction=Direction.DEBIT,
+        amount="2500",
+        concept=Concept.FEEDING,
+        date="2026-07-01",
+    )
+    account.balance_cached = Decimal("999.00")
+    account.save(update_fields=["balance_cached"])
+    call_command("recompute_balances", account=account.pk)
+    account.refresh_from_db()
+    assert account.balance_cached == Decimal("2500.00")
+    assert account.balance_cached == recompute_balance(account)
+
+
+@pytest.mark.parametrize("amount", ["0", "-100"])
+def test_register_payment_rejects_non_positive_amount(amount):
+    account = _account()
+    with pytest.raises(ValidationError):
+        register_payment(account=account, amount=amount, date="2026-07-05")
+    assert Payment.objects.filter(account=account).count() == 0
+    assert LedgerEntry.objects.filter(account=account).count() == 0
