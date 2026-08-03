@@ -452,6 +452,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/form/index.ts`
 - `frontend/src/lib/components/icons/Check.svelte`
 - `frontend/src/lib/components/icons/index.ts`
+- `frontend/src/lib/components/nav/Breadcrumb.svelte`
 - `frontend/src/lib/components/nav/ContextMenu.svelte`
 - `frontend/src/lib/components/nav/DropdownMenu.svelte`
 - `frontend/src/lib/components/nav/Menubar.svelte`
@@ -469,9 +470,11 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/overlay/index.ts`
 - `frontend/src/lib/components/primitives/CornerNavTriangle.svelte`
 - `frontend/src/lib/components/primitives/HomeTriangle.svelte`
+- `frontend/src/lib/components/primitives/titles/PageHeader.svelte`
 - `frontend/src/lib/components/primitives/titles/PageTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/SectionTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/index.ts`
+- `frontend/src/lib/components/showcase/BreadcrumbDemo.svelte`
 - `frontend/src/lib/components/showcase/CalendarDemo.svelte`
 - `frontend/src/lib/components/showcase/CollapsibleDemo.svelte`
 - `frontend/src/lib/components/showcase/ContextMenuDemo.svelte`
@@ -481,6 +484,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/showcase/HomeTriangleDemo.svelte`
 - `frontend/src/lib/components/showcase/HoverCardDemo.svelte`
 - `frontend/src/lib/components/showcase/MenubarDemo.svelte`
+- `frontend/src/lib/components/showcase/PageHeaderDemo.svelte`
 - `frontend/src/lib/components/showcase/PaginationDemo.svelte`
 - `frontend/src/lib/components/showcase/PinInputDemo.svelte`
 - `frontend/src/lib/components/showcase/PopoverDemo.svelte`
@@ -1272,6 +1276,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/form/TagsInput.svelte`
 - `frontend/src/lib/components/form/ToggleGroup.svelte`
 - `frontend/src/lib/components/icons/Check.svelte`
+- `frontend/src/lib/components/nav/Breadcrumb.svelte`
 - `frontend/src/lib/components/nav/ContextMenu.svelte`
 - `frontend/src/lib/components/nav/DropdownMenu.svelte`
 - `frontend/src/lib/components/nav/Menubar.svelte`
@@ -1287,8 +1292,10 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/overlay/Tooltip.svelte`
 - `frontend/src/lib/components/primitives/CornerNavTriangle.svelte`
 - `frontend/src/lib/components/primitives/HomeTriangle.svelte`
+- `frontend/src/lib/components/primitives/titles/PageHeader.svelte`
 - `frontend/src/lib/components/primitives/titles/PageTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/SectionTitle.svelte`
+- `frontend/src/lib/components/showcase/BreadcrumbDemo.svelte`
 - `frontend/src/lib/components/showcase/CalendarDemo.svelte`
 - `frontend/src/lib/components/showcase/CollapsibleDemo.svelte`
 - `frontend/src/lib/components/showcase/ContextMenuDemo.svelte`
@@ -1298,6 +1305,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/showcase/HomeTriangleDemo.svelte`
 - `frontend/src/lib/components/showcase/HoverCardDemo.svelte`
 - `frontend/src/lib/components/showcase/MenubarDemo.svelte`
+- `frontend/src/lib/components/showcase/PageHeaderDemo.svelte`
 - `frontend/src/lib/components/showcase/PaginationDemo.svelte`
 - `frontend/src/lib/components/showcase/PinInputDemo.svelte`
 - `frontend/src/lib/components/showcase/PopoverDemo.svelte`
@@ -1483,6 +1491,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/form/index.ts`
 - `frontend/src/lib/components/icons/Check.svelte`
 - `frontend/src/lib/components/icons/index.ts`
+- `frontend/src/lib/components/nav/Breadcrumb.svelte`
 - `frontend/src/lib/components/nav/ContextMenu.svelte`
 - `frontend/src/lib/components/nav/DropdownMenu.svelte`
 - `frontend/src/lib/components/nav/Menubar.svelte`
@@ -1500,9 +1509,11 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/overlay/index.ts`
 - `frontend/src/lib/components/primitives/CornerNavTriangle.svelte`
 - `frontend/src/lib/components/primitives/HomeTriangle.svelte`
+- `frontend/src/lib/components/primitives/titles/PageHeader.svelte`
 - `frontend/src/lib/components/primitives/titles/PageTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/SectionTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/index.ts`
+- `frontend/src/lib/components/showcase/BreadcrumbDemo.svelte`
 - `frontend/src/lib/components/showcase/CalendarDemo.svelte`
 - `frontend/src/lib/components/showcase/CollapsibleDemo.svelte`
 - `frontend/src/lib/components/showcase/ContextMenuDemo.svelte`
@@ -1512,6 +1523,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/showcase/HomeTriangleDemo.svelte`
 - `frontend/src/lib/components/showcase/HoverCardDemo.svelte`
 - `frontend/src/lib/components/showcase/MenubarDemo.svelte`
+- `frontend/src/lib/components/showcase/PageHeaderDemo.svelte`
 - `frontend/src/lib/components/showcase/PaginationDemo.svelte`
 - `frontend/src/lib/components/showcase/PinInputDemo.svelte`
 - `frontend/src/lib/components/showcase/PopoverDemo.svelte`

@@ -1,5 +1,5 @@
-<!-- LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
-     Governed by: [[adr-52-frontend-and-design-system]] · [[adr-22-showcase-ready-components]]
+<!-- LIVE-DOC:START — astro-drf-aws live-doc; see [[adr-17-live-doc-backlinks]]
+     Governed by: [[adr-04-frontend-and-design-system]] · [[adr-22-showcase-ready-components]]
      Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]]
      LIVE-DOC:END -->
 
@@ -77,8 +77,7 @@
     </header>
 
     <!-- Mobile module nav (sidebar is hidden < lg) -->
-    <nav class="flex gap-2 overflow-x-auto px-4 py-2.5 lg:hidden"
-      style="border-bottom: var(--hairline) solid var(--border);">
+    <nav class="flex gap-2 overflow-x-auto px-4 py-2.5 lg:hidden">
       <slot name="mobile-nav" />
     </nav>
 
