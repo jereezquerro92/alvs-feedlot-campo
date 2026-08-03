@@ -33,7 +33,6 @@
     clients = [],
     publicBackendUrl = "",
     me = null,
-    pending = false,
     /** Graph words fetched server-side by the page ([[adr-13-m365-graph]] rule 3). */
     m365Hello = "",
     m365World = "",
@@ -41,7 +40,6 @@
     clients?: Client[];
     publicBackendUrl?: string;
     me?: Me | null;
-    pending?: boolean;
     m365Hello?: string;
     m365World?: string;
   } = $props();
@@ -63,7 +61,6 @@
   <SessionBadge
     slot="session"
     {me}
-    {pending}
     {publicBackendUrl}
     loginLabel={t("auth_login")}
     logoutLabel={t("auth_logout")}
