@@ -19,7 +19,7 @@ permissions:
 # GitHub repository variable, and `preflight` hard-fails while any is unset —
 # so a repo with no infrastructure of its own cannot reach AWS at all.
 env:
-  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
+  AWS_REGION: ${{ vars.AWS_REGION }}
   AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
   DEPLOY_ROLE_ARN: ${{ vars.DEPLOY_ROLE_ARN }}
   PROJECT_SLUG: ${{ vars.PROJECT_SLUG }}
@@ -59,7 +59,7 @@ jobs:
           # sibling's resources) for a value that is not genuinely required.
           # Every variable that IS required for something this project does
           # ship stays in this list and still fails closed.
-          for v in AWS_ACCOUNT_ID DEPLOY_ROLE_ARN PROJECT_SLUG PROJECT_HOST CLUSTER \
+          for v in AWS_REGION AWS_ACCOUNT_ID DEPLOY_ROLE_ARN PROJECT_SLUG PROJECT_HOST CLUSTER \
                    ECR_REGISTRY PUBLIC_SUBNET_A PUBLIC_SUBNET_B TASK_SG_ID \
                    SECRET_DJANGO SECRET_DB SECRET_COGNITO; do
             [ -n "${!v}" ] || missing+=("$v")
@@ -76,7 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       postgres:
-        image: postgres:17
+        image: postgres:17.9-bookworm
         env:
           POSTGRES_DB: app
           POSTGRES_USER: app

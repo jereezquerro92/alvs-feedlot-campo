@@ -13,7 +13,7 @@
   import { cn } from "$lib/utils";
 
   let {
-    title,
+    title = "",
     subtitle = undefined,
     stats = [],
     status = undefined,
@@ -21,7 +21,8 @@
     class: className = undefined,
     ...rest
   }: {
-    title: string;
+    /** Self-defined default for zero-prop mount ([[adr-22]] rule 1). */
+    title?: string;
     subtitle?: string;
     stats?: EntityStat[];
     /** Status key handed to StatusBadge; omit for no badge. */

@@ -14,6 +14,7 @@
   import { Button } from "$lib/components/ui/button";
   import { Badge } from "$lib/components/ui/badge";
   import { formatNumber } from "$lib/components/data/NumericValue.svelte";
+  import { t } from "../../../i18n";
 
   type Client = {
     id: number;
@@ -26,14 +27,14 @@
   let {
     clients = [],
     columns = {
-      name: "Cliente",
-      kind: "Tipo",
-      taxId: "CUIT",
-      balance: "Saldo (ARS)",
+      name: t("feedlot_col_client"),
+      kind: t("feedlot_col_kind"),
+      taxId: t("feedlot_col_taxid"),
+      balance: t("feedlot_col_balance"),
       action: "",
     },
-    detailLabel = "Ver panel",
-    emptyLabel = "Todavía no hay clientes cargados.",
+    detailLabel = t("feedlot_view_dashboard"),
+    emptyLabel = t("feedlot_empty_clients"),
   }: {
     clients?: Client[];
     columns?: { name: string; kind: string; taxId: string; balance: string; action: string };
@@ -42,8 +43,8 @@
   } = $props();
 
   const KINDS: Record<string, string> = {
-    boarding: "Hotelería",
-    own: "Hacienda propia",
+    boarding: t("feedlot_kind_boarding"),
+    own: t("feedlot_kind_own"),
   };
 
   function balanceOf(c: Client): number | null {
