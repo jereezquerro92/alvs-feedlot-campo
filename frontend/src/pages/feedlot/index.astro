@@ -6,7 +6,6 @@
  * LIVE-DOC:END */
 import Base from "../../layouts/Base.astro";
 import { FeedlotClientsView } from "$lib/components/views";
-import { hasRole } from "$lib/auth";
 import { requireRole, portalLanding } from "$lib/authGate";
 import { t } from "../../i18n";
 import type { Me } from "$lib/types/user";
@@ -48,8 +47,6 @@ try {
   console.error("SSR /api/clients/ failed:", err);
 }
 
-const pending = me !== null && !hasRole(me);
-
 // The Graph status words ([[adr-13-m365-graph]] rule 3 — both routes are
 // AllowAny, so no cookie is forwarded). A failure degrades to its status code
 // rather than blanking the strip or breaking the roster render.
@@ -77,7 +74,6 @@ Astro.response.headers.set("Cache-Control", "no-store");
     clients={clients}
     publicBackendUrl={publicBackendUrl}
     me={me}
-    pending={pending}
     m365Hello={m365Hello}
     m365World={m365World}
   />
