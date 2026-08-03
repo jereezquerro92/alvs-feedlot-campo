@@ -8,10 +8,18 @@ from django.dispatch import receiver
 
 from apps.users.models import AccessRequest, User
 from apps.users.permissions import ADMINS_GROUP
+from apps.users.roles import ROLE_GROUPS
 
 
 @receiver(post_save, sender=AccessRequest)
-def add_role_group_membership(sender, instance, **kwargs):
+def sync_role_group_membership(sender, instance, **kwargs):
+    # adr-20 rule 3 / adr-44: matrix membership tracks AccessRequest.role
+    stale = instance.user.groups.filter(name__in=ROLE_GROUPS)
+    if instance.role_id is not None:
+        stale = stale.exclude(pk=instance.role_id)
+    stale_list = list(stale)
+    if stale_list:
+        instance.user.groups.remove(*stale_list)
     if instance.role_id is not None:
         instance.user.groups.add(instance.role)
 

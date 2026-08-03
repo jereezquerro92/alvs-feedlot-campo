@@ -3,6 +3,8 @@ Governed by: [[adr-10-auth]]
 Docs: [[BACKEND]] · [[AUTH]]
 LIVE-DOC:END"""
 
+from unittest.mock import MagicMock
+
 import pytest
 from django.contrib.admin.sites import AdminSite
 from django.contrib.auth.models import Group
@@ -10,6 +12,7 @@ from django.test import RequestFactory
 
 from apps.users.admin import ROLE_HELP_TEXT, AccessRequestAdmin
 from apps.users.models import AccessRequest
+from apps.users.roles import FIELD_MANAGERS, LOT_OWNERS, ClientDirectoryAccess
 from apps.users.services import upsert_user_from_claims
 
 pytestmark = pytest.mark.django_db
@@ -34,6 +37,20 @@ def _admins():
 
 def _ai_operators():
     return Group.objects.get(name="ai_operators")
+
+
+def _field_managers():
+    return Group.objects.get(name=FIELD_MANAGERS)
+
+
+def _lot_owners():
+    return Group.objects.get(name=LOT_OWNERS)
+
+
+def _directory_allowed(user):
+    request = RequestFactory().get("/api/clients/")
+    request.user = user
+    return ClientDirectoryAccess().has_permission(request, MagicMock())
 
 
 def test_first_login_creates_exactly_one_access_request():
@@ -94,20 +111,22 @@ def test_admin_role_editable_while_pending():
     assert "role" not in _model_admin().get_readonly_fields(_request(), access_request)
 
 
-def test_admin_role_readonly_after_grant():
+def test_admin_role_stays_editable_after_grant():
     user = _user(sub="sub-admin-granted")
     access_request = AccessRequest.objects.get(user=user)
     access_request.role = _admins()
     access_request.save()
-    assert "role" in _model_admin().get_readonly_fields(_request(), access_request)
+    assert "role" not in _model_admin().get_readonly_fields(_request(), access_request)
 
 
-def test_admin_role_help_text_documents_grant_only_contract():
+def test_admin_role_help_text_documents_set_sync_contract():
     form = _model_admin().get_form(_request(), None)
-    assert form.base_fields["role"].help_text == ROLE_HELP_TEXT
+    help_text = form.base_fields["role"].help_text
+    assert help_text == ROLE_HELP_TEXT
+    assert "strip" in help_text.lower() or "remov" in help_text.lower()
 
 
-def test_reassign_role_adds_new_group_and_keeps_old():
+def test_reassign_between_out_of_matrix_roles_keeps_both():
     user = _user(sub="sub-role-reassign")
     access_request = AccessRequest.objects.get(user=user)
     access_request.role = _admins()
@@ -119,7 +138,7 @@ def test_reassign_role_adds_new_group_and_keeps_old():
     assert user.groups.filter(name="ai_operators").exists()
 
 
-def test_clearing_role_does_not_remove_group():
+def test_clearing_role_keeps_out_of_matrix_group():
     user = _user(sub="sub-role-clear")
     access_request = AccessRequest.objects.get(user=user)
     access_request.role = _admins()
@@ -128,6 +147,83 @@ def test_clearing_role_does_not_remove_group():
     access_request.save()
     user.refresh_from_db()
     assert user.groups.filter(name="admins").exists()
+
+
+def test_demoted_user_loses_staff_directory_access():
+    user = _user(sub="sub-demote-directory")
+    access_request = AccessRequest.objects.get(user=user)
+    access_request.role = _field_managers()
+    access_request.save()
+    user.refresh_from_db()
+    assert _directory_allowed(user) is True
+    access_request.role = _lot_owners()
+    access_request.save()
+    user.refresh_from_db()
+    assert user.groups.filter(name=FIELD_MANAGERS).exists() is False
+    assert user.groups.filter(name=LOT_OWNERS).exists() is True
+    assert _directory_allowed(user) is False
+
+
+def test_reassign_role_strips_previous_role_group():
+    user = _user(sub="sub-role-strip")
+    access_request = AccessRequest.objects.get(user=user)
+    access_request.role = _field_managers()
+    access_request.save()
+    access_request.role = _lot_owners()
+    access_request.save()
+    user.refresh_from_db()
+    names = set(user.groups.values_list("name", flat=True))
+    assert names == {LOT_OWNERS}
+
+
+def test_clearing_role_strips_all_role_groups():
+    user = _user(sub="sub-role-strip-all")
+    access_request = AccessRequest.objects.get(user=user)
+    access_request.role = _field_managers()
+    access_request.save()
+    access_request.role = None
+    access_request.save()
+    user.refresh_from_db()
+    assert user.groups.filter(name=FIELD_MANAGERS).exists() is False
+    assert user.groups.count() == 0
+
+
+def test_sync_preserves_hand_granted_admins():
+    user = _user(sub="sub-hand-admins")
+    access_request = AccessRequest.objects.get(user=user)
+    access_request.role = _field_managers()
+    access_request.save()
+    user.groups.add(_admins())
+    access_request.role = _lot_owners()
+    access_request.save()
+    user.refresh_from_db()
+    names = set(user.groups.values_list("name", flat=True))
+    assert names == {LOT_OWNERS, "admins"}
+
+
+def test_sync_preserves_ai_operators_when_role_cleared():
+    user = _user(sub="sub-keep-ai")
+    access_request = AccessRequest.objects.get(user=user)
+    access_request.role = _field_managers()
+    access_request.save()
+    user.groups.add(_ai_operators())
+    access_request.role = None
+    access_request.save()
+    user.refresh_from_db()
+    names = set(user.groups.values_list("name", flat=True))
+    assert names == {"ai_operators"}
+
+
+def test_resave_same_role_does_not_thrash_role_group():
+    user = _user(sub="sub-no-thrash")
+    access_request = AccessRequest.objects.get(user=user)
+    access_request.role = _field_managers()
+    access_request.save()
+    access_request.role = _field_managers()
+    access_request.save()
+    user.refresh_from_db()
+    assert list(user.groups.filter(name=FIELD_MANAGERS)) == [_field_managers()]
+    assert user.groups.count() == 1
 
 
 def test_me_endpoint_does_not_leak_access_request(client):

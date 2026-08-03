@@ -102,3 +102,32 @@ def test_env_allowlist_parses_pairs_defaults_and_whitespace(monkeypatch):
 def test_env_allowlist_unset_is_empty(monkeypatch):
     monkeypatch.delenv("AUTH_BOOTSTRAP_ALLOWLIST", raising=False)
     assert _env_allowlist("AUTH_BOOTSTRAP_ALLOWLIST") == {}
+
+
+@override_settings(AUTH_BOOTSTRAP_ALLOWLIST={"dev@example.com": "field_managers"})
+def test_allowlist_refills_cleared_role_and_restores_group_on_next_login():
+    user = _login(sub="sub-refill")
+    access_request = AccessRequest.objects.get(user=user)
+    assert access_request.role == Group.objects.get(name="field_managers")
+    assert user.groups.filter(name="field_managers").exists()
+    access_request.role = None
+    access_request.save()
+    user.refresh_from_db()
+    assert user.groups.filter(name="field_managers").exists() is False
+    user = _login(sub="sub-refill")
+    access_request = AccessRequest.objects.get(user=user)
+    assert access_request.role == Group.objects.get(name="field_managers")
+    assert user.groups.filter(name="field_managers").exists()
+
+
+def test_cleared_role_stays_revoked_when_email_not_allowlisted():
+    user = _login(sub="sub-revoked", email="gone@example.com")
+    access_request = AccessRequest.objects.get(user=user)
+    access_request.role = Group.objects.get(name="field_managers")
+    access_request.save()
+    access_request.role = None
+    access_request.save()
+    user = _login(sub="sub-revoked", email="gone@example.com")
+    access_request = AccessRequest.objects.get(user=user)
+    assert access_request.role is None
+    assert user.groups.filter(name="field_managers").exists() is False
