@@ -11,10 +11,12 @@
   derived — it computes no metric ([[adr-29-metrics-derivation]] rule 1).
 -->
 <script lang="ts">
+  import { t } from "../../../i18n";
+
   let {
     points = [],
     height = 72,
-    emptyLabel = "Sin datos para graficar",
+    emptyLabel = t("feedlot_no_chart"),
     ariaLabel = "",
   }: {
     /** Ordered series; each `value` string|number, optional `label`. */

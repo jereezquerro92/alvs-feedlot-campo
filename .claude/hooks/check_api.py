@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """API contract + membrane hook (PostToolUse on Write|Edit).
 
-Backend half (adr-51-api-and-backend rule 1): every urls.py route literal
-(path/re_path/router.register) must correspond to an endpoint row in
-docs/API.md. urls.py declares relative segments, so a route matches only when
-its full ordered sequence of literal segments appears — in order — within a
-single declared docs/API.md path (params like <id> are skippable filler).
+Backend half (adr-51-api-and-backend rule 1): every *urls.py route literal
+(urls.py, api_urls.py, … — path/re_path/router.register) must correspond to
+an endpoint row in docs/API.md. Route modules declare relative segments, so a
+route matches only when its full ordered sequence of literal segments appears
+— in order — within a single declared docs/API.md path (params like <id> are
+skippable filler).
 
 Frontend half (adr-53-api-membrane rule 2): a frontend file under frontend/src
 - MUST NOT fetch a path whose literal segment sequence matches no declared
@@ -92,8 +93,13 @@ def _is_ordered_subsequence(needle, haystack):
     return all(seg in it for seg in needle)
 
 
+def _is_backend_route_module(path):
+    # Match urls.py and aliases included from config (e.g. api_urls.py).
+    return path.name.endswith("urls.py") and "/.claude/" not in path.as_posix()
+
+
 def check_backend_urls(path):
-    if path.name != "urls.py" or "/.claude/" in path.as_posix():
+    if not _is_backend_route_module(path):
         return []
     try:
         code = path.read_text(encoding="utf-8")
@@ -200,7 +206,7 @@ def check_frontend(path):
 
 
 def check(path):
-    if path.name == "urls.py":
+    if _is_backend_route_module(path):
         return check_backend_urls(path)
     return check_frontend(path)
 

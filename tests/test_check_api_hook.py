@@ -48,9 +48,9 @@ def make_project(tmp_path: Path, declared: list[str]) -> Path:
     return project
 
 
-def write_urls(project: Path, body: str) -> Path:
-    urls = project / "backend" / "apps" / "x" / "urls.py"
-    urls.parent.mkdir(parents=True)
+def write_urls(project: Path, body: str, name: str = "urls.py") -> Path:
+    urls = project / "backend" / "apps" / "x" / name
+    urls.parent.mkdir(parents=True, exist_ok=True)
     urls.write_text(body, encoding="utf-8")
     return urls
 
@@ -153,12 +153,61 @@ def test_undeclared_single_segment_still_caught() -> None:
         ok("undeclared single-segment route is still caught")
 
 
+def test_api_urls_undeclared_route_is_caught() -> None:
+    # Regression for #35: route modules included under a name other than
+    # urls.py (e.g. apps.users.api_urls) must still be gated against API.md.
+    with tempfile.TemporaryDirectory() as tmp:
+        project = make_project(Path(tmp), declared=["/api/me/"])
+        urls = write_urls(
+            project,
+            'from django.urls import path\n'
+            'urlpatterns = [path("secret-debug/", V.as_view())]\n',
+            name="api_urls.py",
+        )
+        proc = run_hook(project, urls)
+        if proc.returncode != 2:
+            fail(
+                "api_urls.py with an undeclared route must exit 2; "
+                f"got {proc.returncode} stderr={proc.stderr!r}"
+            )
+        if "secret-debug" not in proc.stderr:
+            fail(f"stderr must name the undeclared route; got {proc.stderr!r}")
+        if "api_urls.py" not in proc.stderr:
+            fail(f"stderr must name api_urls.py; got {proc.stderr!r}")
+        ok("undeclared route in api_urls.py is caught")
+
+
+def test_api_urls_declared_route_passes() -> None:
+    with tempfile.TemporaryDirectory() as tmp:
+        project = make_project(
+            Path(tmp), declared=["/api/me/", "/api/restricted/"]
+        )
+        urls = write_urls(
+            project,
+            'from django.urls import path\n'
+            'urlpatterns = [\n'
+            '    path("me/", MeView.as_view()),\n'
+            '    path("restricted/", RestrictedView.as_view()),\n'
+            ']\n',
+            name="api_urls.py",
+        )
+        proc = run_hook(project, urls)
+        if proc.returncode != 0:
+            fail(
+                "declared routes in api_urls.py must pass; "
+                f"got {proc.returncode} stderr={proc.stderr!r}"
+            )
+        ok("declared routes in api_urls.py pass")
+
+
 def main() -> int:
     tests = [
         test_full_path_bypass_is_rejected,
         test_declared_full_path_passes,
         test_existing_template_routes_pass,
         test_undeclared_single_segment_still_caught,
+        test_api_urls_undeclared_route_is_caught,
+        test_api_urls_declared_route_passes,
     ]
     failed = 0
     for fn in tests:
