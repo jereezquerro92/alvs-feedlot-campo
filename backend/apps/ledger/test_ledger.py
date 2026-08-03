@@ -5,6 +5,7 @@ LIVE-DOC:END"""
 from decimal import Decimal
 
 import pytest
+from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
@@ -102,3 +103,12 @@ def test_recompute_balances_command_repairs_drifted_cache():
     account.refresh_from_db()
     assert account.balance_cached == Decimal("2500.00")
     assert account.balance_cached == recompute_balance(account)
+
+
+@pytest.mark.parametrize("amount", ["0", "-100"])
+def test_register_payment_rejects_non_positive_amount(amount):
+    account = _account()
+    with pytest.raises(ValidationError):
+        register_payment(account=account, amount=amount, date="2026-07-05")
+    assert Payment.objects.filter(account=account).count() == 0
+    assert LedgerEntry.objects.filter(account=account).count() == 0

@@ -12,6 +12,7 @@ the source of truth, rule 2).
 
 from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import F, Sum
 from django.utils import timezone
@@ -80,6 +81,9 @@ def post_entry(
 @transaction.atomic
 def register_payment(*, account, amount, date, method="transfer", reference="", created_by=None):
     """Register a payment: a credit entry plus its Payment record (adr-25 rule 7)."""
+    amount = Decimal(amount)
+    if amount <= 0:
+        raise ValidationError("Payment amount must be positive.")
     entry = post_entry(
         account=account,
         direction=Direction.CREDIT,
@@ -93,7 +97,7 @@ def register_payment(*, account, amount, date, method="transfer", reference="", 
     payment = Payment.objects.create(
         account=account,
         date=date,
-        amount=Decimal(amount),
+        amount=amount,
         method=method,
         reference=reference,
         entry=entry,
