@@ -2,6 +2,16 @@
 
 ## [Unreleased]
 
+- group: fix-local-dev-rootless-eacces
+  priority: high
+  issue: 62
+  changes:
+    - fix(docker): compose.yaml gains four anonymous volumes — frontend /app/.astro and /app/dist, backend /app/staticfiles and /app/.pytest_cache — so every path a container writes inside /app survives the host-owned bind mount under rootless Docker
+    - fix(docker): frontend/Dockerfile creates /app/.astro owned by bun before USER bun, since Docker seeds an anon volume's ownership from the image directory it shadows
+    - fix(hooks): check_api.py drops the literal template slug from a prose comment (tests/test_project_slug_hardcode.py was red on main)
+    - chore(git): merged worktree worktree-kdx-adr-review (PR #53) removed, per adr-19 rule 5
+    - docs(docker): DOCKER.md records the volumes, the rootless-uid reason, and the CI-equivalent env the backend suite needs locally
+
 - group: adopcion-doctrina-kodexarg-harness-default
   priority: high
   commit: d661a66
