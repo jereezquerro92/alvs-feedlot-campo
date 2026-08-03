@@ -54,6 +54,8 @@ import {
   ContextMenuDemo,
   MenubarDemo,
   TableOfContentsDemo,
+  BreadcrumbDemo,
+  PageHeaderDemo,
   DrawerDemo,
   HomeTriangleDemo,
   CornerNavTriangleDemo,
@@ -232,6 +234,8 @@ const tocItems: TableOfContentsItem[] = [
       recoBody: t("gallery_reco_body"),
       typography: t("gallery_typography"),
       typographyNote: t("gallery_typography_note"),
+      pageHeader: t("gallery_page_header"),
+      pageHeaderSubtitle: t("gallery_page_header_subtitle"),
       scaleH1: t("gallery_scale_h1"),
       scaleH2: t("gallery_scale_h2"),
       scaleH3: t("gallery_scale_h3"),
@@ -268,6 +272,7 @@ const tocItems: TableOfContentsItem[] = [
       dropdownMenu: t("gallery_dropdownmenu"),
       contextMenu: t("gallery_contextmenu"),
       menubar: t("gallery_menubar"),
+      breadcrumb: t("gallery_breadcrumb"),
       tableOfContents: t("gallery_toc"),
       overlay: t("gallery_overlay"),
       accordion: t("gallery_accordion"),
@@ -285,6 +290,11 @@ const tocItems: TableOfContentsItem[] = [
       theme: t("gallery_theme"),
     }}
   >
+    <PageHeaderDemo
+      title={t("gallery_page_header")}
+      subtitle={t("gallery_page_header_subtitle")}
+      slot="page-header"
+    />
     <DataTable columns={invoiceColumns} rows={invoiceRows} client:load slot="data-table">
       <p slot="detail" class="text-sm text-muted-foreground">{t("gallery_datatable_detail")}</p>
     </DataTable>
@@ -351,6 +361,13 @@ const tocItems: TableOfContentsItem[] = [
       slot="context-menu"
     />
     <MenubarDemo menus={menubarMenus} client:visible slot="menubar" />
+    <BreadcrumbDemo
+      items={[
+        { label: "Estancia La Esperanza", href: "/feedlot/1/" },
+        { label: t("feedlot_ledger_title") },
+      ]}
+      slot="breadcrumb"
+    />
     <TableOfContentsDemo
       items={tocItems}
       label={t("demo_toc_label")}

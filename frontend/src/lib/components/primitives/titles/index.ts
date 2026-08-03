@@ -4,4 +4,5 @@
  * LIVE-DOC:END */
 
 export { default as PageTitle } from "./PageTitle.svelte";
+export { default as PageHeader } from "./PageHeader.svelte";
 export { default as SectionTitle } from "./SectionTitle.svelte";
