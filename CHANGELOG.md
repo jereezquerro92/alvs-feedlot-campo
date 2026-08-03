@@ -56,7 +56,7 @@
 
 - group: reparacion-referencias
   priority: normal
-  commit: pending
+  commit: d661a66
   changes:
     - refactor(docs): citations to renumbered ADRs corrected in ADR prose bodies, AGENTS.md, README.md, ONBOARDING.md, vendored hooks and skills
     - fix(docs): 20 loose citations outside live-doc blocks corrected — resolved to wrong ADR numbers during transition
