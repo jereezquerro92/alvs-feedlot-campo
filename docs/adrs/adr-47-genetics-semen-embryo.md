@@ -3,7 +3,7 @@ title: ADR-47 — Genética: semen, DEP y transferencia embrionaria (genetics)
 type: adr
 status: active
 created: 2026-07-28
-tags: [feedlot, genetics, semen, embryo, inventory, event-sourced]
+tags: [adr, feedlot, genetics, semen, embryo, inventory, event-sourced, phase-breeding]
 ---
 
 # ADR-47 — Genética: semen, DEP y transferencia embrionaria (`genetics`)

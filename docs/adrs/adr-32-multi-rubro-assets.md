@@ -3,7 +3,7 @@ title: adr-32-multi-rubro-assets
 type: adr
 status: active
 created: 2026-07-24
-tags: [adr, feedlot, multi-rubro, assets, crops, machinery]
+tags: [adr, feedlot, multi-rubro, assets, crops, machinery, phase-6]
 ---
 
 # ADR-32 — Multi-rubro: la extracción de `assets` y los rubros `crops` y `machinery`

@@ -3,7 +3,7 @@ title: ADR-45 — El portal del dueño de lote alcanza el asesor conversacional,
 type: adr
 status: active
 created: 2026-07-28
-tags: [rbac, assistant, tenant-isolation, lot-owners, feedlot]
+tags: [adr, rbac, assistant, tenant-isolation, lot-owners, feedlot, phase-module-first-redesign]
 ---
 
 # ADR-45 — El portal del dueño de lote alcanza el asesor conversacional, acotado a su cliente

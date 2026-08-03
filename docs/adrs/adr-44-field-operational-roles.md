@@ -3,7 +3,7 @@ title: ADR-44 — Los seis roles operativos del campo y el scoping por cliente
 type: adr
 status: active
 created: 2026-07-27
-tags: [adr, rbac, auth, roles, feedlot]
+tags: [adr, rbac, auth, roles, feedlot, phase-users]
 ---
 
 # ADR-44 — Los seis roles operativos del campo y el scoping por cliente

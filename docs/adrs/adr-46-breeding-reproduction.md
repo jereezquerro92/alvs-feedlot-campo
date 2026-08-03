@@ -3,7 +3,7 @@ title: ADR-46 — Cría y recría: los eventos reproductivos (breeding)
 type: adr
 status: active
 created: 2026-07-28
-tags: [feedlot, breeding, livestock, reproduction, event-sourced]
+tags: [adr, feedlot, breeding, livestock, reproduction, event-sourced, phase-breeding]
 ---
 
 # ADR-46 — Cría y recría: los eventos reproductivos (`breeding`)
