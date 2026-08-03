@@ -9,10 +9,10 @@ from apps.users.models import AccessRequest
 
 
 ROLE_HELP_TEXT = (
-    "Grant-only: saving a role mirrors it into the user's Django Groups and "
-    "cannot be edited afterwards. Revoke or reassign by editing the user's "
-    "Groups directly — clearing or changing this field never removes a Group "
-    "(tdd-02: additive, never removing)."
+    "Set-sync: saving this field strips every ROLE_GROUPS membership that is "
+    "not the chosen role, then adds the chosen Group when set. Clear to null "
+    "to remove all matrix role Groups; admins/ai_operators and other "
+    "out-of-matrix Groups are left alone (tdd-02 / adr-20 rule 3)."
 )
 
 
@@ -28,11 +28,6 @@ class AccessRequestAdmin(admin.ModelAdmin):
     list_display = ("user", "role", "client", "created_at", "updated_at")
     list_filter = ("role",)
     readonly_fields = ("user", "created_at", "updated_at")
-
-    def get_readonly_fields(self, request, obj=None):
-        if obj is not None and obj.role_id is not None:
-            return self.readonly_fields + ("role",)
-        return self.readonly_fields
 
     def get_form(self, request, obj=None, **kwargs):
         form = super().get_form(request, obj, **kwargs)

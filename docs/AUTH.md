@@ -4,7 +4,7 @@ type: reference
 category: backend
 use_case: wiring login, a session, or a permission class
 created: 2026-07-10
-modified: 2026-08-02
+modified: 2026-08-03
 tags: [doc, harness, auth, cognito, backend]
 ---
 
@@ -110,7 +110,7 @@ Ruled by [[adr-20-authorization-lobby]]. A Cognito login opens a Django session,
 
 ### From a grant to a Group membership
 
-A `post_save` signal on `AccessRequest` mirrors a non-null `role` write into `user.groups`, adding the user to the granted `Group`. The signal is the only path from an `AccessRequest` row to actual authority — the row grants nothing on its own. Enforcement reads Group membership, exactly as the rest of RBAC does ([[adr-10-auth]] rule 2); `AccessRequest` never becomes a second, parallel source of authority.
+A `post_save` signal on `AccessRequest` (`sync_role_group_membership`) **set-syncs** matrix membership: it strips every `ROLE_GROUPS` ([[adr-44-field-operational-roles]]) Group the user holds that is not the current `role`, then — when `role` is non-null — adds that Group. Clearing `role` to `null` removes all `ROLE_GROUPS` memberships. Out-of-matrix Groups (`admins`, `ai_operators`, and any other name outside `ROLE_GROUPS`) are never touched by this sync. The signal is the only path from an `AccessRequest` row to matrix authority — the row grants nothing on its own. Enforcement reads Group membership, exactly as the rest of RBAC does ([[adr-10-auth]] rule 2); `AccessRequest` never becomes a second, parallel source of authority.
 
 ### `admins` also mirrors into `is_staff` / `is_superuser`
 
@@ -120,7 +120,7 @@ The practical effect: `admins`, already the do-everything superset among the fie
 
 ### The bootstrap allowlist
 
-Ruled by [[adr-21-bootstrap-allowlist-grant]]. `AUTH_BOOTSTRAP_ALLOWLIST` ([[GLOSSARY]], [[VARIABLES]]) holds comma-separated `email:group` pairs (group omitted → `admins`); `settings.py` parses it into an email→group map, empty when unset. In the shared provisioning path both login routes run — `upsert_user_from_claims`, the same `get_or_create` the real callback and dev-login share — an allowlisted email whose `AccessRequest.role` is still null gets that `role` filled, and the ordinary [[adr-20-authorization-lobby]] signal mirrors it into `user.groups`. The account escapes the lobby on its first request after first login, with no admin step and no re-login; the check re-runs on every login, so an entry added later grants on the next login. A non-null `role` is never touched (the admin stays authoritative), matching is case-insensitive on the email, and a pair naming a missing Group logs a warning and skips — a typo never breaks login and never creates a Group.
+Ruled by [[adr-21-bootstrap-allowlist-grant]]. `AUTH_BOOTSTRAP_ALLOWLIST` ([[GLOSSARY]], [[VARIABLES]]) holds comma-separated `email:group` pairs (group omitted → `admins`); `settings.py` parses it into an email→group map, empty when unset. In the shared provisioning path both login routes run — `upsert_user_from_claims`, the same `get_or_create` the real callback and dev-login share — an allowlisted email whose `AccessRequest.role` is still null gets that `role` filled, and the ordinary [[adr-20-authorization-lobby]] set-sync signal mirrors it into `user.groups`. The account escapes the lobby on its first request after first login, with no admin step and no re-login; the check re-runs on every login, so an entry added later grants on the next login. A non-null `role` is never touched (the admin stays authoritative). Clearing `role` back to `null` is therefore **non-durable for an allowlisted email** — the next login re-fills the role and restores the Group; the clear stays durable only when the email is not on the allowlist. Matching is case-insensitive on the email, and a pair naming a missing Group logs a warning and skips — a typo never breaks login and never creates a Group.
 
 ### The lobby, `/`
 
