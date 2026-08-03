@@ -52,6 +52,7 @@ src/lib/components/
   overlay/           # Dialog, Drawer, Accordion, ConfirmDialog, Tooltip, Popover, HoverCard, ScrollArea, SidePanel — Melt builders (adr-52 r8 default), SOLID open/close primitives
   theme/             # ThemeModeToggle, QuickThemeToggle, ThemeCard — Melt-builder theme controls
   showcase/          # AlertDialogDemo, TabsDemo, DropdownMenuDemo, ContextMenuDemo, MenubarDemo, TableOfContentsDemo, TooltipDemo, PopoverDemo, HoverCardDemo, CollapsibleDemo, TreeDemo, ScrollAreaDemo, SidePanelDemo, ToastTriggerDemo — gallery-only demo compositions, not app surface
+  shell/             # ChatDrawer — layout-mounted compositions, one instance per page, never a route body
   views/             # LobbyView, ProfileView, ShowcaseView, ShowcaseGalleryView, ChatView — one zero-hydration page body per route
 ```
 
