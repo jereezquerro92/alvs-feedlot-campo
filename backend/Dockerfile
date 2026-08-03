@@ -21,7 +21,12 @@ EXPOSE 8000
 
 ENV UVICORN_WORKERS=4
 
+# .pytest_cache is created here for the same reason frontend/Dockerfile creates
+# .astro: local dev shadows it with an anonymous volume, and Docker seeds a
+# volume's ownership from the image directory it shadows — absent from the image,
+# the volume lands root-owned and pytest cannot write it. Unused in production.
 RUN useradd -u 10001 -m appuser \
+    && mkdir -p /app/.pytest_cache \
     && chown -R appuser:appuser /app
 ENV HOME=/home/appuser \
     UV_CACHE_DIR=/home/appuser/.cache/uv
