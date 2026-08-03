@@ -115,13 +115,15 @@ Without it, `test_dev_login_absent_when_not_debug` sees the `DevLoginBackend` th
 - Copy `.env.example` → `.env` (gitignored). Names must match [[VARIABLES]].
 - Secrets never committed. Frontend will receive only non-secret / `PUBLIC_*` vars later.
 
-## Health (when apps exist)
+## Health
 
 | Service | Probe |
 |---|---|
 | backend | `GET /api/health/` ([[API]]) |
-| frontend | `GET /healthz` (document in app + here) |
+| frontend | `GET /healthz` — liveness only; contract owned by [[FRONTEND]] |
 | db | `pg_isready` (**now**) |
+
+A `healthy` frontend container means the SSR process answers, not that the stack is usable end to end.
 
 ## Local origins
 
