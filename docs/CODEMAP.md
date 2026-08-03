@@ -574,6 +574,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/home-triangle.ts`
 - `frontend/src/lib/optimistic-toggle.ts`
 - `frontend/src/lib/router-client.ts`
+- `frontend/src/lib/ssrFetch.ts`
 - `frontend/src/lib/theme.ts`
 - `frontend/src/lib/types/user.ts`
 - `frontend/src/lib/typewriter-placeholder.ts`
@@ -1617,6 +1618,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/home-triangle.ts`
 - `frontend/src/lib/optimistic-toggle.ts`
 - `frontend/src/lib/router-client.ts`
+- `frontend/src/lib/ssrFetch.ts`
 - `frontend/src/lib/theme.ts`
 - `frontend/src/lib/types/user.ts`
 - `frontend/src/lib/typewriter-placeholder.ts`
