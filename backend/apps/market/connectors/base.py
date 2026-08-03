@@ -48,5 +48,16 @@ class BaseConnector:
         raise NotImplementedError
 
     def collect(self, *, target_date: date) -> list[ParsedPrice]:
-        """fetch + parse. Overridable if a source needs a different shape."""
-        return self.parse(self.fetch(target_date=target_date), target_date=target_date)
+        """fetch + parse. Overridable if a source needs a different shape.
+
+        Network failures (`OSError` / `URLError`) become `ConnectorError` here so
+        `ingest_prices` can isolate one dead source without aborting the run
+        ([[adr-30-market-prices-connectors]] rule 7).
+        """
+        try:
+            return self.parse(self.fetch(target_date=target_date), target_date=target_date)
+        except ConnectorError:
+            raise
+        except OSError as exc:
+            # URLError subclasses OSError; wrap at the connector boundary.
+            raise ConnectorError(str(exc)) from exc

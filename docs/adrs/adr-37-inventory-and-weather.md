@@ -4,7 +4,7 @@ type: adr
 category: backend
 use_case: cargar un insumo que no es alimento, registrar una entrada o salida de stock, anotar lluvia o clima, leer stock actual
 created: 2026-07-25
-modified: 2026-08-02
+modified: 2026-08-03
 tags: [adr, feedlot, inventory, weather, stock, phase-10]
 ---
 
@@ -20,7 +20,7 @@ tags: [adr, feedlot, inventory, weather, stock, phase-10]
 2. `InputType` es catálogo editable con CRUD completo: "cargar insumos" es crear tipos. `InputStockMovement` es un hecho fechado: `list`/`retrieve`/`create`, sin `update` ni `destroy` ([[adr-24-feedlot-domain]] regla 3), y una corrección es otro movimiento.
 3. Ningún `InputStockMovement` postea asiento. Un insumo comprado para el feedlot es consumo propio, no un insumo entregado a un cliente ([[adr-32-multi-rubro-assets]] regla 4). El `unit_price` de una entrada es informativo —valúa el stock— y no genera cargo.
 4. `register_input_movement` rechaza en el servicio —no en la vista— un `InputType` con `is_active=False` y una `quantity` no positiva. La carga tardía con fecha retroactiva se acepta, y un stock que quede negativo por carga parcial se muestra como inconsistencia en vez de bloquearse ([[adr-29-metrics-derivation]] regla 5).
-5. `WeatherLog` registra por fecha y `site` la lluvia (`rainfall_mm`) y, opcionalmente, temperatura mínima y máxima y una nota. Es un hecho inmutable, no postea asiento y no referencia hacienda ni cuenta: es contexto ambiental que las métricas leen.
+5. `WeatherLog` registra por fecha y `site` la lluvia (`rainfall_mm`) y, opcionalmente, temperatura mínima y máxima y una nota. Idempotente por `(site, date)`: re-registrar actualiza la fila, no duplica. No postea asiento y no referencia hacienda ni cuenta: es contexto ambiental que las métricas leen.
 6. `apps.metrics` gana dos lecturas puras —stock actual por insumo y resumen de lluvia del período— sin definir ningún número nuevo del negocio ([[adr-29-metrics-derivation]] regla 1). `Animal`, `Lot` y `feed` no se refactorizan: la extracción mira hacia adelante ([[adr-32-multi-rubro-assets]] regla 2).
 
 ## FORBIDDEN
