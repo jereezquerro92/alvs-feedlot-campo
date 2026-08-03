@@ -39,7 +39,7 @@ FRONTEND_EXTS = (".ts", ".svelte", ".astro")
 # Deliberately narrow and mechanical: markers that only ever show up when a
 # file actually names a framework/ORM/backend-internal detail, never in
 # ordinary English prose ("model", "Django" used descriptively in a comment
-# about auth architecture, the "astro-drf-aws" project slug, etc.).
+# about auth architecture, the project slug, etc.).
 BACKEND_MARKERS = [
     (re.compile(r"\brest_framework\b"), "imports/names the rest_framework package"),
     (re.compile(r"(?<![-\w])DRF(?![-\w])"), "names DRF (Django REST Framework)"),
