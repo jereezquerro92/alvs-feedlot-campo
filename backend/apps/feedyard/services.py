@@ -64,8 +64,15 @@ def register_placement(
         raise ValidationError(
             f"El animal no está activo (estado: {animal.status}); no se ubica."
         )
-    if lot is not None and head_count is None:
-        head_count = lot.head_count
+    if lot is not None:
+        if head_count is None:
+            head_count = lot.head_count
+        else:
+            head_count = int(head_count)
+            if head_count > lot.head_count:
+                raise ValidationError(
+                    f"No se pueden ubicar {head_count} cabezas: el lote tiene {lot.head_count}."
+                )
     return PenPlacement.objects.create(
         pen=pen,
         animal=animal,

@@ -1,7 +1,5 @@
 """LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
-Governed by: [[adr-51-api-and-backend]] · [[adr-25-account-ledger]]
 Docs: [[BACKEND]]
-API: [[API]]
 LIVE-DOC:END"""
 
 """Account/outstanding actions must return a clean 404 when the Account is missing,

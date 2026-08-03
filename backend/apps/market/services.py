@@ -15,7 +15,9 @@ with the other sources. No source failure is swallowed silently here.
 
 from dataclasses import dataclass
 from datetime import date
+from decimal import Decimal
 
+from django.core.exceptions import ValidationError
 from django.db import transaction
 
 from apps.market.connectors import get_connector
@@ -38,6 +40,8 @@ class IngestResult:
 @transaction.atomic
 def upsert_price(*, source: MarketSource, parsed: ParsedPrice) -> bool:
     """Insert or update one price row. Returns True if created, False if updated."""
+    if parsed.price_avg is not None and Decimal(parsed.price_avg) <= 0:
+        raise ValidationError("price_avg must be positive.")
     _, created = MarketPrice.objects.update_or_create(
         source=source,
         category=parsed.category,

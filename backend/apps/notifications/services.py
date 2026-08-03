@@ -14,12 +14,11 @@ from datetime import timedelta
 
 from asgiref.sync import sync_to_async
 from django.core.exceptions import ValidationError
-from django.db import transaction
 from django.utils import timezone
 
 from apps.metrics import services as metrics
 from apps.notifications.models import Notification
-from apps.notifications.senders import SenderError, get_sender
+from apps.notifications.senders import get_sender
 
 
 def _fmt_kg(value):
@@ -68,16 +67,18 @@ def build_weekly_digest(*, client, end=None):
     return subject, "\n".join(lines)
 
 
-@transaction.atomic
 def send_notification(*, client, channel, to_address, subject, body, created_by=None):
     """Create the record, drive the sender, stamp the outcome. Immutable after.
 
-    A send failure is recorded on the row (status=failed, error) and never raised
-    past this call — one client's failure must not stop a batch (adr-36 conseq.).
+    The Notification row is committed *before* the send attempt so any exception
+    during delivery still leaves an audit trail (adr-36 rule 3). A send failure
+    is stamped status=failed and never raised past this call — one client's
+    failure must not stop a batch (adr-36 conseq.).
     """
     if not to_address:
         raise ValidationError("A destination address is required to notify.")
 
+    # No surrounding atomic: the pending row must survive a send exception.
     notification = Notification.objects.create(
         client=client,
         channel=channel,
@@ -91,7 +92,9 @@ def send_notification(*, client, channel, to_address, subject, body, created_by=
     sender = get_sender(channel)
     try:
         provider_id = sender.send(to_address=to_address, subject=subject, body=body)
-    except SenderError as exc:
+    except Exception as exc:
+        # Broad catch on purpose: SenderError *and* unexpected failures must
+        # mark the already-committed row failed, never roll back the audit.
         notification.status = Notification.Status.FAILED
         notification.error = str(exc)[:255]
         notification.save(update_fields=["status", "error"])
