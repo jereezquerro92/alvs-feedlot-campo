@@ -2,6 +2,15 @@
 
 ## [Unreleased]
 
+- group: primer-deploy-productivo
+  priority: high
+  issue: 69
+  changes:
+    - fix(deploy): deploy-prod.yml injects AUTH_BOOTSTRAP_ALLOWLIST into the serving backend task, so a Cognito login can actually leave the lobby (adr-21 rule 1 was declared in VARIABLES but never wired)
+    - fix(deploy): the migrate task also gets DJANGO_SUPERUSER_EMAIL/PASSWORD, so bootstrap_admin creates the break-glass admin instead of no-opping (adr-10 rule 8)
+    - chore(aws): gha-deploy-prod gains the additive inline policy bedrock-gate-nova-lite; the backend task role gains kdx-bedrock-nova-micro-lite — the bedrock-live gate and every runtime inference call were both denied
+    - docs(inventory): INVENTORY records the first production deploy and both IAM grants
+
 - group: fix-local-dev-rootless-eacces
   priority: high
   issue: 62

@@ -77,6 +77,15 @@ Never destroyed on this project's behalf; only this project's attachment to each
 - **12 GitHub Actions repository variables** — all set on `kodexArg/alvs-feedlot-campo`: `AWS_REGION`, `AWS_ACCOUNT_ID`, `DEPLOY_ROLE_ARN` (`arn:aws:iam::789650504128:role/gha-deploy-prod`), `PROJECT_SLUG`, `CLUSTER`, `ECR_REGISTRY`, `PUBLIC_SUBNET_A`/`B`, `TASK_SG_ID`, `SECRET_DJANGO`, `SECRET_DB`, `SECRET_COGNITO`. `SECRET_MSGRAPH` is deliberately unset (no M365 Graph integration wired).
 - Full decision record: [[GH]], [[adr-08-github-and-git]] (REJECTED — the 2026-08-02 ownership rotation).
 
+### First production deploy — 2026-08-03
+
+The project's first `deploy-prod.yml` run reached green and `https://feedlot.grupoalvs.com/` serves. Two IAM grants were required and both are recorded here per [[adr-23-oidc-immutable-subject-claim]] rule 2's discipline for shared-role mutations:
+
+- **`gha-deploy-prod` (shared)** — new inline policy `bedrock-gate-nova-lite`: `bedrock:InvokeModel` on the Nova **Lite** foundation-model ARNs (us-east-1/us-east-2/us-west-2) and the `us.amazon.nova-lite-v1:0` inference profile. **Purely additive** — the pre-existing `gha-deploy-prod-policy` was not opened, so the `BedrockGateNovaMicroInvoke` statement and every other project's grant are untouched. Needed because this project's advisors and assistant run on Nova Lite ([[VARIABLES]]), while the shared role only ever allowed Nova Micro, and the workflow's `bedrock-live` gate invokes Bedrock **as the deploy role** before any image is built.
+- **`alvs-prod-feedlot-campo-backend-task-role` (ours)** — new inline policy `kdx-bedrock-nova-micro-lite`, granting `bedrock:InvokeModel` on both Nova Micro (the router, [[adr-15-chatbot-two-tier]]) and Nova Lite (advisors and assistant, [[adr-27-advisors-generative]] / [[adr-35-conversational-assistant]]). The role previously carried **zero** policies, so the gate alone would have passed while every runtime inference call still failed. Mirrors the sibling precedent `alvs-prod-astro-drf-aws-backend-task-role`. No S3 statement: this project uses `FileSystemStorage`, not a media bucket.
+
+No mock data reaches production: `DEBUG=False` in `alvs/prod/feedlot-campo/django` (so the real Bedrock clients are selected, not the mocks), and `seed_demo_feedlot` is local-Compose-only — the migrate task runs `migrate`, `bootstrap_admin` and `createcachetable`, nothing else.
+
 ## Template reference run (`astro-drf-aws`) — inherited, not ours
 
 The committed resource inventory for the `astro-drf-aws` stage-3 run. Every AWS resource this run touches has a row here, updated **in the same batch** as its creation ([[INFRASTRUCTURE]]). Phase E teardown executes from the `ephemeral` rows and verifies against the Resource Groups Tagging API; `shared` rows are never destroyed.
