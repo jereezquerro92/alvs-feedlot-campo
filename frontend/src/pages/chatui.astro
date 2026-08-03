@@ -10,6 +10,7 @@ import ChatUI from "$lib/components/chat/ChatUI.svelte";
 import { requireRole } from "$lib/authGate";
 import { t } from "../i18n";
 import type { Me } from "$lib/types/user";
+import { ssrFetch } from "$lib/ssrFetch";
 
 const backendApiUrl = process.env.BACKEND_API_URL ?? "http://localhost:8000";
 const publicBackendUrl = process.env.PUBLIC_BACKEND_URL ?? "http://localhost:8000";
@@ -18,7 +19,7 @@ let me: Me | null = null;
 const cookie = Astro.request.headers.get("cookie");
 if (cookie) {
   try {
-    const res = await fetch(`${backendApiUrl}/api/me/`, { headers: { cookie } });
+    const res = await ssrFetch(`${backendApiUrl}/api/me/`, { headers: { cookie } });
     if (res.ok) me = (await res.json()) as Me;
   } catch (err) {
     console.error("SSR /api/me/ failed:", err);
