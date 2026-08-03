@@ -11,6 +11,8 @@
     - fix(hooks): check_api.py drops the literal template slug from a prose comment (tests/test_project_slug_hardcode.py was red on main)
     - chore(git): merged worktree worktree-kdx-adr-review (PR #53) removed, per adr-19 rule 5
     - docs(docker): DOCKER.md records the volumes, the rootless-uid reason, and the CI-equivalent env the backend suite needs locally
+    - fix(docker): backend/Dockerfile creates /app/.pytest_cache owned by appuser, so the anon volume shadowing it is not root-owned (issue 66 — #62's fix was incomplete)
+    - fix(docker): the local backend pins UVICORN_WORKERS=1; uvicorn's click CLI reads UVICORN_* automatically, so the image's production 4 became a --workers the reloader warned about on every boot (issue 64)
 
 - group: adopcion-doctrina-kodexarg-harness-default
   priority: high
