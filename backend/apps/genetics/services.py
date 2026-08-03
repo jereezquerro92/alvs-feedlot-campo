@@ -24,6 +24,7 @@ from apps.genetics.models import (
     EmbryoBatch,
     EmbryoMovement,
     EmbryoReason,
+    SemenBatch,
     SemenMovement,
     SemenReason,
     SemenSale,
@@ -93,6 +94,9 @@ def register_semen_sale(
         raise ValidationError("Sale straws must be positive.")
     if unit_price is None or Decimal(unit_price) <= ZERO:
         raise ValidationError("Sale price must be positive.")
+
+    # Lock the batch row before stock check + out movement (#21 / #57).
+    semen_batch = SemenBatch.objects.select_for_update().get(pk=semen_batch.pk)
     if current_semen_stock(semen_batch=semen_batch) < straws:
         raise ValidationError("Insufficient straw stock for this sale.")
 
