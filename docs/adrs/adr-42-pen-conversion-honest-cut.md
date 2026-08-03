@@ -8,7 +8,6 @@ tags: [adr, feedlot, feedyard, metrics, conversion, pen, phase-4b]
 
 # ADR-42 — Conversión por corral: el corte honesto
 
-**Estado:** activo (Fase 4b)
 **Contexto:** levanta el diferimiento explícito de [[adr-33-feedyard-operating-loop]]
 decisión 7 y [[adr-34-pen-placement]] decisión 5 (la conversión por corral quedaba
 diferida porque "atribuir pesajes al tramo que un animal pasó en un corral es un

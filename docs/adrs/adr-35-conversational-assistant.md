@@ -8,7 +8,6 @@ tags: [adr, feedlot, assistant, generative, chatbot, phase-8]
 
 # ADR-35 — El asistente conversacional es el tier generador, acotado
 
-**Estado:** activo (Fase 8)
 **Contexto:** activa la costura del tier generador que [[adr-15-chatbot-two-tier]]
 regla 9 dejó abierta; reusa el precedente generativo acotado de
 [[adr-27-advisors-generative]] y el patrón de inferencia de [[adr-31-advisors-implementation]].

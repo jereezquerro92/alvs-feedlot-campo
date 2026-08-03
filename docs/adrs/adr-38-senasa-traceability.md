@@ -8,7 +8,6 @@ tags: [adr, feedlot, traceability, senasa, renspa, dte, caravana, phase-11]
 
 # ADR-38 — Trazabilidad SENASA: RENSPA, DT-e y caravana
 
-**Estado:** activo (Fase 11)
 **Contexto:** crece por adición ([[adr-24-feedlot-domain]]): una app nueva
 `traceability` sobre la espina, sin tocar `livestock` ni el ledger. Reusa la postura
 event-sourced de [[adr-24-feedlot-domain]] regla 3 y el precedente "un catálogo se

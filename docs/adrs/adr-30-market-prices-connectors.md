@@ -3,12 +3,11 @@ title: adr-30-market-prices-connectors
 type: adr
 status: active
 created: 2026-07-23
-tags: [adr, feedlot, market, prices, connectors]
+tags: [adr, feedlot, market, prices, connectors, phase-4]
 ---
 
 # ADR-30 — Precios de referencia y conectores de fuentes
 
-**Estado:** propuesto (Fase 4)
 **Contexto:** implementa [[06-precios-hacienda]] con las correcciones de [[06b-verificacion-fuentes-precios]] y [[06c-segunda-fuente-automatica]].
 
 ## Contexto

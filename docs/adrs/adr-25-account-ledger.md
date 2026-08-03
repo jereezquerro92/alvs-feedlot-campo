@@ -1,7 +1,7 @@
 ---
 title: adr-25-account-ledger
 type: adr
-status: proposed
+status: active
 created: 2026-07-21
 tags: [adr, feedlot, ledger, accounting]
 ---

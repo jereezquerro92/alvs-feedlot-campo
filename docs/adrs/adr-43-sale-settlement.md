@@ -8,7 +8,6 @@ tags: [adr, feedlot, ledger, livestock, sale, settlement, phase-4c]
 
 # ADR-43 — La liquidación de venta: comisión de engorde y venta propia
 
-**Estado:** activo (Fase 4c)
 **Contexto:** cumple el ítem que [[adr-25-account-ledger]] regla 6 dejó explícitamente
 diferido (*"`Exit` posts no ledger entry in the initial phases; sale settlement is a
 later addition and MUST arrive as its own ADR"*). Es una **adición**: la regla 6 se

@@ -1,6 +1,13 @@
+---
+title: adr-29-metrics-derivation
+type: adr
+status: active
+created: 2026-07-21
+tags: [adr, feedlot, metrics, derivation, phase-3]
+---
+
 # ADR-29 — Derivación de métricas y el contrato del "no calculable"
 
-**Estado:** propuesto (Fase 3)
 **Contexto:** consume [[adr-25-account-ledger]] y [[adr-28-animal-lifecycle-and-sanitary]]; lo consumirá [[adr-27-advisors-generative]].
 
 ## Contexto

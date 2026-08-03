@@ -1,7 +1,7 @@
 ---
 title: adr-26-livestock-individual-and-lot
 type: adr
-status: proposed
+status: active
 created: 2026-07-21
 tags: [adr, feedlot, livestock]
 ---
