@@ -71,7 +71,7 @@ const today = new Date().toISOString().slice(0, 10);
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Base title={`${client.name} · ${t("feedlot_impute_title")}`}>
+<Base title={`${client.name} · ${t("feedlot_impute_title")}`} me={me}>
   <FeedlotOutstandingView
     client:load
     client={client}

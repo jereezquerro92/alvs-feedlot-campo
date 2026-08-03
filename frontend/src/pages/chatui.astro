@@ -9,6 +9,7 @@ import { ChatView } from "$lib/components/views";
 import ChatUI from "$lib/components/chat/ChatUI.svelte";
 import { requireRole } from "$lib/authGate";
 import { t } from "../i18n";
+import { routerChatCopy } from "$lib/chatui-copy";
 import type { Me } from "$lib/types/user";
 import { ssrFetch } from "$lib/ssrFetch";
 
@@ -32,33 +33,8 @@ if (redirect) return Astro.redirect(redirect);
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Base title={t("nav_chatui")}>
+<Base title={t("nav_chatui")} me={me} chatDrawer={false}>
   <ChatView>
-    <ChatUI
-      client:load
-      publicBackendUrl={publicBackendUrl}
-      copy={{
-        title: t("chatui_router_title"),
-        emptyState: t("chatui_router_empty"),
-        composerPlaceholder: t("chatui_composer_placeholder"),
-        composerAriaLabel: t("chatui_composer_aria_label"),
-        composerSend: t("chatui_composer_send"),
-        composerPlaceholderExamples: [
-          t("chatui_composer_placeholder_example_1"),
-          t("chatui_composer_placeholder_example_2"),
-          t("chatui_composer_placeholder_example_3"),
-        ],
-        messageGo: t("chatui_message_go"),
-        messageConfirm: t("chatui_message_confirm"),
-        outcomeCopy: {
-          router_outcome_escalate: t("router_outcome_escalate"),
-          router_outcome_no_match: t("router_outcome_no_match"),
-          router_outcome_disabled: t("router_outcome_disabled"),
-          router_outcome_hard_reject: t("router_outcome_hard_reject"),
-          router_outcome_throttled: t("router_outcome_throttled"),
-          router_outcome_network_error: t("router_outcome_network_error"),
-        },
-      }}
-    />
+    <ChatUI client:load publicBackendUrl={publicBackendUrl} copy={routerChatCopy()} />
   </ChatView>
 </Base>

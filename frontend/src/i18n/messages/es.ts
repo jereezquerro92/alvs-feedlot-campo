@@ -66,6 +66,10 @@ export const es = {
   router_outcome_throttled: "Estás enviando mensajes muy rápido — esperá un momento.",
   router_outcome_network_error: "Algo falló al contactar al asistente. Probá de nuevo.",
 
+  // shell/ChatDrawer — the same router surface, docked to the right edge
+  shell_chat_drawer_open: "Abrir el router",
+  shell_chat_drawer_close: "Cerrar el router",
+
   // /profile/
   profile_title: "Perfil",
   profile_intro: "Administrá tu cuenta y tu apariencia.",

@@ -6,12 +6,27 @@
 import "../styles/app.css";
 import { parseThemeConfig, computeThemeSSRAttrs } from "$lib/theme";
 import PageTitle from "$lib/components/primitives/titles/PageTitle.svelte";
+import ChatDrawer from "$lib/components/shell/ChatDrawer.svelte";
+import { hasRole } from "$lib/auth";
+import { routerChatCopy } from "$lib/chatui-copy";
+import type { Me } from "$lib/types/user";
 
 interface Props {
   title?: string;
+  /** The session the page already resolved from `/api/me/`. The layout uses it
+   * for one thing: whether the router drawer is mounted at all. */
+  me?: Me | null;
+  /** Set by /chatui/, whose whole canvas already IS the router surface. */
+  chatDrawer?: boolean;
 }
 
-const { title = process.env.PUBLIC_PROJECT_SLUG ?? "astro-drf-aws" } = Astro.props;
+const {
+  title = process.env.PUBLIC_PROJECT_SLUG ?? "astro-drf-aws",
+  me = null,
+  chatDrawer = true,
+} = Astro.props;
+
+const publicBackendUrl = process.env.PUBLIC_BACKEND_URL ?? "http://localhost:8000";
 
 // SSR, no-flash theme apply ("Persistence across login — no flash";
 // [[DESIGN-SYSTEM]]): the `theme` cookie — set by the backend on login and
@@ -31,6 +46,17 @@ const { htmlClass, dataBgPreset, style } = computeThemeSSRAttrs(themeBlob);
   </head>
   <body>
     <slot />
+
+    {
+      /* Role-gated: a session with no Group is confined to the lobby
+         ([[adr-20-authorization-lobby]] rule 1) and the router would answer it
+         nothing. Mounted once here so every gated page carries the same
+         surface — not duplicated per page. */
+      chatDrawer && hasRole(me) && (
+        <ChatDrawer client:load publicBackendUrl={publicBackendUrl} copy={routerChatCopy()} />
+      )
+    }
+
     <script>
 
       import "htmx.org";

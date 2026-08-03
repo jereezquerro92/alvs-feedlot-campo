@@ -40,7 +40,7 @@ const denied = Astro.url.searchParams.get(DENIED_QUERY) === "1";
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Base title={t("login_title")}>
+<Base title={t("login_title")} me={me}>
   <LoginLandingView
     projectSlug={publicProjectSlug}
     publicBackendUrl={publicBackendUrl}

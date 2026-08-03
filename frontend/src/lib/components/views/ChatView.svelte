@@ -8,6 +8,8 @@
   "The Melt preset"), and an opaque `<main>` background would occlude it —
   same reasoning as ProfileView. The slotted ChatUI island fills the canvas.
 -->
-<main class="relative min-h-screen w-full">
+<!-- Flex column so the slotted ChatUI (`flex-1`, no longer `min-h-screen` of
+     its own) takes the full canvas height from here. -->
+<main class="relative flex min-h-screen w-full flex-col">
   <slot />
 </main>

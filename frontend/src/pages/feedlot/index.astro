@@ -69,7 +69,7 @@ const [m365Hello, m365World] = await Promise.all([
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Base title={t("feedlot_clients_title")}>
+<Base title={t("feedlot_clients_title")} me={me}>
   <FeedlotClientsView
     client:load
     clients={clients}

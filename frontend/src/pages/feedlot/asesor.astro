@@ -81,7 +81,7 @@ const pending = me !== null && !hasRole(me);
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Base title={t("feedlot_module_asesor_title")}>
+<Base title={t("feedlot_module_asesor_title")} me={me}>
   <AsesorModuleView
     client:load
     clients={clients}

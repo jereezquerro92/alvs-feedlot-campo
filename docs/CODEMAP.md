@@ -93,9 +93,11 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/router/test_route_view.py`
 - `backend/apps/router/urls.py`
 - `backend/apps/router/views.py`
+- `frontend/src/lib/chatui-copy.ts`
 - `frontend/src/lib/components/chat/ChatComposer.svelte`
 - `frontend/src/lib/components/chat/ChatMessageList.svelte`
 - `frontend/src/lib/components/chat/ChatUI.svelte`
+- `frontend/src/lib/components/shell/ChatDrawer.svelte`
 - `frontend/src/pages/chatui.astro`
 
 ## [[adr-16-async-mandatory]]
@@ -169,6 +171,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/M365StatusCard.svelte`
 - `frontend/src/lib/components/feedlot/RecentMovements.svelte`
 - `frontend/src/lib/components/feedlot/WeighingHistory.svelte`
+- `frontend/src/lib/components/shell/ChatDrawer.svelte`
 - `frontend/src/lib/components/views/AsesorModuleView.svelte`
 - `frontend/src/lib/components/views/FeedStockView.svelte`
 - `frontend/src/lib/components/views/FeedlotAccountView.svelte`
@@ -375,6 +378,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/layouts/Base.astro`
 - `frontend/src/lib/auth.ts`
 - `frontend/src/lib/authGate.ts`
+- `frontend/src/lib/chatui-copy.ts`
 - `frontend/src/lib/components/auth/AuthPanel.svelte`
 - `frontend/src/lib/components/auth/ProfileForm.svelte`
 - `frontend/src/lib/components/auth/SessionBadge.svelte`
@@ -474,6 +478,8 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/primitives/titles/PageTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/SectionTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/index.ts`
+- `frontend/src/lib/components/shell/ChatDrawer.svelte`
+- `frontend/src/lib/components/shell/index.ts`
 - `frontend/src/lib/components/showcase/BreadcrumbDemo.svelte`
 - `frontend/src/lib/components/showcase/CalendarDemo.svelte`
 - `frontend/src/lib/components/showcase/CollapsibleDemo.svelte`
@@ -1205,10 +1211,16 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/router/test_route_view.py`
 - `backend/apps/router/urls.py`
 - `backend/apps/router/views.py`
+- `frontend/src/lib/chatui-copy.ts`
 - `frontend/src/lib/components/chat/ChatComposer.svelte`
 - `frontend/src/lib/components/chat/ChatMessageList.svelte`
 - `frontend/src/lib/components/chat/ChatUI.svelte`
+- `frontend/src/lib/components/shell/ChatDrawer.svelte`
 - `frontend/src/pages/chatui.astro`
+
+## [[COMPONENTIZATION]]
+
+- `frontend/src/lib/components/shell/ChatDrawer.svelte`
 
 ## [[DESIGN-SYSTEM]]
 
@@ -1300,6 +1312,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/primitives/titles/PageHeader.svelte`
 - `frontend/src/lib/components/primitives/titles/PageTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/SectionTitle.svelte`
+- `frontend/src/lib/components/shell/ChatDrawer.svelte`
 - `frontend/src/lib/components/showcase/BreadcrumbDemo.svelte`
 - `frontend/src/lib/components/showcase/CalendarDemo.svelte`
 - `frontend/src/lib/components/showcase/CollapsibleDemo.svelte`
@@ -1419,6 +1432,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/layouts/Base.astro`
 - `frontend/src/lib/auth.ts`
 - `frontend/src/lib/authGate.ts`
+- `frontend/src/lib/chatui-copy.ts`
 - `frontend/src/lib/components/auth/AuthPanel.svelte`
 - `frontend/src/lib/components/auth/ProfileForm.svelte`
 - `frontend/src/lib/components/auth/SessionBadge.svelte`
@@ -1518,6 +1532,8 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/primitives/titles/PageTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/SectionTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/index.ts`
+- `frontend/src/lib/components/shell/ChatDrawer.svelte`
+- `frontend/src/lib/components/shell/index.ts`
 - `frontend/src/lib/components/showcase/BreadcrumbDemo.svelte`
 - `frontend/src/lib/components/showcase/CalendarDemo.svelte`
 - `frontend/src/lib/components/showcase/CollapsibleDemo.svelte`

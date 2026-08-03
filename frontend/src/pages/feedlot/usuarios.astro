@@ -41,7 +41,7 @@ const pending = me !== null && !hasRole(me);
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Base title={t("feedlot_module_usuarios_title")}>
+<Base title={t("feedlot_module_usuarios_title")} me={me}>
   <UsuariosModuleView client:load me={me} publicBackendUrl={publicBackendUrl}>
     <SessionBadge
       client:load

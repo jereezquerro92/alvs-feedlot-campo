@@ -33,7 +33,7 @@ if (redirect) return Astro.redirect(redirect);
 Astro.response.headers.set("Cache-Control", "no-store");
 ---
 
-<Base title={t("profile_title")}>
+<Base title={t("profile_title")} me={me}>
   <ProfileView title={t("profile_title")} intro={t("profile_intro")}>
     <ProfileForm client:load me={me} publicBackendUrl={publicBackendUrl} />
     <ThemeCard client:load me={me} publicBackendUrl={publicBackendUrl} />
