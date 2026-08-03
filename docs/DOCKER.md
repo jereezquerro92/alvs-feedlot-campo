@@ -89,14 +89,24 @@ Compose is **local only** ([[adr-09-docker-compose]]); production is Fargate + E
 
 | Service | Bind | Command | Reload |
 |---|---|---|---|
-| `frontend` | `./frontend:/app` + anon `/app/node_modules` | `rm -f .astro/dev.json && bun run dev --host 0.0.0.0` | astro HMR |
-| `backend` | `./backend:/app` + anon `/app/.venv` | `uvicorn … --reload` (via `uv run --with watchfiles`) | ASGI reload ([[adr-16-async-mandatory]]) |
+| `frontend` | `./frontend:/app` + anon `/app/node_modules`, `/app/.astro`, `/app/dist` | `rm -f .astro/dev.json && bun run dev --host 0.0.0.0` | astro HMR |
+| `backend` | `./backend:/app` + anon `/app/.venv`, `/app/staticfiles`, `/app/.pytest_cache` | `uvicorn … --reload` (via `uv run --with watchfiles`) | ASGI reload ([[adr-16-async-mandatory]]) |
 
 - The **anonymous volume** on `node_modules` / `.venv` is load-bearing: it keeps the image's installed deps and stops the host tree from masking them. Removing it breaks startup.
+- The other four anon volumes are load-bearing for a second, distinct reason: **every path a container writes but the repo does not track needs one.** Both images drop to a non-root user (`bun`, `appuser`), and under rootless Docker that user maps to a subuid with no write access to the host-owned bind mount — so a path the container must create inside `/app` fails with `EACCES` unless a volume shadows it. `/app/.astro` (astro's generated types) and `/app/staticfiles` (the image's `collectstatic` output, which the bind mount would otherwise hide) each killed a service outright; `/app/dist` is what lets `bun run build` and the smoke suite that reads `dist/server/entry.mjs` run in-container; `/app/.pytest_cache` only silences a warning. Docker seeds a volume's ownership from the image directory it shadows, so each of those directories must **exist in the image, owned by the runtime user** — that is why `frontend/Dockerfile` creates `.astro` explicitly.
 - The **`rm -f .astro/dev.json`** is load-bearing too, and for the mirror-image reason: that file is *inside* the bind mount, so it is written to the host and outlives the container. `astro dev` uses it to record which PID owns port 4321; a container killed by `down` never cleans it up, and the next container resolves that PID inside its own namespace — where an unrelated process may hold the same low number — and refuses to start. Clearing it makes a rebuild deterministic. `astro dev --force`, which astro's own error message suggests, does not prevent the refusal (issue #60).
 - `watchfiles` is pulled dev-only through `uv run --with watchfiles==1.2.0` — pinned in [[REQUIREMENTS]] under local-dev tooling (a used package must be pinned, [[adr-50-initial-stack]]) but excluded from the production image (`uv sync --no-dev`).
 
 **Still needs a rebuild** (bind-mount covers code, not the image): a dependency change (`bun.lock` / `uv.lock`) or a `Dockerfile` change → `docker compose --profile full up -d --build`. An env change → `up -d` recreates, no rebuild.
+
+**Running the suites against a live stack.** The frontend's is direct — `docker compose exec frontend bun run build && docker compose exec frontend bun test --conditions browser --conditions svelte` (the build first, because `tests/smoke.test.ts` boots `dist/server/entry.mjs`). The backend's needs the **env CI runs it under**, not the dev env compose supplies, because a handful of tests assert what the settings module builds at import time:
+
+```sh
+docker compose exec -e DEBUG=false -e SECRET_KEY=test-only-secret-key -e AUTH_BOOTSTRAP_ALLOWLIST= \
+  backend uv run pytest -m "not cognito_live and not bedrock_live"
+```
+
+Without it, `test_dev_login_absent_when_not_debug` sees the `DevLoginBackend` that `DEBUG=true` already installed in `AUTHENTICATION_BACKENDS`, and the two `test_bootstrap_allowlist` cases see the `dev@example.com:admins` seed compose sets ([[adr-21-bootstrap-allowlist-grant]]). Those three failures are the dev environment being reported accurately — not defects.
 
 **`bun run dev` is not `bun run build`.** The dev server does not catch build-time errors (e.g. a wrong import depth that breaks the production image); the `build` gate stays a separate CI step, not replaced by local hot reload.
 
