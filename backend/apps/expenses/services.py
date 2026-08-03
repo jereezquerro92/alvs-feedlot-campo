@@ -2,7 +2,7 @@
 Docs: [[BACKEND]]
 LIVE-DOC:END"""
 
-"""Expenses service (adr-44 decision 6, adr-24 rule 4).
+"""Expenses service (adr-44 decision 6, adr-49 rule 4).
 
 `register_expense` records an extra charge and ALWAYS posts a `service` debit
 through the ledger's generic `(source_kind, source_id)` seam — the in-doctrine

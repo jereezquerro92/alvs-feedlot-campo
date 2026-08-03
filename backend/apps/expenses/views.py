@@ -22,7 +22,7 @@ class ExpenseEventViewSet(
     mixins.CreateModelMixin, viewsets.GenericViewSet,
 ):
     """Extra expenses billed to a client (adr-44 decision 6). Immutable events:
-    list/retrieve/create only — a fact is corrected by a new fact (adr-24 rule 3)."""
+    list/retrieve/create only — a fact is corrected by a new fact (adr-49 rule 3)."""
 
     permission_classes = [ExpensesAccess]
     serializer_class = ExpenseEventSerializer

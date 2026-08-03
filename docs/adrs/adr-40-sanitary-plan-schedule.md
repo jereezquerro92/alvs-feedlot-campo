@@ -8,9 +8,9 @@ tags: [adr, feedlot, sanitary, vaccination, plan, schedule, phase-13]
 
 # ADR-40 — El plan sanitario y el calendario de vacunación
 
-**Contexto:** crece por adición sobre `sanitary` ([[adr-24-feedlot-domain]] regla 1),
+**Contexto:** crece por adición sobre `sanitary` ([[adr-49-domain-layer-and-growth-by-addition]] regla 1),
 reusa la restricción XOR animal/lote de [[adr-26-livestock-individual-and-lot]] y la
-postura event-sourced de [[adr-24-feedlot-domain]] regla 3. Extiende
+postura event-sourced de [[adr-49-domain-layer-and-growth-by-addition]] regla 3. Extiende
 [[adr-28-animal-lifecycle-and-sanitary]] sin tocar el cobro que ese ADR fijó. Reglas
 solamente; las entidades viven en [[FEEDLOT-DATA-MODEL]].
 
@@ -31,7 +31,7 @@ cómo se cobra.
 `SanitaryPlan` + `SanitaryPlanItem` son datos maestros: ModelViewSet con CRUD completo
 — "cargar un plan" es crear el plan y sus dosis. `PlanEnrollment` (inscribir un animal
 o lote a un plan con una fecha de inicio) es un hecho fechado: list/retrieve/create,
-sin update ni destroy ([[adr-24-feedlot-domain]] regla 3).
+sin update ni destroy ([[adr-49-domain-layer-and-growth-by-addition]] regla 3).
 
 *Por qué:* un plan tiene composición que se corrige (se agrega una dosis, se ajusta un
 día); una inscripción es un hecho —"a este lote se le arrancó este plan tal día"— que
@@ -74,7 +74,7 @@ entregado. El cargo aparece recién cuando la dosis se aplica de verdad y eso es
 
 *Por qué:* un solo camino de cobro. Cobrar al inscribir cobraría una vacuna que quizás
 nunca se aplica, y reabriría la puerta al doble cargo que la doctrina cerró (un hecho se
-afirma una vez, adr-24 regla 5).
+afirma una vez, adr-49 regla 5).
 
 ### 5. La inscripción valida en el servicio, no en la vista
 
@@ -104,7 +104,7 @@ directa.
   `SanitaryPlanItem`, `PlanEnrollment`); nada fuera de la app, nada en `ledger`.
 - El calendario derivado es un `GET` de solo lectura (acción `schedule` del viewset de
   inscripciones); se computa en la lectura, nunca se materializa como campo editable
-  ([[adr-24-feedlot-domain]] regla 3).
+  ([[adr-49-domain-layer-and-growth-by-addition]] regla 3).
 - No se agregan variables de entorno: es dato interno, sin servicios externos.
 - `HealthEvent` no se refactoriza: el estado "aplicada" se deriva mirando los eventos
   existentes, no se agrega un campo ni un FK al `HealthEvent` (la extracción mira hacia

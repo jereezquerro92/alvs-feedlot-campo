@@ -9,7 +9,7 @@ tags: [adr, feedlot, multi-rubro, assets, crops, machinery, phase-6]
 # ADR-32 — Multi-rubro: la extracción de `assets` y los rubros `crops` y `machinery`
 
 **Contexto:** primer segundo-rubro real; dispara la extracción prevista en
-[[14-preparacion-fase6]]. Extiende [[adr-24-feedlot-domain]] ("crece por adición"),
+[[14-preparacion-fase6]]. Extiende [[adr-49-domain-layer-and-growth-by-addition]] ("crece por adición"),
 reusa el ledger de [[adr-25-account-ledger]] sin tocarlo y la restricción XOR de
 [[adr-26-livestock-individual-and-lot]] como precedente de forma.
 
@@ -53,7 +53,7 @@ herencia literal no aporta nada que justifique tocar el dominio estable.
 `FieldTask` (tarea) y `MaintenanceEvent` (mantenimiento) postean un `debit` con el
 `Concept.SERVICE` **ya existente**, vía `post_entry(...)` con
 `source_kind ∈ {"field_task","maintenance_event"}` y `source_id` del evento — el par
-`(source_kind, source_id)` de [[adr-24-feedlot-domain]] regla 4. `ledger` no gana
+`(source_kind, source_id)` de [[adr-49-domain-layer-and-growth-by-addition]] regla 4. `ledger` no gana
 un modelo, un concepto ni un FK por rubro.
 
 *Por qué:* es la costura de escalabilidad que la doctrina reservó justo para esto.
@@ -85,7 +85,7 @@ cambiar el modelo.
 
 `Pivot`, `Machine` y `Crop` son datos maestros: ModelViewSet con CRUD completo
 ("cargar círculos" es crear pivotes). `Cutting`, `FieldTask` y `MaintenanceEvent`
-son eventos operativos: list/retrieve/create, sin update ni destroy (adr-24 regla 3).
+son eventos operativos: list/retrieve/create, sin update ni destroy (adr-49 regla 3).
 
 *Por qué:* un activo tiene estado que se corrige (se da de baja un pivote, se
 renombra una máquina); un evento operativo es un hecho fechado que sólo se corrige

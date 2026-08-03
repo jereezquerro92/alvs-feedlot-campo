@@ -8,13 +8,13 @@ tags: [adr, feedlot, breeding, livestock, reproduction, event-sourced, phase-bre
 
 # ADR-46 — Cría y recría: los eventos reproductivos (`breeding`)
 
-**Contexto:** crece por adición sobre la espina ([[adr-24-feedlot-domain]] regla 1): una app
+**Contexto:** crece por adición sobre la espina ([[adr-49-domain-layer-and-growth-by-addition]] regla 1): una app
 nueva `breeding`, sin tocar `livestock` ni el ledger salvo el único cargo que el dueño
 definió. Reusa la restricción XOR animal/lote de [[adr-26-livestock-individual-and-lot]] y
 el abstracto `LifecycleEvent` de [[adr-28-animal-lifecycle-and-sanitary]] decisión 1; el
 idiom plantilla→calendario relativo de [[adr-40-sanitary-plan-schedule]] para el protocolo
 IATF; el contrato del "no calculable" de [[adr-29-metrics-derivation]] para las métricas; y
-el par genérico `(source_kind, source_id)` de [[adr-24-feedlot-domain]] regla 4 para el
+el par genérico `(source_kind, source_id)` de [[adr-49-domain-layer-and-growth-by-addition]] regla 4 para el
 único asiento. Depende de [[adr-47-genetics-semen-embryo]] para toros, semen y embriones.
 Reglas solamente; las entidades viven en [[FEEDLOT-DATA-MODEL]], los nombres en
 [[GLOSSARY]] (`GLOSSARY-feedlot-additions.md`) antes de su primer uso
@@ -48,7 +48,7 @@ el único hecho económico que el dueño definió es el servicio de inseminació
 ([[adr-28-animal-lifecycle-and-sanitary]] decisión 1): el par `animal`/`lot` con `CHECK` de
 exactamente uno ([[adr-26-livestock-individual-and-lot]] regla 3). Cada uno mantiene su
 tabla y expone `list`/`retrieve`/`create`, sin `update` ni `destroy`
-([[adr-24-feedlot-domain]] regla 3). El servicio individual es sobre una vaca; el IATF
+([[adr-49-domain-layer-and-growth-by-addition]] regla 3). El servicio individual es sobre una vaca; el IATF
 sistemático se carga sobre un `Lot` (un rodeo servido junto).
 
 *Por qué:* reusar la forma ya probada evita una tabla polimórfica y mantiene la consulta
@@ -58,7 +58,7 @@ directa. Los cuatro necesitan idénticamente "exactamente un target".
 
 `vacía` / `servida` / `preñada` / `parida` / `seca` no es un campo editable en `Animal` ni
 en ningún lado: se deriva cruzando los `Service`, `PregnancyCheck` y `Calving` de cada
-vientre ([[adr-24-feedlot-domain]] regla 3). El diagnóstico de preñez vigente es el último
+vientre ([[adr-49-domain-layer-and-growth-by-addition]] regla 3). El diagnóstico de preñez vigente es el último
 `PregnancyCheck`; la preñez se cierra con el `Calving` correspondiente.
 
 *Por qué:* un flag reproductivo mutable se desincroniza de los hechos. Derivarlo garantiza
@@ -97,7 +97,7 @@ un solo servicio. El offset relativo lo hace reusable, que es el punto de una pl
 Un `Service` con `method ∈ {ai, iatf}` sobre hacienda de un `Client(kind=boarding)` postea
 **un `debit` `concept=service`** a la cuenta del cliente, por la tarifa de inseminación, vía
 el par genérico `(source_kind="breeding_service", source_id=<Service.id>)`
-([[adr-24-feedlot-domain]] regla 4). Fotografía `service_price` (la tarifa) del día
+([[adr-49-domain-layer-and-growth-by-addition]] regla 4). Fotografía `service_price` (la tarifa) del día
 ([[adr-25-account-ledger]] regla 3). El servicio `natural`, el servicio sobre hacienda
 propia, y los eventos `PregnancyCheck`, `Calving` y `Weaning` **no** postean asiento. El
 costo del semen consumido lo maneja `genetics` como un `out` de stock, no como un cargo acá
@@ -148,7 +148,7 @@ alimenta con `feed`, se sanea con `sanitary` y se ubica con `PenPlacement` —na
 
 - El backend entra solo por [[API]] ([[adr-03-api-and-backend]]) y nace por el flujo [[TDD]]
   ([[adr-07-development-flow]]); este ADR no exceptúa ese camino
-  ([[adr-24-feedlot-domain]] regla 6).
+  ([[adr-49-domain-layer-and-growth-by-addition]] regla 6).
 - Migraciones: las tablas nuevas viven en `breeding` (`Service`, `PregnancyCheck`,
   `Calving`, `Weaning`, `IatfProtocol`, `IatfProtocolStep`) y una FK nullable `calf` de
   `Calving` a `livestock.Animal`. Nada fuera de la app nueva; nada en `ledger` (el débito de

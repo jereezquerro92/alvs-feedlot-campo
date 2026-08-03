@@ -11,7 +11,7 @@ deleted; a mistake is corrected by a new counter-entry. Balance is derived as
 sum(debits) - sum(credits); positive means the client owes. Every charge
 snapshots its unit_price/quantity (historical price) and links back to the
 event that produced it via (source_kind, source_id) — the generic costing seam
-(adr-24 rule 4) that lets any future domain post charges without touching this app.
+(adr-49 rule 4) that lets any future domain post charges without touching this app.
 """
 
 from django.conf import settings
@@ -40,7 +40,7 @@ class LedgerEntry(models.Model):
     direction = models.CharField(max_length=6, choices=Direction.choices)
     amount = models.DecimalField(max_digits=14, decimal_places=2)
     concept = models.CharField(max_length=16, choices=Concept.choices)
-    # Generic link to the originating event (adr-24 rule 4). Never a per-domain FK.
+    # Generic link to the originating event (adr-49 rule 4). Never a per-domain FK.
     source_kind = models.CharField(max_length=32, blank=True)
     source_id = models.PositiveBigIntegerField(null=True, blank=True)
     # Historical snapshot for traceability (adr-25 rule 3).

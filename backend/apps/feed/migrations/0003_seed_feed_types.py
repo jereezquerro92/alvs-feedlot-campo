@@ -1,5 +1,5 @@
 # Seed the feed catalog with the common cattle feeds (task #25). FeedType is an
-# editable catalog (adr-24 rule 3), so this only fills in rows an operator would
+# editable catalog (adr-49 rule 3), so this only fills in rows an operator would
 # otherwise create by hand; it is idempotent (get_or_create by unique name) and
 # reversible to a no-op. Names are rendered data (Spanish is allowed for data,
 # LOCALIZATION only binds code/keys).

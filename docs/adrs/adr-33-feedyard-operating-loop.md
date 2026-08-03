@@ -8,7 +8,7 @@ tags: [adr, feedlot, feedyard, pens, rations, bunk, phase-7]
 
 # ADR-33 — El loop operativo del corral (`feedyard`)
 
-**Contexto:** extiende [[adr-24-feedlot-domain]] ("crece por adición") y
+**Contexto:** extiende [[adr-49-domain-layer-and-growth-by-addition]] ("crece por adición") y
 [[adr-25-account-ledger]] (el cobro es del ledger, y de nadie más). Nace de evaluar
 software de feedlot de la competencia (Cattler): el loop diario dieta → orden de
 carga → alimentar → leer comedero → ajustar es el corazón de un feedlot y hoy nos
@@ -34,7 +34,7 @@ cuando la ración se ejecuta.
 
 *Por qué:* un solo camino de cobro. Dos apps que puedan debitar la misma cuenta por
 el mismo alimento reabren la puerta al doble cargo que la doctrina cerró (un hecho se
-afirma una vez, adr-24 regla 5).
+afirma una vez, adr-49 regla 5).
 
 ### 2. La orden de carga es el PLAN; el `FeedingEvent` es lo EJECUTADO
 
@@ -73,7 +73,7 @@ evita que editar una receta reescriba el pasado. El `FeedType` es un insumo; la
 
 `Pen`, `Ration` y `RationLine` son datos maestros: CRUD completo. `LoadingOrder` y
 `BunkScore` son hechos fechados: list/retrieve/create, sin update ni destroy
-(adr-24 regla 3). Una corrección de un evento es otro evento.
+(adr-49 regla 3). Una corrección de un evento es otro evento.
 
 *Por qué:* misma postura event-sourced del resto del sistema. Un corral se corrige
 (se desactiva, se renombra); una lectura de comedero de ayer no se reescribe.
@@ -99,7 +99,7 @@ entrega lo que se puede afirmar con honestidad (el costo) y se difiere lo que no
 ## Consecuencias
 
 - El backend entra sólo por [[API]] (adr-03) y nace por el flujo [[TDD]] (adr-07);
-  este ADR no exceptúa ese camino (adr-24 regla 6).
+  este ADR no exceptúa ese camino (adr-49 regla 6).
 - `feedyard` no gana migraciones que toquen `ledger`; la única migración fuera de la
   app nueva es la FK aditiva `pen` en `feed`.
 - La escala 0–4 de `BunkScore` es el estándar de lectura de comedero; su

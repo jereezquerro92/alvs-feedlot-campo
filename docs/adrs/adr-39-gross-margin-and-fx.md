@@ -11,7 +11,7 @@ tags: [adr, feedlot, margins, fx, currency, metrics, phase-12]
 **Contexto:** cierra el roadmap. Reusa las métricas de [[adr-29-metrics-derivation]]
 (una sola definición de cada número), el precio de mercado de [[adr-30-market-prices-connectors]]
 como valor de referencia, y no toca el ledger, que sigue en ARS con precio histórico
-([[adr-25-account-ledger]] regla 3). Crece por adición ([[adr-24-feedlot-domain]]).
+([[adr-25-account-ledger]] regla 3). Crece por adición ([[adr-49-domain-layer-and-growth-by-addition]]).
 Reglas solamente; las entidades viven en [[FEEDLOT-DATA-MODEL]].
 
 ## Contexto

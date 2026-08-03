@@ -8,7 +8,7 @@
   plan enrollment, with its due date and a status — applied / pending / upcoming
   ([[adr-40-sanitary-plan-schedule]] decision 3). Read-only: it DISPLAYS what the
   backend derives (`GET /api/plan-enrollments/schedule/`) and computes no status of
-  its own; the status is never stored ([[adr-24-feedlot-domain]] rule 3). Mounts with
+  its own; the status is never stored ([[adr-49-domain-layer-and-growth-by-addition]] rule 3). Mounts with
   zero props (empty state) and never throws ([[adr-22-showcase-ready-components]]
   rule 1); a bare mount performs no request (rule 2). Copy Spanish, keys English
   ([[LOCALIZATION]]).

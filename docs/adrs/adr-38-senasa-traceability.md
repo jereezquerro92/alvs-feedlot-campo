@@ -8,9 +8,9 @@ tags: [adr, feedlot, traceability, senasa, renspa, dte, caravana, phase-11]
 
 # ADR-38 — Trazabilidad SENASA: RENSPA, DT-e y caravana
 
-**Contexto:** crece por adición ([[adr-24-feedlot-domain]]): una app nueva
+**Contexto:** crece por adición ([[adr-49-domain-layer-and-growth-by-addition]]): una app nueva
 `traceability` sobre la espina, sin tocar `livestock` ni el ledger. Reusa la postura
-event-sourced de [[adr-24-feedlot-domain]] regla 3 y el precedente "un catálogo se
+event-sourced de [[adr-49-domain-layer-and-growth-by-addition]] regla 3 y el precedente "un catálogo se
 edita, un evento es inmutable" de [[adr-33-feedyard-operating-loop]] decisión 5.
 Reglas solamente; las entidades viven en [[FEEDLOT-DATA-MODEL]].
 
@@ -29,7 +29,7 @@ no hay trazabilidad sanitaria. Se agrega la app `traceability` con esos tres hec
 
 `Establishment` (un establecimiento con su `renspa`) es dato maestro: ModelViewSet con
 CRUD completo — "cargar establecimientos" es crear filas. `TransitDocument` (el DT-e) y
-`Caravana` son hechos fechados: list/retrieve/create, sin update ni destroy (adr-24
+`Caravana` son hechos fechados: list/retrieve/create, sin update ni destroy (adr-49
 regla 3). Una corrección de un DT-e o una re-identificación es un registro nuevo.
 
 *Por qué:* un establecimiento tiene estado que se corrige (se da de baja, se renombra);

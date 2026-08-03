@@ -64,6 +64,6 @@ The workflow for agents is highly typified and prepared: [[DEVELOPMENT-LOOP]] ca
 ## The horizon
 
 - It **grows by addition**: a new capability is a new domain app and its routes, inheriting the spine rather than duplicating it; the harness stays as it is.
-- The **record stays trustworthy, always.** Nothing once logged is ever falsified or discarded to make room for a future feature — the invariant is ADR-bound ([[adr-24-feedlot-domain]], [[adr-25-account-ledger]]), never a local convenience.
+- The **record stays trustworthy, always.** Nothing once logged is ever falsified or discarded to make room for a future feature — the invariant is ADR-bound ([[adr-49-domain-layer-and-growth-by-addition]], [[adr-25-account-ledger]]), never a local convenience.
 - It stays **agnostic to company, farm and account.** The product describes what a feedlot does, never what one feedlot does — no client, herd, establishment, brand or account identifier belongs in code or in docs. Those values arrive as data the users load, or through [[VARIABLES]] (the only inventory of environment variables; secrets live in Secrets Manager).
 - It stays **agnostic to which domains a deployment runs.** An installation that only feeds cattle and one that also cuts alfalfa are the same product with a different set of domains enabled; neither is a fork, a branch, or a special case.

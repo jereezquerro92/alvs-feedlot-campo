@@ -67,7 +67,7 @@ def test_boarding_animal_sale_posts_engorde_commission_debit():
     assert entry.direction == Direction.DEBIT
     assert entry.concept == Concept.SERVICE
     assert entry.amount == Decimal("14400.00")
-    # The entry is traceable back to the exit (adr-24 rule 4).
+    # The entry is traceable back to the exit (adr-49 rule 4).
     assert entry.source_kind == "exit"
     assert entry.source_id == exit_event.id
     # Historical snapshot: price and the kilos it was charged on (adr-25 rule 3).

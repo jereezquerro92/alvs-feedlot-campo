@@ -56,7 +56,7 @@ English keys ([[LOCALIZATION]]).
 `POST /api/feedings/` (the `FeedingEventViewSet` create path, routing to the
 `register_feeding` service) and `POST /api/weighings/` (the weighing create path,
 routing to `register_weighing`). Both go through the domain services, never a raw
-INSERT — the event-sourced posture ([[adr-24-feedlot-domain]] rule 3): the
+INSERT — the event-sourced posture ([[adr-49-domain-layer-and-growth-by-addition]] rule 3): the
 service posts the ledger debit + stock movement for `origin=own_stock`, the
 movement only for `origin=client_stock` ([[adr-25-account-ledger]] rule 4). The
 route also reads `GET /api/feed-types/`, `GET /api/animals/?client=`,

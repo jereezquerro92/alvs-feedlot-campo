@@ -5,7 +5,7 @@
 
 <!--
   Create a corral (`Pen`) — an editable feedyard catalog ([[adr-33-feedyard-operating-loop]]
-  decision 5, [[adr-24-feedlot-domain]] rule 3). Writes only through the declared
+  decision 5, [[adr-49-domain-layer-and-growth-by-addition]] rule 3). Writes only through the declared
   endpoint `POST /api/pens/` (a plain ModelViewSet create); a Pen posts NO ledger
   entry — feedyard plans and monitors, it never charges (adr-33 decision 1). This
   form exists because the loading-order form needs pens to choose from: with zero

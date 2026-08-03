@@ -525,16 +525,6 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/views/RationServeModuleView.svelte`
 - `frontend/src/lib/components/views/UsuariosModuleView.svelte`
 
-## [[adr-24-feedlot-domain]]
-
-- `frontend/src/lib/components/views/AsesorModuleView.svelte`
-- `frontend/src/lib/components/views/FeedStockView.svelte`
-- `frontend/src/lib/components/views/FeedlotClientsView.svelte`
-- `frontend/src/lib/components/views/FeedlotModuleView.svelte`
-- `frontend/src/lib/components/views/GastosModuleView.svelte`
-- `frontend/src/lib/components/views/MixerModuleView.svelte`
-- `frontend/src/lib/components/views/RationServeModuleView.svelte`
-
 ## [[adr-25-account-ledger]]
 
 - `frontend/src/lib/components/feedlot/RecentMovements.svelte`
@@ -596,6 +586,16 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 ## [[adr-45-lot-owner-assistant-access]]
 
 - `backend/apps/users/roles.py`
+
+## [[adr-49-domain-layer-and-growth-by-addition]]
+
+- `frontend/src/lib/components/views/AsesorModuleView.svelte`
+- `frontend/src/lib/components/views/FeedStockView.svelte`
+- `frontend/src/lib/components/views/FeedlotClientsView.svelte`
+- `frontend/src/lib/components/views/FeedlotModuleView.svelte`
+- `frontend/src/lib/components/views/GastosModuleView.svelte`
+- `frontend/src/lib/components/views/MixerModuleView.svelte`
+- `frontend/src/lib/components/views/RationServeModuleView.svelte`
 
 ## [[API]]
 

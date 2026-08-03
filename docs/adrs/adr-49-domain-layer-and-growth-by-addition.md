@@ -1,0 +1,45 @@
+---
+title: adr-49-domain-layer-and-growth-by-addition
+type: adr
+status: active
+created: 2026-08-03
+tags: [adr, feedlot, domain, architecture]
+---
+
+# ADR-49 — the domain layer and growth by addition
+
+Rules only; content lives in [[FEEDLOT]] and [[FEEDLOT-DATA-MODEL]].
+
+Supersedes [[adr-24-feedlot-domain]] (issue #72). That ADR's rule 1 hardcoded a roster of
+app names, which is information an ADR must not carry ([[adr-00-adr-doctrine]] rule 1);
+the roster drifted from the code and came to name an app that no longer exists under that
+name. The roster now lives in [[FEEDLOT]] alone, and rule 1 points at it instead of
+restating it. Rule numbering is preserved so that rule-level citations carry over
+unchanged.
+
+1. The domain is built as domain apps on top of the template, never by editing the
+   template's spine. A new capability is a new app and its [[API]] rows ([[PRD]] "grows by
+   addition"). Which apps exist, which of them are spine and which are domain, and what
+   each owns is [[FEEDLOT]]'s to state — this ADR does not name them (rule 5). An app
+   absent from that roster is not part of the domain layer.
+2. App and model names are decided in [[GLOSSARY]] before first use
+   ([[adr-01-glossary-and-localization]]); the additions are staged in
+   `GLOSSARY-feedlot-additions.md`. A domain app MUST NOT take a name the template already
+   uses for one of its own apps. The collision is resolved before code exists, never after
+   — renaming an app that is already built is a migration, not an edit.
+3. Operational facts are immutable, dated event records; states (animal status, lot
+   counts) and balances are DERIVED from them, never stored as the editable truth.
+   Catalogs are the only editable tables. Corrections are new events, never in-place
+   mutation.
+4. Costing is generic: a charge-bearing event links to the account through a
+   `(source_kind, source_id)` pair on [[adr-25-account-ledger]]'s `LedgerEntry`, not
+   through a per-domain foreign key. Any future domain posts charges through that same
+   pair without changing `ledger`. This pair is the sanctioned scalability seam.
+5. Every fact is stated once. The business narrative is the Claude Project docs; the
+   code-facing SSOTs are [[FEEDLOT]] (domain) and [[FEEDLOT-DATA-MODEL]] (entities). An
+   ADR states rules and links these; it never inlines their facts
+   ([[adr-00-adr-doctrine]] rule 1). This rule binds this ADR too: the drift that
+   superseded [[adr-24-feedlot-domain]] was a breach of it.
+6. Backend work enters only through [[API]] ([[adr-03-api-and-backend]]) and is born via
+   the [[TDD]] flow along the development loop ([[adr-07-development-flow]]); this ADR
+   grants no exception to that path.
