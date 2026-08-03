@@ -74,7 +74,7 @@ Never destroyed on this project's behalf; only this project's attachment to each
 ### Deploy identity (`kodexArg/alvs-feedlot-campo`) — resolved 2026-08-02
 
 - **`gha-deploy-prod` IAM role** — additive trust-policy entry `repo:kodexArg@47777332/alvs-feedlot-campo@1320290142:ref:refs/heads/prod`; no existing entry touched.
-- **12 GitHub Actions repository variables** — all set on `kodexArg/alvs-feedlot-campo`: `AWS_REGION`, `AWS_ACCOUNT_ID`, `DEPLOY_ROLE_ARN` (`arn:aws:iam::789650504128:role/gha-deploy-prod`), `PROJECT_SLUG`, `CLUSTER`, `ECR_REGISTRY`, `PUBLIC_SUBNET_A`/`B`, `TASK_SG_ID`, `SECRET_DJANGO`, `SECRET_DB`, `SECRET_COGNITO`. `SECRET_MSGRAPH` is deliberately unset (no M365 Graph integration wired).
+- **13 GitHub Actions repository variables** — all set on `kodexArg/alvs-feedlot-campo`, including `PROJECT_HOST` = `feedlot.grupoalvs.com` (added 2026-08-03, issue #72 — the public host is configuration, never derived from the slug): `AWS_REGION`, `AWS_ACCOUNT_ID`, `DEPLOY_ROLE_ARN` (`arn:aws:iam::789650504128:role/gha-deploy-prod`), `PROJECT_SLUG`, `CLUSTER`, `ECR_REGISTRY`, `PUBLIC_SUBNET_A`/`B`, `TASK_SG_ID`, `SECRET_DJANGO`, `SECRET_DB`, `SECRET_COGNITO`. `SECRET_MSGRAPH` is deliberately unset (no M365 Graph integration wired).
 - Full decision record: [[GH]], [[adr-08-github-and-git]] (REJECTED — the 2026-08-02 ownership rotation).
 
 ### First production deploy — 2026-08-03

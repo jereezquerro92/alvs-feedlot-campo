@@ -33,7 +33,7 @@ Read by both services and by tooling (CI, compose). Non-secret identity values.
 | Name | Scope | Envs | Secret? | Source | Description |
 |---|---|---|---|---|---|
 | `PROJECT_SLUG` | backend + CI | dev/prod/local | no | plain task env; `.env` local | Project slug — the `<project>` in every AWS name ([[INFRASTRUCTURE]], [[GLOSSARY]]). This template's reference value: `astro-drf-aws`. Read by `backend/config/settings.py` and by `.github/workflows/deploy-prod.yml`; the frontend never reads this name directly — it receives the derived `PUBLIC_PROJECT_SLUG` below ([[VARIABLES]] Frontend) |
-| `BASE_DOMAIN` | backend + frontend | dev/prod/local | no | plain task env; `.env` local | Base domain (`grupoalvs.com`); project host is `<slug>[.dev].<domain>` ([[INFRASTRUCTURE]]) |
+| `BASE_DOMAIN` | backend + frontend | dev/prod/local | no | plain task env; `.env` local | Base domain (`grupoalvs.com`). **The project host is NOT derived from the slug.** It is the `PROJECT_HOST` GitHub Actions repository variable, read at deploy time and required by preflight ([[GH]], [[adr-48-derived-project-deploy-identity]] rules 1–2) — this project is served at `feedlot.grupoalvs.com` while its slug is `feedlot-campo`, and the `<slug>.<domain>` guess this row used to state sent the frontend to a host that does not resolve (issue #72) |
 
 #### Sanctioned `PROJECT_SLUG` consumption points
 
