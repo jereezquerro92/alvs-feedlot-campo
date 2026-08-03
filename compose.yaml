@@ -35,6 +35,12 @@ services:
     environment:
       DEBUG: ${DEBUG:-true}
       SECRET_KEY: ${SECRET_KEY:-dev-insecure-not-for-cloud}
+      # Uvicorn's CLI is a click command with auto_envvar_prefix="UVICORN", so the
+      # image's UVICORN_WORKERS=4 (there for the production CMD) silently fills in
+      # --workers even though the dev command below never passes it — and --reload
+      # then warns that it is ignoring the flag, on every single boot. Pinning it
+      # to 1 here keeps the dev log honest; the production default is untouched.
+      UVICORN_WORKERS: "1"
       DB_HOST: db
       DB_PORT: "5432"
       DB_NAME: ${DB_NAME:-app}
