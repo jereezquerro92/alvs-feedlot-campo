@@ -56,13 +56,13 @@ jobs:
         run: |
           set -uo pipefail
           # test_aws_infra.py verifies LIVE AWS resources and needs boto3 +
-          # AWS credentials; adr-12-ephemeral-run forbids depending on those
-          # born-dead resources surviving, so it can never run in CI.
+          # AWS credentials; INFRASTRUCTURE's born-dead discipline forbids
+          # depending on those resources surviving, so it can never run in CI.
           EXCLUDE="tests/test_aws_infra.py"
           failed=0
           for t in tests/test_*.py; do
             if [ "$t" = "$EXCLUDE" ]; then
-              echo "::notice::skipping $t (live-AWS only; excluded per adr-12-ephemeral-run)"
+              echo "::notice::skipping $t (live-AWS only; needs credentials CI must not hold)"
               continue
             fi
             echo "=== $t ==="

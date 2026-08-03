@@ -393,6 +393,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/services.py`
 - `backend/apps/users/signals.py`
 - `backend/apps/users/test_access_request.py`
+- `backend/apps/users/test_admin_staff_flags.py`
 - `backend/apps/users/test_auth.py`
 - `backend/apps/users/test_bootstrap_admin.py`
 - `backend/apps/users/test_bootstrap_allowlist.py`
@@ -721,6 +722,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/services.py`
 - `backend/apps/users/signals.py`
 - `backend/apps/users/test_access_request.py`
+- `backend/apps/users/test_admin_staff_flags.py`
 - `backend/apps/users/test_auth.py`
 - `backend/apps/users/test_bootstrap_admin.py`
 - `backend/apps/users/test_bootstrap_allowlist.py`
@@ -958,6 +960,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/services.py`
 - `backend/apps/users/signals.py`
 - `backend/apps/users/test_access_request.py`
+- `backend/apps/users/test_admin_staff_flags.py`
 - `backend/apps/users/test_auth.py`
 - `backend/apps/users/test_bootstrap_admin.py`
 - `backend/apps/users/test_bootstrap_allowlist.py`

@@ -10,14 +10,72 @@ tags: [doc, infrastructure, aws, inventory, ephemeral]
 
 # INVENTORY
 
-> [!warning] This project has **zero** provisioned AWS resources
-> `alvs-feedlot-campo` owns nothing in AWS: no account of its own, no role, no cluster, no ECR repository, no database, no secret. Everything below inventories the **template's** `astro-drf-aws` reference run, inherited with the code, and none of it belongs to this project ([[adr-48-derived-project-deploy-identity]] rule 3).
+> [!important] This project now owns real, provisioned AWS resources (since 2026-07-31)
+> `alvs-feedlot-campo` provisioned its own AWS footprint in account `789650504128` / `us-east-1` on 2026-07-31 — its own ECR repos, RDS instance, IAM roles, secrets, ECS task defs/services, target groups, listener rules, and Route 53 record. That real "Provisioned resources (`feedlot-campo`)" section is below, distinct from the template's inherited reference run further down this file. The template's `astro-drf-aws` rows are **not** this project's resources and are kept only because this repo was spawned from that template and inherited the file with the code ([[adr-48-derived-project-deploy-identity]] rule 3) — they are never a fallback deploy target for this project.
 >
-> Two consequences, both binding:
-> - **No document, workflow, test, or step may assume any resource below is reachable from here.** This is [[INFRASTRUCTURE]]'s born-dead discipline applied to the stronger case of no infrastructure at all.
-> - **The deploy pipeline is correctly fail-closed.** `deploy-prod.yml` reads its target from repository variables and hard-fails while they are unset ([[adr-48-derived-project-deploy-identity]] rules 1–2). Unset is the expected state until this project provisions its own resources; the rows below are never the values to fill them with.
->
-> When this project does provision, its resources get their own section here, in the same batch as each creation, and its OIDC trust entry uses this repo's own immutable subject ([[GH]], [[adr-23-oidc-immutable-subject-claim]]).
+> The deploy-role/OIDC trust decision is now made (2026-08-02, [[GH]]): `gha-deploy-prod` is reused, with an additive trust entry for `kodexArg/alvs-feedlot-campo` (the project's owning repo as of the same date, [[adr-08-github-and-git]] rule 11). All 11 required `deploy-prod.yml` repository variables are set on that repo; `deploy-prod.yml`'s preflight now passes rather than hard-failing ([[adr-48-derived-project-deploy-identity]] rules 1–2, satisfied).
+
+## Provisioned resources (`feedlot-campo`) — this project's own footprint
+
+Account `789650504128`, region `us-east-1`. Created 2026-07-31 in a single batch (steward dispatch); all rows below carry the mandatory tag set `project=feedlot-campo`, `env=prod` and the `lifecycle` value shown (tag discipline owned by [[INFRASTRUCTURE]], [[adr-48-derived-project-deploy-identity]] rule 6). `lifecycle=persistent` marks a resource of this project's own standing production footprint (not the template's `ephemeral`-and-torn-down reference run posture) — these are meant to serve production, not to be torn down at the end of a reference exercise.
+
+> [!note] Two divergences from the original plan, discovered by reading live sibling state, not guessed
+> 1. **RDS is dedicated**, by explicit owner directive (2026-07-31) — see [[adr-49-feedlot-campo-dedicated-rds]] and [[BD]]. This diverges from `docs/BD.md`'s general shared-instance-per-env prescription; that same discovery found the sibling `alvs-financial-gateway` is itself on the shared legacy `alvs-prod-pg`, contradicting the plan's premise that siblings uniformly have dedicated instances.
+> 2. **Cognito is a shared pool, not a dedicated one.** No new Cognito User Pool was created for this project. A new app client, `feedlot-campo-prod`, was created inside the existing shared pool `alvs-org-pool` (`us-east-1_YrRbIScNL`), whose Google IdP federation (configured once at the pool level) is reused as-is. This contradicts the plan's assumption of a dedicated per-project pool (the pattern the template's own `astro-drf-aws-pg` reference run and its `us-east-1_IzUPE4fDV` pool established) and is recorded here because it changes what [[AUTH]] and [[VARIABLES]] should say about `COGNITO_USER_POOL_ID` for this project.
+
+| Resource | ID / ARN | Lifecycle | Recorded |
+|---|---|---|---|
+| ECR repo `alvs/feedlot-campo-backend` | `789650504128.dkr.ecr.us-east-1.amazonaws.com/alvs/feedlot-campo-backend` | persistent | 2026-07-31 |
+| ECR repo `alvs/feedlot-campo-frontend` | `789650504128.dkr.ecr.us-east-1.amazonaws.com/alvs/feedlot-campo-frontend` | persistent | 2026-07-31 |
+| RDS subnet group `alvs-prod-feedlot-campo-subnets` | isolated subnets `subnet-0f4865b1984f1ab22`, `subnet-0ad36358282f91a16` | persistent | 2026-07-31 |
+| RDS instance `alvs-prod-feedlot-campo-pg` | `alvs-prod-feedlot-campo-pg.cccpxuiv6n1v.us-east-1.rds.amazonaws.com:5432` — PostgreSQL 17.9, `db.t4g.micro`, single-AZ, 20 GB gp3, dbname `feedlot_campo`, SG `sg-0c6f4c16f86f7a2b3` (shared network SG, dedicated instance) | persistent | 2026-07-31 — **dedicated per owner directive**, see [[adr-49-feedlot-campo-dedicated-rds]]; verified `available` |
+| Cognito app client `feedlot-campo-prod` | client id `5kbpbiaum2fo16iat1q11beiov`, **in the shared pool** `alvs-org-pool` (`us-east-1_YrRbIScNL`) | persistent | 2026-07-31 — **no dedicated pool created**; Google IdP already federated at the shared pool level, reused as-is; callback `https://feedlot.grupoalvs.com/accounts/callback/`, logout `https://feedlot.grupoalvs.com/` |
+| IAM role `alvs-prod-feedlot-campo-backend-exec-role` | `AmazonECSTaskExecutionRolePolicy` + inline read on `alvs/prod/feedlot-campo/*` | persistent | 2026-07-31 |
+| IAM role `alvs-prod-feedlot-campo-backend-task-role` | no inline policies yet (feature-specific policies, e.g. Bedrock, added when those features are wired) | persistent | 2026-07-31 |
+| IAM role `alvs-prod-feedlot-campo-frontend-exec-role` | `AmazonECSTaskExecutionRolePolicy` | persistent | 2026-07-31 |
+| IAM role `alvs-prod-feedlot-campo-frontend-task-role` | no inline policies | persistent | 2026-07-31 |
+| Secret `alvs/prod/feedlot-campo/django` | `arn:aws:secretsmanager:us-east-1:789650504128:secret:alvs/prod/feedlot-campo/django-MIpkIV` | persistent | 2026-07-31 |
+| Secret `alvs/prod/feedlot-campo/db` | `arn:aws:secretsmanager:us-east-1:789650504128:secret:alvs/prod/feedlot-campo/db-D79s5p` | persistent | 2026-07-31 |
+| Secret `alvs/prod/feedlot-campo/cognito` | `arn:aws:secretsmanager:us-east-1:789650504128:secret:alvs/prod/feedlot-campo/cognito-seilzz` | persistent | 2026-07-31 |
+| CloudWatch log group `/alvs/feedlot-campo/backend-prod` | — | persistent | 2026-07-31 |
+| CloudWatch log group `/alvs/feedlot-campo/frontend-prod` | — | persistent | 2026-07-31 |
+| Cloud Map namespace `feedlot-campo-prod.local` | `ns-nba7bte3kysvb2r3`, VPC `vpc-0f6c992f8a75a6629` | persistent | 2026-07-31 |
+| Cloud Map service `backend.feedlot-campo-prod.local` | `srv-ad6py6mxd5jptrpt` | persistent | 2026-07-31 — backend only; frontend has no service-discovery registration, mirrors `alvs-financial-gateway` |
+| Target group `tg-feedlot-campo-backend-prod` | `arn:…/tg-feedlot-campo-backend-prod/f013efbd6570c822` (HTTP 8000, hc `/api/health/`) | persistent | 2026-07-31 |
+| Target group `tg-feedlot-campo-frontend-prod` | `arn:…/tg-feedlot-campo-frontend-prod/49941cacf66117f7` (HTTP 4321, hc `/healthz`) | persistent | 2026-07-31 |
+| ECS task definition `feedlot-campo-backend-prod:1` | cpu256/mem512, image tag `prod-pending-first-build` (placeholder — no image pushed yet) | persistent | 2026-07-31 |
+| ECS task definition `feedlot-campo-frontend-prod:1` | cpu256/mem512, image tag `prod-pending-first-build` | persistent | 2026-07-31 |
+| ECS service `feedlot-campo-backend` | cluster `alvs-prod` (shared), desiredCount 1, public subnets, shared task SG `sg-027b8d1f3fe41007a` | persistent | 2026-07-31 — ACTIVE, `runningCount=0` (expected: ECR repo is empty, no image pushed yet) |
+| ECS service `feedlot-campo-frontend` | same network shape, no Cloud Map registration | persistent | 2026-07-31 — ACTIVE, `runningCount=0` (same reason) |
+| ALB listener rule priority 140 (shared `alvs-prod-alb` `:443`) | host `feedlot.grupoalvs.com` + path `/accounts/*` → `tg-feedlot-campo-backend-prod` | persistent | 2026-07-31 |
+| ALB listener rule priority 141 | host `feedlot.grupoalvs.com` + path `/api/*`,`/admin/*`,`/static/*`,`/media/*` → `tg-feedlot-campo-backend-prod` | persistent | 2026-07-31 |
+| ALB listener rule priority 142 | host `feedlot.grupoalvs.com` (catch-all) → `tg-feedlot-campo-frontend-prod` | persistent | 2026-07-31 |
+| Route 53 A/ALIAS `feedlot.grupoalvs.com` | zone `Z0653783OJDM9CPZYK6Z`, target `dualstack.alvs-prod-alb-18022052.us-east-1.elb.amazonaws.com` | persistent | 2026-07-31 |
+
+### Shared resources adopted, not created (this project's attachments only)
+
+Never destroyed on this project's behalf; only this project's attachment to each (a listener rule, a target group, an SG ingress rule, a Route 53 record, an app client) is this project's to remove if it is ever decommissioned.
+
+| Resource | ID | Note |
+|---|---|---|
+| ALB `alvs-prod-alb`, its `:443` listener, `*.grupoalvs.com` ACM cert | pre-existing | used as-is |
+| ECS cluster `alvs-prod` | pre-existing | used as-is |
+| VPC `vpc-0f6c992f8a75a6629`, public subnets `subnet-0367b5e29ffc0c525`/`subnet-03e3ec09d37971485`, isolated subnets `subnet-0f4865b1984f1ab22`/`subnet-0ad36358282f91a16` | pre-existing | used as-is |
+| Shared task network SG `sg-027b8d1f3fe41007a` (`alvs-prod-task-sg`) | pre-existing | confirmed live via `alvs-financial-gateway`'s ECS service networking, not guessed |
+| Shared RDS network SG `sg-0c6f4c16f86f7a2b3` (`alvs-prod-rds-sg`) | pre-existing | reused for the dedicated `alvs-prod-feedlot-campo-pg` instance — SG is shared/network-level, the instance is not |
+| Cognito pool `alvs-org-pool` (`us-east-1_YrRbIScNL`) + its Google IdP federation | pre-existing | reused, no new pool created — see divergence note above |
+| Route 53 hosted zone `grupoalvs.com` (`Z0653783OJDM9CPZYK6Z`) + ACM `*.grupoalvs.com` cert | pre-existing | used as-is |
+
+### Not created / not yet decided for this project
+
+- **Dedicated Cognito User Pool** — deliberately not created; see divergence note above.
+- Real backend/frontend container images — ECR repos are empty; both ECS services show `runningCount=0` until a first image is pushed (separate CI/build act, outside this inventory batch). `deploy-prod.yml` is now correctly configured to build and push them on the next push to `prod`.
+
+### Deploy identity (`kodexArg/alvs-feedlot-campo`) — resolved 2026-08-02
+
+- **`gha-deploy-prod` IAM role** — additive trust-policy entry `repo:kodexArg@47777332/alvs-feedlot-campo@1320290142:ref:refs/heads/prod`; no existing entry touched.
+- **12 GitHub Actions repository variables** — all set on `kodexArg/alvs-feedlot-campo`: `AWS_REGION`, `AWS_ACCOUNT_ID`, `DEPLOY_ROLE_ARN` (`arn:aws:iam::789650504128:role/gha-deploy-prod`), `PROJECT_SLUG`, `CLUSTER`, `ECR_REGISTRY`, `PUBLIC_SUBNET_A`/`B`, `TASK_SG_ID`, `SECRET_DJANGO`, `SECRET_DB`, `SECRET_COGNITO`. `SECRET_MSGRAPH` is deliberately unset (no M365 Graph integration wired).
+- Full decision record: [[GH]], [[adr-08-github-and-git]] (REJECTED — the 2026-08-02 ownership rotation).
 
 ## Template reference run (`astro-drf-aws`) — inherited, not ours
 

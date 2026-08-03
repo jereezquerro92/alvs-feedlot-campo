@@ -17,7 +17,10 @@ Authentication doctrine for the template. Ruled by [[adr-10-auth]]. Authorizatio
 
 ## Provider: Cognito, authentication only
 
-AWS Cognito (a user pool per project, region us-east-1) is the sole authentication provider. There is no second IdP and no home-grown password store in production ([[adr-10-auth]] rule 1). Cognito verifies credentials and issues OIDC tokens; nothing more is delegated to it.
+AWS Cognito (region us-east-1) is the sole authentication provider. There is no second IdP and no home-grown password store in production ([[adr-10-auth]] rule 1). Cognito verifies credentials and issues OIDC tokens; nothing more is delegated to it.
+
+> [!note] A dedicated pool is the template default, not a universal rule
+> The template's own reference run provisions a pool per project (`astro-drf-aws` got its own `us-east-1_IzUPE4fDV`). This project, `alvs-feedlot-campo`, diverges: it has **no dedicated pool** — its production app client `feedlot-campo-prod` lives inside the pre-existing **shared** pool `alvs-org-pool` (`us-east-1_YrRbIScNL`), whose Google IdP is federated once at the pool level and reused as-is (discovered live on 2026-07-31 by mirroring the sibling `alvs-financial-gateway`, which follows the same shared-pool shape — `docs/INVENTORY.md`). The OIDC mechanics below (steps 1–7), the RBAC split, and every rule in [[adr-10-auth]] are unaffected: a shared pool still authenticates only, still issues the same claims, and Django still owns every authorization decision. This is a factual correction to this project's deployment topology, not a doctrine change — no ADR governs *which* pool a project's client sits in.
 
 > [!warning] Cognito RBAC is prohibited
 > Cognito **groups**, `cognito:groups`, and any **custom-claim-as-role** are banned ([[adr-10-auth]] rule 2). Roles are **Django Groups** checked by **DRF permission classes** ([[BACKEND]]). A permission decision that reads a Cognito claim is a defect, even if it "works". The only claims Django trusts from a token are **identity** claims (`sub`, `email`, and the standard profile attributes it mirrors), never authority.
@@ -108,6 +111,12 @@ Ruled by [[adr-20-authorization-lobby]]. A Cognito login opens a Django session,
 ### From a grant to a Group membership
 
 A `post_save` signal on `AccessRequest` mirrors a non-null `role` write into `user.groups`, adding the user to the granted `Group`. The signal is the only path from an `AccessRequest` row to actual authority — the row grants nothing on its own. Enforcement reads Group membership, exactly as the rest of RBAC does ([[adr-10-auth]] rule 2); `AccessRequest` never becomes a second, parallel source of authority.
+
+### `admins` also mirrors into `is_staff` / `is_superuser`
+
+A separate `m2m_changed` receiver on `User.groups.through` (`backend/apps/users/signals.py`) watches Group membership itself, not the grant path that produced it: whenever a user's membership in the `admins` Group changes, it sets `user.is_staff` and `user.is_superuser` to match — both `True` while the user is in `admins`, both cleared the moment the user leaves it. It fires the same way regardless of how the membership arrived — the [[adr-21-bootstrap-allowlist-grant]] allowlist path and an admin editing Groups directly in `/admin/` both trigger it, because it keys on membership in `User.groups.through`, not on the path that changed it.
+
+The practical effect: `admins`, already the do-everything superset among the field roles ([[adr-44-field-operational-roles]]), reaches `/admin/` as well as the rest of the API surface — one Group membership, both surfaces. Every other Group carries no such mirror and every non-`admins` account keeps `set_unusable_password()`; reaching `/admin/` is always via the Cognito-backed Django session plus these two flags, never a password — the single usable-password account remains the bootstrap superuser named in [[adr-10-auth]] rule 8, untouched by this mirror.
 
 ### The bootstrap allowlist
 

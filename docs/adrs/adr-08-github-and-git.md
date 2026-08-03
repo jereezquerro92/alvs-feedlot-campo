@@ -16,7 +16,7 @@ tags: [adr, github, git]
 
 ## ASSERTIONS
 
-1. The owning account is a per-repository fact, recorded in [[GH]] — not a constant of this doctrine. Remote and `gh` default owner follow whichever account [[GH]] names. For this repository that account is `jereezquerro92`; `kodexArg` owns the template this project was spawned from, and owning the template grants no authority over a project built on it ([[adr-48-derived-project-deploy-identity]] rule 4).
+1. The owning account is a per-repository fact, recorded in [[GH]] — not a constant of this doctrine. Remote and `gh` default owner follow whichever account [[GH]] names. `kodexArg` owns the template this project was spawned from, and owning the template grants no authority over a project built on it ([[adr-48-derived-project-deploy-identity]] rule 4).
 2. `main` is integration, not production.
 3. `prod` is the production branch.
 4. Direct push to `main` and `prod` is allowed only as the owning account of rule 1. All other work uses feature branches and pull requests.
@@ -35,7 +35,8 @@ tags: [adr, github, git]
 
 ## REJECTED
 
-- **A constant owning account (`kodexArg`) baked into this doctrine** — rules 1 and 4 named `kodexArg` as the owner until 2026-07-30. Retired by owner override (issue #52, express-consent path of [[adr-00-adr-doctrine]] rule 8) because a project spawned from the template has its own owner, and owning the template a project was built on grants no authority over the project itself ([[adr-48-derived-project-deploy-identity]] rule 4). The consent was bounded to this edit; it opened no wider exception to how a policy changes elsewhere. It would reopen only if this template's own reference repository needed a rule naming itself specifically.
+- **A constant owning account (`kodexArg`) baked into this doctrine** — rules 1 and 4 named `kodexArg` as the owner until 2026-07-30. Retired by owner override (issue #52 of the pre-fork `jereezquerro92` tracker, express-consent path of [[adr-00-adr-doctrine]] rule 8) because a project spawned from the template has its own owner, and owning the template a project was built on grants no authority over the project itself ([[adr-48-derived-project-deploy-identity]] rule 4). The consent was bounded to this edit; it opened no wider exception to how a policy changes elsewhere. It would reopen only if this template's own reference repository needed a rule naming itself specifically.
+- **A per-repository owner named in this ADR's body (`jereezquerro92`)** — from 2026-07-30 to 2026-08-02 rule 1 named this repository's owning account inline. Retired on 2026-08-02, owner authorization given in conversation ([[adr-00-adr-doctrine]] rule 8), when the owning account recorded in [[GH]] moved to `kodexArg` following a same-day fork: the fork became the project's live wire — the repo `origin` points at, `gh` authenticates as, and the one whose OIDC subject holds deploy trust ([[adr-23-oidc-immutable-subject-claim]], [[adr-48-derived-project-deploy-identity]] rule 5 — a repo/owner change rotates the OIDC identity and both directions are re-derived). `jereezquerro92/alvs-feedlot-campo` is retained as the `upstream` remote and holds no direct-push authority under rule 4. The name now lives only in [[GH]], where rule 1 always said it belongs.
 
 ## RELATED
 

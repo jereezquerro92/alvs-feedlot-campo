@@ -27,4 +27,12 @@ ENV HOME=/home/appuser \
     UV_CACHE_DIR=/home/appuser/.cache/uv
 USER appuser
 
-CMD ["sh", "-c", "uv run python manage.py check --deploy && uv run python manage.py migrate --noinput && uv run python manage.py bootstrap_admin && uv run python manage.py createcachetable && uv run uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --workers ${UVICORN_WORKERS}"]
+# Serving-only boot: migrate/bootstrap_admin/createcachetable are one-shot,
+# run-once-per-deploy steps and MUST NOT execute per replica — with
+# desiredCount > 1 every replica running `migrate` concurrently races DDL
+# against the same database (docs/BD.md "Migration execution points"). Those
+# steps run as a separate, blocking one-off ECS task registered and awaited
+# by .github/workflows/deploy-prod.yml BEFORE the service update, never here.
+# Local dev keeps the old self-migrating chain via compose.yaml's `command:`
+# override on the `backend` service, which this CMD is only the fallback for.
+CMD ["sh", "-c", "uv run python manage.py check --deploy && uv run uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --workers ${UVICORN_WORKERS}"]
