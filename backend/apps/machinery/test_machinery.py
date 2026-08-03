@@ -70,3 +70,25 @@ def test_maintenance_on_retired_machine_is_rejected():
         register_maintenance(
             client=client, machine=machine, date="2026-03-01", title="X", unit_price="100",
         )
+
+
+@pytest.mark.parametrize("quantity", ["0", "-1"])
+def test_maintenance_rejects_non_positive_quantity(quantity):
+    client, machine = _fixtures()
+    with pytest.raises(ValidationError):
+        register_maintenance(
+            client=client, machine=machine, date="2026-03-01", title="X",
+            unit_price="100", quantity=quantity,
+        )
+    assert LedgerEntry.objects.filter(account=client.account).count() == 0
+
+
+def test_maintenance_rejects_negative_unit_price():
+    client, machine = _fixtures()
+    with pytest.raises(ValidationError):
+        register_maintenance(
+            client=client, machine=machine, date="2026-03-01", title="X",
+            unit_price="-5", quantity="1",
+        )
+    assert LedgerEntry.objects.filter(account=client.account).count() == 0
+
