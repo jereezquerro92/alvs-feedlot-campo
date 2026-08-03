@@ -5,6 +5,7 @@ LIVE-DOC:END"""
 from decimal import Decimal
 
 import pytest
+from django.core.exceptions import ValidationError
 
 from apps.clients.models import Client
 from apps.ledger.models import Concept, Direction, LedgerEntry, Payment
@@ -59,3 +60,12 @@ def test_correction_is_a_counter_entry_not_an_edit():
     assert LedgerEntry.objects.filter(account=account).count() == 2
     original.refresh_from_db()
     assert original.amount == Decimal("1000.00")  # untouched
+
+
+@pytest.mark.parametrize("amount", ["0", "-100"])
+def test_register_payment_rejects_non_positive_amount(amount):
+    account = _account()
+    with pytest.raises(ValidationError):
+        register_payment(account=account, amount=amount, date="2026-07-05")
+    assert Payment.objects.filter(account=account).count() == 0
+    assert LedgerEntry.objects.filter(account=account).count() == 0
