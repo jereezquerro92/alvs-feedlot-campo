@@ -31,6 +31,7 @@ env:
   TASK_SG_ID: ${{ vars.TASK_SG_ID }}
   # A Secrets Manager ARN carries an AWS-assigned random suffix, so it is not a
   # pure function of PROJECT_SLUG and is configured on its own (issue #129).
+  PROJECT_HOST: ${{ vars.PROJECT_HOST }}
   SECRET_DJANGO: ${{ vars.SECRET_DJANGO }}
   SECRET_DB: ${{ vars.SECRET_DB }}
   SECRET_COGNITO: ${{ vars.SECRET_COGNITO }}
@@ -58,7 +59,7 @@ jobs:
           # sibling's resources) for a value that is not genuinely required.
           # Every variable that IS required for something this project does
           # ship stays in this list and still fails closed.
-          for v in AWS_ACCOUNT_ID DEPLOY_ROLE_ARN PROJECT_SLUG CLUSTER \
+          for v in AWS_ACCOUNT_ID DEPLOY_ROLE_ARN PROJECT_SLUG PROJECT_HOST CLUSTER \
                    ECR_REGISTRY PUBLIC_SUBNET_A PUBLIC_SUBNET_B TASK_SG_ID \
                    SECRET_DJANGO SECRET_DB SECRET_COGNITO; do
             [ -n "${!v}" ] || missing+=("$v")
@@ -186,7 +187,12 @@ jobs:
           echo "backend_log_group=/alvs/${PROJECT_SLUG}/backend-${ENV_NAME}" >> "$GITHUB_OUTPUT"
           echo "frontend_log_group=/alvs/${PROJECT_SLUG}/frontend-${ENV_NAME}" >> "$GITHUB_OUTPUT"
           echo "cloudmap_namespace=${PROJECT_SLUG}-${ENV_NAME}.local" >> "$GITHUB_OUTPUT"
-          echo "project_host=${PROJECT_SLUG}.grupoalvs.com" >> "$GITHUB_OUTPUT"
+          # The public hostname is repository configuration, NEVER derived from the
+          # slug: this project is served at feedlot.grupoalvs.com while its slug is
+          # feedlot-campo, so the old `${PROJECT_SLUG}.grupoalvs.com` guess pointed
+          # the frontend at a host that does not resolve (issue #72). Preflight
+          # already hard-failed if PROJECT_HOST is unset ([[adr-48]] rules 1-2).
+          echo "project_host=${PROJECT_HOST}" >> "$GITHUB_OUTPUT"
       - uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ env.DEPLOY_ROLE_ARN }}

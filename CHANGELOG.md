@@ -6,6 +6,8 @@
   priority: high
   issue: 69
   changes:
+    - fix(deploy): the public host is the new required PROJECT_HOST repository variable, never `${PROJECT_SLUG}.grupoalvs.com` — this project is served at feedlot.grupoalvs.com while its slug is feedlot-campo, so the frontend's PUBLIC_SITE_URL/PUBLIC_BACKEND_URL and every link built from them, login included, pointed at a host with no DNS record (issue 72)
+    - docs(variables,gh,inventory): the `<slug>.<domain>` derivation claim corrected; PROJECT_HOST recorded as the 13th deploy variable
     - fix(deploy): deploy-prod.yml injects AUTH_BOOTSTRAP_ALLOWLIST into the serving backend task, so a Cognito login can actually leave the lobby (adr-21 rule 1 was declared in VARIABLES but never wired)
     - fix(deploy): the migrate task also gets DJANGO_SUPERUSER_EMAIL/PASSWORD, so bootstrap_admin creates the break-glass admin instead of no-opping (adr-10 rule 8)
     - chore(aws): gha-deploy-prod gains the additive inline policy bedrock-gate-nova-lite; the backend task role gains kdx-bedrock-nova-micro-lite — the bedrock-live gate and every runtime inference call were both denied
