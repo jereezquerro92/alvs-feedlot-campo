@@ -67,7 +67,7 @@ Names here are reference copies of what [[GLOSSARY]] already decided, not the po
 |---|---|---|---|
 | `PageTitle` | `primitives/` | Page-level heading, zero-hydration | Every page |
 | `SectionTitle` | `primitives/` | Section-level heading, zero-hydration | Every page |
-| `CornerNavTriangle` | `primitives/` | Fixed bottom-right isosceles-triangle nav, hand-rolled SVG (rounded on all corners incl. the screen-corner vertex — no Melt builder for this shape), cycles home→chat→showcase | Site-wide 3-front navigation |
+| `CornerNavTriangle` | `primitives/` | Fixed bottom-right isosceles-triangle nav, hand-rolled SVG (rounded on all corners incl. the screen-corner vertex — no Melt builder for this shape), cycles home→chat→showcase | Showcase gallery demo only (not mounted site-wide) |
 | `DataTable` | `data/` | Generic sortable/expandable data table | Financial dashboards & reporting (line-item tables, statements) |
 | `NumericValue` | `data/` | Formatted numeric/currency display, sign-aware coloring | Financial dashboards & reporting (amounts, balances) |
 | `StatusBadge` | `data/` | Enum-to-label/variant badge | Financial dashboards & reporting (state indicators); general enum display |

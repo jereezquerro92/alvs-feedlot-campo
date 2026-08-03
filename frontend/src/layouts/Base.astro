@@ -6,7 +6,6 @@
 import "../styles/app.css";
 import { parseThemeConfig, computeThemeSSRAttrs } from "$lib/theme";
 import PageTitle from "$lib/components/primitives/titles/PageTitle.svelte";
-import CornerNavTriangle from "$lib/components/primitives/CornerNavTriangle.svelte";
 
 interface Props {
   title?: string;
@@ -32,7 +31,6 @@ const { htmlClass, dataBgPreset, style } = computeThemeSSRAttrs(themeBlob);
   </head>
   <body>
     <slot />
-    <CornerNavTriangle pathname={Astro.url.pathname} />
     <script>
 
       import "htmx.org";
