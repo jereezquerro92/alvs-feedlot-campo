@@ -9,7 +9,7 @@
   import NumericValue from "$lib/components/data/NumericValue.svelte";
 
   let {
-    label,
+    label = "",
     value = undefined,
     currency = undefined,
     count = undefined,
@@ -17,7 +17,8 @@
     class: className = undefined,
     ...rest
   }: {
-    label: string;
+    /** Self-defined default for zero-prop mount ([[adr-22]] rule 1). */
+    label?: string;
     /** Optional headline figure, rendered through NumericValue when present. */
     value?: number;
     /** Optional currency label for the figure; omit for a plain number. */
