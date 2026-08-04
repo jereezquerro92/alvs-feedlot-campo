@@ -1,7 +1,6 @@
 <!-- LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
-     Governed by: [[adr-52-frontend-and-design-system]] · [[adr-53-api-membrane]]
+     Governed by: [[adr-52-frontend-and-design-system]]
      Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]]
-     API: [[API]]
      LIVE-DOC:END -->
 
 <!--
