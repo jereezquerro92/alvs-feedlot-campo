@@ -80,11 +80,13 @@ test("/ renders a Showcase button, with an explicit Cache-Control, and hides the
   expect(body).not.toContain('data-testid="m365-word"');
 });
 
-test("/ with no theme cookie renders the flipped defaults on <html> — dark mode + melt background", async () => {
+test("/ with no theme cookie renders the flipped defaults on <html> — light mode + melt background", async () => {
   const res = await fetch(`${BASE}/`);
   expect(res.status).toBe(200);
   const body = await res.text();
-  expect(body).toContain('<html lang="en" class="dark" data-bg-preset="melt"');
+  // Light is the standing default ([[DESIGN-SYSTEM]]); Astro emits bare `class` when empty.
+  expect(body).toContain('<html lang="en" class data-bg-preset="melt"');
+  expect(body).not.toContain('class="dark"');
 });
 
 test("/ with no session cookie renders the anonymous Log in affordance", async () => {

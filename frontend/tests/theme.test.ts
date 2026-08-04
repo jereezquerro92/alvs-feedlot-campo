@@ -125,6 +125,11 @@ describe("parseThemeConfig", () => {
 });
 
 describe("computeThemeSSRAttrs", () => {
+  test("standing DEFAULTS are light mode + melt preset", () => {
+    expect(DEFAULTS.mode).toBe("light");
+    expect(DEFAULTS.bgPreset).toBe("melt");
+  });
+
   test("defaults to DEFAULTS.mode/DEFAULTS.bgPreset, no inline overrides", () => {
     const attrs = computeThemeSSRAttrs(null);
     expect(attrs.htmlClass).toBe(DEFAULTS.mode === "dark" ? "dark" : "");

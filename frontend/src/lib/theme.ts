@@ -40,7 +40,7 @@ export interface ThemeConfig {
 }
 
 export const DEFAULTS: { mode: ThemeMode; bgPreset: ThemeBgPreset; sidebarSide: SidebarSide } = {
-  mode: "dark",
+  mode: "light",
   bgPreset: "melt",
   sidebarSide: "left",
 };

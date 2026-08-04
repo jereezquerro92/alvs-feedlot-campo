@@ -118,7 +118,7 @@ export const es = {
   // /showcase/components/ — gallery chrome
   gallery_title: "Componentes",
   gallery_intro:
-    "Cada componente compuesto que este template incluye, con sus valores por defecto guiados por tokens y bajo el tema dark-melt — tipografía, botones, datos, tiles de panel, la superficie de chat del router, overlays Melt y sesión.",
+    "Cada componente compuesto que este template incluye, con sus valores por defecto guiados por tokens y bajo el tema light-melt — tipografía, botones, datos, tiles de panel, la superficie de chat del router, overlays Melt y sesión.",
   gallery_reco_title: "Recomendados para dashboards financieros y reportes",
   gallery_reco_body:
     "DataTable, NumericValue, MetricTileStrip, StatusBadge, ChipFilterBar, EntityGrid y SummaryCard son los componentes más aptos para ese dominio — es solo una guía; todos los componentes siguen siendo agnósticos del negocio.",
