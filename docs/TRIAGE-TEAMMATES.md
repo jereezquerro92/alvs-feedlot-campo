@@ -250,14 +250,30 @@ is derived from the tags *after* every decision is made, and it only reaches the
 
 Strip every animal from this system and every outcome is byte-identical.
 
-## The REQUIREMENT system (labels only)
+## Issue disposition (stop-the-loop)
+
+Every stop-exit that does not publish a PR applies **one** disposition label from
+[[GH]] and comments why. The hunter refuses to re-hunt while any of these remain.
+Detail: `docs/skills/triage-and-fix/references/disposition.md` ([[adr-04-issue-delivery]]
+rule 8).
+
+| Label | Meaning |
+|---|---|
+| `needs-info` | Ask for requirements / clarification. |
+| `blocked` | Waiting on decision, unmet PR requirement, or env. |
+| `deferred` | Hunt called off — complexity, cascade, or vampiro. |
+| `unresolvable` | **Not resolvable** — constitution / permanent no. |
+| `duplicate` | Confirmed duplicate of another issue/PR. |
+
+## The REQUIREMENT system (PR labels only)
 
 | Label | Meaning |
 |---|---|
 | `requires:<N>` | Do not merge before PR #N. |
-| `deferred` | Hunt called off — directly or by cascade. |
+| `deferred` | Hunt called off — directly or by cascade (PRs). |
 
-Deferred = label present **or** closed unmerged. Spec:
+On issues, unmet PR requirements use `blocked`, not `deferred`. On PRs, deferred =
+label present **or** closed unmerged. Spec:
 `docs/skills/triage-and-fix/references/deps.md`.
 
 ```

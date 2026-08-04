@@ -36,10 +36,11 @@ with `kwf-deps status <N>`:
 
 - **#N merged** → requirement satisfied, hunt proceeds.
 - **#N open, not deferred** → ground **unfit**: quick-exit `requirement-unmet`, comment on
-  the issue naming what it waits on. The issue is **blocked, not dead** — it is NOT labeled
-  `deferred`; its requirement may still land.
-- **#N deferred or closed-unmerged** → same quick-exit, and the comment says the
-  requirement went dead so a human can re-scope or close the issue.
+  the issue naming what it waits on, and label the issue `blocked` (not `deferred`) —
+  the requirement may still land. Spec: `references/disposition.md`.
+- **#N deferred or closed-unmerged** → same quick-exit + `blocked` label; the comment
+  says the requirement went dead so a human can re-scope, close, or mark
+  `unresolvable` if the ask itself is dead.
 
 ### 2. Planning & building — a PR that trusts a PR
 

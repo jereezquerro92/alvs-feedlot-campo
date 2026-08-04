@@ -36,7 +36,10 @@ Upgrades over the early Claude `kdx-wf-triage-and-fix` cast:
    🛡️ paladin — each in its own git worktree.
 2. **Trivial → sorcerer**: `difficulty: trivial` plans on the mid tier.
 3. **PR REQUIREMENT system**: `requires:N` labels; `bin/kwf-deps cascade` on defer.
-4. **Assertions + guardians**: doctrine-first plan, inquisitor TDD gate on
+4. **Issue disposition labels**: stop-exits apply `needs-info` | `blocked` |
+   `deferred` | `unresolvable` | `duplicate` so hunts do not loop
+   (`references/disposition.md`, [[GH]], adr-04).
+5. **Assertions + guardians**: doctrine-first plan, inquisitor TDD gate on
    assertion-touching plans, post-bard `guardian-dispatch` + `assertion-review`.
 
 ## How it runs
@@ -91,14 +94,26 @@ plaza      bard → ONE PR | comment | new issue
 - **kwf-falcon**: GitHub-only duplicate/regression scout. Output contract.
 - **kwf-hound**: which code does this touch? Return lines in `chunk`.
 
-Quick exits, in order:
+Quick exits, in order (every stop **labels** per `references/disposition.md`):
 
 1. Hunter died → abort `hunter-failed`.
-2. `outOfScope: recurring-defect` → **vampiro** 🧛.
-3. Falcon `emergencia` → **duplicate** 🦅.
-4. `stackDepsOk`, `ghConnected`, or `constitutionOk` false → **ground-unfit**.
-5. `requirementsOk` false → **requirement-unmet**: comment naming unmet
-   `Requires PR: #N`; do **not** label the issue `deferred`.
+2. `dispositionStop` ≠ `none` → **already-dispositioned**: one-line note; do not
+   re-plan. Label stays until a human removes it.
+3. `infoComplete` false → **needs-info**: comment the questions; label
+   `needs-info`.
+4. `outOfScope: recurring-defect` → **vampiro** 🧛: comment; label `deferred`.
+5. Falcon `emergencia` → **duplicate** 🦅: comment canonical ref; label
+   `duplicate`.
+6. `constitutionOk` false → **ground-unfit** (law): comment file+rule; label
+   `unresolvable`.
+7. `stackDepsOk` or `ghConnected` false → **ground-unfit** (env): comment;
+   label `blocked`.
+8. `requirementsOk` false → **requirement-unmet**: comment naming unmet
+   `Requires PR: #N`; label `blocked` — do **not** use `deferred` (the
+   requirement may still land).
+
+Complexity that cannot finish in one hunt (planner refuses / must split beyond
+this run) → comment the split; label `deferred`.
 
 **The task** = issue title+body verbatim + hunter tags/notes + falcon + hound.
 String assembly only — no agent.
@@ -165,14 +180,29 @@ It judges PRD, ADRs, and assertion/TDD completeness on assertion-touching plans.
 
 Cast and skill already live in this tree — do not maintain a second SSOT.
 
-## The REQUIREMENT system (labels only)
+## Issue disposition (stop-the-loop)
+
+| Label | Meaning |
+|---|---|
+| `needs-info` | Ask for requirements / clarification; wait for human. |
+| `blocked` | Waiting on decision, unmet PR requirement, or env. |
+| `deferred` | Hunt called off — complexity, cascade, or vampiro. |
+| `unresolvable` | **Not resolvable** — constitution / permanent no. |
+| `duplicate` | Confirmed duplicate; work the canonical issue. |
+
+Re-hunt is forbidden while any of these remain. Spec:
+`references/disposition.md`. Names live in [[GH]].
+
+## The REQUIREMENT system (PR labels only)
 
 | Label | Meaning |
 |---|---|
 | `requires:<N>` | Do not merge before PR #N. |
-| `deferred` | Hunt called off — directly or by cascade. |
+| `deferred` | Hunt called off — directly or by cascade (PRs). |
 
-Deferred = label present **or** closed unmerged. Spec: `references/deps.md`.
+On **issues**, unmet PR requirements use `blocked`, not `deferred`.
+On **PRs**, deferred = label present **or** closed unmerged. Spec:
+`references/deps.md`.
 
 ```
 docs/skills/triage-and-fix/bin/kwf-deps requires <pr> <N...> [--repo R] [--dry-run]
@@ -199,7 +229,8 @@ Optional Actions trigger: `extras/gha-kwf-deps.yml`.
 | `docs/agents/kwf-*.md` | 18 cast definitions — `tools:` is enforcement |
 | `bin/kwf-deps` | REQUIREMENT / defer-cascade CLI |
 | `references/cast.md` | Node spec: contracts, tiers, ownership |
-| `references/deps.md` | REQUIREMENT system spec |
+| `references/deps.md` | REQUIREMENT system spec (PRs) |
+| `references/disposition.md` | Issue stop labels / anti-loop |
 | `references/runtimes.md` | Kimi / Claude / Cursor-Grok dispatch map |
 | `extras/gha-kwf-deps.yml` | Optional Actions cascade trigger |
 | `tests/test-deps.py` | Local kwf-deps harness — `python3 tests/test-deps.py` |

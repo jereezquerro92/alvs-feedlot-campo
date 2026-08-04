@@ -4,7 +4,7 @@ type: adr
 category: harness
 use_case: running a GitHub issue through delivery, wiring or changing the triage party, cloning a project that will use issue delivery, closing a party run that touched law or assertions
 created: 2026-08-02
-modified: 2026-08-02
+modified: 2026-08-03
 tags: [adr, harness, triage-and-fix, delivery, assertions]
 ---
 
@@ -56,6 +56,14 @@ that ADR's own RELATED for the cross-link back.
    may land ordinary fixes without an assertion; any feature the owner
    elevates to a lasting promise enters as an assertion law, then tests,
    then code — never code-first against a silent wish.
+8. **Stop-exits label the issue.** Every party exit that does not publish a
+   PR applies exactly one disposition label from [[GH]]
+   (`needs-info` | `blocked` | `deferred` | `unresolvable` | `duplicate`)
+   and comments the reason. Detail and exit→label map:
+   `docs/skills/triage-and-fix/references/disposition.md`. An issue that
+   already carries any of those labels is not re-hunted until a human
+   removes the label. `unresolvable` is the permanent-no signal — never use
+   it for missing requirements, complexity, or a PR that may still merge.
 
 ## FORBIDDEN
 
@@ -66,6 +74,11 @@ that ADR's own RELATED for the cross-link back.
   a guardian that was not run (rule 4).
 - **NEVER** mark an assertion `verified` from a party run without proving
   tests per [[TDD]] (rule 5).
+- **NEVER** leave a stop-exit as a comment-only with no disposition label
+  (rule 8). An unlabeled stop is how the same issue loops through the party.
+- **NEVER** label `unresolvable` when the real state is waiting, missing
+  requirements, or complexity (rule 8) — those are `blocked`, `needs-info`,
+  and `deferred`.
 
 ## REJECTED
 
@@ -88,7 +101,7 @@ that ADR's own RELATED for the cross-link back.
 
 ### governed paths
 
-- `docs/skills/triage-and-fix/` — playbook, deps, runtime map
+- `docs/skills/triage-and-fix/` — playbook, deps, disposition, runtime map
 - `docs/agents/kwf-*.md` — cast (with guardians)
 - `docs/hooks/guardian-dispatch` — post-bard safety net entry
 - `docs/skills/assertion-review/` — assertion close-out
@@ -99,8 +112,10 @@ that ADR's own RELATED for the cross-link back.
 - [[adr-01-constitution]] — assertions as feature entry path
 - [[adr-02-harness]] — skills/agents home
 - [[adr-03-guardians]] — guardian duty the post-bard step honors
+- [[adr-08-github-and-git]] — labels only from [[GH]] (rule 7)
 - [[adr-19-issue-worktree-pr]] — this project's manual git issue→PR shape,
   kept separate and cross-linked
+- [[GH]] — fixed label set including disposition stop labels
 - [[assertion-00-discipline]] — laws camp/assertion-review must pass
 - [[TDD]] — test-first path when assertions are in play
 - [[HARNESS]] — delivery model in prose

@@ -30,7 +30,10 @@ Real merge conflict → not hunted. Declare
 If a required PR is deferred → `kwf-deps cascade` on it.
 
 **hunted false:** prefer rich `comment-on-issue`; `open-new-issue` only for a *different*
-subject; never PR with zero commits.
+subject; never PR with zero commits. **Apply exactly one disposition label** from
+[[GH]] per `docs/skills/triage-and-fix/references/disposition.md` (exit→label map).
+Replace any prior disposition label. Comment states the reason. `unresolvable` only
+for permanent no — never for missing info, complexity, or unmet PRs.
 
 Any defer you cause → `kwf-deps cascade <pr>`.
 
@@ -40,6 +43,7 @@ Any defer you cause → `kwf-deps cascade <pr>`.
 ---
 hunted: true|false
 action: publish-pr|comment-on-issue|open-new-issue
+dispositionLabel: none|needs-info|blocked|deferred|unresolvable|duplicate
 url: "<published URL>"
 title: "<title>"
 requirementsDeclared: [<PRs>]
