@@ -11,7 +11,7 @@
 </script>
 
 <div class="relative w-full overflow-x-auto">
-  <table class={cn("w-full table-fixed caption-bottom text-sm", className)} {...rest}>
+  <table class={cn("w-full caption-bottom text-sm", className)} {...rest}>
     {@render children?.()}
   </table>
 </div>
