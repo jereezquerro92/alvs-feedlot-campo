@@ -12,10 +12,11 @@ from apps.users.models import User
 
 READ_ONLY_FIELDS = ["sub", "email", "given_name", "family_name", "picture", "groups", "client"]
 
-THEME_TOP_LEVEL_KEYS = {"mode", "bgPreset", "colors", "radius"}
-THEME_COLOR_KEYS = {"background", "primary", "secondary", "accent"}
+THEME_TOP_LEVEL_KEYS = {"mode", "bgPreset", "sidebarSide", "colors", "radius"}
+THEME_COLOR_KEYS = {"canvas", "dots", "surface", "foreground", "primary", "secondary", "accent"}
 THEME_MODE_CHOICES = {"light", "dark"}
 THEME_BG_PRESET_CHOICES = {"default", "melt"}
+THEME_SIDEBAR_SIDE_CHOICES = {"left", "right"}
 
 _COLOR_RE = re.compile(r"^(#[0-9a-fA-F]{3,8}|rgb(a)?\(.*\)|hsl\(.*\)|oklch\(.*\))$")
 _COLOR_FORBIDDEN_CHARS = frozenset(";{}<>\"'")
@@ -62,20 +63,36 @@ class UserSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("mode must be one of: light, dark.")
         if "bgPreset" in value and value["bgPreset"] not in THEME_BG_PRESET_CHOICES:
             raise serializers.ValidationError("bgPreset must be one of: default, melt.")
+        if "sidebarSide" in value and value["sidebarSide"] not in THEME_SIDEBAR_SIDE_CHOICES:
+            raise serializers.ValidationError("sidebarSide must be one of: left, right.")
         if "colors" in value:
             colors = value["colors"]
             if not isinstance(colors, dict):
                 raise serializers.ValidationError("colors must be an object.")
-            unknown_colors = set(colors) - THEME_COLOR_KEYS
-            if unknown_colors:
-                raise serializers.ValidationError(f"Unknown colors key(s): {sorted(unknown_colors)}.")
-            for key, color in colors.items():
-                if not _is_valid_color(color):
-                    raise serializers.ValidationError(f"colors.{key} is not a valid color value.")
+            unknown_modes = set(colors) - THEME_MODE_CHOICES
+            if unknown_modes:
+                raise serializers.ValidationError(
+                    f"colors must be keyed by mode (light/dark); unknown key(s): {sorted(unknown_modes)}."
+                )
+            for mode, palette in colors.items():
+                if not isinstance(palette, dict):
+                    raise serializers.ValidationError(f"colors.{mode} must be an object.")
+                unknown_colors = set(palette) - THEME_COLOR_KEYS
+                if unknown_colors:
+                    raise serializers.ValidationError(
+                        f"Unknown colors.{mode} key(s): {sorted(unknown_colors)}."
+                    )
+                for key, color in palette.items():
+                    if not _is_valid_color(color):
+                        raise serializers.ValidationError(
+                            f"colors.{mode}.{key} is not a valid color value."
+                        )
         if "radius" in value:
             radius = value["radius"]
             if not isinstance(radius, str) or not _RADIUS_RE.match(radius):
-                raise serializers.ValidationError("radius must be a valid CSS length (px/rem/em/%/vh/vw/ch).")
+                raise serializers.ValidationError(
+                    "radius must be a valid CSS length (px/rem/em/%/vh/vw/ch)."
+                )
         return value
 
     def validate(self, attrs):

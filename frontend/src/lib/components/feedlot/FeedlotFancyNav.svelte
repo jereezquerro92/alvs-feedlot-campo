@@ -19,6 +19,7 @@
   import type { NavIconName } from "$lib/components/shell/nav";
   import { cn } from "$lib/utils";
   import { t } from "../../../i18n";
+  import type { SidebarSide } from "$lib/theme";
 
   const PIN_KEY = "feedlot-nav-pinned";
   const NAV_WIDTH = "12rem";
@@ -31,12 +32,15 @@
     mobileOpen = $bindable(false),
     /** Pin preference; Shell reads it so the sandwich toggles the right surface. */
     pinned = $bindable(false),
+    /** Dock edge from theme_config.sidebarSide ([[DESIGN-SYSTEM]]). */
+    side = "left" as SidebarSide,
   }: {
     clientId?: number | string | null;
     active?: string;
     open?: boolean;
     mobileOpen?: boolean;
     pinned?: boolean;
+    side?: SidebarSide;
   } = $props();
 
   onMount(() => {
@@ -161,7 +165,10 @@
 {#if pinned}
   <!-- Desktop: permanent in-flow rail (old green presence via --primary). -->
   <aside
-    class="hidden shrink-0 flex-col overflow-y-auto border-r border-primary/30 bg-primary text-primary-foreground lg:flex"
+    class={cn(
+      "hidden shrink-0 flex-col overflow-y-auto border-primary/30 bg-primary text-primary-foreground lg:flex",
+      side === "right" ? "order-last border-l" : "border-r",
+    )}
     style={`width: ${NAV_WIDTH}`}
   >
     <div class="flex flex-col gap-0 px-3 py-4">
@@ -177,7 +184,10 @@
       onclick={() => (mobileOpen = false)}
     ></button>
     <aside
-      class="fixed inset-y-0 left-0 z-50 flex flex-col overflow-y-auto border-r border-primary/30 bg-primary text-primary-foreground shadow-xl lg:hidden"
+      class={cn(
+        "fixed inset-y-0 z-50 flex flex-col overflow-y-auto border-primary/30 bg-primary text-primary-foreground shadow-xl lg:hidden",
+        side === "right" ? "right-0 border-l" : "left-0 border-r",
+      )}
       style={`width: ${NAV_WIDTH}`}
     >
       <div class="flex flex-col gap-0 px-3 py-4">
@@ -188,7 +198,7 @@
 {:else}
   <FancyDrawer
     bind:open
-    side="left"
+    {side}
     width={NAV_WIDTH}
     title=""
     openLabel={t("shell_nav_label")}

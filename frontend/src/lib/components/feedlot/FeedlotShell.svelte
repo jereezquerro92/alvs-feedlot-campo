@@ -13,9 +13,11 @@
   throws ([[adr-22-showcase-ready-components]] rule 1). Copy via i18n.
 -->
 <script lang="ts">
+  import { onMount } from "svelte";
   import { t } from "../../../i18n";
   import FeedlotFancyNav from "./FeedlotFancyNav.svelte";
   import { Breadcrumb, type BreadcrumbItem } from "$lib/components/nav";
+  import { DEFAULTS, readThemeCookie, type SidebarSide } from "$lib/theme";
 
   type Client = { id: number | string; name?: string; kind?: string };
 
@@ -26,6 +28,8 @@
     /** Optional visible back link above the content. */
     backHref = "",
     backLabel = "",
+    /** Dock edge from theme_config.sidebarSide; defaults from cookie / DEFAULTS. */
+    sidebarSide = undefined,
     // Retained so existing callers keep compiling; default header has no switcher.
     clients: _clients = [],
     switcherPattern: _switcherPattern = "/feedlot/{id}/",
@@ -43,11 +47,21 @@
     backHref?: string;
     backLabel?: string;
     showSwitcher?: boolean;
+    sidebarSide?: SidebarSide;
   } = $props();
 
   let navOpen = $state(false);
   let mobileOpen = $state(false);
   let navPinned = $state(false);
+  let resolvedSide = $state<SidebarSide>(sidebarSide ?? DEFAULTS.sidebarSide);
+
+  onMount(() => {
+    if (sidebarSide) {
+      resolvedSide = sidebarSide;
+      return;
+    }
+    resolvedSide = readThemeCookie().sidebarSide ?? DEFAULTS.sidebarSide;
+  });
 
   const currentId = $derived(currentClient?.id ?? null);
   const sandwichExpanded = $derived(navPinned ? mobileOpen : navOpen);
@@ -81,6 +95,7 @@
   <FeedlotFancyNav
     {active}
     clientId={currentId}
+    side={resolvedSide}
     bind:open={navOpen}
     bind:mobileOpen
     bind:pinned={navPinned}

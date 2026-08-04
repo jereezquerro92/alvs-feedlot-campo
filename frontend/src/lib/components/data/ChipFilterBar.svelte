@@ -5,7 +5,7 @@
 
 <!--
   A single-select chip row built on the melt/builders RadioGroup — the same
-  headless-builder pattern as ThemeCard's bgPreset selector ([[MELT-UI]]).
+  headless-builder pattern as AppearanceCard's bgPreset selector ([[MELT-UI]]).
   RadioGroup supplies roving-focus and aria-checked; the chips are the
   styled layer on top.
 -->

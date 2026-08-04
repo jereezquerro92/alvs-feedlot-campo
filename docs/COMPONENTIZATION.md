@@ -34,7 +34,7 @@ Two more mechanics worth knowing before touching that file. It is the only DOM-b
 
 **The context-bound exemption.** A component whose only valid invocation is as a child of a parent compound component — reading a context that parent sets, never mounted bare by a caller — is exempt from rule 1, and the harness's `CONTEXT_BOUND` list is that exemption's exact membership. The vendored `ui/alert-dialog/` parts are today's only members: each throws on a bare mount by design, stating the parent requirement. The parent is bound by rule 1 with no exemption, and the list holds exact paths — never a directory wildcard — so a new component can never drift into the exemption unnoticed.
 
-**Rule 2 is covered in part by test, in part by review — and the same file says which is which.** `frontend/tests/component-mount.test.ts` now also mounts every discovered component with zero props, stubs `fetch` to record any non-GET method, flushes pending effects, and fails if a mutating request (POST/PATCH/DELETE) went out. That catches the mount-and-effect vector: a mutation wired into `onMount` or an `$effect`, which fires with no caller wiring. What it does **not** cover is the click/interaction-fired mutation — a Save or logout that only PATCHes or POSTs from a handler, its action prop caller-wireable (today `ProfileForm` and `ThemeCard`'s `PATCH /api/me/`, `SessionBadge`'s logout POST). Dispatching clicks to reach that path would demand routing each action through a no-op-defaulting prop — a component change outside this test's scope — so it stays a code-review gate. This is a real control over one vector plus an explicit limit on the other, not a claim of full coverage; [[adr-22-showcase-ready-components]] states the limit rather than implying a control that does not exist.
+**Rule 2 is covered in part by test, in part by review — and the same file says which is which.** `frontend/tests/component-mount.test.ts` now also mounts every discovered component with zero props, stubs `fetch` to record any non-GET method, flushes pending effects, and fails if a mutating request (POST/PATCH/DELETE) went out. That catches the mount-and-effect vector: a mutation wired into `onMount` or an `$effect`, which fires with no caller wiring. What it does **not** cover is the click/interaction-fired mutation — a Save or logout that only PATCHes or POSTs from a handler, its action prop caller-wireable (today `ProfileForm` and `AppearanceCard`'s `PATCH /api/me/`, `SessionBadge`'s logout POST). Dispatching clicks to reach that path would demand routing each action through a no-op-defaulting prop — a component change outside this test's scope — so it stays a code-review gate. This is a real control over one vector plus an explicit limit on the other, not a claim of full coverage; [[adr-22-showcase-ready-components]] states the limit rather than implying a control that does not exist.
 
 ## Folder tree
 
@@ -50,7 +50,7 @@ src/lib/components/
   nav/               # Tabs, DropdownMenu, ContextMenu, Menubar, TableOfContents — Melt builder(s) + hand-rolled fallbacks
   feedback/          # Toast — Melt builder, module-level `toaster` singleton
   overlay/           # Dialog, Drawer, Accordion, ConfirmDialog, Tooltip, Popover, HoverCard, ScrollArea, SidePanel — Melt builders (adr-52 r8 default), SOLID open/close primitives
-  theme/             # ThemeModeToggle, QuickThemeToggle, ThemeCard — Melt-builder theme controls
+  theme/             # ThemeModeToggle, QuickThemeToggle, AppearanceCard, PaletteFields — Melt-builder theme controls
   showcase/          # AlertDialogDemo, TabsDemo, DropdownMenuDemo, ContextMenuDemo, MenubarDemo, TableOfContentsDemo, TooltipDemo, PopoverDemo, HoverCardDemo, CollapsibleDemo, TreeDemo, ScrollAreaDemo, SidePanelDemo, ToastTriggerDemo — gallery-only demo compositions, not app surface
   shell/             # ChatDrawer, NavItem/NavBrand/NavPanelTitle — layout-mounted compositions; one ChatDrawer instance per page
   views/             # LobbyView, ProfileView, ShowcaseView, ShowcaseGalleryView, ChatView — one zero-hydration page body per route
@@ -125,8 +125,9 @@ Names here are reference copies of what [[GLOSSARY]] already decided, not the po
 | `ScrollArea` | `overlay/` | Constrained-height scroll container, hand-rolled (no Melt ScrollArea builder in 0.44) with a themed scrollbar | Drawer/chat long content that must not grow the page |
 | `SidePanel` | `overlay/` | Persistent, viewport-docked collapsible panel (`side` left/right) with a peek tab, hand-rolled — slides its full width off-screen, animated via CSS transform; distinct from `Drawer` (modal slide-in) | App-shell navigation rails & context/detail panels |
 | `ThemeModeToggle` | `theme/` | Light/Dark switch, Melt builder | Any page exposing a mode toggle |
-| `QuickThemeToggle` | `theme/` | Cookie-only mode toggle, decoupled from `/profile` | `SessionBadge`'s ☰ menu (both branches) |
-| `ThemeCard` | `theme/` | Full theme editor (mode, bgPreset, colors, radius) persisted via `PATCH /api/me/` | `/profile/` |
+| `QuickThemeToggle` | `theme/` | Mode toggle with cookie write; signed-in path PATCHes via `onPersist` | `SessionBadge`'s ☰ menu (both branches) |
+| `AppearanceCard` | `theme/` | Full appearance editor (packs, mode, bgPreset, sidebarSide, dual palettes, radius) via `PATCH /api/me/` | `/profile/` |
+| `PaletteFields` | `theme/` | Seven color controls for one mode palette | Mounted twice by `AppearanceCard` |
 | `AlertDialogDemo` | `showcase/` | Standalone composition of the raw `ui/alert-dialog` primitives | `/showcase/components/` gallery only |
 | `TabsDemo` | `showcase/` | Composition of `nav/Tabs` supplying its parameterized `content` snippet | `/showcase/components/` gallery only |
 | `DropdownMenuDemo` | `showcase/` | Composition of `nav/DropdownMenu` supplying realistic row-action sample data | `/showcase/components/` gallery only |
