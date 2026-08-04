@@ -208,9 +208,10 @@ call.
 
 Once the bard publishes, the run is not done. The main agent runs, in order:
 
-1. **Guardian dispatch** — `python3 docs/hooks/guardian-dispatch <baseRef>` from repo root;
-   every guardian it names is dispatched and its `violation`/`danger`/`needs-new-adr`
-   verdict is honored.
+1. **Guardian dispatch** — `python3 docs/hooks/guardian-dispatch --bundle <baseRef>`
+   from repo root (adr-03 rule 10); paste the bundle payload into each owed guardian's
+   prompt and dispatch all owed guardians in one turn; honor
+   `violation`/`danger`/`needs-new-adr`.
 2. **Assertion review** — if the combined diff touches `docs/assertions/**` (other than
    `assertion-00-discipline.md`), the `docs/skills/assertion-review/` skill runs. Unmet
    assertions leave the batch unclosed until TDD produces the proving tests.

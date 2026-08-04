@@ -1,5 +1,5 @@
 #!/bin/sh
-# The dispatch safety net's voice at commit time (adr-03 rules 3 and 8).
+# The dispatch safety net's voice at commit time (adr-03 rules 3, 8, 10).
 #
 # Install once per clone:
 #   ln -s ../../docs/hooks/pre-commit .git/hooks/pre-commit

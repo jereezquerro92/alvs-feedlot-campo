@@ -171,8 +171,9 @@ It judges PRD, ADRs, and assertion/TDD completeness on assertion-touching plans.
 ### Post-bard — close the batch (binding in this harness)
 
 1. **Guardian dispatch.** From repo root:
-   `python3 docs/hooks/guardian-dispatch <baseRef>`. Dispatch every guardian
-   named; honor `violation` / `danger` / `needs-new-adr`.
+   `python3 docs/hooks/guardian-dispatch --bundle <baseRef>` (adr-03 rule 10).
+   Paste the bundle payload into each owed guardian's prompt; dispatch all
+   owed guardians in one turn. Honor `violation` / `danger` / `needs-new-adr`.
 2. **Assertion review.** If the combined diff touches `docs/assertions/**`
    (except `assertion-00-discipline.md`), run
    `docs/skills/assertion-review/SKILL.md`. Unmet → batch not closed; TDD
