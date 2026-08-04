@@ -4,7 +4,7 @@ type: reference
 category: devops
 use_case: branching, opening a PR, tagging a release, or checking who owns this repo
 created: 2026-07-10
-modified: 2026-08-02
+modified: 2026-08-03
 tags: [doc, harness, github, git]
 ---
 
@@ -35,7 +35,9 @@ Forbidden as production name: treating `main` as live. Forbidden branch name for
 
 ## Labels (issues + PRs) — fixed set
 
-Create only these; do not invent free-form labels.
+Create only these; do not invent free-form labels. Party stop-exits and re-entry rules: [[TRIAGE-TEAMMATES]] and `docs/skills/triage-and-fix/references/disposition.md`.
+
+### Type (one primary per issue/PR)
 
 | Label | Use |
 |---|---|
@@ -45,9 +47,29 @@ Create only these; do not invent free-form labels.
 | `docs` | Documentation / harness docs |
 | `harness` | Skills, hooks, ADRs, agent config |
 | `infra` | AWS, CI, deploy |
-| `blocked` | Waiting on decision/input |
 
-One primary type label per issue/PR; add `blocked` only when stuck.
+### Disposition (stop-the-loop — at most one)
+
+These mark why work stopped. **`triage-and-fix` must not re-hunt an issue that still carries any of them** until a human removes the label (and answers / re-scopes as needed).
+
+| Label | Color hint | Use | Re-hunt? |
+|---|---|---|---|
+| `needs-info` | `#d876e3` | Requirements or clarification missing; the party commented the ask | No until removed after the human replies |
+| `blocked` | `#b60205` | Waiting on a decision, unmet `Requires PR: #N`, or other input that may still land | No until removed when the blocker clears |
+| `deferred` | `#e4e669` | Hunt called off — **too complex for one party run** (split/re-scope), PR requirement cascade, or recurring-defect (vampiro) | No until removed after re-scope |
+| `unresolvable` | `#000000` | **Not resolvable** — constitution forbids, permanent out of scope, or confirmed will-not-fix | Never re-hunt; close or leave labeled |
+| `duplicate` | `#cfd3d7` | Confirmed duplicate of another issue/PR (falcon `emergencia`) | No — work the canonical issue |
+
+> [!warning] `unresolvable` is the clear signal
+> Use it only when the answer is permanent no. Waiting, missing requirements, and complexity are **not** `unresolvable` — those are `blocked`, `needs-info`, and `deferred`.
+
+### PR dependency (dynamic prefix)
+
+| Label | Use |
+|---|---|
+| `requires:<N>` | This PR must not merge before PR #N. Created on demand by `kwf-deps` ([[docs/skills/triage-and-fix/references/deps]]). |
+
+One primary type label per issue/PR. Add **one** disposition label when stuck or stopped — never invent a second taxonomy outside this table.
 
 ## Git tags (releases)
 

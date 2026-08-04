@@ -94,7 +94,8 @@ enforcement that it can spawn *only* its familiars.
 ## What each node owns (one decision each)
 
 - **hunter** — whether the ground is fit (toolchain, gh, constitution, **PR
-  requirements**), the two tags, the domain, the vampiro call.
+  requirements**, **disposition stop**, **info completeness**), the two tags, the
+  domain, the vampiro call.
 - **falcon** — the duplication abort (`emergencia`). Severity is about duplication, never
   danger.
 - **hound** — which code references are worth surfacing. No gate; confidence ceiling
