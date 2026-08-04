@@ -35,13 +35,17 @@
     accent: "appearance_color_accent",
   };
 
-  /** `type="color"` needs a 6-digit hex; OKLCH/blank drafts get a neutral
-   * swatch that never overwrites the typed value. */
+  /** `type="color"` needs a 6-digit hex; OKLCH/blank drafts get the token
+   * `--swatch-fallback`, which never overwrites the typed value. */
   function swatch(value: string | undefined): string {
     const v = value ?? "";
     if (/^#[0-9a-fA-F]{6}$/.test(v)) return v;
     if (/^#[0-9a-fA-F]{8}$/.test(v)) return v.slice(0, 7);
-    return "#888888";
+    if (typeof document === "undefined") return "#888888";
+    const raw = getComputedStyle(document.documentElement)
+      .getPropertyValue("--swatch-fallback")
+      .trim();
+    return /^#[0-9a-fA-F]{6}$/.test(raw) ? raw : "#888888";
   }
 
   function setKey(key: keyof ThemeColors, value: string): void {
