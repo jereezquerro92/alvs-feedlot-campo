@@ -202,7 +202,7 @@ export const es = {
   drawer_close: "Cerrar panel",
   drawer_empty: "Sin contenido",
   demo_drawer_note:
-    "Los dos drawers están anclados a los bordes de la ventana y arrancan plegados: usá las pestañas de la izquierda y la derecha para deslizarlos.",
+    "Los dos drawers van anclados a los bordes de la ventana y arrancan plegados: pasá el mouse sobre la pestaña para abrirlos, salí para que se cierren a los 2 s, o hacé click fuera / en el caret para cerrarlos al instante.",
   demo_drawer_left_title: "Navegación",
   demo_drawer_left_body:
     "Drawer izquierdo colapsable — ideal para la navegación principal del shell de la aplicación.",

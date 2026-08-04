@@ -8,15 +8,23 @@
   no Melt builder needed — this is layout state, not a float/dismiss overlay
   like overlay/Popover). The drawer stays mounted and slides its whole width
   off-screen, leaving only the tab at the viewport edge. `side` docks it left
-  or right; `open` is bindable so a shell can drive it. Toggling is local
-  layout state only — no mutating action on the default invocation (adr-22 r2);
-  a zero-prop call renders a collapsed, self-labeled drawer and never throws
-  (adr-22 r1).
+  or right; `open` is bindable so a shell can drive it. Interaction is always
+  the same on either side: hover the tab (mouse) to open; leave the drawer to
+  close after a 2s cooldown; click outside or click the tab caret to close
+  immediately; click the caret when closed to open. Hover-open is mouse-only so
+  a touch tap toggles once instead of open-then-close. A zero-prop call renders
+  a collapsed, self-labeled drawer and never throws (adr-22 r1); toggling is
+  local layout state only — no mutating action on the default invocation
+  (adr-22 r2).
 -->
 <script lang="ts">
+  import { onDestroy } from "svelte";
   import { cn } from "$lib/utils";
   import { t } from "../../../i18n";
   import type { Snippet } from "svelte";
+
+  /** Pointer-leave → close cooldown; always in force for this component. */
+  const CLOSE_DELAY_MS = 2000;
 
   let {
     open = $bindable(false),
@@ -48,9 +56,80 @@
   const offClass = $derived(isLeft ? "-translate-x-full" : "translate-x-full");
   // Chevron points the direction the tab will move the drawer.
   const glyph = $derived(isLeft ? (open ? "‹" : "›") : open ? "›" : "‹");
+
+  let rootEl: HTMLElement | undefined = $state();
+  let closeTimer: ReturnType<typeof setTimeout> | undefined;
+  /** After a caret-close while the pointer is still on the tab, ignore hover-open until leave. */
+  let suppressHoverOpen = $state(false);
+
+  function cancelClose() {
+    clearTimeout(closeTimer);
+    closeTimer = undefined;
+  }
+
+  function scheduleClose() {
+    cancelClose();
+    closeTimer = setTimeout(() => {
+      open = false;
+    }, CLOSE_DELAY_MS);
+  }
+
+  function onDrawerPointerEnter(event: PointerEvent) {
+    // Touch/pen activate via the caret click only — synthesized mouseenter after
+    // a tap would otherwise open-then-close in one gesture.
+    if (event.pointerType !== "mouse") return;
+    cancelClose();
+    if (!suppressHoverOpen) {
+      open = true;
+    }
+  }
+
+  function onDrawerPointerLeave(event: PointerEvent) {
+    if (event.pointerType !== "mouse") return;
+    suppressHoverOpen = false;
+    if (open) {
+      scheduleClose();
+    }
+  }
+
+  function onTabClick() {
+    cancelClose();
+    if (open) {
+      open = false;
+      suppressHoverOpen = true;
+    } else {
+      open = true;
+      suppressHoverOpen = false;
+    }
+  }
+
+  function onDocumentPointerDown(event: PointerEvent) {
+    if (!open || !rootEl) return;
+    const target = event.target;
+    if (target instanceof Node && rootEl.contains(target)) return;
+    cancelClose();
+    open = false;
+    suppressHoverOpen = false;
+  }
+
+  $effect(() => {
+    if (!open) {
+      cancelClose();
+      return;
+    }
+    document.addEventListener("pointerdown", onDocumentPointerDown, true);
+    return () => {
+      document.removeEventListener("pointerdown", onDocumentPointerDown, true);
+    };
+  });
+
+  onDestroy(cancelClose);
 </script>
 
 <aside
+  bind:this={rootEl}
+  onpointerenter={onDrawerPointerEnter}
+  onpointerleave={onDrawerPointerLeave}
   class={cn(
     "fixed inset-y-0 z-40 flex transition-transform duration-300 ease-out motion-reduce:transition-none",
     isLeft ? "left-0" : "right-0",
@@ -81,7 +160,7 @@
 
   <button
     type="button"
-    onclick={() => (open = !open)}
+    onclick={onTabClick}
     aria-label={open ? closeLabel : openLabel}
     aria-expanded={open}
     class={cn(
