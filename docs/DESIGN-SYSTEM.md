@@ -93,7 +93,7 @@ One shared pair of pure functions in `frontend/src/lib/theme.ts` — `computeThe
 - The token declarations sit on `[data-bg-preset="melt"]`/`.dark[data-bg-preset="melt"]` (the `<html>` element); the painted `background` is scoped to `[data-bg-preset="melt"] body`, overriding the plain `body { background: ... }` rule above by specificity.
 - Tuned to match melt-ui.com's own `.dotted-bg`/`.dotted-bg:after` rule pair (scraped ground truth: a dot-grid radial gradient plus a top-fade), widened to a `2rem` grid for this template, so a project drawing its interactive primitives from Melt ([[MELT-UI]]) gets a background that reads as the same family, not an approximation.
 - **One-line adjustable, in `app.css`**: dot density is `--melt-dots-size`, dot color/opacity is `--melt-dots-color` (per mode), the fade highlight is `--melt-fade-color` — changing the preset never means touching the gradient rules themselves, only their tokens.
-- `default` (no `data-bg-preset`, or `data-bg-preset="default"`) is now the **non-default, alternate** preset — the existing `--canvas` + spotlight background already in `app.css`, unchanged by this section. A visitor with no saved preference sees `melt`, in dark mode, by default; `default` is reached only by an explicit user choice on `/profile`.
+- `default` (no `data-bg-preset`, or `data-bg-preset="default"`) is now the **non-default, alternate** preset — the existing `--canvas` + spotlight background already in `app.css`, unchanged by this section. A visitor with no saved preference sees `melt`, in light mode, by default; `default` is reached only by an explicit user choice on `/profile`.
 
 ## Component layering — Melt UI first, shadcn-svelte second, custom last (Bits UI is upstream lineage, not installed)
 
