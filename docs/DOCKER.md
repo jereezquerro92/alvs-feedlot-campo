@@ -4,7 +4,7 @@ type: reference
 category: devops
 use_case: running or changing the local Compose stack
 created: 2026-07-10
-modified: 2026-08-02
+modified: 2026-08-04
 tags: [doc, harness, docker, local]
 ---
 
@@ -69,6 +69,7 @@ docker compose --profile full up --build
 | `migrate --noinput` | schema + the data migrations that fill the catalogs (`FeedType`, `Advisor`, `MarketSource`) |
 | `bootstrap_admin` | the break-glass superuser, when `DJANGO_SUPERUSER_*` are set ([[adr-10-auth]] rule 8) — skipped with a log line when they are not |
 | `seed_demo_operator` | one user in `ai_operators`, so the RBAC gate is exercisable ([[CHATBOT]]) |
+| `seed_router_menu` | the router's `Intent` registry — the chatui menu itself ([[CHATBOT]]). Product content, not demo data, so it carries **no** `--if-debug` and the cloud migrate task runs the same command; the upsert is idempotent and touches only its own rows |
 | `seed_demo_feedlot --if-debug` | the demo domain data: clients, cattle, feed, health events, prices, ledger |
 | `createcachetable` | the database-backed cache table ([[CACHE]] — no cache server, [[adr-06-cache]]) |
 

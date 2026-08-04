@@ -4,7 +4,7 @@ type: reference
 category: devops
 use_case: checking what is provisioned, or tearing it down
 created: 2026-07-11
-modified: 2026-08-02
+modified: 2026-08-04
 tags: [doc, infrastructure, aws, inventory, ephemeral]
 ---
 
@@ -86,7 +86,7 @@ The project's first `deploy-prod.yml` run reached green and `https://feedlot.gru
 
 **`ALLOWED_HOSTS` correction (2026-08-03, issue #75).** The secret was provisioned with only `feedlot.grupoalvs.com`; it is now `feedlot.grupoalvs.com,backend.feedlot-campo-prod.local`. The frontend's SSR fetch reaches the backend by the Cloud Map host, so without that entry Django answered `400 DisallowedHost` and every logged-in visitor rendered as anonymous — a real, role-bearing session bounced back to the lobby. [[VARIABLES]] had stated the requirement with the template's own hostname in the prose, which is how the omission survived provisioning.
 
-No mock data reaches production: `DEBUG=False` in `alvs/prod/feedlot-campo/django` (so the real Bedrock clients are selected, not the mocks), and `seed_demo_feedlot` is local-Compose-only — the migrate task runs `migrate`, `bootstrap_admin` and `createcachetable`, nothing else.
+No mock data reaches production: `DEBUG=False` in `alvs/prod/feedlot-campo/django` (so the real Bedrock clients are selected, not the mocks), and `seed_demo_feedlot` is local-Compose-only — the migrate task runs `migrate`, `bootstrap_admin`, `seed_router_menu` and `createcachetable`, nothing else. `seed_router_menu` is not demo data: it upserts the router's `Intent` registry, the chatui menu the product ships with ([[CHATBOT]]), which is why it runs here and `seed_demo_feedlot` does not.
 
 ## Template reference run (`astro-drf-aws`) — inherited, not ours
 
