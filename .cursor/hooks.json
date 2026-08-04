@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": ".cursor/hooks/sense-rewrite.py",
+        "timeout": 5
+      }
+    ],
+    "beforeSubmitPrompt": [
+      {
+        "type": "prompt",
+        "timeout": 8,
+        "prompt": "Never block this prompt (always ok: true).\n\nInspect the user prompt in $ARGUMENTS.\n\nFire YES only if either is true:\n(1) Spanish text the agent must translate to act correctly, or\n(2) English that could reasonably be understood two different ways and that ambiguity would change the task.\n\nIf YES: ok true, reason exactly: APPLY_SKILL sense-rewrite — rewrite corrected native American English in > quotes, then a --- line, then continue the answer.\n\nIf NO (clear English, or typos that do not change meaning): ok true, reason empty.\n\nDo not treat kdx-triage invocations as YES when that skill will restate English itself."
+      }
+    ]
+  }
+}
