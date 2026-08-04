@@ -4,7 +4,7 @@ type: reference
 category: backend
 use_case: building or changing the router surface
 created: 2026-07-14
-modified: 2026-08-02
+modified: 2026-08-04
 tags: [doc, harness, chatbot, router, ai, security]
 ---
 
@@ -40,6 +40,32 @@ The shipped menu is a **closed, permission-filtered menu** built from a growable
 **A response outside the enum is a hard reject** — logged as a fault, never repaired, never defaulted to a nearest match, never retried into one. Silent repair would reintroduce exactly the ambiguity the enum exists to delete. Every decision, including rejects and escalations, persists an audit row (see Retention below).
 
 **The template stops here.** Stage 2 below is *made possible* by this design; it is not built, not designed in detail, and not scheduled here.
+
+### The starter registry — the rows the seed ships
+
+The registry is a table, so an empty table is a legal state and a chatui whose menu holds nothing but the two reserved members is indistinguishable from a broken router. `seed_router_menu` is what makes that state unreachable: it upserts the starter registry — `STARTER_MENU` — as part of the boot chain in every environment, local Compose and the cloud migrate task alike ([[DOCKER]]). It is not demo data and carries no `--if-debug`; the demo seeds do.
+
+- **Thirteen rows.** Each names a destination the field foreman already reaches by hand — the registry offers a shorter way to an authorized route, never a new authority ([[adr-15-chatbot-two-tier]]).
+- **Twelve are gated on `field_managers`**, `/profile` included. A row's group gate is the registry's own copy of a decision Django already made; it narrows the menu, it does not grant anything.
+- **The logout row is the only ungated member.** It is ungated because its target lives under `/accounts/*`, which sits outside the Group gate by [[adr-20-authorization-lobby]] rule 1 — so offering it to a session with no role promises nothing that session cannot already do. Every other starter row points at gated surface and is gated to match.
+- **A role-less session, and the `lot_owners` portal, therefore see logout plus the two reserved outcomes and nothing else.** That is the correct menu for the lobby ([[adr-20-authorization-lobby]] rule 2), not a degenerate one: the router has nothing to offer a session that has not been granted a role, and inventing something would widen the lobby boundary.
+- **The upsert touches only its own rows.** Rows the owner authored by hand survive the seed untouched, and re-running it over a populated registry changes nothing — the boot chain runs it on every `up`.
+
+### The menu filter — three branches
+
+`build_menu` keeps every **active** row whose gate clears any one of three branches:
+
+1. the row is **ungated** (`group` is null);
+2. the row's group is **one of the requesting user's** Django Groups;
+3. the user is in **`admins`** — the standing superset that passes every gate in the project ([[adr-10-auth]]), and therefore this one too rather than by a rule of its own.
+
+`is_active` is not a permission and the superset does not reach it: a deactivated row is hidden from **everyone**, `admins` included. Retiring a row is an editorial act on the registry — the way to take a phrase off the menu without deleting its audit history — and it would be useless if the one group most likely to be testing the menu were the one group still shown the row.
+
+### Recorded decision (2026-08-04) — a Spanish `Intent.phrase` is registry content
+
+`Intent.phrase` holds Spanish, is persisted, and is read by a user, which puts it within sight of [[adr-12-glossary-and-localization]] rule 6's prohibition on user-facing text generated server-side or built into a persisted field. **It is exempt, and the exemption is narrow:** a phrase is hand-authored **registry content** — written by the owner, reviewed as a row, and rendered verbatim — which is the same category as the descriptor's `label` below, not a message some code composed. The prohibition exists because generated prose has no canonical form to register; a row that a human wrote and another human reviewed has one, and the row *is* it.
+
+What stays forbidden is unchanged: **a phrase composed at runtime** — interpolated from data, assembled from fragments, or produced by a model — is exactly the defect rule 6 names, and no amount of storing it in the registry table launders it. This records the scope of an existing rule against this one field; it is content, not a rule change, so it lives here rather than in a new ADR ([[adr-00-discipline]] rule 1).
 
 ### Local development calls Bedrock directly
 

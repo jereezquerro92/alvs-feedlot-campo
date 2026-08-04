@@ -249,7 +249,7 @@ jobs:
                 "name": "${PROJECT_SLUG}-migrate",
                 "image": "${IMAGE}",
                 "essential": true,
-                "command": ["sh", "-c", "uv run python manage.py migrate --noinput && uv run python manage.py bootstrap_admin && uv run python manage.py createcachetable"],
+                "command": ["sh", "-c", "uv run python manage.py migrate --noinput && uv run python manage.py bootstrap_admin && uv run python manage.py seed_router_menu && uv run python manage.py createcachetable"],
                 "environment": [
                   {"name": "PROJECT_SLUG", "value": "${PROJECT_SLUG}"},
                   {"name": "BASE_DOMAIN", "value": "grupoalvs.com"},
