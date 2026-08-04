@@ -4,7 +4,7 @@ type: reference
 category: frontend
 use_case: choosing a visual value, a token, or theme behaviour
 created: 2026-07-10
-modified: 2026-08-02
+modified: 2026-08-04
 tags: [doc, harness, frontend, design-system]
 ---
 
