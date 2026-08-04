@@ -44,9 +44,13 @@ numbering exception recorded in [[adr-00-discipline]] REJECTED.
    ([[adr-00-discipline]]), never through a local exception.
 6. A guardian's output shape (`status` / `resolution` / `notify`) is fixed by
    its definition file.
-7. Guardians triage before they sweep: a dispatch that touches nothing in the
-   guardian's domain returns its passing verdict in one line, immediately —
-   depth is spent only on plausible concerns.
+7. Guardians triage against the bundle adr_index before they sweep: when a
+   dispatch carries bundle payload (rule 10), the guardian uses the
+   `adr_index` section to determine which ADRs are plausibly relevant, and
+   opens ADR bodies only after that triage step fails to resolve the question.
+   A dispatch that touches nothing in the guardian's domain returns its
+   passing verdict in one line, immediately — depth is spent only on
+   plausible concerns.
 8. Each guardian's watchlist has one machine copy: the `watch:` glob list in
    the frontmatter of its own definition, beside the prose that explains it.
    The dispatch safety net (`docs/hooks/guardian-dispatch`) reads only that
@@ -62,6 +66,33 @@ numbering exception recorded in [[adr-00-discipline]] REJECTED.
    (Carried forward from this project's former `adr-11-guardians` rule 1;
    its rules 2–8 restated no new substance beyond rules 2–8 above and are
    not separately appended.)
+10. **Fast dispatch via bundle.** The owner process runs
+    `docs/hooks/guardian-dispatch --bundle <ref>` to produce the dispatch
+    payload: the list of owed guardians and their hit files, a unified diff
+    scoped to those hit files, and a live ADR use_case index. The owner
+    pastes that payload into each guardian's prompt and dispatches all owed
+    guardians in one turn. The guardian does not rediscover the batch; it
+    uses the payload as its working surface. Rule 10 changes the payload, not
+    the tier — guardians stay on sonnet per rule 9.
+
+## REJECTED
+
+- **Guardian rediscovers batch alone** — guardian called with only the changed
+  file list and no diff or adr_index; expected to glob the changed files itself
+  and derive context independently. Rejected 2026-08-03, owner auth. Replaced
+  by rule 10: the owner process assembles and delivers the payload; the
+  guardian consumes it, no rediscovery.
+- **Pre-rule-10 wording of rule 7** — "Guardians triage before they sweep: a
+  dispatch that touches nothing in the guardian's domain returns its passing
+  verdict in one line, immediately — depth is spent only on plausible
+  concerns." Superseded 2026-08-03 by the bundle-aware wording in rule 7
+  above, which makes the adr_index the first triage surface when bundle
+  payload is present.
+- **Harness-default bundle paired with cheap tier** — the upstream harness
+  default ships the bundle payload with `tier: cheap`, pinning Haiku-class /
+  kimi-for-coding / orch-low for guardian runs. Payload structure adopted
+  as rule 10; tier rejected: rule 9 pins guardians on sonnet for this project,
+  and the bundle changes the payload, not the tier.
 
 ## RELATED
 
@@ -70,7 +101,7 @@ numbering exception recorded in [[adr-00-discipline]] REJECTED.
 - `docs/agents/astro-drf-aws-prd.md`, `astro-drf-aws-adr.md`,
   `astro-drf-aws-api.md` — this project's three guardians (rule 9), the
   harness-default `guardian-prd`/`guardian-adr` pair not imported
-- `docs/hooks/guardian-dispatch` — the dispatch safety net (rules 3, 8)
+- `docs/hooks/guardian-dispatch` — the dispatch safety net (rules 3, 8, 10)
 - `docs/hooks/pre-commit` — the safety net's voice at commit time
 
 ### related files
@@ -81,4 +112,3 @@ numbering exception recorded in [[adr-00-discipline]] REJECTED.
 - [[PRD]] — the document the PRD guardian owns
 - [[API]] — the document the third guardian (rule 9) owns
 - [[HARNESS]] — the agent-tooling tier these definitions live in
-</content>

@@ -24,6 +24,13 @@ not the harness-default git `pre-commit` symlink. Both serve the same duty
 is wired in this repo, deliberately. `.claude/agents` and `.agents/agents`
 already resolve to this project's agent SSOT.
 
+**Watch: gap (honest).** The `PostToolUse` hook names guardians but does
+not emit the bundle payload ([[adr-03-guardians]] rule 10) — it fires per
+tool call, not at post-bard. At post-bard the operator runs
+`python3 docs/hooks/guardian-dispatch --bundle <baseRef>` manually and pastes
+the bundle payload into each owed guardian's prompt. The hook's name-only
+nudge is the within-session signal; `--bundle` is the dispatch-ready payload.
+
 ## 3. Vault — already vendored
 
 The `markdown-vault-docs` MCP is vendored project-locally

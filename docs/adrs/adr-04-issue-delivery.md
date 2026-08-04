@@ -38,9 +38,10 @@ that ADR's own RELATED for the cross-link back.
    inquisitor before camp. That duty does not replace [[adr-03-guardians]] —
    guardians still gate law changes after publish.
 4. After plaza / bard publishes, the **owner process** closes the batch: run
-   `docs/hooks/guardian-dispatch` against the delivered change set; dispatch
-   every guardian owed; honor `violation` / `danger` / `needs-new-adr` per
-   [[adr-03-guardians]].
+   `docs/hooks/guardian-dispatch --bundle <baseRef>` against the delivered
+   change set ([[adr-03-guardians]] rule 10); paste the bundle payload into
+   each guardian's prompt and dispatch all owed guardians in one turn; honor
+   `violation` / `danger` / `needs-new-adr` per [[adr-03-guardians]].
 5. When a plan slice or delivered diff touches `docs/assertions/` or claims
    to satisfy an assertion law, builders follow [[TDD]] and the
    `assertion-review` skill: proving tests first, linked under `### Tests`,
@@ -82,6 +83,12 @@ that ADR's own RELATED for the cross-link back.
 
 ## REJECTED
 
+- **Name-only post-bard dispatch** — post-bard step called
+  `docs/hooks/guardian-dispatch <baseRef>` without `--bundle`; dispatched
+  guardians received only the changed-file list, no diff, no adr_index.
+  Superseded 2026-08-03 by rule 4's `--bundle` form ([[adr-03-guardians]]
+  rule 10): the owner delivers the full payload in one turn, guardian does
+  not rediscover.
 - **Compose-only sibling (no cast in-tree)** — keep `kwf-*` exclusively in
   `~/Dev/harness-triage-party` and discover it globally. Rejected 2026-08-02:
   the main harness must ship a working delivery path for clones; multi-runtime

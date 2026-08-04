@@ -91,5 +91,5 @@ and law links in the agent file win.
 1. YAML final-message contracts — never prose handoffs between phases.
 2. Dead / garbage node → phase abort (`hunter-failed`, …).
 3. Builders create their own git worktrees; bard merges path-disjoint slices.
-4. Post-bard: `guardian-dispatch` + `assertion-review` when assertions moved.
+4. Post-bard: `guardian-dispatch --bundle <baseRef>` (adr-03 rule 10) + `assertion-review` when assertions moved.
 5. `bin/kwf-deps` path: `docs/skills/triage-and-fix/bin/kwf-deps` from repo root.
