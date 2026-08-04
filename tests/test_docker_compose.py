@@ -74,6 +74,7 @@ def test_backend_startup_chain_rebuilds_the_database() -> None:
         "migrate --noinput",
         "bootstrap_admin",
         "seed_demo_operator",
+        "seed_router_menu",
         "seed_demo_feedlot",
         "createcachetable",
     ):
@@ -89,6 +90,15 @@ def test_backend_startup_chain_rebuilds_the_database() -> None:
             "compose.yaml: seed_demo_feedlot must be called with --if-debug. The "
             "chain is joined by `&&`, so outside DEBUG the command's CommandError "
             "would abort the boot and leave the backend down (issue #59)"
+        )
+
+    if "seed_router_menu --if-debug" in command:
+        fail(
+            "compose.yaml: seed_router_menu must NOT be called with --if-debug. The "
+            "router registry is product content, not demo data ([[CHATBOT]]): it has "
+            "to land in every environment, which is why the cloud migrate task runs "
+            "the same command. Gating it on DEBUG would ship a chatui whose menu is "
+            "empty everywhere it actually matters"
         )
 
     if "|| true" in command or "|| :" in command:

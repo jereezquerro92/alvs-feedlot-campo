@@ -68,12 +68,17 @@ services:
     # what makes a destroyed-and-rebuilt stack come up populated instead of
     # healthy-and-empty (issue #59); it is idempotent on a surviving volume and
     # takes --if-debug so a DEBUG=false local run skips it instead of killing
-    # the chain. No `|| true` anywhere — a real seed failure must still be loud.
+    # the chain. `seed_router_menu` deliberately takes NO --if-debug: the router
+    # registry is product content, not demo data ([[CHATBOT]]), so it must land
+    # in every environment — the same command runs in the cloud migrate task,
+    # and a chatui that boots with an empty menu is indistinguishable from a
+    # broken router. No `|| true` anywhere — a real seed failure must still be loud.
     # Local only: production is Fargate and never runs this ([[adr-09-docker-compose]] rule 10).
     command: >
       sh -c "uv run python manage.py migrate --noinput &&
              uv run python manage.py bootstrap_admin &&
              uv run python manage.py seed_demo_operator &&
+             uv run python manage.py seed_router_menu &&
              uv run python manage.py seed_demo_feedlot --if-debug &&
              uv run python manage.py createcachetable &&
              uv run --with watchfiles==1.2.0 uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --reload"
