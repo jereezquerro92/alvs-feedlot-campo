@@ -4,8 +4,8 @@
      LIVE-DOC:END -->
 
 <!--
-  Compact pill badge (avatar | display name | hamburger). The hamburger
-  opens a Melt UI Popover ([[MELT-UI]]) used as a dropdown menu, hand-rolled
+  Compact pill badge (avatar | display name | hamburger on lg+; avatar-only
+  on mobile). The whole pill is the Melt UI Popover trigger ([[MELT-UI]]), hand-rolled
   directly on `melt/builders` — the same precedent nav/DropdownMenu.svelte
   sets — rather than composed from the vendored overlay/Popover component:
   that component's trigger self-renders a fixed labeled Button, which
@@ -101,8 +101,11 @@
 </script>
 
 {#if me}
-  <div
-    class="flex items-center gap-2 rounded-full border border-border bg-card py-1 pl-1 pr-2 text-card-foreground shadow-sm"
+  <button
+    type="button"
+    {...popover.trigger}
+    aria-label={t("auth_open_menu")}
+    class="flex items-center gap-2 rounded-full border border-border bg-card py-1 pl-1 pr-1 text-card-foreground shadow-sm lg:pr-2"
   >
     <Avatar class="size-7!">
       {#if me.picture}
@@ -111,18 +114,12 @@
         <AvatarFallback class="text-xs">{initials}</AvatarFallback>
       {/if}
     </Avatar>
-    <span class="max-w-32 truncate text-sm font-medium">{username}</span>
-    <button
-      type="button"
-      {...popover.trigger}
-      aria-label={t("auth_open_menu")}
-      class={cn(
-        "inline-flex size-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground",
-      )}
-    >
-      <span aria-hidden="true">&#9776;</span>
-    </button>
-  </div>
+    <span class="hidden max-w-32 truncate text-sm font-medium lg:inline">{username}</span>
+    <span
+      aria-hidden="true"
+      class="hidden size-7 items-center justify-center rounded-full text-muted-foreground lg:inline-flex"
+    >&#9776;</span>
+  </button>
 
   <div
     {...popover.content}
