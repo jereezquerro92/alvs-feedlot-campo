@@ -78,6 +78,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/router/management/commands/purge_router_audit.py`
 - `backend/apps/router/management/commands/route_utterance.py`
 - `backend/apps/router/management/commands/seed_demo_operator.py`
+- `backend/apps/router/management/commands/seed_router_menu.py`
 - `backend/apps/router/menu.py`
 - `backend/apps/router/models.py`
 - `backend/apps/router/permissions.py`
@@ -91,6 +92,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/router/test_rate_abuse.py`
 - `backend/apps/router/test_route_utterance.py`
 - `backend/apps/router/test_route_view.py`
+- `backend/apps/router/test_seed_router_menu.py`
 - `backend/apps/router/urls.py`
 - `backend/apps/router/views.py`
 - `frontend/src/lib/chatui-copy.ts`
@@ -109,6 +111,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/router/management/commands/purge_router_audit.py`
 - `backend/apps/router/management/commands/route_utterance.py`
 - `backend/apps/router/management/commands/seed_demo_operator.py`
+- `backend/apps/router/management/commands/seed_router_menu.py`
 - `backend/apps/router/menu.py`
 - `backend/apps/router/models.py`
 - `backend/apps/router/permissions.py`
@@ -122,6 +125,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/router/test_rate_abuse.py`
 - `backend/apps/router/test_route_utterance.py`
 - `backend/apps/router/test_route_view.py`
+- `backend/apps/router/test_seed_router_menu.py`
 - `backend/apps/router/urls.py`
 - `backend/apps/router/views.py`
 - `backend/config/asgi.py`
@@ -1116,6 +1120,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/router/management/commands/purge_router_audit.py`
 - `backend/apps/router/management/commands/route_utterance.py`
 - `backend/apps/router/management/commands/seed_demo_operator.py`
+- `backend/apps/router/management/commands/seed_router_menu.py`
 - `backend/apps/router/menu.py`
 - `backend/apps/router/models.py`
 - `backend/apps/router/permissions.py`
@@ -1129,6 +1134,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/router/test_rate_abuse.py`
 - `backend/apps/router/test_route_utterance.py`
 - `backend/apps/router/test_route_view.py`
+- `backend/apps/router/test_seed_router_menu.py`
 - `backend/apps/router/urls.py`
 - `backend/apps/router/views.py`
 - `backend/apps/sanitary/admin.py`
@@ -1207,6 +1213,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/router/management/commands/purge_router_audit.py`
 - `backend/apps/router/management/commands/route_utterance.py`
 - `backend/apps/router/management/commands/seed_demo_operator.py`
+- `backend/apps/router/management/commands/seed_router_menu.py`
 - `backend/apps/router/menu.py`
 - `backend/apps/router/models.py`
 - `backend/apps/router/permissions.py`
@@ -1220,6 +1227,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/router/test_rate_abuse.py`
 - `backend/apps/router/test_route_utterance.py`
 - `backend/apps/router/test_route_view.py`
+- `backend/apps/router/test_seed_router_menu.py`
 - `backend/apps/router/urls.py`
 - `backend/apps/router/views.py`
 - `frontend/src/lib/chatui-copy.ts`
