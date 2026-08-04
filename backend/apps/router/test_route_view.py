@@ -216,7 +216,9 @@ def test_gated_intent_not_offered_is_hard_rejected_even_if_model_names_it(client
     hard reject, never repaired to the gated action."""
     gated_group, _ = Group.objects.get_or_create(name="secret-ops")
     Intent.objects.create(phrase="wipe database", target="/admin/wipe/", order=1, group=gated_group)
-    user = _user(django_user_model, "admin-11", groups=["admins"])
+    # ai_operators reaches the route but is not the admins superset — so gated
+    # rows stay hidden and a model that names one is hard-rejected (#135).
+    user = _user(django_user_model, "admin-11", groups=[AI_OPERATORS_GROUP])
     client.force_login(user, backend=MODEL_BACKEND)
     from apps.router import inference
 
@@ -230,7 +232,7 @@ def test_menu_offered_in_audit_row_excludes_gated_intents(client, django_user_mo
     gated_group, _ = Group.objects.get_or_create(name="secret-ops-2")
     Intent.objects.create(phrase="wipe database", target="/admin/wipe/", order=1, group=gated_group)
     Intent.objects.create(phrase="log out", target="/accounts/logout/", order=2)
-    user = _user(django_user_model, "admin-12", groups=["admins"])
+    user = _user(django_user_model, "admin-12", groups=[AI_OPERATORS_GROUP])
     client.force_login(user, backend=MODEL_BACKEND)
     response = client.post(ROUTE, {"utterance": "log me out"}, content_type="application/json")
     assert response.status_code == 200
@@ -285,12 +287,13 @@ def test_phrase_collision_rejected_before_reaching_view():
 
 
 def test_unauthorized_user_gets_only_reserved_outcomes(client, django_user_model):
-    """A router-eligible user (admins) with zero visible registry intents —
+    """A router-eligible user (ai_operators) with zero visible registry intents —
     every Intent is gated to a group they lack — sees only the two reserved
-    outcomes, never a degenerate empty menu ([[adr-15-chatbot-two-tier]])."""
+    outcomes, never a degenerate empty menu ([[adr-15-chatbot-two-tier]]).
+    Must not use `admins`: that group is the standing menu-filter superset (#135)."""
     gated_group, _ = Group.objects.get_or_create(name="secret-ops-3")
     Intent.objects.create(phrase="wipe database", target="/admin/wipe/", order=1, group=gated_group)
-    user = _user(django_user_model, "admin-13", groups=["admins"])
+    user = _user(django_user_model, "admin-13", groups=[AI_OPERATORS_GROUP])
     client.force_login(user, backend=MODEL_BACKEND)
     response = client.post(ROUTE, {"utterance": "anything"}, content_type="application/json")
     assert response.status_code == 200
