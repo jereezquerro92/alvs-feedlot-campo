@@ -88,15 +88,17 @@
 
   <div class="flex min-w-0 flex-1 flex-col">
     <header class="flex w-full items-center gap-3 px-6 pt-8 sm:px-10">
-      <button
-        type="button"
-        class="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md lg:hidden"
-        aria-label={t("shell_nav_sandwich_aria")}
-        aria-expanded={sandwichExpanded}
-        onclick={toggleSandwich}
-      >
-        <span aria-hidden="true" class="text-lg leading-none">{sandwichExpanded ? "✕" : "☰"}</span>
-      </button>
+      <div class="flex items-center rounded-full border border-border bg-card p-1 text-card-foreground shadow-sm lg:hidden">
+        <button
+          type="button"
+          class="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
+          aria-label={t("shell_nav_sandwich_aria")}
+          aria-expanded={sandwichExpanded}
+          onclick={toggleSandwich}
+        >
+          <span aria-hidden="true" class="text-lg leading-none">{sandwichExpanded ? "✕" : "☰"}</span>
+        </button>
+      </div>
       <div class="ml-auto flex items-center gap-3">
         <Breadcrumb items={crumbs} />
         <slot name="session" />
