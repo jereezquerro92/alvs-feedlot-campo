@@ -63,6 +63,7 @@ button:disabled,
   --accent: oklch(0.93 0.030 55);
   --accent-foreground: oklch(0.30 0.020 50);
   --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.99 0 0);
   --border: oklch(0.90 0.010 55);
   --input: oklch(0.90 0.010 55);
   --ring: oklch(0.64 0.150 45);
@@ -81,6 +82,11 @@ button:disabled,
      fill). Same near-black value in both themes — the orange fill is what
      changes per mode, not the icon. */
   --corner-nav-icon: oklch(0.12 0.01 50);
+  /* Volume cues on the triangle face — same in both modes. */
+  --corner-nav-shadow: oklch(0 0 0 / 0.22);
+  --corner-nav-edge: oklch(1 0 0 / 0.35);
+  /* Native <input type="color"> needs a 6-digit hex when the draft is OKLCH. */
+  --swatch-fallback: #888888;
 }
 
 /* --primary alternates (swap the H, keep the L/C pairing pattern above):
@@ -108,6 +114,7 @@ button:disabled,
   --accent: oklch(0.30 0.030 55);
   --accent-foreground: oklch(0.95 0.006 60);
   --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.99 0 0);
   /* Warm, opaque border system (issue #169) — never translucent white.
      Convention: default surface -> border-border; emphasis card ->
      border-primary/40 (SummaryCard's treatment); active/selected ->
@@ -127,16 +134,18 @@ button:disabled,
   --corner-nav-icon: oklch(0.12 0.01 50);
 }
 
-/* --- The feedlot app is green -------------------------------------------------
+/* --- The feedlot app is green (Jeremías skin, f4af45f) -----------------------
    The template's global brand stays orange (`--primary` above) for the showcase,
-   chat and profile surfaces. The feedlot operational app runs green: any subtree
-   wrapped in `.feedlot-app` overrides `--primary`/`--ring` to green, so every
+   chat and profile surfaces — that is the kodexArg / rationed-orange default.
+   The feedlot operational app runs Jeremías emerald: any subtree wrapped in
+   `.feedlot-app` overrides `--primary`/`--ring`/`--success` to green, so every
    Tailwind `bg-primary`/`text-primary`/`ring` utility resolves green under the
-   cascade WITHOUT touching a single component class ([[adr-04-frontend-and-design-system]]
+   cascade WITHOUT touching a single component class ([[adr-52-frontend-and-design-system]]
    rule 5 — every visual value is a token; [[DESIGN-SYSTEM]] variable-driven theming).
    The dark-green sidebar and the chart palette are their own tokens, read by the
    feedlot shell components through `var(--sidebar-*)` / `var(--chart-*)`. Light + dark,
-   always. */
+   always. Named AppearanceCard packs (kodexArg / Jeremías / Militar / Ámbar) fill the
+   user-tunable theme_config palette; they do not retire this operational skin. */
 .feedlot-app {
   --primary: oklch(0.52 0.12 152);
   --primary-foreground: oklch(0.99 0.01 152);
@@ -212,6 +221,7 @@ button:disabled,
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);

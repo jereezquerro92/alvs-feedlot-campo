@@ -382,6 +382,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/auth/AuthPanel.svelte`
 - `frontend/src/lib/components/auth/ProfileForm.svelte`
 - `frontend/src/lib/components/auth/SessionBadge.svelte`
+- `frontend/src/lib/components/auth/SessionMenuRow.svelte`
 - `frontend/src/lib/components/auth/index.ts`
 - `frontend/src/lib/components/chat/ChatComposer.svelte`
 - `frontend/src/lib/components/chat/ChatMessageList.svelte`
@@ -415,6 +416,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/ExpenseForm.svelte`
 - `frontend/src/lib/components/feedlot/FeedDeliveryForm.svelte`
 - `frontend/src/lib/components/feedlot/FeedingForm.svelte`
+- `frontend/src/lib/components/feedlot/FeedlotFancyNav.svelte`
 - `frontend/src/lib/components/feedlot/FeedlotShell.svelte`
 - `frontend/src/lib/components/feedlot/FeedlotSidebar.svelte`
 - `frontend/src/lib/components/feedlot/FeedlotTopbar.svelte`
@@ -467,6 +469,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/overlay/ConfirmDialog.svelte`
 - `frontend/src/lib/components/overlay/Dialog.svelte`
 - `frontend/src/lib/components/overlay/Drawer.svelte`
+- `frontend/src/lib/components/overlay/FancyDrawer.svelte`
 - `frontend/src/lib/components/overlay/HoverCard.svelte`
 - `frontend/src/lib/components/overlay/Popover.svelte`
 - `frontend/src/lib/components/overlay/ScrollArea.svelte`
@@ -479,7 +482,14 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/primitives/titles/SectionTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/index.ts`
 - `frontend/src/lib/components/shell/ChatDrawer.svelte`
+- `frontend/src/lib/components/shell/NavBadge.svelte`
+- `frontend/src/lib/components/shell/NavBrand.svelte`
+- `frontend/src/lib/components/shell/NavGlyph.svelte`
+- `frontend/src/lib/components/shell/NavItem.svelte`
+- `frontend/src/lib/components/shell/NavLockToggle.svelte`
+- `frontend/src/lib/components/shell/NavPanelTitle.svelte`
 - `frontend/src/lib/components/shell/index.ts`
+- `frontend/src/lib/components/shell/nav.ts`
 - `frontend/src/lib/components/showcase/BreadcrumbDemo.svelte`
 - `frontend/src/lib/components/showcase/CalendarDemo.svelte`
 - `frontend/src/lib/components/showcase/CollapsibleDemo.svelte`
@@ -487,6 +497,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/showcase/CornerNavTriangleDemo.svelte`
 - `frontend/src/lib/components/showcase/DrawerDemo.svelte`
 - `frontend/src/lib/components/showcase/DropdownMenuDemo.svelte`
+- `frontend/src/lib/components/showcase/FancyDrawerDemo.svelte`
 - `frontend/src/lib/components/showcase/HomeTriangleDemo.svelte`
 - `frontend/src/lib/components/showcase/HoverCardDemo.svelte`
 - `frontend/src/lib/components/showcase/MenubarDemo.svelte`
@@ -505,8 +516,9 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/showcase/TooltipDemo.svelte`
 - `frontend/src/lib/components/showcase/TreeDemo.svelte`
 - `frontend/src/lib/components/showcase/index.ts`
+- `frontend/src/lib/components/theme/AppearanceCard.svelte`
+- `frontend/src/lib/components/theme/PaletteFields.svelte`
 - `frontend/src/lib/components/theme/QuickThemeToggle.svelte`
-- `frontend/src/lib/components/theme/ThemeCard.svelte`
 - `frontend/src/lib/components/theme/ThemeModeToggle.svelte`
 - `frontend/src/lib/components/theme/index.ts`
 - `frontend/src/lib/components/ui/alert-dialog/alert-dialog-action.svelte`
@@ -581,6 +593,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/optimistic-toggle.ts`
 - `frontend/src/lib/router-client.ts`
 - `frontend/src/lib/ssrFetch.ts`
+- `frontend/src/lib/theme-packs.ts`
 - `frontend/src/lib/theme.ts`
 - `frontend/src/lib/types/user.ts`
 - `frontend/src/lib/typewriter-placeholder.ts`
@@ -728,7 +741,6 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/SanitaryPlanForm.svelte`
 - `frontend/src/lib/components/feedlot/WeighingForm.svelte`
 - `frontend/src/lib/components/feedlot/WeighingHistory.svelte`
-- `frontend/src/lib/components/theme/ThemeCard.svelte`
 - `frontend/src/lib/router-client.ts`
 - `frontend/src/pages/chatui.astro`
 - `frontend/src/pages/feedlot/alimentacion.astro`
@@ -872,7 +884,6 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/SanitaryPlanForm.svelte`
 - `frontend/src/lib/components/feedlot/WeighingForm.svelte`
 - `frontend/src/lib/components/feedlot/WeighingHistory.svelte`
-- `frontend/src/lib/components/theme/ThemeCard.svelte`
 - `frontend/src/lib/router-client.ts`
 - `frontend/src/pages/chatui.astro`
 - `frontend/src/pages/feedlot/alimentacion.astro`
@@ -1227,6 +1238,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/auth/AuthPanel.svelte`
 - `frontend/src/lib/components/auth/ProfileForm.svelte`
 - `frontend/src/lib/components/auth/SessionBadge.svelte`
+- `frontend/src/lib/components/auth/SessionMenuRow.svelte`
 - `frontend/src/lib/components/chat/ChatComposer.svelte`
 - `frontend/src/lib/components/chat/ChatMessageList.svelte`
 - `frontend/src/lib/components/chat/ChatUI.svelte`
@@ -1255,6 +1267,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/ExpenseForm.svelte`
 - `frontend/src/lib/components/feedlot/FeedDeliveryForm.svelte`
 - `frontend/src/lib/components/feedlot/FeedingForm.svelte`
+- `frontend/src/lib/components/feedlot/FeedlotFancyNav.svelte`
 - `frontend/src/lib/components/feedlot/FeedlotShell.svelte`
 - `frontend/src/lib/components/feedlot/FeedlotSidebar.svelte`
 - `frontend/src/lib/components/feedlot/FeedlotTopbar.svelte`
@@ -1303,6 +1316,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/overlay/ConfirmDialog.svelte`
 - `frontend/src/lib/components/overlay/Dialog.svelte`
 - `frontend/src/lib/components/overlay/Drawer.svelte`
+- `frontend/src/lib/components/overlay/FancyDrawer.svelte`
 - `frontend/src/lib/components/overlay/HoverCard.svelte`
 - `frontend/src/lib/components/overlay/Popover.svelte`
 - `frontend/src/lib/components/overlay/ScrollArea.svelte`
@@ -1313,6 +1327,12 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/primitives/titles/PageTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/SectionTitle.svelte`
 - `frontend/src/lib/components/shell/ChatDrawer.svelte`
+- `frontend/src/lib/components/shell/NavBadge.svelte`
+- `frontend/src/lib/components/shell/NavBrand.svelte`
+- `frontend/src/lib/components/shell/NavGlyph.svelte`
+- `frontend/src/lib/components/shell/NavItem.svelte`
+- `frontend/src/lib/components/shell/NavLockToggle.svelte`
+- `frontend/src/lib/components/shell/NavPanelTitle.svelte`
 - `frontend/src/lib/components/showcase/BreadcrumbDemo.svelte`
 - `frontend/src/lib/components/showcase/CalendarDemo.svelte`
 - `frontend/src/lib/components/showcase/CollapsibleDemo.svelte`
@@ -1320,6 +1340,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/showcase/CornerNavTriangleDemo.svelte`
 - `frontend/src/lib/components/showcase/DrawerDemo.svelte`
 - `frontend/src/lib/components/showcase/DropdownMenuDemo.svelte`
+- `frontend/src/lib/components/showcase/FancyDrawerDemo.svelte`
 - `frontend/src/lib/components/showcase/HomeTriangleDemo.svelte`
 - `frontend/src/lib/components/showcase/HoverCardDemo.svelte`
 - `frontend/src/lib/components/showcase/MenubarDemo.svelte`
@@ -1337,8 +1358,9 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/showcase/ToggleGroupDemo.svelte`
 - `frontend/src/lib/components/showcase/TooltipDemo.svelte`
 - `frontend/src/lib/components/showcase/TreeDemo.svelte`
+- `frontend/src/lib/components/theme/AppearanceCard.svelte`
+- `frontend/src/lib/components/theme/PaletteFields.svelte`
 - `frontend/src/lib/components/theme/QuickThemeToggle.svelte`
-- `frontend/src/lib/components/theme/ThemeCard.svelte`
 - `frontend/src/lib/components/theme/ThemeModeToggle.svelte`
 - `frontend/src/lib/components/ui/alert-dialog/alert-dialog-action.svelte`
 - `frontend/src/lib/components/ui/alert-dialog/alert-dialog-cancel.svelte`
@@ -1436,6 +1458,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/auth/AuthPanel.svelte`
 - `frontend/src/lib/components/auth/ProfileForm.svelte`
 - `frontend/src/lib/components/auth/SessionBadge.svelte`
+- `frontend/src/lib/components/auth/SessionMenuRow.svelte`
 - `frontend/src/lib/components/auth/index.ts`
 - `frontend/src/lib/components/chat/ChatComposer.svelte`
 - `frontend/src/lib/components/chat/ChatMessageList.svelte`
@@ -1469,6 +1492,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/feedlot/ExpenseForm.svelte`
 - `frontend/src/lib/components/feedlot/FeedDeliveryForm.svelte`
 - `frontend/src/lib/components/feedlot/FeedingForm.svelte`
+- `frontend/src/lib/components/feedlot/FeedlotFancyNav.svelte`
 - `frontend/src/lib/components/feedlot/FeedlotShell.svelte`
 - `frontend/src/lib/components/feedlot/FeedlotSidebar.svelte`
 - `frontend/src/lib/components/feedlot/FeedlotTopbar.svelte`
@@ -1521,6 +1545,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/overlay/ConfirmDialog.svelte`
 - `frontend/src/lib/components/overlay/Dialog.svelte`
 - `frontend/src/lib/components/overlay/Drawer.svelte`
+- `frontend/src/lib/components/overlay/FancyDrawer.svelte`
 - `frontend/src/lib/components/overlay/HoverCard.svelte`
 - `frontend/src/lib/components/overlay/Popover.svelte`
 - `frontend/src/lib/components/overlay/ScrollArea.svelte`
@@ -1533,7 +1558,14 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/primitives/titles/SectionTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/index.ts`
 - `frontend/src/lib/components/shell/ChatDrawer.svelte`
+- `frontend/src/lib/components/shell/NavBadge.svelte`
+- `frontend/src/lib/components/shell/NavBrand.svelte`
+- `frontend/src/lib/components/shell/NavGlyph.svelte`
+- `frontend/src/lib/components/shell/NavItem.svelte`
+- `frontend/src/lib/components/shell/NavLockToggle.svelte`
+- `frontend/src/lib/components/shell/NavPanelTitle.svelte`
 - `frontend/src/lib/components/shell/index.ts`
+- `frontend/src/lib/components/shell/nav.ts`
 - `frontend/src/lib/components/showcase/BreadcrumbDemo.svelte`
 - `frontend/src/lib/components/showcase/CalendarDemo.svelte`
 - `frontend/src/lib/components/showcase/CollapsibleDemo.svelte`
@@ -1541,6 +1573,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/showcase/CornerNavTriangleDemo.svelte`
 - `frontend/src/lib/components/showcase/DrawerDemo.svelte`
 - `frontend/src/lib/components/showcase/DropdownMenuDemo.svelte`
+- `frontend/src/lib/components/showcase/FancyDrawerDemo.svelte`
 - `frontend/src/lib/components/showcase/HomeTriangleDemo.svelte`
 - `frontend/src/lib/components/showcase/HoverCardDemo.svelte`
 - `frontend/src/lib/components/showcase/MenubarDemo.svelte`
@@ -1559,8 +1592,9 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/showcase/TooltipDemo.svelte`
 - `frontend/src/lib/components/showcase/TreeDemo.svelte`
 - `frontend/src/lib/components/showcase/index.ts`
+- `frontend/src/lib/components/theme/AppearanceCard.svelte`
+- `frontend/src/lib/components/theme/PaletteFields.svelte`
 - `frontend/src/lib/components/theme/QuickThemeToggle.svelte`
-- `frontend/src/lib/components/theme/ThemeCard.svelte`
 - `frontend/src/lib/components/theme/ThemeModeToggle.svelte`
 - `frontend/src/lib/components/theme/index.ts`
 - `frontend/src/lib/components/ui/alert-dialog/alert-dialog-action.svelte`
@@ -1635,6 +1669,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/optimistic-toggle.ts`
 - `frontend/src/lib/router-client.ts`
 - `frontend/src/lib/ssrFetch.ts`
+- `frontend/src/lib/theme-packs.ts`
 - `frontend/src/lib/theme.ts`
 - `frontend/src/lib/types/user.ts`
 - `frontend/src/lib/typewriter-placeholder.ts`
@@ -1674,7 +1709,6 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 
 ## [[MELT-UI]]
 
-- `frontend/src/lib/components/theme/ThemeCard.svelte`
 - `frontend/src/lib/components/theme/ThemeModeToggle.svelte`
 - `frontend/src/lib/theme.ts`
 

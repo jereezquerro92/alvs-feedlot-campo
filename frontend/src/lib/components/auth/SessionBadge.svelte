@@ -47,6 +47,7 @@
   import { cn } from "$lib/utils";
   import { t } from "../../../i18n";
   import type { Me } from "$lib/types/user";
+  import type { ThemeConfig } from "$lib/theme";
 
   let {
     me = null,
@@ -93,6 +94,24 @@
     }
   }
 
+  /** Signed-in quick toggle persists mode so cookie and theme_config stay aligned. */
+  async function persistTheme(blob: ThemeConfig): Promise<void> {
+    if (!me || !publicBackendUrl) return;
+    try {
+      await fetch(`${publicBackendUrl}/api/me/`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": readCsrfTokenFromCookie(),
+        },
+        body: JSON.stringify({ theme_config: blob }),
+      });
+    } catch {
+      /* cookie already mirrors the flip; a failed PATCH is non-fatal */
+    }
+  }
+
   const popover = new Popover({
     floatingConfig: {
       computePosition: { placement: "bottom-end" },
@@ -126,7 +145,7 @@
     class="z-50 hidden min-w-56 flex-col gap-1 rounded-md border border-border bg-popover p-2 text-popover-foreground shadow-md [&:popover-open]:flex"
   >
     <span class="truncate px-2 py-1.5 text-sm text-muted-foreground">{me.email}</span>
-    <QuickThemeToggle />
+    <QuickThemeToggle onPersist={persistTheme} />
     {#if !pending}
       <SessionMenuRow href="/profile/" icon="user" label={t("nav_profile")} />
       {#if isAdmin}

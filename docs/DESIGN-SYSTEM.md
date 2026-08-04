@@ -47,17 +47,23 @@ This is a standing ratification, not a snapshot pinned to today's OKLCH numbers 
 
 ## User-configurable subset (`/profile`)
 
-A subset of the token layer is exposed to the end user, not just to the developer. This is deliberately narrow — most tokens stay developer-only:
+A subset of the token layer is exposed to the end user, not just to the developer. This is deliberately narrow — most tokens stay developer-only. The editor is `AppearanceCard` (with one `PaletteFields` per mode); closed theme packs in `frontend/src/lib/theme-packs.ts` fill both palettes as curated presets — they do not add a persisted pack id.
 
 | Control | Values | Backs which token(s) |
 |---|---|---|
 | mode | `light` \| `dark` (default: `dark`) | toggles the `.dark` class |
 | bgPreset | `default` \| `melt` (default: `melt`) | `[data-bg-preset]` attribute → the `--melt-dots-*`/`--melt-fade-color` set below, with distinct light/dark pairs |
-| custom background | OKLCH color | `--background` |
-| custom primary | OKLCH color | `--primary` |
-| custom secondary | OKLCH color | `--secondary` |
-| custom accent | OKLCH color | `--accent` |
+| sidebarSide | `left` \| `right` (default: `left`) | which viewport edge FancyDrawer / the pinned feedlot rail docks to |
+| colors (per mode) | `canvas`, `dots`, `surface`, `foreground`, `primary`, `secondary`, `accent` | `--canvas`, `--melt-dots-color`, `--background`, `--foreground`, `--primary`, `--secondary`, `--accent` — only the **active** mode's palette is applied |
 | radius | length | `--radius` (the three derived `--radius-*` follow via `@theme inline`) |
+| theme pack (UI only) | closed enum `kodexarg` \| `jeremias` \| `militar` \| `amber` | fills both mode palettes from curated OKLCH snapshots; Save persists colors, not the pack id |
+
+> `theme_config.colors` is keyed by mode — `{ light: {…}, dark: {…} }` — because a color tuned against a dark field is not the same color that works over a light one. Only the active mode's palette reaches the rendered style. `AppearanceCard` shows both themes at once and refuses to save until each defines at least `canvas` and `dots`.
+
+### Dual brand — kodexArg orange vs Jeremías green
+
+- **Global / profile / showcase / chat** use the rationed-orange `:root` / `.dark` tokens (kodexArg).
+- **Operational feedlot modules** wrap in `.feedlot-app`, which applies Jeremías emerald (`--primary` H≈152 from commit `f4af45f`) plus `--sidebar-*` / `--chart-*` developer tokens. That skin is intentional product brand, not a leftover hardcode; named packs fill the user-tunable palette and do not retire `.feedlot-app`.
 
 - **Persistence is per-user**: the chosen values live on `User.theme_config`, read and written through `PATCH /api/me/` ([[API]]). A profile visual preference is user data, not session state — it survives logout/login on the same account.
 - **Mirrored to a `theme` cookie for no-flash SSR.** The cookie is a client-side rendering hint, not a secret and not a session credential: it carries no auth data and needs no `HttpOnly`/`Secure` treatment beyond ordinary hygiene. Mechanism: below.
@@ -65,10 +71,10 @@ A subset of the token layer is exposed to the end user, not just to the develope
 
 ## Theme application mechanism
 
-One shared pair of pure functions in `frontend/src/lib/theme.ts` — `computeThemeSSRAttrs` and its client wrapper `applyTheme` — is the single place that turns a `ThemeConfig` blob into `.dark` / `data-bg-preset` / inline token overrides. Every rendering path below calls one of the two; neither Base.astro nor ThemeCard hand-rolls its own version:
+One shared pair of pure functions in `frontend/src/lib/theme.ts` — `computeThemeSSRAttrs` and its client wrapper `applyTheme` — is the single place that turns a `ThemeConfig` blob into `.dark` / `data-bg-preset` / inline token overrides. Every rendering path below calls one of the two; neither Base.astro nor AppearanceCard hand-rolls its own version:
 
 - **SSR, no-flash.** `Base.astro` reads the `theme` cookie (`Astro.cookies.get("theme")`), decodes and sanitizes it with `parseThemeConfig` (which delegates to `sanitizeThemeConfig`/`sanitizeColor`/`sanitizeRadius`), then calls `computeThemeSSRAttrs(blob)` for `{ htmlClass, dataBgPreset, style }` — spread straight onto `<html>` before the first byte renders. This is why an authenticated user never sees a flash of the default theme on navigation or after login (the `theme` cookie is set by the backend on login and on a successful `PATCH /api/me/`, [[API]]).
-- **Client live preview.** `ThemeCard.svelte` runs an `$effect` that calls `applyTheme(draftBlob)` on every control change — the mode toggle, the `bgPreset` radio, a color input, the radius field. `applyTheme` reuses `computeThemeSSRAttrs` internally, then writes the class, the `data-bg-preset` attribute, and the custom-property overrides directly onto `document.documentElement`. This is a pure client-local repaint: no `PATCH /api/me/` request fires per keystroke or click.
+- **Client live preview.** `AppearanceCard.svelte` runs an `$effect` that calls `applyTheme(draftBlob)` on every control change — the mode toggle, the `bgPreset` radio, a color input, the radius field. `applyTheme` reuses `computeThemeSSRAttrs` internally, then writes the class, the `data-bg-preset` attribute, and the custom-property overrides directly onto `document.documentElement`. This is a pure client-local repaint: no `PATCH /api/me/` request fires per keystroke or click.
 - **Cookie mirror only on a confirmed Save.** `writeThemeCookie` runs exactly once per Save click, and only after `PATCH /api/me/` returns `200` — never from the live-preview effect. It mirrors the server's own echoed, re-sanitized response, not the client's draft, so the cookie always matches what actually persisted. A `400` or network failure leaves the `theme` cookie and the last-confirmed snapshot (what Reset reverts to) untouched; the draft stays live-previewed but unpersisted.
 - **Sanitize on both sides, one shared contract.** `sanitizeColor`/`sanitizeRadius`/`sanitizeThemeConfig` (`theme.ts`) run client-side at every hop that touches untrusted input — building the live-preview draft blob, narrowing the confirmed `PATCH` response before it is mirrored to the cookie, and inside `computeThemeSSRAttrs`/`applyTheme` themselves — and Django re-validates the identical shape server-side before persisting ([[API]]). Neither side treats the other's input as pre-sanitized.
 

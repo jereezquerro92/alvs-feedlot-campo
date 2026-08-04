@@ -4,16 +4,29 @@
      LIVE-DOC:END -->
 
 <!--
-  Quick theme row for SessionBadge's menu: cookie-only mode persistence,
-  deliberately decoupled from `/profile`'s ThemeCard (the only control that
-  writes `theme_config` via PATCH /api/me/). Same SessionMenuRow chrome as
-  profile/showcase — icon left, label right.
+  Quick theme row for SessionBadge's menu. Flips mode, applies live, writes
+  the theme cookie; when `onPersist` is supplied (signed-in), the parent
+  PATCHes theme_config so DB and cookie stay aligned.
 -->
 <script lang="ts">
   import { Toggle } from "melt/builders";
   import SessionMenuRow from "$lib/components/auth/SessionMenuRow.svelte";
-  import { DEFAULTS, readThemeCookie, applyTheme, writeThemeCookie, type ThemeMode } from "$lib/theme";
+  import {
+    DEFAULTS,
+    readThemeCookie,
+    applyTheme,
+    writeThemeCookie,
+    type ThemeMode,
+    type ThemeConfig,
+  } from "$lib/theme";
   import { t } from "../../../i18n";
+
+  let {
+    onPersist,
+  }: {
+    /** Optional signed-in persist hook — parent PATCHes /api/me/. */
+    onPersist?: (blob: ThemeConfig) => void | Promise<void>;
+  } = $props();
 
   let mode = $state<ThemeMode>(readThemeCookie().mode ?? DEFAULTS.mode);
 
@@ -22,6 +35,7 @@
     const merged = { ...readThemeCookie(), mode: next };
     applyTheme(merged);
     writeThemeCookie(merged);
+    void onPersist?.(merged);
   }
 
   const toggle = new Toggle({

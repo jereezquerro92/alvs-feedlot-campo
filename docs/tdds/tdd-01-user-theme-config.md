@@ -99,3 +99,23 @@ Failing-first, then made green:
 green. `python manage.py makemigrations --check --dry-run` reports "No
 changes detected"; the full `backend/apps/users` suite (112 tests) and the
 full backend suite (196 tests) pass.
+
+## Amendment — per-mode palettes + sidebarSide (issue #139)
+
+The Design section above described one flat palette shared by both modes,
+with keys `background` / `primary` / `secondary` / `accent`. Issue #139
+(theme system parity with the gateway AppearanceCard contract) widens the
+blob:
+
+- Top-level keys gain `sidebarSide` ∈ `{left, right}`.
+- `colors` is validated one level deeper: mode → palette. A key at the mode
+  level that is not `light` or `dark` is a `400`, and so is a flat palette.
+- Palette keys are `canvas`, `dots`, `surface`, `foreground`, `primary`,
+  `secondary`, `accent` (`background` retires; legacy rows map it to
+  `surface`).
+- Migration `users.0009_theme_config_palette_per_mode` moves a stored flat
+  palette under the mode the same blob declares — the only mode it was ever
+  tuned against — and renames `background` → `surface`.
+- `test_theme.py` covers per-mode isolation, flat rejection, `sidebarSide`
+  enum rejection, and the existing cookie / injection suite against the
+  nested shape.

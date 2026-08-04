@@ -66,7 +66,7 @@
   {...dialog.content}
   aria-label={title}
   class={cn(
-    "m-auto w-[calc(100%-2rem)] max-w-lg rounded-xl border bg-card p-0 text-card-foreground shadow-lg backdrop:bg-black/50",
+    "m-auto w-[calc(100%-2rem)] max-w-lg rounded-xl border bg-card p-0 text-card-foreground shadow-lg backdrop:bg-[color:var(--scrim-bg)]",
     className,
   )}
 >

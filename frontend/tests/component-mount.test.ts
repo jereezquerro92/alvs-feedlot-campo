@@ -113,7 +113,7 @@ describe("adr-22 rule 1 — zero-prop mount", () => {
 //
 // It deliberately does NOT dispatch clicks. The click-fired mutation path
 // (a Save/logout that PATCHes or POSTs only from a handler, its action prop
-// caller-wireable — ProfileForm, ThemeCard, SessionBadge) stays a code-review
+// caller-wireable — ProfileForm, AppearanceCard, SessionBadge) stays a code-review
 // gate: catching it by test would require routing those actions through
 // no-op-defaulting props, a component change outside this test's scope.
 // COMPONENTIZATION.md states this split coverage and its limit plainly.

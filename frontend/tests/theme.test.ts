@@ -1,20 +1,22 @@
 import { describe, expect, test } from "bun:test";
 import {
   DEFAULTS,
+  COLOR_VARS,
   computeThemeSSRAttrs,
   parseThemeConfig,
   sanitizeColor,
   sanitizeRadius,
   sanitizeThemeConfig,
 } from "../src/lib/theme";
+import {
+  THEME_PACK_IDS,
+  themeConfigFromPack,
+  isThemePackId,
+} from "../src/lib/theme-packs";
 
-// Unit coverage for the theme contract's DOM-free helpers (
-// "Persistence across login — no flash", "Invalid custom value is
-// rejected"). Mirrors docs/API.md's PATCH /api/me/ `theme_config`
-// validation exactly — these are the same rules Django enforces
-// server-side, re-applied client-side for the live-preview path and the
-// SSR no-flash render. No jsdom, matching this template's bun:test
-// conventions (optimistic-toggle.test.ts).
+// Unit coverage for the theme contract's DOM-free helpers. Mirrors
+// docs/API.md's PATCH /api/me/ theme_config validation — same rules Django
+// enforces server-side, re-applied client-side for live-preview and SSR.
 
 describe("sanitizeColor", () => {
   test("accepts hex, rgb(a), hsl, and oklch forms", () => {
@@ -51,26 +53,51 @@ describe("sanitizeRadius", () => {
 });
 
 describe("sanitizeThemeConfig", () => {
-  test("keeps only the closed key set with valid values", () => {
+  test("keeps only the closed key set with valid per-mode values", () => {
     const blob = sanitizeThemeConfig({
       mode: "dark",
       bgPreset: "melt",
-      colors: { background: "oklch(0.1 0 0)", primary: "not-a-color" },
+      sidebarSide: "right",
+      colors: {
+        dark: { canvas: "oklch(0.1 0 0)", primary: "not-a-color" },
+        light: { primary: "oklch(0.6 0.1 45)" },
+      },
       radius: "0.5rem",
       unknownKey: "danger",
     });
     expect(blob).toEqual({
       mode: "dark",
       bgPreset: "melt",
-      colors: { background: "oklch(0.1 0 0)" },
+      sidebarSide: "right",
+      colors: {
+        dark: { canvas: "oklch(0.1 0 0)" },
+        light: { primary: "oklch(0.6 0.1 45)" },
+      },
       radius: "0.5rem",
     });
   });
 
-  test("drops an out-of-enum mode/bgPreset instead of defaulting silently", () => {
-    const blob = sanitizeThemeConfig({ mode: "purple", bgPreset: "wallpaper" });
+  test("reads a legacy flat palette under the declared mode as surface", () => {
+    const blob = sanitizeThemeConfig({
+      mode: "light",
+      colors: { background: "#ffffff", primary: "oklch(0.6 0.1 45)" },
+    });
+    expect(blob.colors?.light).toEqual({
+      surface: "#ffffff",
+      primary: "oklch(0.6 0.1 45)",
+    });
+    expect(blob.colors?.dark).toBeUndefined();
+  });
+
+  test("drops an out-of-enum mode/bgPreset/sidebarSide instead of defaulting silently", () => {
+    const blob = sanitizeThemeConfig({
+      mode: "purple",
+      bgPreset: "wallpaper",
+      sidebarSide: "top",
+    });
     expect(blob.mode).toBeUndefined();
     expect(blob.bgPreset).toBeUndefined();
+    expect(blob.sidebarSide).toBeUndefined();
   });
 
   test("returns {} for a non-object value", () => {
@@ -111,23 +138,70 @@ describe("computeThemeSSRAttrs", () => {
     expect(attrs.dataBgPreset).toBe("melt");
   });
 
-  test("an explicit non-default value is preserved, never forced back to DEFAULTS (regression: presence, not equality)", () => {
-    // A saved theme_config of mode:"light" / bgPreset:"default" must survive
-    // even though DEFAULTS is now dark/melt — resolving by `=== "dark"` /
-    // `=== "melt"` equality instead of by presence (`??`) would silently
-    // discard an explicitly-saved light/default choice back to the new
-    // DEFAULTS, regressing the user-configurable-theme guarantee.
+  test("an explicit non-default value is preserved, never forced back to DEFAULTS", () => {
     expect(computeThemeSSRAttrs({ mode: "light" }).htmlClass).toBe("");
     expect(computeThemeSSRAttrs({ bgPreset: "default" }).dataBgPreset).toBe("default");
   });
 
-  test("only sanitized, present color/radius overrides reach the inline style", () => {
+  test("only the active mode's sanitized overrides reach the inline style", () => {
     const attrs = computeThemeSSRAttrs({
-      colors: { background: "oklch(0.2 0 0)", primary: "javascript:alert(1)" },
+      mode: "dark",
+      colors: {
+        dark: { canvas: "oklch(0.2 0 0)", primary: "javascript:alert(1)" },
+        light: { canvas: "oklch(0.9 0 0)" },
+      },
       radius: "1rem",
     });
-    expect(attrs.style).toContain("--background: oklch(0.2 0 0)");
+    expect(attrs.style).toContain(`${COLOR_VARS.canvas}: oklch(0.2 0 0)`);
     expect(attrs.style).toContain("--radius: 1rem");
     expect(attrs.style).not.toContain("--primary");
+    expect(attrs.style).not.toContain("oklch(0.9 0 0)");
+  });
+});
+
+describe("theme packs", () => {
+  test("every pack id is recognized and yields a valid dual-mode ThemeConfig", () => {
+    for (const id of THEME_PACK_IDS) {
+      expect(isThemePackId(id)).toBe(true);
+      const blob = themeConfigFromPack(id);
+      expect(blob.colors?.light?.primary).toBeTruthy();
+      expect(blob.colors?.dark?.primary).toBeTruthy();
+      expect(blob.colors?.light?.canvas).toBeTruthy();
+      expect(blob.colors?.dark?.dots).toBeTruthy();
+      // Round-trip through sanitize must keep the pack intact
+      expect(sanitizeThemeConfig(blob)).toEqual(blob);
+    }
+  });
+
+  test("kodexArg primary is orange-ish (hue near 45)", () => {
+    const blob = themeConfigFromPack("kodexarg");
+    expect(blob.colors?.dark?.primary).toContain("45");
+    expect(blob.colors?.light?.primary).toContain("45");
+  });
+
+  test("Jeremías primary is emerald (hue near 152) from .feedlot-app", () => {
+    const blob = themeConfigFromPack("jeremias");
+    expect(blob.colors?.light?.primary).toBe("oklch(0.52 0.12 152)");
+    expect(blob.colors?.dark?.primary).toBe("oklch(0.68 0.13 152)");
+  });
+
+  test("Militar primary is olive (hue near 120), distinct from Jeremías", () => {
+    const blob = themeConfigFromPack("militar");
+    expect(blob.colors?.light?.primary).toContain("120");
+    expect(blob.colors?.light?.primary).not.toContain("152");
+  });
+
+  test("applying a pack preserves mode/bgPreset/sidebarSide from the base blob", () => {
+    const blob = themeConfigFromPack("amber", {
+      mode: "light",
+      bgPreset: "default",
+      sidebarSide: "right",
+      radius: "1rem",
+    });
+    expect(blob.mode).toBe("light");
+    expect(blob.bgPreset).toBe("default");
+    expect(blob.sidebarSide).toBe("right");
+    expect(blob.radius).toBe("1rem");
+    expect(blob.colors?.light?.primary).toContain("60");
   });
 });

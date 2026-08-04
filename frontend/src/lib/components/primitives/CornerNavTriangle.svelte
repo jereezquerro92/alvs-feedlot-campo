@@ -90,7 +90,7 @@
          C 21.83 22.5 22.5 21.83 22.5 21
          Z"
       fill="var(--color-primary)"
-      style="filter: drop-shadow(0 0.5px 0.75px oklch(0 0 0 / 0.22));"
+      style="filter: drop-shadow(0 0.5px 0.75px var(--corner-nav-shadow));"
     />
     <!-- Volume fillet: a hairline light stroke along the hypotenuse only —
          the lit upper edge that, with the drop shadow below, reads as a
@@ -98,7 +98,7 @@
     <path
       d="M 19.71 5.75 L 5.75 19.71"
       fill="none"
-      stroke="oklch(1 0 0 / 0.35)"
+      stroke="var(--corner-nav-edge)"
       stroke-width="0.5"
       stroke-linecap="round"
     />

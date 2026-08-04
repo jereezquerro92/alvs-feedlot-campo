@@ -29,11 +29,22 @@ CLAIMS = {
 VALID_THEME = {
     "mode": "dark",
     "bgPreset": "melt",
+    "sidebarSide": "left",
     "colors": {
-        "background": "#101010",
-        "primary": "oklch(0.6 0.2 250)",
-        "secondary": "rgb(10, 20, 30)",
-        "accent": "hsl(200, 50%, 50%)",
+        "dark": {
+            "canvas": "#101010",
+            "dots": "oklch(0.48 0.13 45 / 0.25)",
+            "surface": "#161616",
+            "foreground": "#eeeeee",
+            "primary": "oklch(0.6 0.2 45)",
+            "secondary": "rgb(10, 20, 30)",
+            "accent": "hsl(200, 50%, 50%)",
+        },
+        "light": {
+            "canvas": "#f0f0f0",
+            "dots": "oklch(0.90 0.05 75)",
+            "primary": "oklch(0.64 0.19 45)",
+        },
     },
     "radius": "0.625rem",
 }
@@ -92,12 +103,7 @@ def test_me_patch_valid_theme_config_persists_and_sets_theme_cookie(client, sett
 
 def test_me_patch_theme_config_replaces_wholesale(client):
     user = _user(sub="sub-theme-replace")
-    user.theme_config = {
-        "mode": "dark",
-        "bgPreset": "melt",
-        "colors": {"background": "#000000"},
-        "radius": "1rem",
-    }
+    user.theme_config = VALID_THEME
     user.save()
     client.force_login(user)
     response = client.patch(ME, {"theme_config": {"mode": "light"}}, content_type="application/json")
@@ -119,6 +125,23 @@ def test_me_patch_without_theme_config_key_leaves_blob_and_cookie_unchanged(clie
     assert "theme" not in response.cookies
 
 
+def test_me_patch_per_mode_palettes_survive_apart(client):
+    user = _user(sub="sub-theme-per-mode")
+    client.force_login(user)
+    blob = {
+        "mode": "dark",
+        "colors": {
+            "dark": {"primary": "oklch(0.7 0.1 45)"},
+            "light": {"primary": "oklch(0.5 0.1 152)"},
+        },
+    }
+    response = client.patch(ME, {"theme_config": blob}, content_type="application/json")
+    assert response.status_code == 200
+    saved = response.json()["theme_config"]
+    assert saved["colors"]["dark"]["primary"] == "oklch(0.7 0.1 45)"
+    assert saved["colors"]["light"]["primary"] == "oklch(0.5 0.1 152)"
+
+
 # --- PATCH rejection ------------------------------------------------------
 
 
@@ -134,12 +157,23 @@ def test_me_patch_theme_config_unknown_top_level_key_rejected(client):
     assert "theme" not in response.cookies
 
 
+def test_me_patch_theme_config_flat_palette_rejected(client):
+    user = _user(sub="sub-theme-flat")
+    client.force_login(user)
+    response = client.patch(
+        ME,
+        {"theme_config": {"colors": {"primary": "#fff", "background": "#000"}}},
+        content_type="application/json",
+    )
+    assert response.status_code == 400
+
+
 def test_me_patch_theme_config_unknown_color_key_rejected(client):
     user = _user(sub="sub-theme-unknown-color")
     client.force_login(user)
     response = client.patch(
         ME,
-        {"theme_config": {"colors": {"background": "#fff", "border": "#000"}}},
+        {"theme_config": {"colors": {"dark": {"primary": "#fff", "border": "#000"}}}},
         content_type="application/json",
     )
     assert response.status_code == 400
@@ -161,6 +195,15 @@ def test_me_patch_theme_config_bad_bgpreset_enum_rejected(client):
     assert response.status_code == 400
 
 
+def test_me_patch_theme_config_bad_sidebar_side_rejected(client):
+    user = _user(sub="sub-theme-side")
+    client.force_login(user)
+    response = client.patch(
+        ME, {"theme_config": {"sidebarSide": "top"}}, content_type="application/json"
+    )
+    assert response.status_code == 400
+
+
 @pytest.mark.parametrize(
     "bad_color",
     [
@@ -175,7 +218,7 @@ def test_me_patch_theme_config_injection_color_rejected(client, bad_color):
     client.force_login(user)
     response = client.patch(
         ME,
-        {"theme_config": {"colors": {"background": bad_color}}},
+        {"theme_config": {"colors": {"dark": {"canvas": bad_color}}}},
         content_type="application/json",
     )
     assert response.status_code == 400
@@ -198,11 +241,11 @@ def test_me_patch_theme_config_accepts_all_color_forms(client, good_color):
     client.force_login(user)
     response = client.patch(
         ME,
-        {"theme_config": {"colors": {"background": good_color}}},
+        {"theme_config": {"colors": {"dark": {"canvas": good_color}}}},
         content_type="application/json",
     )
     assert response.status_code == 200
-    assert response.json()["theme_config"]["colors"]["background"] == good_color
+    assert response.json()["theme_config"]["colors"]["dark"]["canvas"] == good_color
 
 
 @pytest.mark.parametrize("bad_radius", [12, "10px;evil", "url(x)"])
