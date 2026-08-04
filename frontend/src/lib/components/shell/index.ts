@@ -4,3 +4,10 @@
  * LIVE-DOC:END */
 
 export { default as ChatDrawer } from "./ChatDrawer.svelte";
+export { default as NavItem } from "./NavItem.svelte";
+export { default as NavGlyph } from "./NavGlyph.svelte";
+export { default as NavBadge } from "./NavBadge.svelte";
+export { default as NavBrand } from "./NavBrand.svelte";
+export { default as NavPanelTitle } from "./NavPanelTitle.svelte";
+export { default as NavLockToggle } from "./NavLockToggle.svelte";
+export type { NavIconName } from "./nav";

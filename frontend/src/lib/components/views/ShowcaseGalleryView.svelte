@@ -66,6 +66,7 @@
     hoverCard: string;
     scrollArea: string;
     drawer: string;
+    fancyDrawer: string;
     homeTriangle: string;
     cornerNavTriangle: string;
     feedback: string;
@@ -334,6 +335,10 @@
     <div class="flex flex-col gap-2">
       <SectionTitle as="h3">{copy.drawer}</SectionTitle>
       <slot name="drawer" />
+    </div>
+    <div class="flex flex-col gap-2">
+      <SectionTitle as="h3">{copy.fancyDrawer}</SectionTitle>
+      <slot name="fancy-drawer" />
     </div>
     <div class="flex flex-col gap-2">
       <SectionTitle as="h3">{copy.homeTriangle}</SectionTitle>

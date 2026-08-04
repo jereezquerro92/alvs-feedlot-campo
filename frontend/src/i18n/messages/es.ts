@@ -45,6 +45,8 @@ export const es = {
 
   // theme components
   theme_toggle_mode: "Cambiar entre tema claro y oscuro",
+  theme_mode_light: "Tema claro",
+  theme_mode_dark: "Tema oscuro",
 
   // /chatui/ — router chat surface ([[CHATBOT]], adr-15)
   chatui_router_title: "Router",
@@ -67,6 +69,13 @@ export const es = {
   // shell/ChatDrawer — the same router surface, docked to the right edge
   shell_chat_drawer_open: "Abrir el router",
   shell_chat_drawer_close: "Cerrar el router",
+  // shell / FeedlotFancyNav
+  shell_nav_label: "Menú",
+  shell_nav_badge_pending: "pendientes",
+  shell_nav_lock_aria: "Fijar menú al borde",
+  shell_nav_unlock_aria: "Liberar menú flotante",
+  shell_nav_sandwich_aria: "Abrir o cerrar menú",
+  shell_nav_dismiss_overlay: "Cerrar menú",
 
   // /profile/
   profile_title: "Perfil",
@@ -111,6 +120,7 @@ export const es = {
   gallery_hover_card: "Hover Card",
   gallery_scroll_area: "Scroll Area",
   gallery_drawer: "Drawer",
+  gallery_fancy_drawer: "Fancy Drawer",
   gallery_home_triangle: "Home Triangle",
   gallery_corner_nav_triangle: "Corner Nav Triangle",
   gallery_form: "Formulario",
@@ -200,13 +210,20 @@ export const es = {
   drawer_close: "Cerrar panel",
   drawer_empty: "Sin contenido",
   demo_drawer_note:
-    "Los dos drawers van anclados a los bordes de la ventana y arrancan plegados: pasá el mouse sobre la pestaña para abrirlos, salí para que se cierren a los 2 s, o hacé click fuera / en el caret para cerrarlos al instante.",
-  demo_drawer_left_title: "Navegación",
-  demo_drawer_left_body:
-    "Drawer izquierdo colapsable — ideal para la navegación principal del shell de la aplicación.",
-  demo_drawer_right_title: "Detalles",
-  demo_drawer_right_body:
-    "Drawer derecho colapsable — ideal para contexto, filtros o el detalle de la fila seleccionada.",
+    "Drawer es el panel de borde a altura completa. En esta galería no se monta en vivo: solo un Fancy Drawer a la izquierda y otro a la derecha pueden ocupar los bordes del viewport.",
+  // FancyDrawer — floating sibling of Drawer (⅔ width, vertical center, exposed-side radius)
+  fancy_drawer_default_title: "Panel",
+  fancy_drawer_open: "Abrir panel",
+  fancy_drawer_close: "Cerrar panel",
+  fancy_drawer_empty: "Sin contenido",
+  demo_fancy_drawer_note:
+    "Un Fancy Drawer a la izquierda y otro a la derecha: ⅔ de ancho, altura al contenido (centrado en el viewport), esquinas redondeadas del lado expuesto. Hover / dismiss igual que Drawer.",
+  demo_fancy_drawer_left_title: "Fancy · izquierdo",
+  demo_fancy_drawer_left_body:
+    "Contenido centrado en vertical. Bordes derechos redondeados; el borde izquierdo queda al ras del viewport.",
+  demo_fancy_drawer_right_title: "Fancy · derecho",
+  demo_fancy_drawer_right_body:
+    "Contenido centrado en vertical. Bordes izquierdos redondeados; el borde derecho queda al ras del viewport.",
   // HomeTriangle — component default (adr-22 zero-prop state) + gallery demo
   home_triangle_aria_label: "Inicio",
   demo_home_triangle_note:

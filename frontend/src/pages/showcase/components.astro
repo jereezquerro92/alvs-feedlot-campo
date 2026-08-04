@@ -57,6 +57,7 @@ import {
   BreadcrumbDemo,
   PageHeaderDemo,
   DrawerDemo,
+  FancyDrawerDemo,
   HomeTriangleDemo,
   CornerNavTriangleDemo,
 } from "$lib/components/showcase";
@@ -223,7 +224,7 @@ const tocItems: TableOfContentsItem[] = [
 ];
 ---
 
-<Base title={t("gallery_title")} me={me}>
+<Base title={t("gallery_title")} me={me} chatDrawer={false}>
   {/* @ts-expect-error Astro↔Svelte-5 named-slot typing limitation (@astrojs/svelte 9 / Svelte 5 legacy <slot name>): the generated TSX types the component's children as `undefined`, but the many slotted children render correctly at runtime — see the issue that gated this on a green `bun run check` */}
   <ShowcaseGalleryView
     entities={entities}
@@ -282,6 +283,7 @@ const tocItems: TableOfContentsItem[] = [
       hoverCard: t("gallery_hover_card"),
       scrollArea: t("gallery_scroll_area"),
       drawer: t("gallery_drawer"),
+      fancyDrawer: t("gallery_fancy_drawer"),
       homeTriangle: t("gallery_home_triangle"),
       cornerNavTriangle: t("gallery_corner_nav_triangle"),
       feedback: t("gallery_feedback"),
@@ -436,6 +438,7 @@ const tocItems: TableOfContentsItem[] = [
       slot="scroll-area"
     />
     <DrawerDemo client:visible slot="drawer" />
+    <FancyDrawerDemo client:visible slot="fancy-drawer" />
     <HomeTriangleDemo slot="home-triangle" />
     <CornerNavTriangleDemo slot="corner-nav-triangle" />
     <Progress
