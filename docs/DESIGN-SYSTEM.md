@@ -51,7 +51,7 @@ A subset of the token layer is exposed to the end user, not just to the develope
 
 | Control | Values | Backs which token(s) |
 |---|---|---|
-| mode | `light` \| `dark` (default: `dark`) | toggles the `.dark` class |
+| mode | `light` \| `dark` (default: `light`) | toggles the `.dark` class |
 | bgPreset | `default` \| `melt` (default: `melt`) | `[data-bg-preset]` attribute → the `--melt-dots-*`/`--melt-fade-color` set below, with distinct light/dark pairs |
 | sidebarSide | `left` \| `right` (default: `left`) | which viewport edge FancyDrawer / the pinned feedlot rail docks to |
 | colors (per mode) | `canvas`, `dots`, `surface`, `foreground`, `primary`, `secondary`, `accent` | `--canvas`, `--melt-dots-color`, `--background`, `--foreground`, `--primary`, `--secondary`, `--accent` — only the **active** mode's palette is applied |
