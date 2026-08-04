@@ -21,4 +21,7 @@ export type NavIconName =
   | "key"
   | "tag"
   | "chat"
-  | "user";
+  | "user"
+  | "sun"
+  | "moon"
+  | "layers";

@@ -5,4 +5,5 @@
 
 export { default as AuthPanel } from "./AuthPanel.svelte";
 export { default as SessionBadge } from "./SessionBadge.svelte";
+export { default as SessionMenuRow } from "./SessionMenuRow.svelte";
 export { default as ProfileForm } from "./ProfileForm.svelte";

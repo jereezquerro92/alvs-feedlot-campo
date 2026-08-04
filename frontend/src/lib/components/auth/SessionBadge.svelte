@@ -11,6 +11,9 @@
   that component's trigger self-renders a fixed labeled Button, which
   cannot host this badge's avatar+name+hamburger cluster.
 
+  Menu rows (theme / profile / showcase) share SessionMenuRow — icon left,
+  label right. Showcase is admins-only ([[AUTH]] Django Groups).
+
   Content sits behind Melt's native `popover="manual"` attribute
   (getPopover(), Popover builder source), which is hidden-by-default per
   the HTML Popover API — first paint never shows it open, only a user
@@ -37,6 +40,8 @@
   import { Button } from "$lib/components/ui/button";
   import { Avatar, AvatarImage, AvatarFallback } from "$lib/components/ui/avatar";
   import QuickThemeToggle from "$lib/components/theme/QuickThemeToggle.svelte";
+  import SessionMenuRow from "$lib/components/auth/SessionMenuRow.svelte";
+  import { GROUP, inAnyGroup } from "$lib/auth";
   import { readCsrfTokenFromCookie } from "$lib/csrf";
   import { resolveDisplayName, resolveInitials } from "$lib/display-name";
   import { cn } from "$lib/utils";
@@ -73,6 +78,7 @@
 
   const username = $derived(resolveDisplayName(me));
   const initials = $derived(resolveInitials(me));
+  const isAdmin = $derived(inAnyGroup(me, [GROUP.ADMINS]));
 
   let csrfToken = $state("");
 
@@ -120,15 +126,17 @@
 
   <div
     {...popover.content}
-    class="z-50 hidden min-w-56 flex-col gap-3 rounded-md border border-border bg-popover p-3 text-popover-foreground shadow-md [&:popover-open]:flex"
+    class="z-50 hidden min-w-56 flex-col gap-1 rounded-md border border-border bg-popover p-2 text-popover-foreground shadow-md [&:popover-open]:flex"
   >
-    <span class="truncate text-sm text-muted-foreground">{me.email}</span>
+    <span class="truncate px-2 py-1.5 text-sm text-muted-foreground">{me.email}</span>
     <QuickThemeToggle />
     {#if !pending}
-      <Button href="/profile/" variant="ghost" size="sm" class="w-full justify-start">{t("nav_profile")}</Button>
-      <Button href="/showcase/components/" variant="ghost" size="sm" class="w-full justify-start">{t("nav_showcase")}</Button>
+      <SessionMenuRow href="/profile/" icon="user" label={t("nav_profile")} />
+      {#if isAdmin}
+        <SessionMenuRow href="/showcase/components/" icon="layers" label={t("nav_showcase")} />
+      {/if}
     {/if}
-    <form method="post" action={`${publicBackendUrl}/accounts/logout/`} onsubmit={handleLogoutSubmit}>
+    <form method="post" action={`${publicBackendUrl}/accounts/logout/`} onsubmit={handleLogoutSubmit} class="pt-1">
       <input type="hidden" name="csrfmiddlewaretoken" value={csrfToken} />
       <Button type="submit" variant="destructive" size="sm" class="w-full">{logoutLabel}</Button>
     </form>
@@ -150,7 +158,7 @@
 
   <div
     {...popover.content}
-    class="z-50 hidden min-w-40 flex-col gap-3 rounded-md border border-border bg-popover p-3 text-popover-foreground shadow-md [&:popover-open]:flex"
+    class="z-50 hidden min-w-40 flex-col gap-1 rounded-md border border-border bg-popover p-2 text-popover-foreground shadow-md [&:popover-open]:flex"
   >
     <QuickThemeToggle />
   </div>

@@ -45,7 +45,7 @@ src/lib/components/
   data/              # DataTable, NumericValue, StatusBadge, ChipFilterBar, Pagination, Collapsible, Tree
   dashboard/         # MetricTile, MetricTileStrip, EntityCard, EntityGrid, SummaryCard
   chat/              # ChatUI, ChatMessageList, ChatComposer — the router's chat surface (CHATBOT)
-  auth/              # AuthPanel, SessionBadge, ProfileForm
+  auth/              # AuthPanel, SessionBadge, SessionMenuRow, ProfileForm
   form/              # Select, Combobox, Checkbox, Switch, DatePicker, DateRangePicker, PinInput, TagsInput — Melt builders (adr-52 r8 default)
   nav/               # Tabs, DropdownMenu, ContextMenu, Menubar, TableOfContents — Melt builder(s) + hand-rolled fallbacks
   feedback/          # Toast — Melt builder, module-level `toaster` singleton
@@ -93,6 +93,7 @@ Names here are reference copies of what [[GLOSSARY]] already decided, not the po
 | `NavBadge` | `shell/` | Count/pending pill for `NavItem` | `NavItem` |
 | `AuthPanel` | `auth/` | Session-aware auth actions | Any authenticated page |
 | `SessionBadge` | `auth/` | Compact current-session indicator | Any authenticated page |
+| `SessionMenuRow` | `auth/` | Fixed menu row: icon left, label right | `SessionBadge` popover rows (theme / profile / showcase) |
 | `ProfileForm` | `auth/` | Editable profile fields (nickname, avatar visibility) with confirm-guarded save | `/profile/` |
 | `Select` | `form/` | Single-select popover, Melt builder | Forms needing a closed-option field |
 | `Combobox` | `form/` | Searchable single-select, Melt builder | Forms needing a filterable option field |

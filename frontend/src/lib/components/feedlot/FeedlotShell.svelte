@@ -5,12 +5,12 @@
 
 <!--
   The single app shell every feedlot module renders inside ([[FEEDLOT]]):
-  FancyDrawer nav (left) + floating header (Breadcrumb pill + session slot) +
-  optional visible "back" button, then the module content as the default slot.
-  Site navigation is FeedlotFancyNav — floating by default; lock docks it as a
-  permanent primary-green rail (sandwich on mobile). Pure chrome — it never
-  fetches or mutates. Mounts with zero props and never throws
-  ([[adr-22-showcase-ready-components]] rule 1). Copy via i18n.
+  FancyDrawer nav (left) + floating header (circular mobile sandwich +
+  Breadcrumb pill + session slot) + optional visible "back" button, then the
+  module content as the default slot. Site navigation is FeedlotFancyNav —
+  floating by default; lock docks it as a permanent primary-green rail.
+  Pure chrome — it never fetches or mutates. Mounts with zero props and never
+  throws ([[adr-22-showcase-ready-components]] rule 1). Copy via i18n.
 -->
 <script lang="ts">
   import { t } from "../../../i18n";
@@ -45,7 +45,20 @@
     showSwitcher?: boolean;
   } = $props();
 
+  let navOpen = $state(false);
+  let mobileOpen = $state(false);
+  let navPinned = $state(false);
+
   const currentId = $derived(currentClient?.id ?? null);
+  const sandwichExpanded = $derived(navPinned ? mobileOpen : navOpen);
+
+  function toggleSandwich() {
+    if (navPinned) {
+      mobileOpen = !mobileOpen;
+    } else {
+      navOpen = !navOpen;
+    }
+  }
 
   const crumbs = $derived.by((): BreadcrumbItem[] => {
     const trail: BreadcrumbItem[] = [];
@@ -65,12 +78,29 @@
 </script>
 
 <div class="feedlot-app flex min-h-screen">
-  <FeedlotFancyNav {active} clientId={currentId} />
+  <FeedlotFancyNav
+    {active}
+    clientId={currentId}
+    bind:open={navOpen}
+    bind:mobileOpen
+    bind:pinned={navPinned}
+  />
 
   <div class="flex min-w-0 flex-1 flex-col">
-    <header class="flex w-full items-center justify-end gap-3 px-6 pt-8 sm:px-10">
-      <Breadcrumb items={crumbs} />
-      <slot name="session" />
+    <header class="flex w-full items-center gap-3 px-6 pt-8 sm:px-10">
+      <button
+        type="button"
+        class="inline-flex size-10 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md lg:hidden"
+        aria-label={t("shell_nav_sandwich_aria")}
+        aria-expanded={sandwichExpanded}
+        onclick={toggleSandwich}
+      >
+        <span aria-hidden="true" class="text-lg leading-none">{sandwichExpanded ? "✕" : "☰"}</span>
+      </button>
+      <div class="ml-auto flex items-center gap-3">
+        <Breadcrumb items={crumbs} />
+        <slot name="session" />
+      </div>
     </header>
 
     <nav class="flex gap-2 overflow-x-auto px-4 py-2.5 lg:hidden">

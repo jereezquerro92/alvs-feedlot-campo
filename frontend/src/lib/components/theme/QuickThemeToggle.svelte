@@ -4,16 +4,16 @@
      LIVE-DOC:END -->
 
 <!--
-  Quick toggle housed in SessionBadge's ☰ menu:
-  cookie-only mode persistence, deliberately decoupled from `/profile`'s ThemeCard, which
-  is the only control that writes `theme_config` via `PATCH /api/me/`. Wraps
-  ThemeModeToggle ([[MELT-UI]]) with zero edits to it — every other themed
-  key (bgPreset, colors, radius) is untouched here and stays whatever the
-  cookie already holds.
+  Quick theme row for SessionBadge's menu: cookie-only mode persistence,
+  deliberately decoupled from `/profile`'s ThemeCard (the only control that
+  writes `theme_config` via PATCH /api/me/). Same SessionMenuRow chrome as
+  profile/showcase — icon left, label right.
 -->
 <script lang="ts">
-  import ThemeModeToggle from "$lib/components/theme/ThemeModeToggle.svelte";
+  import { Toggle } from "melt/builders";
+  import SessionMenuRow from "$lib/components/auth/SessionMenuRow.svelte";
   import { DEFAULTS, readThemeCookie, applyTheme, writeThemeCookie, type ThemeMode } from "$lib/theme";
+  import { t } from "../../../i18n";
 
   let mode = $state<ThemeMode>(readThemeCookie().mode ?? DEFAULTS.mode);
 
@@ -23,6 +23,21 @@
     applyTheme(merged);
     writeThemeCookie(merged);
   }
+
+  const toggle = new Toggle({
+    value: () => mode === "dark",
+    onValueChange: (isDark) => {
+      setMode(isDark ? "dark" : "light");
+    },
+  });
+
+  const label = $derived(mode === "dark" ? t("theme_mode_dark") : t("theme_mode_light"));
+  const icon = $derived(mode === "dark" ? ("moon" as const) : ("sun" as const));
 </script>
 
-<ThemeModeToggle bind:mode={() => mode, setMode} />
+<SessionMenuRow
+  {label}
+  {icon}
+  ariaLabel={t("theme_toggle_mode")}
+  {...toggle.trigger}
+/>

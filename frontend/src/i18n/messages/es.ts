@@ -45,6 +45,8 @@ export const es = {
 
   // theme components
   theme_toggle_mode: "Cambiar entre tema claro y oscuro",
+  theme_mode_light: "Tema claro",
+  theme_mode_dark: "Tema oscuro",
 
   // /chatui/ — router chat surface ([[CHATBOT]], adr-15)
   chatui_router_title: "Router",
@@ -209,12 +211,6 @@ export const es = {
   drawer_empty: "Sin contenido",
   demo_drawer_note:
     "Drawer es el panel de borde a altura completa. En esta galería no se monta en vivo: solo un Fancy Drawer a la izquierda y otro a la derecha pueden ocupar los bordes del viewport.",
-  demo_drawer_left_title: "Navegación",
-  demo_drawer_left_body:
-    "Drawer izquierdo colapsable — ideal para la navegación principal del shell de la aplicación.",
-  demo_drawer_right_title: "Detalles",
-  demo_drawer_right_body:
-    "Drawer derecho colapsable — ideal para contexto, filtros o el detalle de la fila seleccionada.",
   // FancyDrawer — floating sibling of Drawer (⅔ width, vertical center, exposed-side radius)
   fancy_drawer_default_title: "Panel",
   fancy_drawer_open: "Abrir panel",

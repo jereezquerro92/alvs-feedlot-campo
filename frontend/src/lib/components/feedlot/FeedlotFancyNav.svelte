@@ -7,8 +7,9 @@
   Feedlot site menu: unlocked = floating FancyDrawer; locked (closed padlock) =
   permanent left rail with primary (feedlot green) fill — the old sidebar
   presence. Lock + "Menú" stays on top either way so the user can free it.
-  Mobile locked mode uses a sandwich toggle over an edge overlay. Mounts with
-  zero props (adr-22 r1). Pin preference persists in localStorage.
+  Mobile locked mode uses an edge overlay toggled by FeedlotShell's circular
+  sandwich (header). Mounts with zero props (adr-22 r1). Pin preference
+  persists in localStorage.
 -->
 <script lang="ts">
   import { onMount } from "svelte";
@@ -26,14 +27,17 @@
     clientId = null,
     active = "dashboard",
     open = $bindable(false),
+    /** Mobile overlay when the rail is pinned; owned by FeedlotShell's sandwich. */
+    mobileOpen = $bindable(false),
+    /** Pin preference; Shell reads it so the sandwich toggles the right surface. */
+    pinned = $bindable(false),
   }: {
     clientId?: number | string | null;
     active?: string;
     open?: boolean;
+    mobileOpen?: boolean;
+    pinned?: boolean;
   } = $props();
-
-  let pinned = $state(false);
-  let mobileOpen = $state(false);
 
   onMount(() => {
     try {
@@ -60,10 +64,6 @@
 
   function togglePin() {
     persistPin(!pinned);
-  }
-
-  function toggleMobile() {
-    mobileOpen = !mobileOpen;
   }
 
   const c = $derived(clientId ?? null);
@@ -168,17 +168,6 @@
       {@render navBody()}
     </div>
   </aside>
-
-  <!-- Mobile sandwich: opens edge overlay when locked. -->
-  <button
-    type="button"
-    class="fixed left-3 top-3 z-50 inline-flex size-10 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-md lg:hidden"
-    aria-label={t("shell_nav_sandwich_aria")}
-    aria-expanded={mobileOpen}
-    onclick={toggleMobile}
-  >
-    <span aria-hidden="true" class="text-lg leading-none">{mobileOpen ? "✕" : "☰"}</span>
-  </button>
 
   {#if mobileOpen}
     <button
