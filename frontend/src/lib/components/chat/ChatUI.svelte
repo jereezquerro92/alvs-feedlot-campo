@@ -108,11 +108,11 @@
     <SectionTitle as="h1">{copy.title}</SectionTitle>
   {/if}
   <div bind:this={messageContainer} class="flex flex-1 flex-col justify-end overflow-y-auto">
-    {#if messages.length === 0}
+    {#if messages.length === 0 && copy.emptyState}
       <p class="text-sm text-muted-foreground">
         {copy.emptyState}
       </p>
-    {:else}
+    {:else if messages.length > 0}
       <ChatMessageList
         {messages}
         onconfirm={confirmNavigate}

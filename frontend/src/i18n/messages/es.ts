@@ -48,15 +48,13 @@ export const es = {
 
   // /chatui/ — router chat surface ([[CHATBOT]], adr-15)
   chatui_router_title: "Router",
-  chatui_router_empty:
-    "Pedí una página o una acción — el router la relaciona con un destino permitido. Nunca redacta una respuesta libre.",
-  chatui_composer_placeholder: "Escribí un mensaje",
+  chatui_router_empty: "",
+  chatui_composer_placeholder: "Página o acción…",
   chatui_composer_aria_label: "Mensaje de chat",
   chatui_composer_send: "Enviar",
-  chatui_composer_placeholder_example_1: "Dame el último balance de la empresa XYZ",
-  chatui_composer_placeholder_example_2:
-    "Lista personas trabajando ahora mismo en la estación de servicio",
-  chatui_composer_placeholder_example_3: "Quiero elevar un ticket con un problema",
+  chatui_composer_placeholder_example_1: "Abrir clientes",
+  chatui_composer_placeholder_example_2: "Ir al perfil",
+  chatui_composer_placeholder_example_3: "Ver el lote",
   chatui_message_go: "Ir",
   chatui_message_confirm: "Confirmar",
   router_outcome_escalate: "Esto necesita a una persona — quedó marcado para seguimiento.",
