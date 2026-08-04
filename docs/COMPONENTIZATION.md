@@ -52,7 +52,7 @@ src/lib/components/
   overlay/           # Dialog, Drawer, Accordion, ConfirmDialog, Tooltip, Popover, HoverCard, ScrollArea, SidePanel — Melt builders (adr-52 r8 default), SOLID open/close primitives
   theme/             # ThemeModeToggle, QuickThemeToggle, ThemeCard — Melt-builder theme controls
   showcase/          # AlertDialogDemo, TabsDemo, DropdownMenuDemo, ContextMenuDemo, MenubarDemo, TableOfContentsDemo, TooltipDemo, PopoverDemo, HoverCardDemo, CollapsibleDemo, TreeDemo, ScrollAreaDemo, SidePanelDemo, ToastTriggerDemo — gallery-only demo compositions, not app surface
-  shell/             # ChatDrawer — layout-mounted compositions, one instance per page, never a route body
+  shell/             # ChatDrawer, NavItem/NavBrand/NavPanelTitle — layout-mounted compositions; one ChatDrawer instance per page
   views/             # LobbyView, ProfileView, ShowcaseView, ShowcaseGalleryView, ChatView — one zero-hydration page body per route
 ```
 
@@ -85,6 +85,12 @@ Names here are reference copies of what [[GLOSSARY]] already decided, not the po
 | `ChatMessageList` | `chat/` | Renders structured router outcomes only, never free prose | [[CHATBOT]] router UI |
 | `ChatComposer` | `chat/` | Posts raw user text to the router endpoint | [[CHATBOT]] router UI |
 | `ChatDrawer` | `shell/` | `overlay/Drawer` + `chat/ChatUI` docked right, mounted once in `Base.astro` and role-gated | The router surface on every gated page ([[CHATBOT]]) |
+| `NavItem` | `shell/` | Fancy nav capsule (icon disc + label + optional badge) | `FeedlotFancyNav` rows |
+| `NavBrand` | `shell/` | Compact ALVS brand mark (glyph + name + subtitle); ready for a future shell surface — not mounted in live FancyNav | Future branded shell chrome |
+| `NavPanelTitle` | `shell/` | Drawer/panel heading strip; `FancyDrawer` shows it only when `title` is non-empty | Optional labeled panel heads |
+| `NavLockToggle` | `shell/` | Open/closed padlock + Menú label; pins FancyNav to a permanent primary rail | `FeedlotFancyNav` |
+| `NavGlyph` | `shell/` | Inline SVG icons for `NavItem` | `NavItem` |
+| `NavBadge` | `shell/` | Count/pending pill for `NavItem` | `NavItem` |
 | `AuthPanel` | `auth/` | Session-aware auth actions | Any authenticated page |
 | `SessionBadge` | `auth/` | Compact current-session indicator | Any authenticated page |
 | `ProfileForm` | `auth/` | Editable profile fields (nickname, avatar visibility) with confirm-guarded save | `/profile/` |
@@ -108,6 +114,8 @@ Names here are reference copies of what [[GLOSSARY]] already decided, not the po
 | `Toast` | `feedback/` | Toast notifications, Melt Toaster builder; `toaster` is a module-level singleton | Any feature needing transient confirmation/error feedback |
 | `Dialog` | `overlay/` | Generic (non-alert) modal | Any feature needing a modal |
 | `Drawer` | `overlay/` | Side-panel slide-in | Any feature needing a side panel |
+| `FancyDrawer` | `overlay/` | Floating sibling of `Drawer`: ⅔ default width, height hugs content (viewport-centered), exposed-side rounding; empty `title` hides `NavPanelTitle` | Compact edge panels that should not span full viewport height |
+| `FeedlotFancyNav` | `feedlot/` | Floating `FancyDrawer` + lock to dock as permanent primary-green rail (mobile sandwich) | `FeedlotShell` (left edge) |
 | `Accordion` | `overlay/` | Collapsible section | Any feature needing progressive disclosure |
 | `ConfirmDialog` | `overlay/` | Confirm-labeled alert-dialog wrapper | Destructive/confirm-gated actions |
 | `Tooltip` | `overlay/` | Hover/focus hint, Melt builder | Any feature needing a short contextual hint |

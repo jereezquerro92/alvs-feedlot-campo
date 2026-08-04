@@ -126,6 +126,7 @@
     <QuickThemeToggle />
     {#if !pending}
       <Button href="/profile/" variant="ghost" size="sm" class="w-full justify-start">{t("nav_profile")}</Button>
+      <Button href="/showcase/components/" variant="ghost" size="sm" class="w-full justify-start">{t("nav_showcase")}</Button>
     {/if}
     <form method="post" action={`${publicBackendUrl}/accounts/logout/`} onsubmit={handleLogoutSubmit}>
       <input type="hidden" name="csrfmiddlewaretoken" value={csrfToken} />

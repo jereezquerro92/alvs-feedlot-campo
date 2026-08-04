@@ -30,7 +30,8 @@ export { default as ClientForm } from "./ClientForm.svelte";
 export { default as PaymentForm } from "./PaymentForm.svelte";
 export { default as PaymentImputationForm } from "./PaymentImputationForm.svelte";
 
-// Dashboard app shell (green scope) — sidebar, topbar and the panel widgets.
+// Dashboard app shell — FancyDrawer nav + topbar widgets (no permanent aside).
+export { default as FeedlotFancyNav } from "./FeedlotFancyNav.svelte";
 export { default as FeedlotSidebar } from "./FeedlotSidebar.svelte";
 export { default as FeedlotTopbar } from "./FeedlotTopbar.svelte";
 export { default as FeedlotShell } from "./FeedlotShell.svelte";
