@@ -11,6 +11,7 @@ from django.db import IntegrityError, transaction
 
 from apps.router.menu import build_menu
 from apps.router.models import ESCALATE, NO_MATCH, Intent
+from apps.users.permissions import ADMINS_GROUP
 
 pytestmark = pytest.mark.django_db
 
@@ -19,6 +20,15 @@ User = get_user_model()
 
 def _user(sub="sub-plain"):
     return User.objects.create_user(sub=sub)
+
+
+def _admin_user(sub="sub-admin"):
+    """A user whose ONLY membership is `admins` — never the gate group under
+    test, so a row it sees is seen through the superset, not through a gate."""
+    user = _user(sub=sub)
+    admins, _created = Group.objects.get_or_create(name=ADMINS_GROUP)
+    user.groups.add(admins)
+    return user
 
 
 def test_fresh_no_group_user_gets_non_degenerate_menu():
@@ -58,6 +68,47 @@ def test_gated_intent_hidden_until_group_membership():
     assert "open the admin site" in [e["phrase"] for e in menu]
 
 
+def test_admins_user_sees_every_active_gated_intent():
+    """#135: `admins` is the standing app-wide superset (signals.py mirrors it
+    into is_staff/is_superuser), so the menu's gate check short-circuits for it
+    — every active row is visible, including gates the user does not belong to.
+    Still a Django-side authorization decision taken before inference, so the
+    router only ever narrows within an already-authorized set
+    ([[adr-15-chatbot-two-tier]] rules 2/3)."""
+    alpha = Group.objects.create(name="gate-alpha")
+    beta = Group.objects.create(name="gate-beta")
+    Intent.objects.create(phrase="ungated", target="/ungated/", order=1)
+    Intent.objects.create(phrase="alpha only", target="/alpha/", order=2, group=alpha)
+    Intent.objects.create(phrase="beta only", target="/beta/", order=3, group=beta)
+
+    user = _admin_user()
+    assert set(user.groups.values_list("name", flat=True)) == {ADMINS_GROUP}
+
+    menu, by_phrase = build_menu(user)
+    assert [entry["phrase"] for entry in menu] == [
+        "ungated",
+        "alpha only",
+        "beta only",
+        NO_MATCH,
+        ESCALATE,
+    ]
+    assert set(by_phrase) == {"ungated", "alpha only", "beta only"}
+    assert by_phrase["beta only"].target == "/beta/"
+
+
+def test_role_less_user_unaffected_by_admins_superset():
+    """The superset widens `admins` only: a user with zero memberships keeps
+    seeing exactly the ungated rows plus the two reserved outcomes."""
+    gamma = Group.objects.create(name="gate-gamma")
+    Intent.objects.create(phrase="ungated", target="/ungated/", order=1)
+    Intent.objects.create(phrase="gamma only", target="/gamma/", order=2, group=gamma)
+
+    user = _user(sub="sub-role-less")
+    menu, by_phrase = build_menu(user)
+    assert [entry["phrase"] for entry in menu] == ["ungated", NO_MATCH, ESCALATE]
+    assert set(by_phrase) == {"ungated"}
+
+
 def test_menu_ordering_is_explicit_and_deterministic():
     """#94: ordering follows Intent.order, not insertion or Meta.ordering
     alone; NO_MATCH always precedes ESCALATE."""
@@ -75,6 +126,24 @@ def test_inactive_intent_excluded():
     user = _user()
     menu, _by_phrase = build_menu(user)
     assert "disabled" not in [e["phrase"] for e in menu]
+
+
+def test_inactive_intent_hidden_even_from_admins_user():
+    """`is_active` is a registry-state filter, not a permission one, so the
+    superset does not reach past it: a retired row stays invisible to `admins`
+    and the menu falls back to the two reserved outcomes."""
+    delta = Group.objects.create(name="gate-delta")
+    Intent.objects.create(
+        phrase="retired gated", target="/retired-gated/", order=1, group=delta, is_active=False
+    )
+    Intent.objects.create(
+        phrase="retired ungated", target="/retired-ungated/", order=2, is_active=False
+    )
+
+    user = _admin_user(sub="sub-admin-inactive")
+    menu, by_phrase = build_menu(user)
+    assert [entry["phrase"] for entry in menu] == [NO_MATCH, ESCALATE]
+    assert by_phrase == {}
 
 
 def test_phrase_collision_rejected_at_write_time():
