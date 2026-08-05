@@ -107,6 +107,14 @@ def register_feeding(*, client, feed_type, quantity, unit_price, origin, date, a
         raise ValidationError("La cantidad debe ser positiva.")
     if unit_price < 0:
         raise ValidationError("El precio unitario no puede ser negativo.")
+    if animal and lot:
+        raise ValidationError("Feeding must target an animal or a lot, not both.")
+    target = animal or lot
+    if target:
+        if target.status != target.Status.ACTIVE:
+            raise ValidationError("Cannot register feeding for an inactive target.")
+        if target.client_id != client.id:
+            raise ValidationError("Target does not belong to the specifying client.")
     feeding = FeedingEvent.objects.create(
         client=client,
         animal=animal,

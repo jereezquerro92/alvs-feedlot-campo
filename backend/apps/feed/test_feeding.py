@@ -186,3 +186,24 @@ def test_register_feeding_rejects_negative_unit_price():
         )
     assert FeedingEvent.objects.count() == 0
     assert LedgerEntry.objects.filter(account=client.account).count() == 0
+
+
+def test_register_feeding_rejects_inactive_target():
+    client, feed, lot = _fixtures()
+    lot.status = "closed"
+    lot.save()
+    with pytest.raises(ValidationError, match="inactive"):
+        register_feeding(
+            client=client, feed_type=feed, quantity="100", unit_price="285",
+            origin=FeedingEvent.Origin.OWN_STOCK, date="2026-07-21", lot=lot,
+        )
+
+
+def test_register_feeding_rejects_wrong_client_target():
+    client, feed, lot = _fixtures()
+    other_client = Client.objects.create(name="Client B", tax_id="30-77777777-7")
+    with pytest.raises(ValidationError, match="belong"):
+        register_feeding(
+            client=other_client, feed_type=feed, quantity="100", unit_price="285",
+            origin=FeedingEvent.Origin.OWN_STOCK, date="2026-07-21", lot=lot,
+        )
