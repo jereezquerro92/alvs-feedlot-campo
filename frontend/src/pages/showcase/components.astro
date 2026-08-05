@@ -61,6 +61,7 @@ import {
   FancyDrawerDemo,
   HomeTriangleDemo,
   CornerNavTriangleDemo,
+  SlotCopy,
 } from "$lib/components/showcase";
 import type {
   TabItem,
@@ -322,7 +323,7 @@ const tocItems: TableOfContentsItem[] = [
       slot="choice-list"
     />
     <DataTable columns={invoiceColumns} rows={invoiceRows} client:load slot="data-table">
-      <p slot="detail" class="text-sm text-muted-foreground">{t("gallery_datatable_detail")}</p>
+      <SlotCopy slot="detail" muted text={t("gallery_datatable_detail")} />
     </DataTable>
     <ChipFilterBar chips={statusChips} client:load slot="chip-filter-bar" />
     <PaginationDemo pageCount={invoicePageCount} client:load slot="pagination" />
@@ -424,7 +425,7 @@ const tocItems: TableOfContentsItem[] = [
     />
     <Fragment slot="overlay-triggers">
       <Dialog triggerLabel={t("demo_dialog_trigger")} title={t("demo_dialog_title")} description={t("demo_dialog_desc")} client:visible>
-        <p>{t("demo_dialog_body")}</p>
+        <SlotCopy text={t("demo_dialog_body")} />
       </Dialog>
     </Fragment>
     <Accordion items={accordionItems} client:visible slot="accordion" />

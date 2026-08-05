@@ -262,12 +262,12 @@
           </Card.Content>
         </Card.Root>
 
-        <Card.Root class="border-border/40 shadow-sm">
+        <Card.Root class="min-w-0 border-border/40 shadow-sm">
           <Card.Header>
             <Card.Title class="text-base">{t("feedlot_donut_title")}</Card.Title>
             <Card.Description>{t("feedlot_donut_desc")}</Card.Description>
           </Card.Header>
-          <Card.Content>
+          <Card.Content class="min-w-0">
             <CostDonut
               slices={costSlices}
               centerLabel={t("feedlot_donut_center")}

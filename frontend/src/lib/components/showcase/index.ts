@@ -29,3 +29,4 @@ export { default as DrawerDemo } from "./DrawerDemo.svelte";
 export { default as FancyDrawerDemo } from "./FancyDrawerDemo.svelte";
 export { default as HomeTriangleDemo } from "./HomeTriangleDemo.svelte";
 export { default as CornerNavTriangleDemo } from "./CornerNavTriangleDemo.svelte";
+export { default as SlotCopy } from "./SlotCopy.svelte";

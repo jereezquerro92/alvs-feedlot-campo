@@ -515,6 +515,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/showcase/RangeCalendarDemo.svelte`
 - `frontend/src/lib/components/showcase/ScrollAreaDemo.svelte`
 - `frontend/src/lib/components/showcase/SliderDemo.svelte`
+- `frontend/src/lib/components/showcase/SlotCopy.svelte`
 - `frontend/src/lib/components/showcase/TableOfContentsDemo.svelte`
 - `frontend/src/lib/components/showcase/TabsDemo.svelte`
 - `frontend/src/lib/components/showcase/TagsInputDemo.svelte`
@@ -1365,6 +1366,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/showcase/RangeCalendarDemo.svelte`
 - `frontend/src/lib/components/showcase/ScrollAreaDemo.svelte`
 - `frontend/src/lib/components/showcase/SliderDemo.svelte`
+- `frontend/src/lib/components/showcase/SlotCopy.svelte`
 - `frontend/src/lib/components/showcase/TableOfContentsDemo.svelte`
 - `frontend/src/lib/components/showcase/TabsDemo.svelte`
 - `frontend/src/lib/components/showcase/TagsInputDemo.svelte`
@@ -1601,6 +1603,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/showcase/RangeCalendarDemo.svelte`
 - `frontend/src/lib/components/showcase/ScrollAreaDemo.svelte`
 - `frontend/src/lib/components/showcase/SliderDemo.svelte`
+- `frontend/src/lib/components/showcase/SlotCopy.svelte`
 - `frontend/src/lib/components/showcase/TableOfContentsDemo.svelte`
 - `frontend/src/lib/components/showcase/TabsDemo.svelte`
 - `frontend/src/lib/components/showcase/TagsInputDemo.svelte`
