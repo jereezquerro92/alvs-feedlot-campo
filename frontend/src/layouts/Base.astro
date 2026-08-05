@@ -4,25 +4,36 @@
  * Docs: [[FRONTEND]]
  * LIVE-DOC:END */
 import "../styles/app.css";
-import { parseThemeConfig, computeThemeSSRAttrs } from "$lib/theme";
+import { parseThemeConfig, computeThemeSSRAttrs, DEFAULTS } from "$lib/theme";
 import PageTitle from "$lib/components/primitives/titles/PageTitle.svelte";
+import FeedlotFancyNav from "$lib/components/feedlot/FeedlotFancyNav.svelte";
+import ChatDrawer from "$lib/components/shell/ChatDrawer.svelte";
+import { resolveShellNav } from "$lib/components/shell/nav";
+import { hasRole } from "$lib/auth";
+import { routerChatCopy } from "$lib/chatui-copy";
 import type { Me } from "$lib/types/user";
+
+/** Temporary: hide the right-edge router ChatDrawer while left-menu work lands. */
+const SHOW_CHAT_DRAWER = false;
 
 interface Props {
   title?: string;
-  /** Session from `/api/me/` — retained for page callers; router ChatDrawer
-   * is not mounted until further advice. */
+  /** Session from `/api/me/` — gates site chrome (left FancyNav + right ChatDrawer). */
   me?: Me | null;
-  /** Reserved: /chatui/ used to suppress a global ChatDrawer. Ignored while
-   * the drawer is not rendered. */
+  /** Set false on /chatui/ (canvas already IS the router). Ignored while SHOW_CHAT_DRAWER is false. */
   chatDrawer?: boolean;
+  /** Set false to suppress the left site menu (e.g. lobby). Default: on whenever the session has a role. */
+  shellNav?: boolean;
 }
 
 const {
   title = process.env.PUBLIC_PROJECT_SLUG ?? "astro-drf-aws",
-  me: _me = null,
-  chatDrawer: _chatDrawer = false,
+  me = null,
+  chatDrawer = true,
+  shellNav = true,
 } = Astro.props;
+
+const publicBackendUrl = process.env.PUBLIC_BACKEND_URL ?? "http://localhost:8000";
 
 // SSR, no-flash theme apply ("Persistence across login — no flash";
 // [[DESIGN-SYSTEM]]): the `theme` cookie — set by the backend on login and
@@ -30,6 +41,15 @@ const {
 // server-side, before the first byte renders.
 const themeBlob = parseThemeConfig(Astro.cookies.get("theme")?.value);
 const { htmlClass, dataBgPreset, style } = computeThemeSSRAttrs(themeBlob);
+const sidebarSide = themeBlob.sidebarSide ?? DEFAULTS.sidebarSide;
+
+const { active: navActive, clientId: navClientId } = resolveShellNav(
+  Astro.url.pathname,
+  Astro.url.searchParams,
+);
+
+const showShellNav = shellNav && hasRole(me);
+const showChatDrawer = SHOW_CHAT_DRAWER && chatDrawer && hasRole(me);
 ---
 
 <!doctype html>
@@ -41,12 +61,31 @@ const { htmlClass, dataBgPreset, style } = computeThemeSSRAttrs(themeBlob);
     <PageTitle title={title} />
   </head>
   <body>
-    <slot />
+    <div class="flex min-h-screen">
+      {
+        showShellNav && (
+          <FeedlotFancyNav
+            client:load
+            active={navActive}
+            clientId={navClientId}
+            side={sidebarSide}
+          />
+        )
+      }
+      <div class="min-w-0 flex-1">
+        <slot />
+      </div>
+    </div>
 
-    <!-- Router ChatDrawer (`?` edge tab) intentionally not rendered until further advice. -->
+    {
+      /* Role-gated router surface ([[CHATBOT]], adr-15). Hidden temporarily
+         via SHOW_CHAT_DRAWER while left-menu work is in progress. */
+      showChatDrawer && (
+        <ChatDrawer client:load publicBackendUrl={publicBackendUrl} copy={routerChatCopy()} />
+      )
+    }
 
     <script>
-
       import "htmx.org";
     </script>
   </body>
