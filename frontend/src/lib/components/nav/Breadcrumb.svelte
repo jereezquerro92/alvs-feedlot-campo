@@ -6,10 +6,11 @@
 <!--
   Pill breadcrumb matching SessionBadge's chrome exactly ([[DESIGN-SYSTEM]]):
   same outer pill classes (`py-1 pl-1 pr-2`, `gap-2`, border, shadow) and a
-  `size-7` home control mirroring the avatar / hamburger hitbox. Pure
-  navigation — links only, no fetch/mutate. Mounts with zero props and never
-  throws ([[adr-22-showcase-ready-components]] rule 1). Copy via i18n
-  ([[LOCALIZATION]]).
+  `size-8` home control matching the Avatar hitbox. Fill is
+  `bg-foreground text-background` so light gets a black disc / light house and
+  dark theme inverts. Pure navigation — links only, no fetch/mutate. Mounts
+  with zero props and never throws ([[adr-22-showcase-ready-components]]
+  rule 1). Copy via i18n ([[LOCALIZATION]]).
 -->
 <script lang="ts" module>
   export type BreadcrumbItem = {
@@ -46,20 +47,15 @@
     href={homeHref}
     aria-label={t("nav_home")}
     title={t("nav_home")}
-    class="inline-flex size-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+    class="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-90"
   >
     <svg
       viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="1.75"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      class="size-3.5"
+      fill="currentColor"
+      class="size-4"
       aria-hidden="true"
     >
-      <path d="M3 21V10l9-6 9 6v11" />
-      <path d="M9 21v-6h6v6" />
+      <path d="M12 3.2 3 10.4V21a1 1 0 0 0 1 1h5.5v-6.5h5V22H20a1 1 0 0 0 1-1V10.4L12 3.2Z" />
     </svg>
   </a>
 

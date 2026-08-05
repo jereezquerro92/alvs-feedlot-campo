@@ -33,6 +33,9 @@
     width = "18rem",
     openLabel = t("drawer_open"),
     closeLabel = t("drawer_close"),
+    /** Optional fixed peek-tab glyph (e.g. "?" for help). When omitted, a
+     * directional chevron follows open/side. */
+    tabGlyph = "",
     children,
     class: className = undefined,
   }: {
@@ -45,6 +48,7 @@
     openLabel?: string;
     /** Accessible label for the tab when expanded. */
     closeLabel?: string;
+    tabGlyph?: string;
     children?: Snippet;
     class?: string;
   } = $props();
@@ -54,8 +58,11 @@
   // just outside the body, lands flush at the viewport edge (matches the
   // reference peek-tab behavior).
   const offClass = $derived(isLeft ? "-translate-x-full" : "translate-x-full");
-  // Chevron points the direction the tab will move the drawer.
-  const glyph = $derived(isLeft ? (open ? "‹" : "›") : open ? "›" : "‹");
+  // Chevron points the direction the tab will move the drawer; a caller-supplied
+  // tabGlyph (help "?") replaces it for both states.
+  const glyph = $derived(
+    tabGlyph || (isLeft ? (open ? "‹" : "›") : open ? "›" : "‹"),
+  );
 
   let rootEl: HTMLElement | undefined = $state();
   let closeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -166,8 +173,8 @@
     class={cn(
       "absolute top-1/2 flex h-12 w-7 -translate-y-1/2 items-center justify-center bg-background text-muted-foreground shadow-md transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
       isLeft
-        ? "left-full rounded-r-md border border-l-0 border-border"
-        : "right-full rounded-l-md border border-r-0 border-border",
+        ? "left-full rounded-r-2xl border border-l-0 border-border"
+        : "right-full rounded-l-2xl border border-r-0 border-border",
     )}
   >
     <span aria-hidden="true">{glyph}</span>

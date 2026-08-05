@@ -5,7 +5,8 @@
 
 <!--
   Pin control for FancyNav: open lock = floating drawer; closed lock = docked
-  rail. Primary fill + primary-foreground label. Zero-prop safe (adr-22 r1).
+  rail. Icon-only disc (same size + tokens as Breadcrumb home) — lives in the
+  FancyNav footer with profile + theme. Zero-prop safe (adr-22 r1).
 -->
 <script lang="ts">
   import { cn } from "$lib/utils";
@@ -13,12 +14,10 @@
 
   let {
     locked = false,
-    label = t("shell_nav_label"),
     class: className = undefined,
     onclick,
   }: {
     locked?: boolean;
-    label?: string;
     class?: string;
     onclick?: (event: MouseEvent) => void;
   } = $props();
@@ -33,30 +32,21 @@
   {onclick}
   aria-pressed={locked}
   aria-label={aria}
+  title={aria}
   class={cn(
-    "flex w-full items-center gap-2 rounded-lg bg-primary px-2.5 py-1.5 text-xs font-semibold tracking-wide text-primary-foreground shadow-sm transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+    "inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
     className,
   )}
 >
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    stroke-width="1.75"
-    stroke-linecap="round"
-    stroke-linejoin="round"
-    class="size-3.5 shrink-0"
-    aria-hidden="true"
-  >
+  <svg viewBox="0 0 24 24" fill="currentColor" class="size-4" aria-hidden="true">
     {#if locked}
-      <!-- Closed lock -->
-      <rect x="5" y="11" width="14" height="10" rx="2" />
-      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+      <path
+        d="M17 10V8A5 5 0 0 0 7 8v2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8a2 2 0 0 0-2-2h-1Zm-8 0V8a3 3 0 1 1 6 0v2H9Zm3 5.5a1.5 1.5 0 0 1 .75 2.8V20h-1.5v-1.7a1.5 1.5 0 0 1 .75-2.8Z"
+      />
     {:else}
-      <!-- Open lock — shackle swung open -->
-      <rect x="5" y="11" width="14" height="10" rx="2" />
-      <path d="M8 11V8a4 4 0 0 1 7.5-1.8" />
+      <path
+        d="M17 10h1a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h7V8a3 3 0 0 0-5.76-1.2l-1.5-.8A5 5 0 0 1 16 8v2Zm-5 5.5a1.5 1.5 0 0 0-.75 2.8V20h1.5v-1.7a1.5 1.5 0 0 0-.75-2.8Z"
+      />
     {/if}
   </svg>
-  <span class="truncate">{label}</span>
 </button>
