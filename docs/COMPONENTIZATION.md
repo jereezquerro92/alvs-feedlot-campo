@@ -40,10 +40,10 @@ Two more mechanics worth knowing before touching that file. It is the only DOM-b
 
 ```
 src/lib/components/
-  primitives/        # PageTitle.svelte, SectionTitle.svelte — .svelte, zero-hydration
+  primitives/        # PageTitle, PageHeader, SectionTitle, PageStage — .svelte, zero-hydration
   ui/                # shadcn-svelte vendored set (adr-52 r4), incl. table/
   data/              # DataTable, NumericValue, StatusBadge, ChipFilterBar, Pagination, Collapsible, Tree
-  dashboard/         # MetricTile, MetricTileStrip, EntityCard, EntityGrid, SummaryCard
+  dashboard/         # MetricTile, MetricTileStrip, EntityCard, EntityGrid, SummaryCard, ChoiceList
   chat/              # ChatUI, ChatMessageList, ChatComposer — the router's chat surface (CHATBOT)
   auth/              # AuthPanel, SessionBadge, SessionMenuRow, ProfileForm
   form/              # Select, Combobox, Checkbox, Switch, DatePicker, DateRangePicker, PinInput, TagsInput — Melt builders (adr-52 r8 default)
@@ -51,7 +51,7 @@ src/lib/components/
   feedback/          # Toast — Melt builder, module-level `toaster` singleton
   overlay/           # Dialog, Drawer, Accordion, ConfirmDialog, Tooltip, Popover, HoverCard, ScrollArea, SidePanel — Melt builders (adr-52 r8 default), SOLID open/close primitives
   theme/             # ThemeModeToggle, QuickThemeToggle, AppearanceCard, PaletteFields — Melt-builder theme controls
-  showcase/          # AlertDialogDemo, TabsDemo, DropdownMenuDemo, ContextMenuDemo, MenubarDemo, TableOfContentsDemo, TooltipDemo, PopoverDemo, HoverCardDemo, CollapsibleDemo, TreeDemo, ScrollAreaDemo, SidePanelDemo, ToastTriggerDemo — gallery-only demo compositions, not app surface
+  showcase/          # AlertDialogDemo, TabsDemo, DropdownMenuDemo, ContextMenuDemo, MenubarDemo, TableOfContentsDemo, TooltipDemo, PopoverDemo, HoverCardDemo, CollapsibleDemo, TreeDemo, ScrollAreaDemo, SidePanelDemo, ToastTriggerDemo, ChoiceListDemo — gallery-only demo compositions, not app surface
   shell/             # ChatDrawer, NavItem/NavBrand/NavPanelTitle — layout-mounted compositions; one ChatDrawer instance per page
   views/             # LobbyView, ProfileView, ShowcaseView, ShowcaseGalleryView, ChatView — one zero-hydration page body per route
 ```
@@ -67,6 +67,8 @@ Names here are reference copies of what [[GLOSSARY]] already decided, not the po
 | Component | Folder | Purpose | Recommended for |
 |---|---|---|---|
 | `PageTitle` | `primitives/` | Page-level heading, zero-hydration | Every page |
+| `PageHeader` | `primitives/titles/` | Page title + subtitle + optional actions | Every page |
+| `PageStage` | `primitives/` | Centers a primary control in the page body | Initial pick / focus moments |
 | `SectionTitle` | `primitives/` | Section-level heading, zero-hydration | Every page |
 | `CornerNavTriangle` | `primitives/` | Fixed bottom-right isosceles-triangle nav, hand-rolled SVG (rounded on all corners incl. the screen-corner vertex — no Melt builder for this shape), cycles home→chat→showcase | Showcase gallery demo only (not mounted site-wide) |
 | `DataTable` | `data/` | Generic sortable/expandable data table | Financial dashboards & reporting (line-item tables, statements) |
@@ -81,6 +83,7 @@ Names here are reference copies of what [[GLOSSARY]] already decided, not the po
 | `EntityCard` | `dashboard/` | Card summarizing one entity's key stats | Financial dashboards & reporting (account/holding cards); general entity display |
 | `EntityGrid` | `dashboard/` | Grid of `EntityCard` | Financial dashboards & reporting; general entity display |
 | `SummaryCard` | `dashboard/` | Pinned aggregate/rollup card | Financial dashboards & reporting |
+| `ChoiceList` | `dashboard/` | Big-control titled card of pressable rows with optional badge | Initial pick / choose-one-and-go surfaces |
 | `ChatUI` | `chat/` | Composed chat surface (list + composer) | [[CHATBOT]] router UI |
 | `ChatMessageList` | `chat/` | Renders structured router outcomes only, never free prose | [[CHATBOT]] router UI |
 | `ChatComposer` | `chat/` | Posts raw user text to the router endpoint | [[CHATBOT]] router UI |

@@ -101,7 +101,7 @@
         <slot name="mobile-nav" />
       </nav>
 
-      <main class="flex-1 px-4 py-6 sm:px-8 sm:py-8">
+      <main class="flex flex-1 flex-col px-4 py-6 sm:px-8 sm:py-8">
         {#if backHref}
           <a
             href={backHref}

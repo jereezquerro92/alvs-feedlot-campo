@@ -392,6 +392,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/chat/ChatMessageList.svelte`
 - `frontend/src/lib/components/chat/ChatUI.svelte`
 - `frontend/src/lib/components/chat/index.ts`
+- `frontend/src/lib/components/dashboard/ChoiceList.svelte`
 - `frontend/src/lib/components/dashboard/EntityCard.svelte`
 - `frontend/src/lib/components/dashboard/EntityGrid.svelte`
 - `frontend/src/lib/components/dashboard/MetricTile.svelte`
@@ -481,6 +482,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/overlay/index.ts`
 - `frontend/src/lib/components/primitives/CornerNavTriangle.svelte`
 - `frontend/src/lib/components/primitives/HomeTriangle.svelte`
+- `frontend/src/lib/components/primitives/PageStage.svelte`
 - `frontend/src/lib/components/primitives/titles/PageHeader.svelte`
 - `frontend/src/lib/components/primitives/titles/PageTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/SectionTitle.svelte`
@@ -496,6 +498,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/shell/nav.ts`
 - `frontend/src/lib/components/showcase/BreadcrumbDemo.svelte`
 - `frontend/src/lib/components/showcase/CalendarDemo.svelte`
+- `frontend/src/lib/components/showcase/ChoiceListDemo.svelte`
 - `frontend/src/lib/components/showcase/CollapsibleDemo.svelte`
 - `frontend/src/lib/components/showcase/ContextMenuDemo.svelte`
 - `frontend/src/lib/components/showcase/CornerNavTriangleDemo.svelte`
@@ -1250,6 +1253,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/chat/ChatComposer.svelte`
 - `frontend/src/lib/components/chat/ChatMessageList.svelte`
 - `frontend/src/lib/components/chat/ChatUI.svelte`
+- `frontend/src/lib/components/dashboard/ChoiceList.svelte`
 - `frontend/src/lib/components/dashboard/EntityCard.svelte`
 - `frontend/src/lib/components/dashboard/EntityGrid.svelte`
 - `frontend/src/lib/components/dashboard/MetricTile.svelte`
@@ -1331,6 +1335,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/overlay/Tooltip.svelte`
 - `frontend/src/lib/components/primitives/CornerNavTriangle.svelte`
 - `frontend/src/lib/components/primitives/HomeTriangle.svelte`
+- `frontend/src/lib/components/primitives/PageStage.svelte`
 - `frontend/src/lib/components/primitives/titles/PageHeader.svelte`
 - `frontend/src/lib/components/primitives/titles/PageTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/SectionTitle.svelte`
@@ -1343,6 +1348,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/shell/NavPanelTitle.svelte`
 - `frontend/src/lib/components/showcase/BreadcrumbDemo.svelte`
 - `frontend/src/lib/components/showcase/CalendarDemo.svelte`
+- `frontend/src/lib/components/showcase/ChoiceListDemo.svelte`
 - `frontend/src/lib/components/showcase/CollapsibleDemo.svelte`
 - `frontend/src/lib/components/showcase/ContextMenuDemo.svelte`
 - `frontend/src/lib/components/showcase/CornerNavTriangleDemo.svelte`
@@ -1472,6 +1478,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/chat/ChatMessageList.svelte`
 - `frontend/src/lib/components/chat/ChatUI.svelte`
 - `frontend/src/lib/components/chat/index.ts`
+- `frontend/src/lib/components/dashboard/ChoiceList.svelte`
 - `frontend/src/lib/components/dashboard/EntityCard.svelte`
 - `frontend/src/lib/components/dashboard/EntityGrid.svelte`
 - `frontend/src/lib/components/dashboard/MetricTile.svelte`
@@ -1561,6 +1568,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/overlay/index.ts`
 - `frontend/src/lib/components/primitives/CornerNavTriangle.svelte`
 - `frontend/src/lib/components/primitives/HomeTriangle.svelte`
+- `frontend/src/lib/components/primitives/PageStage.svelte`
 - `frontend/src/lib/components/primitives/titles/PageHeader.svelte`
 - `frontend/src/lib/components/primitives/titles/PageTitle.svelte`
 - `frontend/src/lib/components/primitives/titles/SectionTitle.svelte`
@@ -1576,6 +1584,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/shell/nav.ts`
 - `frontend/src/lib/components/showcase/BreadcrumbDemo.svelte`
 - `frontend/src/lib/components/showcase/CalendarDemo.svelte`
+- `frontend/src/lib/components/showcase/ChoiceListDemo.svelte`
 - `frontend/src/lib/components/showcase/CollapsibleDemo.svelte`
 - `frontend/src/lib/components/showcase/ContextMenuDemo.svelte`
 - `frontend/src/lib/components/showcase/CornerNavTriangleDemo.svelte`

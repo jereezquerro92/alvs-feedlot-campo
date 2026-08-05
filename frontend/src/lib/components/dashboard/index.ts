@@ -11,3 +11,5 @@ export type { EntityStat } from "./EntityCard.svelte";
 export { default as EntityGrid } from "./EntityGrid.svelte";
 export { default as SummaryCard } from "./SummaryCard.svelte";
 export type { SummaryItem } from "./SummaryCard.svelte";
+export { default as ChoiceList } from "./ChoiceList.svelte";
+export type { ChoiceItem } from "./ChoiceList.svelte";

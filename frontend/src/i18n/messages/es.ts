@@ -122,8 +122,9 @@ export const es = {
   gallery_reco_body:
     "DataTable, NumericValue, MetricTileStrip, StatusBadge, ChipFilterBar, EntityGrid y SummaryCard son los componentes más aptos para ese dominio — es solo una guía; todos los componentes siguen siendo agnósticos del negocio.",
   gallery_typography: "Tipografía",
-  gallery_page_header: "PageHeader",
-  gallery_page_header_subtitle: "Título de página con subtítulo y acciones opcionales.",
+  gallery_page_header: "Operación del día",
+  gallery_page_header_subtitle:
+    "Título en color primary, subtítulo muted, acciones al costado — el default de página.",
   gallery_typography_note:
     "PageTitle renderiza el <title> del documento en el servidor, sin directiva de cliente — Base.astro ya lo usa en todas las páginas, incluida esta, así que no tiene demo visual aparte. SectionTitle provee las tres escalas de título de abajo.",
   gallery_scale_h1: "Título de sección — escala h1",
@@ -143,6 +144,13 @@ export const es = {
   gallery_metrictiles: "MetricTileStrip — clickeable",
   gallery_entitygrid: "EntityGrid de EntityCards",
   gallery_summarycard: "SummaryCard",
+  gallery_choice_list: "ChoiceList — control grande de elección",
+  gallery_choice_list_title: "Elegí una cuenta",
+  gallery_choice_list_subtitle: "Un toque abre la operación.",
+  demo_choice_a: "Don Alberto",
+  demo_choice_b: "Estancia La Esperanza",
+  demo_choice_badge_own: "Hacienda propia",
+  demo_choice_badge_board: "Hotelería",
   gallery_chat: "Chat",
   gallery_chat_note:
     "La superficie del router: solo resultados de enum cerrado, cero prosa libre. El mismo componente que chatui.astro renderiza a página completa.",
@@ -373,8 +381,7 @@ export const es = {
 
   // feedlot — lista de clientes
   feedlot_clients_title: "Clientes del feedlot",
-  feedlot_clients_intro:
-    "Cada cliente con hacienda en el feedlot y el saldo de su cuenta corriente. Entrá a un cliente para ver su panel.",
+  feedlot_clients_intro: "Elegí un cliente para abrir su operación.",
   feedlot_col_client: "Cliente",
   feedlot_col_kind: "Tipo",
   feedlot_col_taxid: "CUIT",

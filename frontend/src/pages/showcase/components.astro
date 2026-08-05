@@ -56,6 +56,7 @@ import {
   TableOfContentsDemo,
   BreadcrumbDemo,
   PageHeaderDemo,
+  ChoiceListDemo,
   DrawerDemo,
   FancyDrawerDemo,
   HomeTriangleDemo,
@@ -254,6 +255,7 @@ const tocItems: TableOfContentsItem[] = [
       entityGrid: t("gallery_entitygrid"),
       summaryCard: t("gallery_summarycard"),
       summaryTitle: t("demo_summary_title"),
+      choiceList: t("gallery_choice_list"),
       chat: t("gallery_chat"),
       chatNote: t("gallery_chat_note"),
       form: t("gallery_form"),
@@ -297,6 +299,27 @@ const tocItems: TableOfContentsItem[] = [
       title={t("gallery_page_header")}
       subtitle={t("gallery_page_header_subtitle")}
       slot="page-header"
+    />
+    <ChoiceListDemo
+      title={t("gallery_choice_list_title")}
+      subtitle={t("gallery_choice_list_subtitle")}
+      items={[
+        {
+          id: "a",
+          label: t("demo_choice_a"),
+          href: "#",
+          badge: t("demo_choice_badge_own"),
+          badgeVariant: "success",
+        },
+        {
+          id: "b",
+          label: t("demo_choice_b"),
+          href: "#",
+          badge: t("demo_choice_badge_board"),
+          badgeVariant: "success",
+        },
+      ]}
+      slot="choice-list"
     />
     <DataTable columns={invoiceColumns} rows={invoiceRows} client:load slot="data-table">
       <p slot="detail" class="text-sm text-muted-foreground">{t("gallery_datatable_detail")}</p>

@@ -37,6 +37,7 @@
     entityGrid: string;
     summaryCard: string;
     summaryTitle: string;
+    choiceList: string;
     chat: string;
     chatNote: string;
     form: string;
@@ -196,6 +197,11 @@
     <div class="flex flex-col gap-2">
       <SectionTitle as="h3">{copy.summaryCard}</SectionTitle>
       <SummaryCard title={copy.summaryTitle} items={summaryItems} />
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <SectionTitle as="h3">{copy.choiceList}</SectionTitle>
+      <slot name="choice-list" />
     </div>
   </section>
 
