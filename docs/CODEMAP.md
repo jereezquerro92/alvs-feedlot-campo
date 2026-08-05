@@ -495,6 +495,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/shell/NavLockToggle.svelte`
 - `frontend/src/lib/components/shell/NavPanelTitle.svelte`
 - `frontend/src/lib/components/shell/index.ts`
+- `frontend/src/lib/components/shell/nav-fsm.ts`
 - `frontend/src/lib/components/shell/nav.ts`
 - `frontend/src/lib/components/showcase/BreadcrumbDemo.svelte`
 - `frontend/src/lib/components/showcase/CalendarDemo.svelte`
@@ -1583,6 +1584,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/shell/NavLockToggle.svelte`
 - `frontend/src/lib/components/shell/NavPanelTitle.svelte`
 - `frontend/src/lib/components/shell/index.ts`
+- `frontend/src/lib/components/shell/nav-fsm.ts`
 - `frontend/src/lib/components/shell/nav.ts`
 - `frontend/src/lib/components/showcase/BreadcrumbDemo.svelte`
 - `frontend/src/lib/components/showcase/CalendarDemo.svelte`

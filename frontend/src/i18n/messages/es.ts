@@ -108,7 +108,6 @@ export const es = {
   shell_nav_badge_pending: "pendientes",
   shell_nav_lock_aria: "Fijar menú al borde",
   shell_nav_unlock_aria: "Liberar menú flotante",
-  shell_nav_dismiss_overlay: "Cerrar menú",
 
   // /profile/
   profile_title: "Perfil",
