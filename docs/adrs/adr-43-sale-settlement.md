@@ -2,55 +2,55 @@
 title: adr-43-sale-settlement
 type: adr
 category: backend
-use_case: registrar una salida por venta, liquidar la comisión de engorde o el producido propio, leer el margen de la cuenta propia
+use_case: register a sale exit, settle the fattening commission or own-account proceeds, read the own-account margin
 created: 2026-07-26
-modified: 2026-08-02
+modified: 2026-08-04
 tags: [adr, feedlot, ledger, livestock, sale, settlement, phase-4c]
 ---
 
-# ADR-43 — La liquidación de venta: comisión de engorde y venta propia
+# ADR-43 — Sale settlement: fattening commission and own-account sale
 
 ## CONTEXT
 
-> Una salida por venta deja huella económica, y son dos casos distintos según de quién es la hacienda: el cliente boarding paga una comisión por el engorde, y la hacienda propia produce un ingreso del feedlot. La diferencia la decide `Client.kind`, y ninguna liquidación muta un asiento existente.
+> A sale exit leaves an economic record, and there are two distinct cases depending on who owns the livestock: the boarding client pays a commission for fattening, while own livestock produces feedlot income. The distinction is decided by `Client.kind`, and no settlement mutates an existing ledger entry.
 
 ## ASSERTIONS
 
-1. Liquidar una venta postea un `LedgerEntry` nuevo en la cuenta del dueño de la hacienda. No edita ni reabre nada: los cargos de alimento y sanidad quedan cobrados y la salida no se reescribe ([[adr-25-account-ledger]] regla 1). El asiento se liga a la salida por `(source_kind="exit", source_id=<Exit.id>)` ([[adr-24-feedlot-domain]] regla 4).
-2. Hacienda de cliente (`Client.kind=boarding`): la salida-venta postea un **débito** `concept=service` por la comisión de engorde, `(engorde_commission_pct / 100) × kilos_ganados × sale_price_per_kg`. Los kilos ganados son los medidos de pesaje a pesaje sobre los tramos medibles ([[adr-29-metrics-derivation]] regla 3). El asiento fotografía `unit_price` y `quantity` del día ([[adr-25-account-ledger]] regla 3).
-3. Hacienda propia (`Client.kind=own`): la salida-venta postea un **crédito** `concept=sale` por `weight × sale_price_per_kg` en la cuenta propia. Como esa cuenta ya acumula los costos como débitos, el crédito los compensa y el saldo neto tiende al margen.
-4. La liquidación está gateada por sus insumos y no postea nada cuando falta `sale_price_per_kg`; cuando en el caso boarding falta `engorde_commission_pct` o los kilos ganados no son medibles, dan cero o dan negativo; o cuando en el caso propio falta `weight`. La salida se registra igual, sin liquidación.
-5. La liquidación aplica exclusivamente a `Exit.kind=sale`. Una muerte sigue sin tocar el ledger y una salida `transfer` u `other` tampoco postea: no hubo venta que liquidar, y el consumo ya cobrado no se revierte.
-6. Qué asiento se postea lo decide `Client.kind` del dueño, resuelto desde el `Animal` o `Lot` de la salida. El único campo nuevo es `engorde_commission_pct` (nullable), que sólo aplica al caso boarding; no hay un "modo de liquidación" redundante con `kind`.
-7. No hay tabla `Settlement`: la liquidación es un `LedgerEntry`. `register_exit` gana la lógica gateada y las salidas ya cargadas siguen válidas — la liquidación aplica hacia adelante y no reprocesa el pasado.
+1. Settling a sale posts a new `LedgerEntry` to the livestock owner's account. It edits or reopens nothing: feed and sanitary charges remain collected and the exit is not rewritten ([[adr-25-account-ledger]] rule 1). The entry is linked to the exit by `(source_kind="exit", source_id=<Exit.id>)` ([[adr-24-feedlot-domain]] rule 4).
+2. Client livestock (`Client.kind=boarding`): the sale exit posts a **debit** `concept=service` for the fattening commission, `(engorde_commission_pct / 100) × kilos_ganados × sale_price_per_kg`. Weight gained is measured weigh-in to weigh-out across measurable intervals ([[adr-29-metrics-derivation]] rule 3). The entry snapshots `unit_price` and `quantity` as of the day ([[adr-25-account-ledger]] rule 3).
+3. Own livestock (`Client.kind=own`): the sale exit posts a **credit** `concept=sale` for `weight × sale_price_per_kg` to the own account. Since that account already accumulates costs as debits, the credit offsets them and the net balance tends toward the margin.
+4. Settlement is gated by its inputs and posts nothing when `sale_price_per_kg` is missing; when in the boarding case `engorde_commission_pct` is missing or weight gained is not measurable, they yield zero or negative; or when in the own case `weight` is missing. The exit is recorded regardless, without settlement.
+5. Settlement applies exclusively to `Exit.kind=sale`. A death still does not touch the ledger, and a `transfer` or `other` exit also posts nothing: there was no sale to settle, and already-charged consumption is not reversed.
+6. Which entry is posted is decided by the owner's `Client.kind`, resolved from the `Animal` or `Lot` of the exit. The only new field is `engorde_commission_pct` (nullable), which applies only to the boarding case; there is no "settlement mode" that duplicates `kind`.
+7. There is no `Settlement` table: settlement is a `LedgerEntry`. `register_exit` gains the gated logic and already-loaded exits remain valid — settlement applies going forward and does not reprocess the past.
 
 ## FORBIDDEN
 
-- **NEVER** mutar un asiento para liquidar (regla 1). Una liquidación es un hecho nuevo, no una corrección del pasado.
-- **NEVER** postear un cargo cuando falta un insumo (regla 4). Un asiento fabricado es peor que una métrica fabricada: mueve el saldo real de un cliente.
-- **NEVER** cobrar la comisión sobre el peso total (regla 2). Incluiría el peso de ingreso que el cliente ya traía; lo que el feedlot cobra es el engorde.
-- **NEVER** liquidar una muerte o un retiro sin venta (regla 5). No hubo venta, y revertir consumo por una salida sería otra decisión, comercial y no técnica.
-- **NEVER** agregar un campo que duplique la distinción de `Client.kind` (regla 6). Dos campos que dicen lo mismo terminan contradiciéndose.
+- **NEVER** mutate an entry to settle (rule 1). A settlement is a new fact, not a correction of the past.
+- **NEVER** post a charge when an input is missing (rule 4). A fabricated entry is worse than a fabricated metric: it moves a real client balance.
+- **NEVER** charge the commission on total weight (rule 2). That would include the intake weight the client already had; what the feedlot charges is the fattening.
+- **NEVER** settle a death or a non-sale exit (rule 5). There was no sale, and reversing consumption for an exit would be a separate commercial, not technical, decision.
+- **NEVER** add a field that duplicates the `Client.kind` distinction (rule 6). Two fields saying the same thing will eventually contradict each other.
 
 ## REJECTED
 
-- **Un modelo `Settlement` aparte** — la liquidación como su propia tabla, con su estado. Rechazado por la regla 7: la liquidación *es* un asiento, y una tabla paralela sería un segundo lugar donde mirar cuánto se cobró.
-- **Registrar el precio de venta de la hacienda de cliente como ingreso propio** — tomar la venta entera del boarding. Rechazado: la venta es del cliente y el feedlot cobra el servicio de engordar, no el producido.
-- **Reliquidar las salidas ya cargadas** — recorrer el pasado aplicando la nueva regla. No se hace (regla 7); si se necesita, es una acción explícita con su propio cambio.
-- **`Exit` sin ninguna huella económica** — la política previa, donde `sale_price_per_kg` era informativo y ninguna salida posteaba. Reemplazada por este ADR, que [[adr-25-account-ledger]] regla 6 exigía como vehículo.
+- **A separate `Settlement` model** — settlement as its own table with its own state. Rejected by rule 7: settlement *is* an entry, and a parallel table would be a second place to look for what was charged.
+- **Recording the boarding client's sale price as own income** — taking the full boarding sale. Rejected: the sale belongs to the client and the feedlot charges for the fattening service, not the proceeds.
+- **Re-settling already-loaded exits** — walking the past and applying the new rule. Not done (rule 7); if needed it is an explicit action with its own change.
+- **`Exit` with no economic record** — the prior policy, where `sale_price_per_kg` was informational and no exit posted. Replaced by this ADR, which [[adr-25-account-ledger]] rule 6 required as its vehicle.
 
 ## RELATED
 
 ### related adrs
 
-- [[docs/adrs/adr-25-account-ledger]] — reglas 1, 3 y 6, el asiento inmutable, el precio del día y el diferimiento que esto cumple
-- [[docs/adrs/adr-28-animal-lifecycle-and-sanitary]] — la salida y la muerte, y qué parte quedó intacta
-- [[docs/adrs/adr-24-feedlot-domain]] — regla 4, el par genérico que liga el asiento a la salida
-- [[docs/adrs/adr-29-metrics-derivation]] — reglas 2 y 3, los kilos ganados y el hueco honesto
-- [[docs/adrs/adr-47-genetics-semen-embryo]] — el mismo `Concept.SALE` en la venta de semen
+- [[docs/adrs/adr-25-account-ledger]] — rules 1, 3 and 6, the immutable entry, the day price, and the deferral this fulfills
+- [[docs/adrs/adr-28-animal-lifecycle-and-sanitary]] — the exit and death, and what part remained intact
+- [[docs/adrs/adr-24-feedlot-domain]] — rule 4, the generic pair that links the entry to the exit
+- [[docs/adrs/adr-29-metrics-derivation]] — rules 2 and 3, weight gained and the honest gap
+- [[docs/adrs/adr-47-genetics-semen-embryo]] — the same `Concept.SALE` in semen sales
 
 ### related files
 
 - [[docs/FEEDLOT-DATA-MODEL]] — `Exit`, `LedgerEntry`, `Client`
-- [[docs/feedlot/15-liquidacion-de-venta-propuesta]] — el modelo comercial que el dueño definió
-- [[docs/API]] — la ruta de salidas
+- [[docs/feedlot/15-liquidacion-de-venta-propuesta]] — the commercial model the owner defined
+- [[docs/API]] — the exits route

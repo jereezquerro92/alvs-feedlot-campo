@@ -2,54 +2,54 @@
 title: adr-28-animal-lifecycle-and-sanitary
 type: adr
 category: backend
-use_case: registrar un pesaje, una muerte o una salida, cargar una aplicación sanitaria, calcular GDP de un lote, tocar la app sanitary
+use_case: register a weighing, a death or an exit, load a sanitary application, calculate ADG for a lot, touch the sanitary app
 created: 2026-07-21
-modified: 2026-08-02
+modified: 2026-08-04
 tags: [adr, feedlot, livestock, sanitary, lifecycle, phase-2]
 ---
 
-# ADR-28 — Ciclo del animal y la app `sanitary`
+# ADR-28 — Animal lifecycle and the `sanitary` app
 
 ## CONTEXT
 
-> Qué le pasó al animal después de entrar y comer: cuánto engordó, si murió, cuándo salió y qué sanidad recibió. Los tres eventos de ciclo de vida comparten forma pero no tabla, y la sanidad siempre se cobra.
+> What happened to the animal after it entered and ate: how much it gained, whether it died, when it left, and what sanitary care it received. The three lifecycle events share shape but not table, and sanitary care is always charged.
 
 ## ASSERTIONS
 
-1. `Weighing`, `Death` y `Exit` heredan del abstracto `LifecycleEvent`, que aporta el par `animal`/`lot` y su restricción XOR ([[adr-26-livestock-individual-and-lot]] regla 3). Cada uno mantiene su propia tabla.
-2. El GDP de un lote se compara por cabeza (`total_weight / head_count`). Si el `head_count` difiere entre los dos pesajes, el período se reporta con `adg = null` y `not_calculable = "head_count_changed"`: el total de un lote se mueve por ingresos, muertes y salidas, no sólo por engorde.
-3. Una muerte no genera asiento — el alimento y la sanidad ya consumidos quedan cobrados y una muerte no los revierte. Una salida tampoco los revierte, y en sus tipos `transfer`/`other` no postea nada. La salida-venta (`Exit.kind=sale`) sí liquida, según [[adr-43-sale-settlement]]: hacienda de cliente (`kind=boarding`) paga una comisión de engorde como débito de servicio; hacienda propia (`kind=own`) registra el producido como crédito en la cuenta propia. El `sale_price_per_kg` es el precio que esa liquidación fotografía ([[adr-25-account-ledger]] regla 3).
-4. La app del dominio sanitario se llama `sanitary`, porque `apps.health` es el liveness probe del template y el probe es contrato con el orquestador.
-5. Toda aplicación sanitaria se cobra: `register_health_event` siempre postea un débito. No existe el equivalente al `origin=client_stock` de la alimentación, porque los productos sanitarios los pone siempre el feedlot.
-6. Los eventos de ciclo de vida son inmutables: los viewsets exponen `list`/`retrieve`/`create`, sin `update` ni `destroy`. Un animal muerto o vendido rechaza pesajes y sanidad posteriores; la carga tardía con fecha retroactiva se acepta mientras el target siga activo.
+1. `Weighing`, `Death`, and `Exit` inherit from the abstract `LifecycleEvent`, which contributes the `animal`/`lot` pair and its XOR constraint ([[adr-26-livestock-individual-and-lot]] rule 3). Each one keeps its own table.
+2. The ADG of a lot is compared per head (`total_weight / head_count`). If `head_count` differs between the two weighings, the period is reported with `adg = null` and `not_calculable = "head_count_changed"`: a lot's total shifts due to entries, deaths, and exits, not only by weight gain.
+3. A death does not create a ledger entry — the feed and sanitary care already consumed remain charged and a death does not reverse them. An exit does not reverse them either, and in its `transfer`/`other` types it posts nothing. The sale-exit (`Exit.kind=sale`) does settle, per [[adr-43-sale-settlement]]: client livestock (`kind=boarding`) pays a fattening commission as a service debit; own livestock (`kind=own`) records the proceeds as a credit in the own account. `sale_price_per_kg` is the price that settlement captures ([[adr-25-account-ledger]] rule 3).
+4. The sanitary domain app is named `sanitary`, because `apps.health` is the template's liveness probe and the probe is a contract with the orchestrator.
+5. Every sanitary application is charged: `register_health_event` always posts a debit. There is no equivalent to the feed's `origin=client_stock`, because sanitary products are always supplied by the feedlot.
+6. Lifecycle events are immutable: viewsets expose `list`/`retrieve`/`create`, without `update` or `destroy`. A dead or sold animal rejects subsequent weighings and sanitary applications; late entry with a retroactive date is accepted as long as the target is still active.
 
 ## FORBIDDEN
 
-- **NEVER** calcular el GDP de un lote sobre el peso total (regla 2). El total lo mueve el rodeo entrando y saliendo, así que el número mediría cualquier cosa menos crecimiento.
-- **NEVER** rellenar un GDP no calculable con una estimación (regla 2). Un número plausible y falso se grafica igual que uno real ([[adr-29-metrics-derivation]] regla 2).
-- **NEVER** revertir cargos por una muerte de forma automática (regla 3). Sería convertir al feedlot en asegurador del cliente, que es una decisión comercial; si se toma, entra como un `adjustment` explícito y auditable.
-- **NEVER** renombrar `apps.health` para liberar el nombre (regla 4). El probe es contrato con el orquestador; lo que se renombra es el dominio nuevo.
-- **NEVER** exponer `update` o `destroy` sobre un evento de ciclo de vida (regla 6). Una corrección es otro evento.
+- **NEVER** calculate a lot's ADG on the total weight (rule 2). The total is moved by the herd entering and leaving, so the number would measure anything but growth.
+- **NEVER** fill a non-calculable ADG with an estimate (rule 2). A plausible and false number graphs the same as a real one ([[adr-29-metrics-derivation]] rule 2).
+- **NEVER** automatically reverse charges for a death (rule 3). That would turn the feedlot into the client's insurer, which is a business decision; if taken, it enters as an explicit and auditable `adjustment`.
+- **NEVER** rename `apps.health` to free up the name (rule 4). The probe is a contract with the orchestrator; what gets renamed is the new domain.
+- **NEVER** expose `update` or `destroy` on a lifecycle event (rule 6). A correction is another event.
 
 ## REJECTED
 
-- **Una tabla única de eventos polimórficos** — `Weighing`, `Death` y `Exit` en una sola tabla con un campo tipo. Perdió por los campos nulables que obliga en cada fila y el filtro por tipo en cada consulta; el abstracto comparte la restricción sin fusionar los dominios.
-- **Un `origin=client_stock` para sanidad** — el equivalente sanitario del alimento que trae el cliente. Rechazado como complejidad especulativa: hoy los productos los pone siempre el feedlot. Reabre el día que un cliente traiga su propia vacuna, agregando el campo entonces.
-- **Llevar stock sanitario en esta fase** — existencias además de aplicaciones, replicando `FeedStockMovement`. No se tomó: el volumen es bajo y el problema real de las vacunas es el vencimiento y la cadena de frío, no el saldo. El patrón queda disponible para cuando ese problema se resuelva de verdad; [[adr-40-sanitary-plan-schedule]] agregó el calendario sin tocar esto.
-- **La venta como hecho del cliente, sin huella económica** — la política que este ADR sostuvo hasta [[adr-43-sale-settlement]]: `sale_price_per_kg` era informativo y ninguna salida posteaba. Reemplazada por la regla 3 con el consentimiento del dueño; las muertes siguen sin tocar el ledger.
+- **A single table of polymorphic events** — `Weighing`, `Death`, and `Exit` in one table with a type field. Rejected because of the nullable fields it forces on every row and the type filter on every query; the abstract shares the constraint without merging the domains.
+- **A `origin=client_stock` for sanitary care** — the sanitary equivalent of client-supplied feed. Rejected as speculative complexity: today the feedlot always supplies the products. Reopens when a client brings their own vaccine, adding the field then.
+- **Tracking sanitary stock in this phase** — inventory on top of applications, replicating `FeedStockMovement`. Not taken: the volume is low and the real problem with vaccines is expiry and the cold chain, not the balance. The pattern remains available for when that problem is truly solved; [[adr-40-sanitary-plan-schedule]] added the schedule without touching this.
+- **The sale as a client fact, with no economic footprint** — the policy this ADR held until [[adr-43-sale-settlement]]: `sale_price_per_kg` was informational and no exit posted anything. Replaced by rule 3 with the owner's consent; deaths continue to leave the ledger untouched.
 
 ## RELATED
 
 ### related adrs
 
-- [[docs/adrs/adr-26-livestock-individual-and-lot]] — regla 3, el XOR que el abstracto aporta
-- [[docs/adrs/adr-25-account-ledger]] — qué cobra el ledger y qué no
-- [[docs/adrs/adr-43-sale-settlement]] — la liquidación de la regla 3
-- [[docs/adrs/adr-29-metrics-derivation]] — el contrato del "no calculable" de la regla 2
-- [[docs/adrs/adr-40-sanitary-plan-schedule]] — el plan sanitario sobre estos eventos
+- [[docs/adrs/adr-26-livestock-individual-and-lot]] — rule 3, the XOR the abstract contributes
+- [[docs/adrs/adr-25-account-ledger]] — what the ledger charges and what it does not
+- [[docs/adrs/adr-43-sale-settlement]] — the settlement of rule 3
+- [[docs/adrs/adr-29-metrics-derivation]] — the "not calculable" contract of rule 2
+- [[docs/adrs/adr-40-sanitary-plan-schedule]] — the sanitary plan over these events
 
 ### related files
 
 - [[docs/FEEDLOT-DATA-MODEL]] — `LifecycleEvent`, `Weighing`, `Death`, `Exit`, `HealthEvent`
-- [[docs/FEEDLOT]] — el ciclo del animal en la operación
-- [[docs/API]] — las rutas de ciclo de vida y sanidad
+- [[docs/FEEDLOT]] — the animal lifecycle in the operation
+- [[docs/API]] — the lifecycle and sanitary routes

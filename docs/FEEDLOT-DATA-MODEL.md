@@ -4,13 +4,13 @@ type: reference
 category: project
 use_case: looking up an entity, field or relation of the feedlot domain
 created: 2026-07-21
-modified: 2026-08-02
+modified: 2026-08-04
 tags: [doc, feedlot, data-model, ssot]
 ---
 
 # FEEDLOT-DATA-MODEL — entities and relations
 
-> [!note] Proposed
+> [!note] Scope of this doc
 > SSOT for the feedlot entities. Force for the debated choices lives in
 > [[adr-24-feedlot-domain]], [[adr-25-account-ledger]], [[adr-26-livestock-individual-and-lot]].
 > Overview: [[FEEDLOT]]. Endpoints that expose these: `API-feedlot-additions.md` → [[API]].

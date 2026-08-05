@@ -2,55 +2,55 @@
 title: adr-35-conversational-assistant
 type: adr
 category: backend
-use_case: preguntar en lenguaje natural sobre un cliente, agregar un turno o una conversación, tocar el snapshot o el cliente de inferencia del asistente
+use_case: ask in natural language about a client, add a turn or a conversation, touch the assistant's snapshot or inference client
 created: 2026-07-25
-modified: 2026-08-02
+modified: 2026-08-04
 tags: [adr, feedlot, assistant, generative, chatbot, phase-8]
 ---
 
-# ADR-35 — El asistente conversacional es el tier generador, acotado
+# ADR-35 — The conversational assistant is the bounded generating tier
 
 ## CONTEXT
 
-> Preguntarle a los datos de un cliente en lenguaje natural, multi-turno, y recibir una respuesta fundada. `assistant` es el tier que genera de [[adr-15-chatbot-two-tier]]: prosa libre, read-only para siempre, permanentemente disjunto del router que elige.
+> Querying a client's data in natural language, multi-turn, and receiving a grounded response. `assistant` is the generating tier of [[adr-15-chatbot-two-tier]]: free prose, read-only forever, permanently disjoint from the router that chooses.
 
 ## ASSERTIONS
 
-1. El asistente produce prosa analítica sobre los datos de un cliente y nunca ejecuta una acción, postea un asiento ni cambia estado de dominio. Es el tier generador de [[adr-15-chatbot-two-tier]] regla 1: read-only, para siempre. Disparar una acción sería re-entrar por el router con su menú cerrado (regla 4 de ese ADR), un camino que esta fase deja fuera de alcance.
-2. Cada turno razona sólo sobre un `input_snapshot` que el backend arma para un cliente ([[adr-27-advisors-generative]] regla 2). El asistente no consulta la base, no lee otro cliente y no ejecuta nada; el snapshot se construye en el servicio con el `client` de la conversación y no se recibe armado desde afuera ([[adr-31-advisors-implementation]] regla 2).
-3. El snapshot se arma con `apps.advisors.snapshot.build_snapshot`, que lee `apps.metrics`. El asistente, el asesor y el gráfico que ve el cliente leen los mismos números y no pueden contradecirse. Si la conversión sale "no calculable" en el dashboard, sale igual acá.
-4. Una `Conversation` es un hilo por cliente y cada `Message` de rol `assistant` persiste su `input_snapshot`, `model_id`, `tokens` y `latency_ms`. Leer un mensaje no vuelve a inferir: se ve exactamente qué datos vio el modelo en cada respuesta.
-5. `AssistantBedrockClient` (real, `converse`, temperatura 0.3) y `MockAssistantClient` (determinista, sin red) se eligen en `get_assistant_client`, único punto de selección, gateado por DEBUG igual que el router y los asesores. Un proceso no-DEBUG sólo puede construir el cliente real; los tests corren contra el mock.
-6. Conversaciones y mensajes exponen `list`/`retrieve`/`create`, sin `update` ni `destroy` ([[adr-24-feedlot-domain]] regla 3): un turno es un hecho fechado y una corrección es otro turno.
-7. La inferencia sigue las reglas en vigor: async con `sync_to_async` sobre `boto3` ([[adr-16-async-mandatory]] regla 4), sobre Bedrock. `ASSISTANT_BEDROCK_MODEL_ID` entra en [[VARIABLES]] antes de leerse ([[adr-51-api-and-backend]] regla 7) y reusa `BEDROCK_REGION`.
-8. Es una capa de capacidad, no un cambio de doctrina: Cognito sigue siendo el único autenticador ([[adr-10-auth]]), [[CACHE]] no gana un servidor ([[adr-06-cache]]) y el router sigue siendo el único con derechos de actuador.
+1. The assistant produces analytical prose about a client's data and never executes an action, posts a ledger entry, or changes domain state. It is the generating tier of [[adr-15-chatbot-two-tier]] rule 1: read-only, forever. Triggering an action would mean re-entering through the router with its closed menu (rule 4 of that ADR), a path this phase leaves out of scope.
+2. Each turn reasons only over an `input_snapshot` that the backend builds for a client ([[adr-27-advisors-generative]] rule 2). The assistant does not query the database, does not read another client, and does not execute anything; the snapshot is built in the service from the conversation's `client` and is not received pre-built from outside ([[adr-31-advisors-implementation]] rule 2).
+3. The snapshot is built with `apps.advisors.snapshot.build_snapshot`, which reads `apps.metrics`. The assistant, the advisor, and the chart the client sees all read the same numbers and cannot contradict each other. If the conversion comes out as "not calculable" on the dashboard, it comes out the same here.
+4. A `Conversation` is a thread per client and each `Message` of role `assistant` persists its `input_snapshot`, `model_id`, `tokens`, and `latency_ms`. Reading a message does not re-infer: it shows exactly what data the model saw in each response.
+5. `AssistantBedrockClient` (real, `converse`, temperature 0.3) and `MockAssistantClient` (deterministic, no network) are selected in `get_assistant_client`, the sole selection point, gated by DEBUG exactly like the router and advisors. A non-DEBUG process can only construct the real client; tests run against the mock.
+6. Conversations and messages expose `list`/`retrieve`/`create`, no `update` or `destroy` ([[adr-24-feedlot-domain]] rule 3): a turn is a dated fact and a correction is another turn.
+7. Inference follows the rules in force: async with `sync_to_async` over `boto3` ([[adr-16-async-mandatory]] rule 4), over Bedrock. `ASSISTANT_BEDROCK_MODEL_ID` is registered in [[VARIABLES]] before being read ([[adr-51-api-and-backend]] rule 7) and reuses `BEDROCK_REGION`.
+8. This is a capability layer, not a doctrine change: Cognito remains the sole authenticator ([[adr-10-auth]]), [[CACHE]] gains no server ([[adr-06-cache]]), and the router remains the sole holder of actuator rights.
 
 ## FORBIDDEN
 
-- **NEVER** darle al asistente un derecho de actuador (regla 1). Un tier que genere prosa y además accione reabre exactamente el canal que [[adr-15-chatbot-two-tier]] existe para cerrar.
-- **NEVER** aceptar un snapshot armado desde afuera (regla 2). Es la vía por la que los datos de otro cliente entrarían al turno.
-- **NEVER** darle al asistente un camino a la base (regla 2). El snapshot es todo lo que ve, y ahí se verifica la barrera.
-- **NEVER** re-inferir al leer un mensaje (regla 4). El registro dejaría de decir qué vio el modelo cuando respondió.
-- **NEVER** editar o borrar un turno (regla 6). Una corrección es otro turno.
+- **NEVER** grant the assistant actuator rights (rule 1). A tier that both generates prose and executes actions reopens exactly the channel that [[adr-15-chatbot-two-tier]] exists to close.
+- **NEVER** accept a snapshot pre-built from outside (rule 2). That is the path by which another client's data would enter the turn.
+- **NEVER** give the assistant a path to the database (rule 2). The snapshot is all it sees, and that is where the barrier is verified.
+- **NEVER** re-infer when reading a message (rule 4). The record would no longer say what the model saw when it responded.
+- **NEVER** edit or delete a turn (rule 6). A correction is another turn.
 
 ## REJECTED
 
-- **Un solo tier que elija y genere** — un asistente con acceso al menú de acciones del router. Rechazado de plano: es la fusión que [[adr-15-chatbot-two-tier]] regla 1 declara permanentemente prohibida.
-- **Construir en esta fase la re-entrada al router** — el camino por el que el asistente pediría una acción con menú cerrado. Fuera de alcance explícito; queda como costura, no como deuda oculta.
-- **Definir métricas propias del asistente** — números calculados para la conversación. Rechazado por la regla 3: el asistente y el dashboard tienen que leer la misma fuente.
+- **A single tier that chooses and generates** — an assistant with access to the router's action menu. Rejected outright: it is the merge that [[adr-15-chatbot-two-tier]] rule 1 declares permanently forbidden.
+- **Building the router re-entry in this phase** — the path by which the assistant would request an action with the menu closed. Explicitly out of scope; recorded as a seam, not a hidden debt.
+- **Defining assistant-specific metrics** — numbers calculated for the conversation. Rejected by rule 3: the assistant and the dashboard must read the same source.
 
 ## RELATED
 
 ### related adrs
 
-- [[docs/adrs/adr-15-chatbot-two-tier]] — la disjunción permanente entre elegir y generar
-- [[docs/adrs/adr-27-advisors-generative]] — el precedente generativo acotado y el scope por cliente
-- [[docs/adrs/adr-31-advisors-implementation]] — el snapshot y el cliente de inferencia que esto calca
-- [[docs/adrs/adr-45-lot-owner-assistant-access]] — quién alcanza estas rutas y con qué recorte
-- [[docs/adrs/adr-16-async-mandatory]] — regla 4, cómo se llama a Bedrock
+- [[docs/adrs/adr-15-chatbot-two-tier]] — the permanent disjunction between choosing and generating
+- [[docs/adrs/adr-27-advisors-generative]] — the bounded generative precedent and per-client scope
+- [[docs/adrs/adr-31-advisors-implementation]] — the snapshot and inference client this replicates
+- [[docs/adrs/adr-45-lot-owner-assistant-access]] — who can reach these routes and with what scope
+- [[docs/adrs/adr-16-async-mandatory]] — rule 4, how Bedrock is called
 
 ### related files
 
-- [[docs/CHATBOT]] — los dos tiers y la frontera entre ellos
-- [[docs/VARIABLES]] — `ASSISTANT_BEDROCK_MODEL_ID` y `BEDROCK_REGION`
-- [[docs/API]] — las rutas de conversaciones y mensajes
+- [[docs/CHATBOT]] — the two tiers and the boundary between them
+- [[docs/VARIABLES]] — `ASSISTANT_BEDROCK_MODEL_ID` and `BEDROCK_REGION`
+- [[docs/API]] — the conversations and messages routes

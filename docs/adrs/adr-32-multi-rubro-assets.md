@@ -2,53 +2,53 @@
 title: adr-32-multi-rubro-assets
 type: adr
 category: backend
-use_case: agregar un rubro nuevo, cargar pivotes, cortes, máquinas o mantenimientos, heredar de las bases de assets, costear un evento que no es hacienda
+use_case: add a new category, load pivots, cuttings, machines, or maintenance events, inherit from asset bases, cost an event that is not livestock
 created: 2026-07-24
-modified: 2026-08-02
+modified: 2026-08-04
 tags: [adr, feedlot, multi-rubro, assets, crops, machinery]
 ---
 
-# ADR-32 — Multi-rubro: la extracción de `assets` y los rubros `crops` y `machinery`
+# ADR-32 — Multi-category: the `assets` extraction and the `crops` and `machinery` categories
 
 ## CONTEXT
 
-> El primer segundo rubro real: alfalfa sobre pivotes y maquinaria con sus mantenimientos. Dos rubros a la vez son el disparador para extraer lo común a `assets`, y ese es el momento — no antes, con un solo rubro, y no hacia atrás sobre la hacienda que ya funciona.
+> The first real second category: alfalfa on pivots and machinery with its maintenance. Two categories at once are the trigger to extract what is common into `assets`, and that is the moment — not before, with a single category, and not backward onto livestock that already works.
 
 ## ASSERTIONS
 
-1. `assets` aporta abstracciones y no tablas: expone `AssetBase` (identidad y ciclo de vida de un activo) y `CostedEvent` (un evento que fotografía `unit_price × quantity` y postea un débito `service`). `crops` y `machinery` heredan de ellas y cada activo concreto mantiene su propia tabla, mismo idiom que `LifecycleEvent` en `livestock` ([[adr-28-animal-lifecycle-and-sanitary]] regla 1).
-2. `Animal` y `Lot` no se refactorizan hacia atrás. La extracción mira hacia adelante: cubre los rubros nuevos, no migra el que ya funciona con datos, migraciones y tests que pasan.
-3. El costeo entra por el par genérico: `FieldTask` y `MaintenanceEvent` postean un `debit` con el `Concept.SERVICE` existente, vía `post_entry` con `source_kind ∈ {"field_task", "maintenance_event"}` ([[adr-24-feedlot-domain]] regla 4). `ledger` no gana un modelo, un concepto ni un FK por rubro.
-4. `Cutting` es un evento de producción inmutable —registra kilos cosechados y no postea asiento, porque una cosecha propia no es un insumo entregado a un cliente—. `FieldTask` y `MaintenanceEvent` son costos y siempre postean.
-5. Toda tarea y todo mantenimiento llevan `client` obligatorio. El feedlot propio es un `Client(kind=own)` y sus costos internos se acumulan en esa cuenta, igual que su hacienda propia.
-6. `Pivot`, `Machine` y `Crop` son catálogos editables con CRUD completo; `Cutting`, `FieldTask` y `MaintenanceEvent` son eventos: `list`/`retrieve`/`create`, sin `update` ni `destroy` ([[adr-24-feedlot-domain]] regla 3). Un pivote o máquina `retired` rechaza eventos nuevos en el servicio, no en la vista.
-7. `species`, `category`, `kind` y `status` son enums en inglés ([[LOCALIZATION]]); el español vive sólo en el render.
+1. `assets` provides abstractions and not tables: it exposes `AssetBase` (identity and lifecycle of an asset) and `CostedEvent` (an event that captures `unit_price × quantity` and posts a `service` debit). `crops` and `machinery` inherit from them and each concrete asset keeps its own table, the same idiom as `LifecycleEvent` in `livestock` ([[adr-28-animal-lifecycle-and-sanitary]] rule 1).
+2. `Animal` and `Lot` are not refactored backward. The extraction looks forward: it covers the new categories, not the one that already works with data, migrations, and passing tests.
+3. Costing enters through the generic pair: `FieldTask` and `MaintenanceEvent` post a `debit` with the existing `Concept.SERVICE`, via `post_entry` with `source_kind ∈ {"field_task", "maintenance_event"}` ([[adr-24-feedlot-domain]] rule 4). `ledger` gains no model, concept, or FK per category.
+4. `Cutting` is an immutable production event — it records harvested kilos and posts no ledger entry, because own-farm harvest is not an input delivered to a client —. `FieldTask` and `MaintenanceEvent` are costs and always post.
+5. Every task and every maintenance event carries a mandatory `client`. The feedlot itself is a `Client(kind=own)` and its internal costs accumulate in that account, the same as its own livestock.
+6. `Pivot`, `Machine`, and `Crop` are editable catalogs with full CRUD; `Cutting`, `FieldTask`, and `MaintenanceEvent` are events: `list`/`retrieve`/`create`, without `update` or `destroy` ([[adr-24-feedlot-domain]] rule 3). A `retired` pivot or machine rejects new events in the service, not in the view.
+7. `species`, `category`, `kind`, and `status` are enums in English ([[LOCALIZATION]]); Spanish lives only in the render.
 
 ## FORBIDDEN
 
-- **NEVER** copiar `Animal`/`Lot` y sus eventos para un rubro nuevo (regla 1). Tres modelos casi iguales son la señal que dispara la extracción, no una forma de avanzar.
-- **NEVER** reescribir la hacienda para que herede de `AssetBase` (regla 2). Es riesgo sin retorno sobre un dominio estable, sólo por simetría.
-- **NEVER** agregar a `ledger` un modelo, un concepto o un FK para un rubro nuevo (regla 3). La costura genérica existe exactamente para que un rubro que cobra no lo toque.
-- **NEVER** postear un asiento por un corte (regla 4). Es cosecha propia: no hay a quién cobrarle.
-- **NEVER** validar el estado de un activo en la vista (regla 6). La regla de negocio vive en el servicio, único punto de escritura que comparten vista, admin y comando.
+- **NEVER** copy `Animal`/`Lot` and its events for a new category (rule 1). Three near-identical models are the signal that triggers the extraction, not a way to proceed.
+- **NEVER** rewrite livestock to inherit from `AssetBase` (rule 2). That is risk without return on a stable domain, done only for symmetry.
+- **NEVER** add to `ledger` a model, concept, or FK for a new category (rule 3). The generic seam exists precisely so that a billing category need not touch it.
+- **NEVER** post a ledger entry for a cutting (rule 4). It is own-farm harvest: there is no one to charge.
+- **NEVER** validate asset state in the view (rule 6). The business rule lives in the service, the single write point shared by the view, admin, and command.
 
 ## REJECTED
 
-- **Extraer `assets` en la Fase 1** — las abstracciones compartidas desde el principio, con un solo rubro. No se hizo por YAGNI: con un rubro no hay nada común que compartir, y la abstracción habría sido una conjetura sobre el segundo.
-- **Un origen "sin cliente / sin cargo" para tareas y mantenimientos** — un evento que no cobra a nadie. Rechazado como complejidad especulativa (mismo criterio que [[adr-28-animal-lifecycle-and-sanitary]] sobre sanidad): el `Client(kind=own)` ya absorbe los costos internos.
-- **Puentear el corte al stock de alimento propio** — un `Cutting` produciendo un `in` de `FeedStockMovement`. Postergado explícitamente: entra cuando el negocio lo pida, con su propio cambio, no como efecto lateral de esta fase.
+- **Extracting `assets` in Phase 1** — shared abstractions from the start, with a single category. Not done due to YAGNI: with one category there is nothing common to share, and the abstraction would have been a conjecture about the second.
+- **A "no client / no charge" origin for tasks and maintenance events** — an event that charges no one. Rejected as speculative complexity (same criterion as [[adr-28-animal-lifecycle-and-sanitary]] on sanitary care): `Client(kind=own)` already absorbs internal costs.
+- **Bridging the cutting to own feed stock** — a `Cutting` producing an `in` for `FeedStockMovement`. Explicitly deferred: it enters when the business asks for it, with its own change, not as a side effect of this phase.
 
 ## RELATED
 
 ### related adrs
 
-- [[docs/adrs/adr-24-feedlot-domain]] — reglas 3 y 4, el crecimiento por adición y la costura de costeo
-- [[docs/adrs/adr-25-account-ledger]] — qué cobra el ledger y qué no
-- [[docs/adrs/adr-28-animal-lifecycle-and-sanitary]] — el idiom del abstracto y el criterio anti-especulativo
-- [[docs/adrs/adr-37-inventory-and-weather]] — la misma extracción, aplicada al stock de insumos
+- [[docs/adrs/adr-24-feedlot-domain]] — rules 3 and 4, growth by addition and the costing seam
+- [[docs/adrs/adr-25-account-ledger]] — what the ledger charges and what it does not
+- [[docs/adrs/adr-28-animal-lifecycle-and-sanitary]] — the abstract idiom and the anti-speculative criterion
+- [[docs/adrs/adr-37-inventory-and-weather]] — the same extraction, applied to input stock
 
 ### related files
 
-- [[docs/feedlot/14-preparacion-fase6]] — la señal de alarma que dispara la extracción
+- [[docs/feedlot/14-preparacion-fase6]] — the alarm signal that triggers the extraction
 - [[docs/FEEDLOT-DATA-MODEL]] — `Pivot`, `Machine`, `Crop`, `Cutting`, `FieldTask`, `MaintenanceEvent`
-- [[docs/constitution/LOCALIZATION]] — inglés en el código, español en el render
+- [[docs/constitution/LOCALIZATION]] — English in code, Spanish in the render

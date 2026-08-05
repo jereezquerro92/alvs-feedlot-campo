@@ -2,6 +2,13 @@
 
 ## [Unreleased]
 
+- group: sync-upstream-jereezquerro92
+  priority: normal
+  changes:
+    - docs(adrs): translate ADR-28 through ADR-47 bodies from Spanish to English (five-section shape preserved; upstream #73/#75 intent)
+    - docs(feedlot): unfreeze FEEDLOT.md and FEEDLOT-DATA-MODEL.md as active domain SSOTs (upstream #65/#71)
+    - docs(adr): adr-24 rule 1 stops hardcoding the app roster — points at FEEDLOT; old roster moved to REJECTED in-place per adr-00 rule 8 (upstream #72/#74 intent; no supersession chain — adr-49 remains dedicated-RDS here)
+
 - group: remove-corner-nav-triangle-global-mount
   priority: normal
   issue: 77

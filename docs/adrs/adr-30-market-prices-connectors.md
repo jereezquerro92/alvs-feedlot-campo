@@ -2,55 +2,55 @@
 title: adr-30-market-prices-connectors
 type: adr
 category: backend
-use_case: escribir o arreglar un conector de precios, ingerir una fecha, elegir una fuente de referencia, testear un parser contra un fixture
+use_case: write or fix a price connector, ingest a date, choose a reference source, test a parser against a fixture
 created: 2026-07-23
-modified: 2026-08-02
+modified: 2026-08-04
 tags: [adr, feedlot, market, prices, connectors]
 ---
 
-# ADR-30 — Precios de referencia y conectores de fuentes
+# ADR-30 — Reference prices and source connectors
 
 ## CONTEXT
 
-> Los precios de hacienda son un valor de mercado externo, de referencia: no son la moneda de la cuenta, que sigue en ARS con precio histórico. Cada fuente entra por un conector que separa la red del parseo y falla de forma distinguible.
+> Livestock prices are an external market reference value: they are not the account's currency, which remains in ARS at historical cost. Each source enters through a connector that separates networking from parsing and fails in a distinguishable way.
 
 ## ASSERTIONS
 
-1. Cañuelas es la fuente primaria diaria y datos.gob.ar está descartada: su serie oficial de novillo terminó en 2019, verificado contra el sitio vivo.
-2. IPCVA es la segunda fuente automática —páginas renderizadas en servidor, redundancia mensual de un proveedor independiente— y ROSGAN queda de carga manual, porque arma su tabla con JavaScript y publica remates periódicos, no un precio diario.
-3. Cada conector separa `fetch` (trae bytes, usa red) de `parse` (interpreta, puro). Los tests apuntan a `parse` contra un fixture fijo, nunca al sitio real.
-4. El parser mapea columnas leyendo la fila de encabezado, nunca por posición. Si el sitio reordena columnas los valores no se deslizan al campo equivocado, y si el encabezado desaparece falla en vez de guardar basura.
-5. Tres estados se distinguen: página provisoria del día en curso → vacío, no es error; tabla presente sin filas (día sin operaciones) → vacío; tabla ausente (el HTML cambió) → `ConnectorError`.
-6. La ingesta es idempotente por `(fuente, categoría, fecha)`: reingerir actualiza la fila, no la duplica. El payload crudo se guarda en `raw` para rehacer el parseo sin volver a pedir.
-7. Una fuente caída no frena a las demás: `ingest_prices` aísla cada una, registra la falla y sigue. Ante un hueco, `latest_price` devuelve el último valor conocido.
-8. Dos fuentes automáticas nunca se promedian. Cañuelas es diaria de mercado físico en ARS e IPCVA es un índice mensual en USD/kg: miden cosas distintas con distinto rezago, se guardan separadas por su `source` y elige el consumidor.
-9. `MarketPrice` guarda mínimo, máximo, promedio, mediana y cabezas, no sólo el promedio, porque las fuentes los publican y el asesor puede usarlos.
+1. Cañuelas is the primary daily source and datos.gob.ar is discarded: its official novillo series ended in 2019, verified against the live site.
+2. IPCVA is the second automatic source — server-rendered pages, monthly redundancy from an independent provider — and ROSGAN remains a manual-entry source, because it builds its table with JavaScript and publishes periodic auctions, not a daily price.
+3. Each connector separates `fetch` (brings bytes, uses the network) from `parse` (interprets, pure). Tests target `parse` against a fixed fixture, never the live site.
+4. The parser maps columns by reading the header row, never by position. If the site reorders columns, values do not slip to the wrong field, and if the header disappears it fails instead of saving garbage.
+5. Three states are distinguished: provisional page for the current day → empty, not an error; table present with no rows (day with no operations) → empty; table absent (the HTML changed) → `ConnectorError`.
+6. Ingestion is idempotent by `(source, category, date)`: re-ingesting updates the row, not duplicates it. The raw payload is saved in `raw` to redo parsing without re-fetching.
+7. A failed source does not stop the others: `ingest_prices` isolates each one, records the failure, and continues. When there is a gap, `latest_price` returns the last known value.
+8. Two automatic sources are never averaged. Cañuelas is a daily physical market price in ARS and IPCVA is a monthly index in USD/kg: they measure different things with different lag, are stored separately by their `source`, and the consumer chooses.
+9. `MarketPrice` stores minimum, maximum, average, median, and head count, not just the average, because the sources publish them and the advisor can use them.
 
 ## FORBIDDEN
 
-- **NEVER** promediar dos fuentes (regla 8). Fabricaría un número que no publica ninguna, y con unidades distintas ni siquiera es un promedio.
-- **NEVER** mapear columnas por posición (regla 4). Un reordenamiento del sitio guarda precios en el campo equivocado sin fallar.
-- **NEVER** confundir "no hubo operaciones" con "el HTML cambió" (regla 5). El segundo caso pasaría inadvertido durante días leyéndose como un mercado quieto.
-- **NEVER** testear un parser contra el sitio vivo (regla 3). El sitio se cae y cambia, y el test dejaría de decir si el parser está bien.
-- **NEVER** tapar la falla de un conector con un `try/except` silencioso (regla 7). El aislamiento por fuente existe para registrar la falla, no para esconderla.
+- **NEVER** average two sources (rule 8). That would fabricate a number no source publishes, and with different units it is not even an average.
+- **NEVER** map columns by position (rule 4). A reordering of the site saves prices in the wrong field without failing.
+- **NEVER** confuse "no operations took place" with "the HTML changed" (rule 5). The second case would go unnoticed for days reading as a quiet market.
+- **NEVER** test a parser against the live site (rule 3). The site goes down and changes, and the test would stop telling whether the parser is correct.
+- **NEVER** hide a connector failure with a silent `try/except` (rule 7). Per-source isolation exists to record the failure, not to hide it.
 
 ## REJECTED
 
-- **datos.gob.ar como fuente primaria** — la estrategia que asumía el documento 06. Cayó al verificarla: la serie oficial de novillo termina en 2019. Reabriría sólo si el organismo la retomara.
-- **ROSGAN como fuente automática** — descartada por construcción del sitio: la tabla la arma JavaScript y lo que publica son remates periódicos, no un precio diario. Queda como índice de carga manual.
-- **Promediar Cañuelas e IPCVA en un precio único** — un solo número de referencia, más cómodo para el dashboard. Rechazado por la regla 8; la comodidad del consumidor no justifica inventar la serie.
+- **datos.gob.ar as the primary source** — the strategy assumed by document 06. Dropped on verification: the official novillo series ends in 2019. Would reopen only if the agency resumed it.
+- **ROSGAN as an automatic source** — discarded due to site construction: JavaScript builds the table and what it publishes are periodic auctions, not a daily price. Remains as a manual-entry index.
+- **Averaging Cañuelas and IPCVA into a single price** — one reference number, more convenient for the dashboard. Rejected by rule 8; consumer convenience does not justify inventing the series.
 
 ## RELATED
 
 ### related adrs
 
-- [[docs/adrs/adr-25-account-ledger]] — regla 3, por qué la cuenta no se redenomina con estos precios
-- [[docs/adrs/adr-39-gross-margin-and-fx]] — el margen que consume este precio de referencia
-- [[docs/adrs/adr-29-metrics-derivation]] — el contrato del hueco que `latest_price` respeta
+- [[docs/adrs/adr-25-account-ledger]] — rule 3, why the account is not redenominated with these prices
+- [[docs/adrs/adr-39-gross-margin-and-fx]] — the margin that consumes this reference price
+- [[docs/adrs/adr-29-metrics-derivation]] — the gap contract that `latest_price` respects
 
 ### related files
 
-- [[docs/feedlot/06-precios-hacienda]] — las fuentes, sus URLs y sus formularios
-- [[docs/feedlot/06b-verificacion-fuentes-precios]] — la verificación contra los sitios vivos
-- [[docs/feedlot/06c-segunda-fuente-automatica]] — IPCVA, su serie y su salvedad de unidad
-- [[docs/FEEDLOT-DATA-MODEL]] — `MarketPrice` y `MarketSource`
+- [[docs/feedlot/06-precios-hacienda]] — the sources, their URLs, and their forms
+- [[docs/feedlot/06b-verificacion-fuentes-precios]] — the verification against the live sites
+- [[docs/feedlot/06c-segunda-fuente-automatica]] — IPCVA, its series, and its unit caveat
+- [[docs/FEEDLOT-DATA-MODEL]] — `MarketPrice` and `MarketSource`

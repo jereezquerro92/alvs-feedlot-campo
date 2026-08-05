@@ -2,56 +2,56 @@
 title: adr-47-genetics-semen-embryo
 type: adr
 category: backend
-use_case: cargar un toro o sus DEP, mover pajuelas o embriones, registrar una colecta, vender semen, leer stock genético
+use_case: load a bull or its EBVs, move straws or embryos, register a flush, sell semen, read genetic stock
 created: 2026-07-28
-modified: 2026-08-02
+modified: 2026-08-04
 tags: [adr, feedlot, genetics, semen, embryo, inventory, event-sourced]
 ---
 
-# ADR-47 — Genética: semen, DEP y transferencia embrionaria (`genetics`)
+# ADR-47 — Genetics: semen, EBVs, and embryo transfer (`genetics`)
 
 ## CONTEXT
 
-> La genética como activo de primera clase: toros propios y externos, pajuelas en el termo, sus DEP, y la transferencia embrionaria. El inventario se lleva por movimientos y el único hecho económico que sale de la app es la venta de semen.
+> Genetics as a first-class asset: own and external bulls, straws in the tank, their EBVs, and embryo transfer. Inventory is tracked by movements and the only economic fact the app produces is semen sales.
 
 ## ASSERTIONS
 
-1. `genetics` separa catálogos editables —`Sire`, `SemenBatch`, `EmbryoBatch`, `BreedingValue`, con CRUD completo— de hechos fechados inmutables —`SemenMovement`, `EmbryoMovement`, `EmbryoFlush` y `SemenSale`, con `list`/`retrieve`/`create` y sin `update` ni `destroy` ([[adr-24-feedlot-domain]] regla 3).
-2. El stock de un `SemenBatch` se deriva de sus movimientos y el de un `EmbryoBatch` de los suyos —Σ entradas − Σ salidas—, exactamente como `FeedStockMovement` ([[adr-25-account-ledger]] regla 4) e `InputStockMovement` ([[adr-37-inventory-and-weather]] regla 1). Nunca se guarda un `straws_remaining` editable.
-3. Un `Sire` referencia opcionalmente un `Animal` propio (`category=bull`) o representa un toro externo cuyo semen se compra sin poseer el animal. Un `BreedingValue` es un DEP por toro —`trait`, `value`, `accuracy`, `source`, `date`— y es dato de catálogo que se carga, no una métrica derivada de los eventos del sistema: los publica la evaluación genética, no los pesajes propios.
-4. `SemenSale` postea un `credit` `concept=sale` a la cuenta propia por el producido, vía `(source_kind="semen_sale", source_id=<SemenSale.id>)` ([[adr-24-feedlot-domain]] regla 4), y descuenta un `SemenMovement` `out` con `reason=sale`. Fotografía `unit_price × straws` del día ([[adr-25-account-ledger]] regla 3), mismo precedente que la venta de hacienda propia ([[adr-43-sale-settlement]] regla 3). El comprador es informativo.
-5. `EmbryoFlush` registra la colecta sobre una donante con su toro y su grado, y produce inventario: crea o actualiza un `EmbryoBatch` y postea un `EmbryoMovement` `in`. El transfer a una receptora no vive acá: es un `Service` con `method=embryo_transfer` en `breeding` ([[adr-46-breeding-reproduction]] regla 7) que descuenta el `out`.
-6. Ningún movimiento ni colecta postea asiento: producción y consumo propios no son insumos entregados. El `unit_cost` de una compra de pajuelas es informativo y no genera cargo; el único asiento de la app es el crédito de venta.
-7. `register_semen_movement` rechaza una partida inactiva y una `quantity` no positiva; `register_semen_sale` rechaza stock insuficiente y un precio no positivo, y arma el crédito y el `out` en una transacción; las funciones de embriones validan igual. Un stock que quede negativo por carga parcial se muestra como inconsistencia, no se bloquea ([[adr-29-metrics-derivation]] regla 5).
-8. `apps.metrics` deriva stock de pajuelas por partida y por toro, semen disponible total y uso por toro en el período. Sin movimientos devuelven `null` con su `not_calculable`, nunca un cero de relleno.
-9. `method`, `reason`, `trait`, `grade`, `direction` y demás enums son inglés ([[LOCALIZATION]]); las etiquetas en español existen sólo en el render.
+1. `genetics` separates editable catalogs — `Sire`, `SemenBatch`, `EmbryoBatch`, `BreedingValue`, with full CRUD — from immutable dated facts — `SemenMovement`, `EmbryoMovement`, `EmbryoFlush` and `SemenSale`, with `list`/`retrieve`/`create` and no `update` or `destroy` ([[adr-24-feedlot-domain]] rule 3).
+2. The stock of a `SemenBatch` is derived from its movements and that of an `EmbryoBatch` from its own — Σ ins − Σ outs — exactly like `FeedStockMovement` ([[adr-25-account-ledger]] rule 4) and `InputStockMovement` ([[adr-37-inventory-and-weather]] rule 1). An editable `straws_remaining` is never stored.
+3. A `Sire` optionally references an own `Animal` (`category=bull`) or represents an external bull whose semen is purchased without owning the animal. A `BreedingValue` is an EBV per bull — `trait`, `value`, `accuracy`, `source`, `date` — and is catalog data that is loaded, not a metric derived from system events: it is published by the genetic evaluation, not by own weighings.
+4. `SemenSale` posts a `credit` `concept=sale` to the own account for the proceeds, via `(source_kind="semen_sale", source_id=<SemenSale.id>)` ([[adr-24-feedlot-domain]] rule 4), and deducts a `SemenMovement` `out` with `reason=sale`. Snapshots `unit_price × straws` as of the day ([[adr-25-account-ledger]] rule 3), same precedent as the own-livestock sale ([[adr-43-sale-settlement]] rule 3). The buyer is informational.
+5. `EmbryoFlush` records the flush on a donor with its bull and grade, and produces inventory: creates or updates an `EmbryoBatch` and posts an `EmbryoMovement` `in`. Transfer to a recipient does not live here: it is a `Service` with `method=embryo_transfer` in `breeding` ([[adr-46-breeding-reproduction]] rule 7) that deducts the `out`.
+6. No movement or flush posts an entry: own production and consumption are not delivered inputs. The `unit_cost` of a straw purchase is informational and generates no charge; the only entry in the app is the sale credit.
+7. `register_semen_movement` rejects an inactive batch and a non-positive `quantity`; `register_semen_sale` rejects insufficient stock and a non-positive price, and builds the credit and the `out` in a transaction; embryo functions validate the same. A stock that goes negative due to partial loading is shown as an inconsistency, not blocked ([[adr-29-metrics-derivation]] rule 5).
+8. `apps.metrics` derives straw stock by batch and by bull, total available semen, and usage by bull in the period. Without movements they return `null` with their `not_calculable`, never a filler zero.
+9. `method`, `reason`, `trait`, `grade`, `direction` and other enums are English ([[LOCALIZATION]]); Spanish labels exist only in the render.
 
 ## FORBIDDEN
 
-- **NEVER** guardar un contador editable de pajuelas o embriones (regla 2). Pierde la historia de por qué cambió el stock de un termo.
-- **NEVER** postear un asiento por un movimiento o una colecta (regla 6). El consumo propio ya está valuado por el stock; el único hecho económico es la venta.
-- **NEVER** calcular un DEP desde los pesajes propios (regla 3). Los publica la evaluación genética; derivarlos acá inventaría un número que nadie firma.
-- **NEVER** registrar el transfer embrionario en `genetics` (regla 5). Es un hecho reproductivo sobre un animal y pertenece a `breeding`.
-- **NEVER** vender más pajuelas de las que hay (regla 7). El crédito y el `out` se arman juntos, en una transacción.
+- **NEVER** store an editable straw or embryo counter (rule 2). It loses the history of why a tank's stock changed.
+- **NEVER** post an entry for a movement or a flush (rule 6). Own consumption is already valued by the stock; the only economic fact is the sale.
+- **NEVER** calculate an EBV from own weighings (rule 3). It is published by the genetic evaluation; deriving it here would invent a number no one endorses.
+- **NEVER** record embryo transfer in `genetics` (rule 5). It is a reproductive event on an animal and belongs to `breeding`.
+- **NEVER** sell more straws than are available (rule 7). The credit and the `out` are built together, in a transaction.
 
 ## REJECTED
 
-- **Cobrarle además al cliente comprador de semen** — un débito en su cuenta junto al crédito propio. Fuera de alcance: entra por el mismo seam con su propio cambio, no en este cut.
-- **Facturar el semen consumido en una IA propia** — tratar la pajuela como insumo entregado. Rechazado por la regla 6: es costo interno ya valuado; el cargo por inseminación al cliente boarding lo decide `breeding` ([[adr-46-breeding-reproduction]] regla 6).
-- **Un campo de genética en `Animal`** — el toro y sus valores colgados del animal. Rechazado por el precedente de [[adr-32-multi-rubro-assets]] regla 2: `Sire.animal` referencia al `Animal` existente sin agregarle nada.
+- **Also charging the semen-buying client** — a debit in their account alongside the own credit. Out of scope: it enters through the same seam with its own change, not in this cut.
+- **Billing semen consumed in an own AI** — treating the straw as a delivered input. Rejected by rule 6: it is an already-valued internal cost; the insemination charge to the boarding client is decided by `breeding` ([[adr-46-breeding-reproduction]] rule 6).
+- **A genetics field on `Animal`** — the bull and its values hung on the animal. Rejected by the precedent of [[adr-32-multi-rubro-assets]] rule 2: `Sire.animal` references the existing `Animal` without adding anything to it.
 
 ## RELATED
 
 ### related adrs
 
-- [[docs/adrs/adr-46-breeding-reproduction]] — el consumidor: el servicio que descuenta semen o embrión
-- [[docs/adrs/adr-25-account-ledger]] — reglas 3 y 4, el precio del día y el stock por movimientos
-- [[docs/adrs/adr-37-inventory-and-weather]] — regla 1, el patrón de stock generalizado
-- [[docs/adrs/adr-43-sale-settlement]] — regla 3, el precedente del crédito `sale` en la cuenta propia
-- [[docs/adrs/adr-29-metrics-derivation]] — el hueco honesto y la inconsistencia que se muestra
+- [[docs/adrs/adr-46-breeding-reproduction]] — the consumer: the service that deducts semen or embryo
+- [[docs/adrs/adr-25-account-ledger]] — rules 3 and 4, the day price and stock by movements
+- [[docs/adrs/adr-37-inventory-and-weather]] — rule 1, the generalized stock pattern
+- [[docs/adrs/adr-43-sale-settlement]] — rule 3, the precedent of the `sale` credit in the own account
+- [[docs/adrs/adr-29-metrics-derivation]] — the honest gap and the inconsistency that is shown
 
 ### related files
 
-- [[docs/FEEDLOT-DATA-MODEL]] — `Sire`, `BreedingValue`, `SemenBatch`, `EmbryoBatch` y sus movimientos
-- [[docs/GLOSSARY-feedlot-additions]] — los nombres genéticos, antes del primer uso
-- [[docs/API]] — las rutas de `genetics`
+- [[docs/FEEDLOT-DATA-MODEL]] — `Sire`, `BreedingValue`, `SemenBatch`, `EmbryoBatch` and their movements
+- [[docs/GLOSSARY-feedlot-additions]] — the genetics names, before first use
+- [[docs/API]] — the `genetics` routes

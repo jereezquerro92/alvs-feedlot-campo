@@ -2,51 +2,51 @@
 title: adr-37-inventory-and-weather
 type: adr
 category: backend
-use_case: cargar un insumo que no es alimento, registrar una entrada o salida de stock, anotar lluvia o clima, leer stock actual
+use_case: load a non-feed input, record a stock entry or exit, log rainfall or weather, read current stock
 created: 2026-07-25
-modified: 2026-08-03
+modified: 2026-08-04
 tags: [adr, feedlot, inventory, weather, stock, phase-10]
 ---
 
-# ADR-37 — Inventario general de insumos y registro de clima
+# ADR-37 — General input inventory and weather log
 
 ## CONTEXT
 
-> Dos hechos que faltaban: cuánto insumo hay —gasoil, postes, alambre, sanitarios de campo— y cuánto llovió. El stock se generaliza del patrón por movimientos del alimento; ninguno de los dos toca el ledger.
+> Two missing facts: how much input there is —diesel, posts, wire, field supplies— and how much it rained. Stock is generalized from the feed movement pattern; neither touches the ledger.
 
 ## ASSERTIONS
 
-1. `InputStockMovement` registra entradas y salidas fechadas de un `InputType` por `(owner_kind, client)`, y el stock actual se deriva —Σ entradas − Σ salidas— exactamente como `FeedStockMovement` ([[adr-25-account-ledger]] regla 4). Nunca se guarda un campo `stock` editable en `InputType`.
-2. `InputType` es catálogo editable con CRUD completo: "cargar insumos" es crear tipos. `InputStockMovement` es un hecho fechado: `list`/`retrieve`/`create`, sin `update` ni `destroy` ([[adr-24-feedlot-domain]] regla 3), y una corrección es otro movimiento.
-3. Ningún `InputStockMovement` postea asiento. Un insumo comprado para el feedlot es consumo propio, no un insumo entregado a un cliente ([[adr-32-multi-rubro-assets]] regla 4). El `unit_price` de una entrada es informativo —valúa el stock— y no genera cargo.
-4. `register_input_movement` rechaza en el servicio —no en la vista— un `InputType` con `is_active=False` y una `quantity` no positiva. La carga tardía con fecha retroactiva se acepta, y un stock que quede negativo por carga parcial se muestra como inconsistencia en vez de bloquearse ([[adr-29-metrics-derivation]] regla 5).
-5. `WeatherLog` registra por fecha y `site` la lluvia (`rainfall_mm`) y, opcionalmente, temperatura mínima y máxima y una nota. Idempotente por `(site, date)`: re-registrar actualiza la fila, no duplica. No postea asiento y no referencia hacienda ni cuenta: es contexto ambiental que las métricas leen.
-6. `apps.metrics` gana dos lecturas puras —stock actual por insumo y resumen de lluvia del período— sin definir ningún número nuevo del negocio ([[adr-29-metrics-derivation]] regla 1). `Animal`, `Lot` y `feed` no se refactorizan: la extracción mira hacia adelante ([[adr-32-multi-rubro-assets]] regla 2).
+1. `InputStockMovement` records dated inflows and outflows of an `InputType` by `(owner_kind, client)`, and current stock is derived —Σ entries − Σ exits— exactly as `FeedStockMovement` does ([[adr-25-account-ledger]] rule 4). An editable `stock` field is never stored on `InputType`.
+2. `InputType` is an editable catalog with full CRUD: "loading inputs" means creating types. `InputStockMovement` is a dated fact: `list`/`retrieve`/`create`, no `update` or `destroy` ([[adr-24-feedlot-domain]] rule 3), and a correction is another movement.
+3. No `InputStockMovement` posts a ledger entry. An input purchased for the feedlot is own consumption, not an input delivered to a client ([[adr-32-multi-rubro-assets]] rule 4). The `unit_price` of an entry is informational —it values the stock— and does not generate a charge.
+4. `register_input_movement` rejects at the service layer —not at the view— an `InputType` with `is_active=False` and a non-positive `quantity`. Late-entry with a backdated date is accepted, and a stock that goes negative due to partial loading is shown as an inconsistency rather than being blocked ([[adr-29-metrics-derivation]] rule 5).
+5. `WeatherLog` records per date and `site` the rainfall (`rainfall_mm`) and, optionally, minimum and maximum temperature and a note. Idempotent by `(site, date)`: re-registering updates the row, it does not duplicate. It posts no ledger entry and references no livestock or account: it is environmental context that the metrics read.
+6. `apps.metrics` gains two pure reads —current stock by input and rainfall summary for the period— without defining any new business number ([[adr-29-metrics-derivation]] rule 1). `Animal`, `Lot`, and `feed` are not refactored: the extraction looks forward ([[adr-32-multi-rubro-assets]] rule 2).
 
 ## FORBIDDEN
 
-- **NEVER** guardar un stock editable en `InputType` (regla 1). Un saldo escrito a mano pierde la historia de por qué cambió.
-- **NEVER** postear un asiento por un movimiento de insumo (regla 3). Es consumo propio, y el único camino de cobro sigue siendo el ledger vía `feed`.
-- **NEVER** bloquear una carga porque el stock quede negativo (regla 4). El operador falsearía la fecha, y ahí el dato se pierde de verdad.
-- **NEVER** validar el insumo en la vista (regla 4). La regla vive en el servicio, que comparten vista, admin y comando.
-- **NEVER** acoplar `WeatherLog` a hacienda o a una cuenta (regla 5). La lluvia es contexto para decidir, no una transacción.
+- **NEVER** store an editable stock field on `InputType` (rule 1). A manually written balance loses the history of why it changed.
+- **NEVER** post a ledger entry for an input movement (rule 3). It is own consumption, and the only charging path remains the ledger via `feed`.
+- **NEVER** block an entry because stock would go negative (rule 4). The operator would falsify the date, and that is where the data is truly lost.
+- **NEVER** validate the input in the view (rule 4). The rule lives in the service, shared by view, admin, and command.
+- **NEVER** couple `WeatherLog` to livestock or an account (rule 5). Rainfall is context for decisions, not a transaction.
 
 ## REJECTED
 
-- **Copiar `FeedStockMovement` por cada insumo** — un modelo de stock por tipo de cosa. Es la duplicación que dispara la extracción: un solo movimiento genérico cubre todos y deja uno solo que mantener.
-- **Migrar el alimento al stock genérico** — unificar `FeedStockMovement` dentro de `inventory`. Rechazado por el mismo criterio de [[adr-32-multi-rubro-assets]] regla 2: reescribir lo que funciona sólo por simetría es riesgo sin retorno.
-- **Cobrar el insumo al cliente desde acá** — facturar gasoil o alambre como servicio. Fuera de alcance: si algún día se factura, entra por el par genérico `(source_kind, source_id)` con su propio cambio.
+- **Copying `FeedStockMovement` per input** — a stock model per type of thing. It is the duplication that triggers the extraction: a single generic movement covers all and leaves only one to maintain.
+- **Migrating feed to the generic stock** — unifying `FeedStockMovement` inside `inventory`. Rejected by the same criterion as [[adr-32-multi-rubro-assets]] rule 2: rewriting what works for symmetry alone is risk with no return.
+- **Charging the client for the input from here** — invoicing diesel or wire as a service. Out of scope: if it is ever invoiced, it enters through the generic pair `(source_kind, source_id)` with its own change.
 
 ## RELATED
 
 ### related adrs
 
-- [[docs/adrs/adr-25-account-ledger]] — regla 4, el patrón de stock por movimientos que esto generaliza
-- [[docs/adrs/adr-32-multi-rubro-assets]] — reglas 2 y 4, la extracción hacia adelante y el consumo propio
-- [[docs/adrs/adr-29-metrics-derivation]] — reglas 1 y 5, derivar y mostrar la inconsistencia
-- [[docs/adrs/adr-47-genetics-semen-embryo]] — el mismo patrón aplicado a pajuelas y embriones
+- [[docs/adrs/adr-25-account-ledger]] — rule 4, the stock-by-movements pattern this generalizes
+- [[docs/adrs/adr-32-multi-rubro-assets]] — rules 2 and 4, forward extraction and own consumption
+- [[docs/adrs/adr-29-metrics-derivation]] — rules 1 and 5, derive and surface the inconsistency
+- [[docs/adrs/adr-47-genetics-semen-embryo]] — the same pattern applied to straws and embryos
 
 ### related files
 
 - [[docs/FEEDLOT-DATA-MODEL]] — `InputType`, `InputStockMovement`, `WeatherLog`
-- [[docs/API]] — las rutas de inventario y clima
+- [[docs/API]] — the inventory and weather routes

@@ -2,55 +2,55 @@
 title: adr-31-advisors-implementation
 type: adr
 category: backend
-use_case: generar un informe de asesor, armar o cambiar el snapshot, elegir el cliente de inferencia, testear la generación sin red
+use_case: generate an advisor report, build or change the snapshot, choose the inference client, test generation without network
 created: 2026-07-23
-modified: 2026-08-02
+modified: 2026-08-04
 tags: [adr, feedlot, advisors, inference, bedrock, phase-5]
 ---
 
-# ADR-31 — Implementación de los asesores
+# ADR-31 — Advisors implementation
 
 ## CONTEXT
 
-> Cómo se construyeron los asesores que [[adr-27-advisors-generative]] fijó. La pieza delicada no es la generación —pedirle texto a un modelo es fácil— sino garantizar que ese texto sea auditable y acotado a un cliente.
+> How the advisors that [[adr-27-advisors-generative]] established were built. The delicate piece is not generation — asking a model for text is easy — but ensuring that text is auditable and scoped to a single client.
 
 ## ASSERTIONS
 
-1. `apps.advisors.snapshot.build_snapshot` es el único punto que toca la base de un cliente. El asesor recibe un dict y nada más: adentro no hay camino hacia la base ni hacia otro cliente ([[adr-27-advisors-generative]] regla 2).
-2. `generate_report` arma el snapshot con el `client` que se le pasa y no acepta uno armado desde afuera, de modo que un llamador no puede colar datos de otro cliente. El scope por cliente es una barrera dura, no una convención.
-3. El snapshot se arma desde `apps.metrics` ([[adr-29-metrics-derivation]]): el asesor y el gráfico que ve el cliente leen los mismos números y no pueden contradecirse. Si la conversión sale "no calculable" en el dashboard, sale igual para el asesor.
-4. `AdvisorBedrockClient` (real) y `MockAdvisorClient` (determinista) se eligen en `get_advisor_client`, único punto de selección, gateado por DEBUG igual que el router ([[adr-15-chatbot-two-tier]]). Un proceso no-DEBUG sólo puede construir el cliente real; ningún setting fuerza el mock a un deploy. A diferencia del router, este tier genera prosa: temperatura 0.3.
-5. Cada generación persiste un `AdvisorReport` con snapshot, output, `model_id`, tokens y latencia; leer un reporte no vuelve a inferir ([[adr-27-advisors-generative]] regla 3). Eso es lo que hace auditable una sugerencia económica: se ve exactamente qué datos vio el modelo.
-6. La inferencia real necesita `ADVISOR_BEDROCK_MODEL_ID` y la región en [[VARIABLES]], el permiso IAM, el gate de conectividad Bedrock y el envoltorio async de [[adr-16-async-mandatory]] regla 4 (`sync_to_async`, nunca `aiobotocore`). Los tests corren contra el mock.
-7. La generación es a demanda o programada: el `POST` dispara una y ninguna señal genera sola. Los viewsets exponen `list`/`retrieve`/`create` de reportes y jamás una mutación de datos del cliente. Un asesor inactivo rechaza la generación en el servicio, no en la vista.
+1. `apps.advisors.snapshot.build_snapshot` is the only point that touches a client's database. The advisor receives a dict and nothing more: inside there is no path to the database or to another client ([[adr-27-advisors-generative]] rule 2).
+2. `generate_report` builds the snapshot with the `client` it receives and does not accept one built externally, so a caller cannot smuggle in data from another client. The per-client scope is a hard barrier, not a convention.
+3. The snapshot is built from `apps.metrics` ([[adr-29-metrics-derivation]]): the advisor and the chart the client sees read the same numbers and cannot contradict each other. If conversion comes out "not calculable" on the dashboard, it comes out the same way for the advisor.
+4. `AdvisorBedrockClient` (real) and `MockAdvisorClient` (deterministic) are chosen in `get_advisor_client`, the sole selection point, gated by DEBUG just like the router ([[adr-15-chatbot-two-tier]]). A non-DEBUG process can only build the real client; no setting forces the mock into a deploy. Unlike the router, this tier generates prose: temperature 0.3.
+5. Every generation persists an `AdvisorReport` with snapshot, output, `model_id`, tokens, and latency; reading a report does not re-infer ([[adr-27-advisors-generative]] rule 3). That is what makes an economic suggestion auditable: you can see exactly what data the model saw.
+6. Real inference requires `ADVISOR_BEDROCK_MODEL_ID` and the region in [[VARIABLES]], the IAM permission, the Bedrock connectivity gate, and the async wrapper from [[adr-16-async-mandatory]] rule 4 (`sync_to_async`, never `aiobotocore`). Tests run against the mock.
+7. Generation is on-demand or scheduled: the `POST` triggers one and no signal generates on its own. Viewsets expose `list`/`retrieve`/`create` for reports and never a mutation of client data. An inactive advisor rejects generation in the service, not in the view.
 
 ## FORBIDDEN
 
-- **NEVER** aceptar un snapshot armado por el llamador (regla 2). Es la vía por la que los datos de otro cliente entran al paquete sin que nada lo note.
-- **NEVER** darle al asesor un camino a la base (regla 1). El snapshot es todo lo que ve, y por eso la barrera se verifica en un solo lugar.
-- **NEVER** seleccionar el cliente de inferencia fuera de `get_advisor_client` (regla 4). Dos puntos de selección son dos políticas, y una de las dos se olvida del gate.
-- **NEVER** permitir que un setting fuerce el mock fuera de DEBUG (regla 4). Un deploy que responde con texto determinista parece funcionar.
-- **NEVER** re-inferir al leer un reporte (regla 5). El registro dejaría de ser el registro.
-- **NEVER** usar `aiobotocore` para la inferencia (regla 6). [[adr-16-async-mandatory]] regla 4 fija `boto3` envuelto en `sync_to_async`.
+- **NEVER** accept a snapshot built by the caller (rule 2). That is the path by which another client's data enters the package without anything noticing.
+- **NEVER** give the advisor a path to the database (rule 1). The snapshot is everything it sees, and that is why the barrier is verified in a single place.
+- **NEVER** select the inference client outside `get_advisor_client` (rule 4). Two selection points are two policies, and one of them forgets the gate.
+- **NEVER** allow a setting to force the mock outside DEBUG (rule 4). A deploy that responds with deterministic text appears to work.
+- **NEVER** re-infer when reading a report (rule 5). The record would cease to be the record.
+- **NEVER** use `aiobotocore` for inference (rule 6). [[adr-16-async-mandatory]] rule 4 mandates `boto3` wrapped in `sync_to_async`.
 
 ## REJECTED
 
-- **Recibir el snapshot como parámetro del endpoint** — dejar que el caller arme el paquete y el servicio sólo infiera. Rechazado por la regla 2: haría del aislamiento entre clientes una convención del llamador.
-- **Definir las métricas del snapshot dentro de `advisors`** — fórmulas propias del asesor, ajustadas a lo que le sirve narrar. Rechazado por la regla 3; el asesor y el dashboard tienen que poder contradecirse sólo si los hechos cambian.
-- **Temperatura 0 como en el router** — la misma configuración del tier que elige. No aplica: este tier genera prosa, y es la excepción generativa acotada de [[adr-27-advisors-generative]].
+- **Receiving the snapshot as an endpoint parameter** — letting the caller build the package and the service only infer. Rejected by rule 2: it would make client isolation a caller convention.
+- **Defining snapshot metrics inside `advisors`** — the advisor's own formulas, adjusted for what it needs to narrate. Rejected by rule 3; the advisor and the dashboard must only be able to contradict each other if the facts change.
+- **Temperature 0 as in the router** — the same configuration as the choosing tier. Not applicable: this tier generates prose, and it is the bounded generative exception of [[adr-27-advisors-generative]].
 
 ## RELATED
 
 ### related adrs
 
-- [[docs/adrs/adr-27-advisors-generative]] — las reglas que este ADR implementa
-- [[docs/adrs/adr-29-metrics-derivation]] — la única definición de cada número del snapshot
-- [[docs/adrs/adr-15-chatbot-two-tier]] — el patrón de cliente de inferencia que la regla 4 calca
-- [[docs/adrs/adr-16-async-mandatory]] — regla 4, cómo se llama a Bedrock
-- [[docs/adrs/adr-35-conversational-assistant]] — el mismo patrón, en el asistente
+- [[docs/adrs/adr-27-advisors-generative]] — the rules this ADR implements
+- [[docs/adrs/adr-29-metrics-derivation]] — the single definition of each number in the snapshot
+- [[docs/adrs/adr-15-chatbot-two-tier]] — the inference client pattern that rule 4 mirrors
+- [[docs/adrs/adr-16-async-mandatory]] — rule 4, how Bedrock is called
+- [[docs/adrs/adr-35-conversational-assistant]] — the same pattern, in the assistant
 
 ### related files
 
-- [[docs/VARIABLES]] — `ADVISOR_BEDROCK_MODEL_ID` y la región
-- [[docs/FEEDLOT-DATA-MODEL]] — `Advisor` y `AdvisorReport`
-- [[docs/API]] — las rutas de asesores
+- [[docs/VARIABLES]] — `ADVISOR_BEDROCK_MODEL_ID` and the region
+- [[docs/FEEDLOT-DATA-MODEL]] — `Advisor` and `AdvisorReport`
+- [[docs/API]] — the advisor routes

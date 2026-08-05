@@ -2,50 +2,50 @@
 title: adr-42-pen-conversion-honest-cut
 type: adr
 category: backend
-use_case: leer o cambiar la conversión por corral, atribuir engorde a un corral, componer el cierre por corral
+use_case: read or change the per-pen conversion, attribute gain to a pen, compose the pen closeout
 created: 2026-07-25
-modified: 2026-08-02
+modified: 2026-08-04
 tags: [adr, feedlot, feedyard, metrics, conversion, pen, phase-4b]
 ---
 
-# ADR-42 — Conversión por corral: el corte honesto
+# ADR-42 — Per-Pen Conversion: the Honest Cut
 
 ## CONTEXT
 
-> La mitad de ganancia del cierre por corral, que estaba diferida porque un kilo de engorde no sabe en qué corral se puso. Con `PenPlacement` se atribuye el subconjunto honesto —los tramos que el animal pasó enteros en un corral— y lo ambiguo se declara no calculable.
+> The gain half of the pen closeout, which was deferred because a kilo of weight gain carries no record of which pen it was produced in. With `PenPlacement` the honest subset is attributed —the segments the animal spent entirely in one pen— and the ambiguous portion is declared non-calculable.
 
 ## ASSERTIONS
 
-1. `pen_conversion(*, pen, start, end)` es una función pura en `apps.metrics`, hermana de `pen_occupancy_report` y `pen_cost_summary`. No hay tabla ni migración: la conversión es una afirmación derivada, no un dato almacenado ([[adr-29-metrics-derivation]] regla 1).
-2. Un tramo de pesaje se atribuye al corral donde el target estaba al pesaje anterior, y sólo si no hubo ningún `PenPlacement` estrictamente dentro del intervalo y ese corral es el que se está midiendo. La ubicación se deriva de los eventos `in`/`out` ([[adr-34-pen-placement]] regla 1): un `in` fija el corral, un `out` lo libera.
-3. Lo no atribuible se cuenta. Un tramo cuyo ADG ya es no calculable ([[adr-28-animal-lifecycle-and-sanitary]] regla 2) se saltea (`segments_skipped`); uno calculable que no se puede fijar a una sola estadía —cambió de corral, o el target no tiene placement acá— cuenta como `segments_unattributed`. Los kilos se suman sólo sobre `segments_attributed`.
-4. `pen_conversion` devuelve `null` con su `not_calculable` cuando no hay tramo atribuible (`no_attributable_growth`), cuando el engorde atribuido salió plano o negativo (`no_weight_gain`) o cuando no hay alimento registrado al corral en el período (`no_feed_recorded`). Nunca un cero de relleno.
-5. Es lectura pura: no postea asiento, no muta nada y no agrega variables ni endpoints en este cut. Se entrega como función de servicio testeada, con la misma exposición que sus hermanas, hasta que exista un dashboard de corrales que las consuma.
-6. `pen_closeout(*, pen, start, end)` compone la mitad de ocupación con la de conversión en un solo cierre por corral, y cada mitad carga su propio `not_calculable`. La conversión por cliente no cambia: esta métrica es su desagregado por corral.
+1. `pen_conversion(*, pen, start, end)` is a pure function in `apps.metrics`, sibling of `pen_occupancy_report` and `pen_cost_summary`. There is no table or migration: conversion is a derived assertion, not a stored datum ([[adr-29-metrics-derivation]] rule 1).
+2. A weighing segment is attributed to the pen where the target was at the previous weighing, and only if no `PenPlacement` occurred strictly inside the interval and that pen is the one being measured. The location is derived from the `in`/`out` events ([[adr-34-pen-placement]] rule 1): an `in` fixes the pen, an `out` releases it.
+3. The non-attributable is counted. A segment whose ADG is already non-calculable ([[adr-28-animal-lifecycle-and-sanitary]] rule 2) is skipped (`segments_skipped`); a calculable one that cannot be fixed to a single stay —the animal changed pens, or the target has no placement here— counts as `segments_unattributed`. Kilos are summed only over `segments_attributed`.
+4. `pen_conversion` returns `null` with its `not_calculable` when there is no attributable segment (`no_attributable_growth`), when the attributed gain came out flat or negative (`no_weight_gain`), or when no feed is recorded for the pen in the period (`no_feed_recorded`). Never a filler zero.
+5. It is pure read: it posts no ledger entry, mutates nothing, and adds no variables or endpoints in this cut. It is delivered as a tested service function, with the same exposure as its siblings, until a pen dashboard exists to consume them.
+6. `pen_closeout(*, pen, start, end)` composes the occupancy half with the conversion half into a single pen closeout, and each half carries its own `not_calculable`. The per-client conversion does not change: this metric is its disaggregation by pen.
 
 ## FORBIDDEN
 
-- **NEVER** atribuir a un corral un tramo en el que el animal cambió de corral (regla 2). El engorde se repartió de una forma que los datos no registran, y asignarlo entero a uno es el número inventado que [[adr-29-metrics-derivation]] regla 2 prohíbe.
-- **NEVER** devolver cero cuando no hay nada atribuible (regla 4). Un cero se grafica igual que un cero real y puede justificar una decisión de compra.
-- **NEVER** omitir los contadores de tramos (regla 3). Sin ellos no se distingue "el corral no engordó" de "no pudimos atribuirle el engorde".
-- **NEVER** almacenar la conversión como dato (regla 1). Queda vieja con el próximo pesaje y crea una segunda definición del número.
+- **NEVER** attribute to a pen a segment in which the animal changed pens (rule 2). The gain was distributed in a way the data do not record, and assigning all of it to one pen is the fabricated number that [[adr-29-metrics-derivation]] rule 2 prohibits.
+- **NEVER** return zero when there is nothing attributable (rule 4). A zero charts the same as a real zero and can justify a purchasing decision.
+- **NEVER** omit the segment counters (rule 3). Without them, "the pen did not gain weight" cannot be distinguished from "we could not attribute the gain to it".
+- **NEVER** store the conversion as a datum (rule 1). It becomes stale with the next weighing and creates a second definition of the number.
 
 ## REJECTED
 
-- **Prorratear el engorde entre corrales** — repartir el tramo partido según los días en cada corral. Rechazado: la proporción no está en los datos, así que el reparto sería una estimación presentada como medición.
-- **Atribuir el tramo al corral del pesaje final** — una regla simple para no perder tramos. Perdió contra la regla 2: le regala a un corral el engorde que otro produjo.
-- **Exponer un endpoint sólo para esta métrica** — publicarla antes que a sus dos hermanas. Rechazado por asimetría y por agregar una ruta sin consumidor; las tres se exponen juntas cuando exista el dashboard que las use.
+- **Prorating gain across pens** — splitting the broken segment by days in each pen. Rejected: the proportion is not in the data, so the split would be an estimate presented as a measurement.
+- **Attributing the segment to the pen of the final weighing** — a simple rule to avoid losing segments. Rejected against rule 2: it gifts to a pen the gain that another pen produced.
+- **Exposing an endpoint for this metric alone** — publishing it before its two siblings. Rejected for asymmetry and for adding a route with no consumer; all three are exposed together when the dashboard that uses them exists.
 
 ## RELATED
 
 ### related adrs
 
-- [[docs/adrs/adr-34-pen-placement]] — regla 1, los eventos que hacen posible la atribución
-- [[docs/adrs/adr-33-feedyard-operating-loop]] — la mitad de costo del cierre por corral
-- [[docs/adrs/adr-29-metrics-derivation]] — reglas 1 a 3, derivar, no inventar, y contar lo salteado
-- [[docs/adrs/adr-28-animal-lifecycle-and-sanitary]] — regla 2, el ADG no calculable
+- [[docs/adrs/adr-34-pen-placement]] — rule 1, the events that make attribution possible
+- [[docs/adrs/adr-33-feedyard-operating-loop]] — the cost half of the pen closeout
+- [[docs/adrs/adr-29-metrics-derivation]] — rules 1 to 3, derive not invent, and count the skipped
+- [[docs/adrs/adr-28-animal-lifecycle-and-sanitary]] — rule 2, the non-calculable ADG
 
 ### related files
 
-- [[docs/FEEDLOT]] — el cierre por corral en la operación
+- [[docs/FEEDLOT]] — the pen closeout in operation
 - [[docs/FEEDLOT-DATA-MODEL]] — `PenPlacement`, `Weighing`, `FeedingEvent`
