@@ -58,6 +58,10 @@ A subset of the token layer is exposed to the end user, not just to the develope
 | radius | length | `--radius` (the three derived `--radius-*` follow via `@theme inline`) |
 | theme pack (UI only) | closed enum `kodexarg` \| `jeremias` \| `militar` \| `amber` | fills both mode palettes from curated OKLCH snapshots; Save persists colors, not the pack id |
 
+**Site menu rail minimum (locked mode).** The locked in-flow rail is shown only when the viewport is at least `43.75rem` (~700px). Below that, the shell forces unlocked FancyDrawer even if the lock preference is on — preference may persist so the rail returns when the viewport fits again ([[adr-54-site-menu-lock-modes]]).
+
+**Site menu lock cookie (`nav_lock`).** Lock preference is a client chrome cookie (`1` = locked, `0` = unlocked), Path `/`, Max-Age one year, SameSite=Lax — the same no-flash class as the `theme` cookie. `Base.astro` reads it on SSR and passes it into `FeedlotFancyNav`; the island writes it on toggle. Viewport bands: `mobile` &lt; `43.75rem`, `tablet` from there to `64rem`, `desk` at `64rem`+ — resolved by `shell/nav-fsm` ([[adr-54-site-menu-lock-modes]] rules 6–8).
+
 > `theme_config.colors` is keyed by mode — `{ light: {…}, dark: {…} }` — because a color tuned against a dark field is not the same color that works over a light one. Only the active mode's palette reaches the rendered style. `AppearanceCard` shows both themes at once and refuses to save until each defines at least `canvas` and `dots`.
 
 ### Dual brand — kodexArg orange vs Jeremías green

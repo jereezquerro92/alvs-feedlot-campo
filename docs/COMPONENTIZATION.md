@@ -118,8 +118,8 @@ Names here are reference copies of what [[GLOSSARY]] already decided, not the po
 | `Toast` | `feedback/` | Toast notifications, Melt Toaster builder; `toaster` is a module-level singleton | Any feature needing transient confirmation/error feedback |
 | `Dialog` | `overlay/` | Generic (non-alert) modal | Any feature needing a modal |
 | `Drawer` | `overlay/` | Side-panel slide-in | Any feature needing a side panel |
-| `FancyDrawer` | `overlay/` | Floating sibling of `Drawer`: ⅔ default width, height hugs content (viewport-centered), exposed-side rounding; empty `title` hides `NavPanelTitle` | Compact edge panels that should not span full viewport height |
-| `FeedlotFancyNav` | `feedlot/` | Floating `FancyDrawer` + lock to dock as permanent primary-green rail (mobile sandwich) | `FeedlotShell` (left edge) |
+| `FancyDrawer` | `overlay/` | Floating sibling of `Drawer`: ⅔ default width, height hugs content (viewport-centered), exposed-side rounding; empty `title` hides `NavPanelTitle`; peek caret stays in-flow inside the hit box (click/tap toggles; closed offset `calc(-100% + tab)`) — [[adr-54-site-menu-lock-modes]] | Compact edge panels that should not span full viewport height; unlocked site menu |
+| `FeedlotFancyNav` | `feedlot/` | Site menu FSM (`shell/nav-fsm`): preference from `nav_lock` cookie (SSR), viewport mobile/tablet/desk, presentation rail\|drawer, active from URL; locked preference dual-mounts rail+drawer with CSS at `43.75rem` — [[adr-54-site-menu-lock-modes]] | Mounted once in `Base.astro` (left/right per `sidebarSide`) |
 | `Accordion` | `overlay/` | Collapsible section | Any feature needing progressive disclosure |
 | `ConfirmDialog` | `overlay/` | Confirm-labeled alert-dialog wrapper | Destructive/confirm-gated actions |
 | `Tooltip` | `overlay/` | Hover/focus hint, Melt builder | Any feature needing a short contextual hint |

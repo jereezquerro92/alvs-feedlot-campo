@@ -12,3 +12,18 @@ export { default as NavPanelTitle } from "./NavPanelTitle.svelte";
 export { default as NavLockToggle } from "./NavLockToggle.svelte";
 export { resolveShellNav } from "./nav";
 export type { NavIconName } from "./nav";
+export {
+  parseNavLockCookie,
+  resolveNavFsm,
+  resolvePresentation,
+  resolveViewport,
+  NAV_LOCK_COOKIE,
+  RAIL_MIN_WIDTH,
+  DESK_MIN_WIDTH,
+} from "./nav-fsm";
+export type {
+  NavLockPreference,
+  NavViewport,
+  NavPresentation,
+  NavFsmState,
+} from "./nav-fsm";

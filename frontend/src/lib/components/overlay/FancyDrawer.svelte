@@ -1,15 +1,17 @@
 <!-- LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
-     Governed by: [[adr-52-frontend-and-design-system]]
-     Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]]
+     Governed by: [[adr-52-frontend-and-design-system]] · [[adr-54-site-menu-lock-modes]]
+     Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]] · [[COMPONENTIZATION]]
      LIVE-DOC:END -->
 
 <!--
   FancyDrawer — sibling of overlay/Drawer with a content-sized floating
-  silhouette. Same interaction contract (hover-open, 2s leave cooldown,
-  outside/caret dismiss). Title strip is optional: empty `title` hides
-  shell/NavPanelTitle (feedlot FancyNav); showcase still passes titles.
+  silhouette. Interaction: hover-open (mouse), click/tap the caret to toggle,
+  2s leave cooldown, outside dismiss. Title strip is optional: empty `title`
+  hides shell/NavPanelTitle (feedlot FancyNav); showcase still passes titles.
   Geometry: default width ⅔ of Drawer's 18rem (12rem), height hugs content
-  (vertically centered), exposed-side rounding only. Zero-prop safe (adr-22 r1).
+  (vertically centered), exposed-side rounding only. The peek tab stays inside
+  the aside's box (in-flow) so closed-state hit-testing works — closed offset is
+  calc(-100% + tab) so only the caret peeks. Zero-prop safe (adr-22 r1).
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
@@ -23,6 +25,9 @@
 
   /** ⅔ of Drawer's default `18rem` width. */
   const DEFAULT_WIDTH = "12rem";
+
+  /** Peek-tab width (`w-7`); must match the closed translate inset. */
+  const TAB_WIDTH = "1.75rem";
 
   let {
     open = $bindable(false),
@@ -48,15 +53,16 @@
   const showTitle = $derived(title.trim().length > 0);
 
   const isLeft = $derived(side === "left");
-  // Keep -translate-y-1/2 always (viewport vertical center); slide off on X when closed.
-  const slideClass = $derived(
-    open
-      ? "-translate-y-1/2"
-      : isLeft
-        ? "-translate-x-full -translate-y-1/2"
-        : "translate-x-full -translate-y-1/2",
-  );
   const glyph = $derived(isLeft ? (open ? "‹" : "›") : open ? "›" : "‹");
+
+  /** X offset: open = flush; closed = leave only the in-flow tab on-screen. */
+  const offsetX = $derived(
+    open
+      ? "0"
+      : isLeft
+        ? `calc(-100% + ${TAB_WIDTH})`
+        : `calc(100% - ${TAB_WIDTH})`,
+  );
 
   let rootEl: HTMLElement | undefined = $state();
   let closeTimer: ReturnType<typeof setTimeout> | undefined;
@@ -131,11 +137,22 @@
   class={cn(
     "fixed top-1/2 z-40 flex h-fit max-h-[calc(100vh-3rem)] transition-transform duration-300 ease-out motion-reduce:transition-none",
     isLeft ? "left-0" : "right-0",
-    slideClass,
     className,
   )}
-  style={`width: ${width}`}
+  style={`width: calc(${width} + ${TAB_WIDTH}); transform: translate(${offsetX}, -50%)`}
 >
+  {#if !isLeft}
+    <button
+      type="button"
+      onclick={onTabClick}
+      aria-label={open ? closeLabel : openLabel}
+      aria-expanded={open}
+      class="flex h-12 w-7 shrink-0 items-center justify-center self-center rounded-l-2xl border border-r-0 border-border bg-background text-muted-foreground shadow-md transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+    >
+      <span aria-hidden="true">{glyph}</span>
+    </button>
+  {/if}
+
   <div
     inert={!open}
     aria-hidden={!open}
@@ -145,6 +162,7 @@
         ? "rounded-r-2xl border border-l-0 border-border"
         : "rounded-l-2xl border border-r-0 border-border",
     )}
+    style={`width: ${width}`}
   >
     <div class="flex flex-col gap-0 px-3 py-4">
       {#if showTitle}
@@ -160,18 +178,15 @@
     </div>
   </div>
 
-  <button
-    type="button"
-    onclick={onTabClick}
-    aria-label={open ? closeLabel : openLabel}
-    aria-expanded={open}
-    class={cn(
-      "absolute top-1/2 flex h-12 w-7 -translate-y-1/2 items-center justify-center bg-background text-muted-foreground shadow-md transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-      isLeft
-        ? "left-full rounded-r-2xl border border-l-0 border-border"
-        : "right-full rounded-l-2xl border border-r-0 border-border",
-    )}
-  >
-    <span aria-hidden="true">{glyph}</span>
-  </button>
+  {#if isLeft}
+    <button
+      type="button"
+      onclick={onTabClick}
+      aria-label={open ? closeLabel : openLabel}
+      aria-expanded={open}
+      class="flex h-12 w-7 shrink-0 items-center justify-center self-center rounded-r-2xl border border-l-0 border-border bg-background text-muted-foreground shadow-md transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+    >
+      <span aria-hidden="true">{glyph}</span>
+    </button>
+  {/if}
 </aside>

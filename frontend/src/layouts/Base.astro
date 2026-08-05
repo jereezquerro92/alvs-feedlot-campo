@@ -1,17 +1,22 @@
 ---
 /* LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
- * Governed by: [[adr-52-frontend-and-design-system]]
- * Docs: [[FRONTEND]]
+ * Governed by: [[adr-52-frontend-and-design-system]] · [[adr-54-site-menu-lock-modes]]
+ * Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]]
  * LIVE-DOC:END */
 import "../styles/app.css";
+import { ClientRouter, fade } from "astro:transitions";
 import { parseThemeConfig, computeThemeSSRAttrs, DEFAULTS } from "$lib/theme";
 import PageTitle from "$lib/components/primitives/titles/PageTitle.svelte";
 import FeedlotFancyNav from "$lib/components/feedlot/FeedlotFancyNav.svelte";
 import ChatDrawer from "$lib/components/shell/ChatDrawer.svelte";
 import { resolveShellNav } from "$lib/components/shell/nav";
+import { parseNavLockCookie } from "$lib/components/shell/nav-fsm";
 import { hasRole } from "$lib/auth";
 import { routerChatCopy } from "$lib/chatui-copy";
 import type { Me } from "$lib/types/user";
+
+/** Soft page crossfade — short enough to feel calm, not sluggish. */
+const PAGE_FADE = fade({ duration: "150ms" });
 
 /** Temporary: hide the right-edge router ChatDrawer while left-menu work lands. */
 const SHOW_CHAT_DRAWER = false;
@@ -49,6 +54,10 @@ const { active: navActive, clientId: navClientId } = resolveShellNav(
   Astro.url.searchParams,
 );
 
+// Lock preference from `nav_lock` cookie — same no-flash class as `theme`
+// ([[adr-54-site-menu-lock-modes]]). Viewport band is CSS on first paint.
+const navPreference = parseNavLockCookie(Astro.cookies.get("nav_lock")?.value);
+
 // Client pick is mandatory for the site menu: path `/feedlot/{id}/…` or
 // `?client=` must already identify one. The `/feedlot/` ChoiceList landing
 // and any page without that context stay without FancyNav.
@@ -63,20 +72,23 @@ const showChatDrawer = SHOW_CHAT_DRAWER && chatDrawer && hasRole(me);
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <PageTitle title={title} />
+    <ClientRouter />
   </head>
   <body>
     <div class="flex min-h-screen">
       {
         showShellNav && (
           <FeedlotFancyNav
+            transition:persist="shell-nav"
             client:load
             active={navActive}
             clientId={navClientId}
+            preference={navPreference}
             side={sidebarSide}
           />
         )
       }
-      <div class="min-w-0 flex-1">
+      <div class="min-w-0 flex-1" transition:animate={PAGE_FADE}>
         <slot />
       </div>
     </div>

@@ -1,14 +1,13 @@
 <!-- LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
-     Governed by: [[adr-52-frontend-and-design-system]]
-     Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]]
+     Governed by: [[adr-52-frontend-and-design-system]] · [[adr-54-site-menu-lock-modes]]
+     Docs: [[FRONTEND]] · [[DESIGN-SYSTEM]] · [[COMPONENTIZATION]]
      LIVE-DOC:END -->
 
 <!--
-  Feedlot site menu: unlocked = floating FancyDrawer; locked (closed padlock) =
-  permanent left rail (no fill — page canvas shows through). Footer holds
-  lock / profile / theme icon discs, separated below the menu. Floating mode
-  opens from FancyDrawer's edge tab. Mounts with zero props (adr-22 r1). Pin
-  preference persists in localStorage.
+  Feedlot site menu driven by shell/nav-fsm: preference (cookie, SSR), viewport
+  band (matchMedia), presentation (rail|drawer), active (from Base). Locked
+  preference mounts rail + drawer together; CSS at RAIL_MIN_WIDTH picks which
+  is visible so navigation never flashes unlocked. Unlocked = FancyDrawer only.
 -->
 <script lang="ts">
   import { onMount } from "svelte";
@@ -17,6 +16,17 @@
   import NavLockToggle from "$lib/components/shell/NavLockToggle.svelte";
   import NavGlyph from "$lib/components/shell/NavGlyph.svelte";
   import type { NavIconName } from "$lib/components/shell/nav";
+  import {
+    DESK_MIN_WIDTH,
+    RAIL_MIN_WIDTH,
+    migrateLegacyNavLock,
+    resolveNavFsm,
+    resolvePresentation,
+    resolveViewport,
+    writeNavLockCookie,
+    type NavLockPreference,
+    type NavViewport,
+  } from "$lib/components/shell/nav-fsm";
   import { cn } from "$lib/utils";
   import { t } from "../../../i18n";
   import {
@@ -28,56 +38,70 @@
     type ThemeMode,
   } from "$lib/theme";
 
-  const PIN_KEY = "feedlot-nav-pinned";
   const NAV_WIDTH = "12rem";
 
   let {
     clientId = null,
     active = "dashboard",
+    /** SSR lock preference from the `nav_lock` cookie ([[adr-54-site-menu-lock-modes]]). */
+    preference: preferenceProp = "unlocked" as NavLockPreference,
     open = $bindable(false),
-    /** Mobile overlay when the rail is pinned. */
-    mobileOpen = $bindable(false),
-    /** Pin preference; Shell binds it. */
-    pinned = $bindable(false),
     /** Dock edge from theme_config.sidebarSide ([[DESIGN-SYSTEM]]). */
     side = "left" as SidebarSide,
   }: {
     clientId?: number | string | null;
     active?: string;
+    preference?: NavLockPreference;
     open?: boolean;
-    mobileOpen?: boolean;
-    pinned?: boolean;
     side?: SidebarSide;
   } = $props();
 
+  let localPreference = $state<NavLockPreference | null>(null);
+  let viewport = $state<NavViewport>("desk");
   let mode = $state<ThemeMode>(DEFAULTS.mode);
+
+  // SSR cookie wins until the user toggles; a new preferenceProp (navigation) clears the override.
+  $effect(() => {
+    preferenceProp;
+    localPreference = null;
+  });
+
+  const preference = $derived(localPreference ?? preferenceProp);
+
+  const fsm = $derived(
+    resolveNavFsm({ preference, viewport, active }),
+  );
 
   onMount(() => {
     mode = readThemeCookie().mode ?? DEFAULTS.mode;
-    try {
-      pinned = localStorage.getItem(PIN_KEY) === "1";
-    } catch {
-      /* private mode / denied */
-    }
+    const migrated = migrateLegacyNavLock();
+    if (migrated) localPreference = migrated;
+
+    const railMq = window.matchMedia(`(min-width: ${RAIL_MIN_WIDTH})`);
+    const deskMq = window.matchMedia(`(min-width: ${DESK_MIN_WIDTH})`);
+    const syncViewport = () => {
+      viewport = resolveViewport(railMq.matches, deskMq.matches);
+    };
+    syncViewport();
+    railMq.addEventListener("change", syncViewport);
+    deskMq.addEventListener("change", syncViewport);
+    return () => {
+      railMq.removeEventListener("change", syncViewport);
+      deskMq.removeEventListener("change", syncViewport);
+    };
   });
 
-  function persistPin(next: boolean) {
-    pinned = next;
-    try {
-      localStorage.setItem(PIN_KEY, next ? "1" : "0");
-    } catch {
-      /* ignore */
-    }
-    if (next) {
+  function persistPreference(next: NavLockPreference) {
+    localPreference = next;
+    writeNavLockCookie(next);
+    if (next === "locked" && resolvePresentation(next, viewport) === "rail") {
       open = true;
-      mobileOpen = false;
-    } else {
-      mobileOpen = false;
     }
   }
 
   function togglePin() {
-    persistPin(!pinned);
+    if (preference === "unlocked" && viewport === "mobile") return;
+    persistPreference(preference === "locked" ? "unlocked" : "locked");
   }
 
   function toggleTheme() {
@@ -157,7 +181,7 @@
     role="group"
     aria-label={t("shell_nav_label")}
   >
-    <NavLockToggle locked={pinned} onclick={togglePin} />
+    <NavLockToggle locked={fsm.presentation === "rail"} onclick={togglePin} />
     <a
       href="/profile/"
       aria-label={t("nav_profile")}
@@ -182,7 +206,7 @@
   <div class="flex h-full min-h-0 flex-col">
     <nav aria-label={t("shell_nav_label")} class="flex min-h-0 flex-1 flex-col gap-7 overflow-y-auto text-foreground">
       {#each sections as section (section.title)}
-        <div class="flex flex-col gap-1.5">
+        <div class="flex flex-col gap-2.5">
           <div
             class="px-2 pb-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
           >
@@ -193,7 +217,7 @@
               href={routes[item.key] ?? "#"}
               label={item.label}
               icon={item.icon}
-              active={item.key === active}
+              active={item.key === fsm.active}
               tone="default"
             />
           {/each}
@@ -204,40 +228,23 @@
   </div>
 {/snippet}
 
-{#if pinned}
-  <!-- Desktop: permanent in-flow rail — no aside fill; canvas shows through. -->
+{#snippet rail()}
   <aside
     class={cn(
-      "hidden min-h-0 shrink-0 flex-col overflow-y-auto border-border text-foreground lg:flex",
+      "flex min-h-0 shrink-0 flex-col overflow-y-auto border-border text-foreground",
+      /* Soft wash + backdrop blur: melt dots read out of focus; labels stay sharp. */
+      "bg-background/45 backdrop-blur-[0.35rem] supports-[backdrop-filter]:bg-background/35",
       side === "right" ? "order-last border-l" : "border-r",
     )}
     style={`width: ${NAV_WIDTH}`}
   >
-    <div class="flex h-full min-h-0 flex-col px-3 py-4">
+    <div class="relative z-10 flex h-full min-h-0 flex-col px-3 pb-4 pt-20">
       {@render navBody()}
     </div>
   </aside>
+{/snippet}
 
-  {#if mobileOpen}
-    <button
-      type="button"
-      class="fixed inset-0 z-40 bg-foreground/40 lg:hidden"
-      aria-label={t("shell_nav_dismiss_overlay")}
-      onclick={() => (mobileOpen = false)}
-    ></button>
-    <aside
-      class={cn(
-        "fixed inset-y-0 z-50 flex flex-col overflow-y-auto border-border text-foreground shadow-xl lg:hidden",
-        side === "right" ? "right-0 border-l" : "left-0 border-r",
-      )}
-      style={`width: ${NAV_WIDTH}`}
-    >
-      <div class="flex h-full min-h-0 flex-col px-3 py-4">
-        {@render navBody()}
-      </div>
-    </aside>
-  {/if}
-{:else}
+{#snippet drawer()}
   <FancyDrawer
     bind:open
     {side}
@@ -248,4 +255,16 @@
   >
     {@render navBody()}
   </FancyDrawer>
+{/snippet}
+
+{#if preference === "locked"}
+  <!-- CSS picks rail vs drawer so SSR + navigation never flash unlocked. -->
+  <div class="hidden min-[43.75rem]:contents">
+    {@render rail()}
+  </div>
+  <div class="contents min-[43.75rem]:hidden">
+    {@render drawer()}
+  </div>
+{:else}
+  {@render drawer()}
 {/if}
