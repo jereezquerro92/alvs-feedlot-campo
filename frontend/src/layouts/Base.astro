@@ -22,7 +22,8 @@ interface Props {
   me?: Me | null;
   /** Set false on /chatui/ (canvas already IS the router). Ignored while SHOW_CHAT_DRAWER is false. */
   chatDrawer?: boolean;
-  /** Set false to suppress the left site menu (e.g. lobby). Default: on whenever the session has a role. */
+  /** Set false to suppress the left site menu (e.g. lobby). Default: on when
+   * the session has a role AND a client is already selected in the URL. */
   shellNav?: boolean;
 }
 
@@ -48,7 +49,10 @@ const { active: navActive, clientId: navClientId } = resolveShellNav(
   Astro.url.searchParams,
 );
 
-const showShellNav = shellNav && hasRole(me);
+// Client pick is mandatory for the site menu: path `/feedlot/{id}/…` or
+// `?client=` must already identify one. The `/feedlot/` ChoiceList landing
+// and any page without that context stay without FancyNav.
+const showShellNav = shellNav && hasRole(me) && navClientId != null;
 const showChatDrawer = SHOW_CHAT_DRAWER && chatDrawer && hasRole(me);
 ---
 
