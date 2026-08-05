@@ -126,7 +126,7 @@
     aria-label={t("auth_open_menu")}
     class="flex items-center gap-2 rounded-full border border-border bg-card py-1 pl-1 pr-1 text-card-foreground shadow-sm lg:pr-2"
   >
-    <Avatar class="size-7!">
+    <Avatar class="size-8!">
       {#if me.picture}
         <AvatarImage src={me.picture} alt={username} />
       {:else}

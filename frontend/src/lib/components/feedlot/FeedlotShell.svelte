@@ -5,12 +5,10 @@
 
 <!--
   The single app shell every feedlot module renders inside ([[FEEDLOT]]):
-  FancyDrawer nav (left) + floating header (circular mobile sandwich +
-  Breadcrumb pill + session slot) + optional visible "back" button, then the
-  module content as the default slot. Site navigation is FeedlotFancyNav —
-  floating by default; lock docks it as a permanent primary-green rail.
-  Pure chrome — it never fetches or mutates. Mounts with zero props and never
-  throws ([[adr-22-showcase-ready-components]] rule 1). Copy via i18n.
+  full-width header (Breadcrumb + session), then a row of FancyDrawer /
+  pinned rail + module content. Nav never climbs into the header band.
+  Pure chrome — it never fetches or mutates. Mounts with zero props and
+  never throws ([[adr-22-showcase-ready-components]] rule 1). Copy via i18n.
 -->
 <script lang="ts">
   import { onMount } from "svelte";
@@ -64,15 +62,6 @@
   });
 
   const currentId = $derived(currentClient?.id ?? null);
-  const sandwichExpanded = $derived(navPinned ? mobileOpen : navOpen);
-
-  function toggleSandwich() {
-    if (navPinned) {
-      mobileOpen = !mobileOpen;
-    } else {
-      navOpen = !navOpen;
-    }
-  }
 
   const crumbs = $derived.by((): BreadcrumbItem[] => {
     const trail: BreadcrumbItem[] = [];
@@ -91,55 +80,44 @@
   });
 </script>
 
-<div class="feedlot-app flex min-h-screen">
-  <FeedlotFancyNav
-    {active}
-    clientId={currentId}
-    side={resolvedSide}
-    bind:open={navOpen}
-    bind:mobileOpen
-    bind:pinned={navPinned}
-  />
+<div class="feedlot-app flex min-h-screen flex-col">
+  <header class="flex w-full shrink-0 items-center justify-end gap-3 px-6 pt-8 sm:px-10">
+    <Breadcrumb items={crumbs} />
+    <slot name="session" />
+  </header>
 
-  <div class="flex min-w-0 flex-1 flex-col">
-    <header class="flex w-full items-center gap-3 px-6 pt-8 sm:px-10">
-      <div class="flex items-center rounded-full border border-border bg-card p-1 text-card-foreground shadow-sm lg:hidden">
-        <button
-          type="button"
-          class="inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
-          aria-label={t("shell_nav_sandwich_aria")}
-          aria-expanded={sandwichExpanded}
-          onclick={toggleSandwich}
-        >
-          <span aria-hidden="true" class="text-lg leading-none">{sandwichExpanded ? "✕" : "☰"}</span>
-        </button>
-      </div>
-      <div class="ml-auto flex items-center gap-3">
-        <Breadcrumb items={crumbs} />
-        <slot name="session" />
-      </div>
-    </header>
+  <div class="flex min-h-0 min-w-0 flex-1">
+    <FeedlotFancyNav
+      {active}
+      clientId={currentId}
+      side={resolvedSide}
+      bind:open={navOpen}
+      bind:mobileOpen
+      bind:pinned={navPinned}
+    />
 
-    <nav class="flex gap-2 overflow-x-auto px-4 py-2.5 lg:hidden">
-      <slot name="mobile-nav" />
-    </nav>
+    <div class="flex min-w-0 flex-1 flex-col">
+      <nav class="flex gap-2 overflow-x-auto px-4 py-2.5 lg:hidden">
+        <slot name="mobile-nav" />
+      </nav>
 
-    <main class="flex-1 px-4 py-6 sm:px-8 sm:py-8">
-      {#if backHref}
-        <a
-          href={backHref}
-          class="mb-5 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors hover:bg-accent"
-          style="border: var(--hairline) solid var(--border); color: var(--foreground);"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-            stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true">
-            <path d="m15 18-6-6 6-6" />
-          </svg>
-          {backLabel || t("feedlot_back")}
-        </a>
-      {/if}
+      <main class="flex-1 px-4 py-6 sm:px-8 sm:py-8">
+        {#if backHref}
+          <a
+            href={backHref}
+            class="mb-5 inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold transition-colors hover:bg-accent"
+            style="border: var(--hairline) solid var(--border); color: var(--foreground);"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+            {backLabel || t("feedlot_back")}
+          </a>
+        {/if}
 
-      <slot />
-    </main>
+        <slot />
+      </main>
+    </div>
   </div>
 </div>

@@ -5,21 +5,28 @@
 
 <!--
   Feedlot site menu: unlocked = floating FancyDrawer; locked (closed padlock) =
-  permanent left rail with primary (feedlot green) fill — the old sidebar
-  presence. Lock + "Menú" stays on top either way so the user can free it.
-  Mobile locked mode uses an edge overlay toggled by FeedlotShell's circular
-  sandwich (header). Mounts with zero props (adr-22 r1). Pin preference
-  persists in localStorage.
+  permanent left rail (no fill — page canvas shows through). Footer holds
+  lock / profile / theme icon discs, separated below the menu. Floating mode
+  opens from FancyDrawer's edge tab. Mounts with zero props (adr-22 r1). Pin
+  preference persists in localStorage.
 -->
 <script lang="ts">
   import { onMount } from "svelte";
   import FancyDrawer from "$lib/components/overlay/FancyDrawer.svelte";
   import NavItem from "$lib/components/shell/NavItem.svelte";
   import NavLockToggle from "$lib/components/shell/NavLockToggle.svelte";
+  import NavGlyph from "$lib/components/shell/NavGlyph.svelte";
   import type { NavIconName } from "$lib/components/shell/nav";
   import { cn } from "$lib/utils";
   import { t } from "../../../i18n";
-  import type { SidebarSide } from "$lib/theme";
+  import {
+    DEFAULTS,
+    applyTheme,
+    readThemeCookie,
+    writeThemeCookie,
+    type SidebarSide,
+    type ThemeMode,
+  } from "$lib/theme";
 
   const PIN_KEY = "feedlot-nav-pinned";
   const NAV_WIDTH = "12rem";
@@ -28,9 +35,9 @@
     clientId = null,
     active = "dashboard",
     open = $bindable(false),
-    /** Mobile overlay when the rail is pinned; owned by FeedlotShell's sandwich. */
+    /** Mobile overlay when the rail is pinned. */
     mobileOpen = $bindable(false),
-    /** Pin preference; Shell reads it so the sandwich toggles the right surface. */
+    /** Pin preference; Shell binds it. */
     pinned = $bindable(false),
     /** Dock edge from theme_config.sidebarSide ([[DESIGN-SYSTEM]]). */
     side = "left" as SidebarSide,
@@ -43,7 +50,10 @@
     side?: SidebarSide;
   } = $props();
 
+  let mode = $state<ThemeMode>(DEFAULTS.mode);
+
   onMount(() => {
+    mode = readThemeCookie().mode ?? DEFAULTS.mode;
     try {
       pinned = localStorage.getItem(PIN_KEY) === "1";
     } catch {
@@ -69,6 +79,16 @@
   function togglePin() {
     persistPin(!pinned);
   }
+
+  function toggleTheme() {
+    const next: ThemeMode = mode === "dark" ? "light" : "dark";
+    mode = next;
+    const merged = { ...readThemeCookie(), mode: next };
+    applyTheme(merged);
+    writeThemeCookie(merged);
+  }
+
+  const themeIcon = $derived(mode === "dark" ? ("moon" as const) : ("sun" as const));
 
   const c = $derived(clientId ?? null);
   const q = $derived(c ? `?client=${c}` : "");
@@ -127,23 +147,44 @@
     },
   ]);
 
-  const itemTone = $derived(pinned ? ("inverse" as const) : ("default" as const));
+  const iconDisc =
+    "inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 </script>
 
-{#snippet navBody()}
-  <div class="flex flex-col gap-3">
+{#snippet navFooter()}
+  <div
+    class="mt-6 flex shrink-0 items-center justify-center gap-2.5 border-t border-border pt-4"
+    role="group"
+    aria-label={t("shell_nav_label")}
+  >
     <NavLockToggle locked={pinned} onclick={togglePin} />
-    <nav
-      aria-label={t("shell_nav_label")}
-      class={cn("flex flex-col gap-4", pinned ? "text-primary-foreground" : "text-foreground")}
+    <a
+      href="/profile/"
+      aria-label={t("nav_profile")}
+      title={t("nav_profile")}
+      class={iconDisc}
     >
+      <NavGlyph name="user" class="size-4" />
+    </a>
+    <button
+      type="button"
+      aria-label={t("theme_toggle_mode")}
+      title={t("theme_toggle_mode")}
+      class={iconDisc}
+      onclick={toggleTheme}
+    >
+      <NavGlyph name={themeIcon} class="size-4" />
+    </button>
+  </div>
+{/snippet}
+
+{#snippet navBody()}
+  <div class="flex h-full min-h-0 flex-col">
+    <nav aria-label={t("shell_nav_label")} class="flex min-h-0 flex-1 flex-col gap-7 overflow-y-auto text-foreground">
       {#each sections as section (section.title)}
-        <div class="flex flex-col gap-0.5">
+        <div class="flex flex-col gap-1.5">
           <div
-            class={cn(
-              "px-2 pb-1 text-[0.65rem] font-semibold uppercase tracking-[0.12em]",
-              pinned ? "text-primary-foreground/65" : "text-muted-foreground",
-            )}
+            class="px-2 pb-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground"
           >
             {section.title}
           </div>
@@ -153,25 +194,26 @@
               label={item.label}
               icon={item.icon}
               active={item.key === active}
-              tone={itemTone}
+              tone="default"
             />
           {/each}
         </div>
       {/each}
     </nav>
+    {@render navFooter()}
   </div>
 {/snippet}
 
 {#if pinned}
-  <!-- Desktop: permanent in-flow rail (old green presence via --primary). -->
+  <!-- Desktop: permanent in-flow rail — no aside fill; canvas shows through. -->
   <aside
     class={cn(
-      "hidden shrink-0 flex-col overflow-y-auto border-primary/30 bg-primary text-primary-foreground lg:flex",
+      "hidden min-h-0 shrink-0 flex-col overflow-y-auto border-border text-foreground lg:flex",
       side === "right" ? "order-last border-l" : "border-r",
     )}
     style={`width: ${NAV_WIDTH}`}
   >
-    <div class="flex flex-col gap-0 px-3 py-4">
+    <div class="flex h-full min-h-0 flex-col px-3 py-4">
       {@render navBody()}
     </div>
   </aside>
@@ -185,12 +227,12 @@
     ></button>
     <aside
       class={cn(
-        "fixed inset-y-0 z-50 flex flex-col overflow-y-auto border-primary/30 bg-primary text-primary-foreground shadow-xl lg:hidden",
+        "fixed inset-y-0 z-50 flex flex-col overflow-y-auto border-border text-foreground shadow-xl lg:hidden",
         side === "right" ? "right-0 border-l" : "left-0 border-r",
       )}
       style={`width: ${NAV_WIDTH}`}
     >
-      <div class="flex flex-col gap-0 px-3 py-4">
+      <div class="flex h-full min-h-0 flex-col px-3 py-4">
         {@render navBody()}
       </div>
     </aside>

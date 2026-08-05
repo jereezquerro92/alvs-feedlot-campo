@@ -51,6 +51,7 @@
   title={copy.title || t("chatui_router_title")}
   openLabel={t("shell_chat_drawer_open")}
   closeLabel={t("shell_chat_drawer_close")}
+  tabGlyph="?"
 >
   <div class="flex h-full min-h-0 flex-col">
     <ChatUI
