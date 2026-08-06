@@ -60,28 +60,52 @@ def discover_guardian_defs() -> dict[str, dict[str, str]]:
 
 
 def extract_watchlist_keys() -> list[str]:
-    """Statically pull WATCHLISTS' dict keys via AST — never import the
-    hook module, which may carry PostToolUse side effects."""
+    """Pull the watchlist keys from the `watch:` frontmatter of each agent def.
+
+    That key is the single machine copy of every watchlist (adr-03 rule 8), so
+    it — not the hook — is where the keys live. This also guards the property
+    in the other direction: the hook must NOT declare a WATCHLISTS dict of its
+    own, because a second copy is exactly the drift rule 8 forbids. The hook is
+    still never imported here; it may carry PostToolUse side effects.
+    """
     if not DISPATCH_HOOK.is_file():
         fail(f"missing {DISPATCH_HOOK.relative_to(ROOT)}")
     tree = ast.parse(DISPATCH_HOOK.read_text(encoding="utf-8"), filename=str(DISPATCH_HOOK))
     for node in ast.walk(tree):
         if isinstance(node, ast.Assign) and isinstance(node.value, ast.Dict):
-            target_names = [t.id for t in node.targets if isinstance(t, ast.Name)]
-            if "WATCHLISTS" not in target_names:
+            if any(t.id == "WATCHLISTS" for t in node.targets if isinstance(t, ast.Name)):
+                fail(
+                    f"{DISPATCH_HOOK.relative_to(ROOT)} declares a WATCHLISTS dict "
+                    "literal; watchlists live in each agent's `watch:` frontmatter "
+                    "and the hook must only read them (adr-03 rule 8)"
+                )
+
+    keys: list[str] = []
+    for path in sorted(AGENTS_DIR.glob("*.md")):
+        lines = path.read_text(encoding="utf-8").splitlines()
+        if not lines or lines[0].strip() != "---":
+            continue
+        in_watch = False
+        has_glob = False
+        for line in lines[1:]:
+            if line.strip() == "---":
+                break
+            if line.startswith("watch:"):
+                in_watch = True
                 continue
-            keys: list[str] = []
-            for k in node.value.keys:
-                if isinstance(k, ast.Constant) and isinstance(k.value, str):
-                    keys.append(k.value)
+            if in_watch:
+                if line.strip().startswith("- "):
+                    has_glob = True
                 else:
-                    fail(
-                        "WATCHLISTS has a non-string-literal key; cannot "
-                        "statically verify it via AST"
-                    )
-            return keys
-    fail(f"no WATCHLISTS dict assignment found in {DISPATCH_HOOK.relative_to(ROOT)}")
-    return []  # unreachable — fail() raises
+                    in_watch = False
+        if has_glob:
+            keys.append(path.stem)
+    if not keys:
+        fail(
+            "no agent definition under docs/agents/*.md declares a `watch:` list; "
+            "the dispatch safety net cannot name a single guardian (adr-03 rule 8)"
+        )
+    return keys
 
 
 def test_identity_triangle() -> None:

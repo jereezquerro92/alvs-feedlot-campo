@@ -13,10 +13,11 @@ DISPATCH_HOOK = ROOT / ".claude" / "hooks" / "dispatch_guardians.py"
 API_HOOK = ROOT / ".claude" / "hooks" / "require_api_read.py"
 PR_FLOW_HOOK = ROOT / ".claude" / "hooks" / "require_pr_flow.py"
 
-# Coverage parity: reproduces today's dispatch_guardians.py WATCHLISTS
-# glob-by-glob. adr-03 rule 8 keeps the watchlist in exactly two places
-# (each guardian's Watchlist section + the hook WATCHLISTS); this test
-# guards the hook half against silent drift when the two hooks were merged.
+# Coverage parity, glob-by-glob, against the today-agreed watchlists.
+# adr-03 rule 8 keeps ONE machine copy of each watchlist: the `watch:` key in
+# the frontmatter of the guardian's own definition. Both hooks only read it.
+# This constant is a test fixture asserting that copy's CONTENT — never a
+# second runtime copy, and never a reason to reintroduce one in a hook.
 EXPECTED_WATCHLISTS = {
     "astro-drf-aws-prd": (
         "docs/constitution/PRD.md",
@@ -116,9 +117,23 @@ def context_of(proc: subprocess.CompletedProcess) -> str:
     return json.loads(proc.stdout)["hookSpecificOutput"]["additionalContext"]
 
 
+def seed_guardian_defs(project: Path) -> None:
+    """Copy the real guardian definitions into a temp project.
+
+    The hook reads each watchlist from the `watch:` frontmatter of these files
+    (adr-03 rule 8 — one machine copy), so a project without them has no
+    watchlists at all. Seeding them is what makes the fixture a real project.
+    """
+    agents = project / "docs" / "agents"
+    agents.mkdir(parents=True, exist_ok=True)
+    for src in sorted((ROOT / "docs" / "agents").glob("*.md")):
+        (agents / src.name).write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+
+
 def test_guardian_named_once_across_eight_file_batch() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         project = Path(tmp)
+        seed_guardian_defs(project)
         session = "S-batch"
         first = run_dispatch(project, "docs/adrs/adr-01.md", session)
         if "astro-drf-aws-adr" not in context_of(first):

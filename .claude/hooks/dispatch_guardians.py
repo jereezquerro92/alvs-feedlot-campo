@@ -9,8 +9,10 @@ single output block:
   - names the ADR(s) to review when a governance-sensitive file is touched
     via RULES — wikilinks and a one-line "why review" only, never rule
     restatement (adr-00 rule 1).
-WATCHLISTS mirrors the Watchlist section of each agent file — keep them in
-sync (adr-03 rule 8: one machine copy per watchlist, identical in coverage).
+WATCHLISTS is READ from the `watch:` frontmatter key of each agent definition,
+never declared here: that key is the single machine copy of every watchlist
+(adr-03 rule 8), shared with docs/hooks/guardian-dispatch. A watched surface
+enters or leaves a watchlist by editing the guardian's own file, nowhere else.
 
 Both jobs dedupe per session-scoped batch: each guardian/ADR is named once
 per session, not once per file, via a gitignored seen-set at
@@ -24,45 +26,49 @@ import os
 import sys
 from pathlib import Path
 
-WATCHLISTS = {
-    "astro-drf-aws-prd": (
-        "docs/constitution/PRD.md",
-        "AGENTS.md",
-        "CLAUDE.md",
-        "README.md",
-        ".github/workflows/*",
-    ),
-    "astro-drf-aws-adr": (
-        "docs/agents/*",
-        ".claude/rules/*",
-        "docs/adrs/*",
-        "docs/obsolete/*",
-        ".github/workflows/*",
-        "compose.yaml",
-        "docs/constitution/REQUIREMENTS.md",
-        "docs/GLOSSARY.md",
-        "docs/constitution/LOCALIZATION.md",
-        "docs/constitution/INFRASTRUCTURE.md",
-        "docs/VARIABLES.md",
-        "docs/INVENTORY.md",
-        "*/pyproject.toml",
-        "pyproject.toml",
-        "*/package.json",
-        "package.json",
-        "*/bun.lock*",
-        "bun.lock*",
-    ),
-    "astro-drf-aws-api": (
-        "docs/API.md",
-        "*/urls.py",
-        "*/api_urls.py",
-        "*/views.py",
-        "*/viewsets.py",
-        "*/serializers.py",
-        "*/models.py",
-        "*/templates/*",
-    ),
-}
+def _read_watchlists(agents_dir):
+    """Parse `watch:` from each agent definition's frontmatter.
+
+    adr-03 rule 8: that key is the single machine copy of every watchlist, so
+    this hook reads it and never carries a list of its own. Same parse as
+    docs/hooks/guardian-dispatch, which is the runtime-agnostic entry point.
+    """
+    lists = {}
+    try:
+        paths = sorted(Path(agents_dir).glob("*.md"))
+    except OSError:
+        return {}
+    for path in paths:
+        try:
+            lines = path.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            continue
+        if not lines or lines[0].strip() != "---":
+            continue
+        globs = []
+        in_watch = False
+        for line in lines[1:]:
+            if line.strip() == "---":
+                break
+            if line.startswith("watch:"):
+                in_watch = True
+                continue
+            if in_watch:
+                stripped = line.strip()
+                if stripped.startswith("- "):
+                    globs.append(stripped[2:].strip().strip("'\""))
+                else:
+                    in_watch = False
+        if globs:
+            lists[path.stem] = tuple(globs)
+    return lists
+
+
+WATCHLISTS = _read_watchlists(
+    Path(os.environ.get("CLAUDE_PROJECT_DIR", Path(__file__).resolve().parents[2]))
+    / "docs"
+    / "agents"
+)
 
 # (globs, required tool_name or None for any, reminder text)
 RULES = (
