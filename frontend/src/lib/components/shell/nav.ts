@@ -53,8 +53,8 @@ const CLIENT_SUB_ACTIVE: Record<string, string> = {
 /**
  * Resolve FancyNav highlight + client context from the request URL so
  * `Base.astro` can mount the site menu once without every page re-passing it.
- * A non-null `clientId` (path `/feedlot/{id}/…` or `?client=`) is what Base
- * requires before showing the left menu — client pick is mandatory.
+ * `clientId` is data, not a gate: a null one scopes no link and never
+ * suppresses the menu ([[adr-54-site-menu-lock-modes]] rule 3).
  */
 export function resolveShellNav(
   pathname: string,

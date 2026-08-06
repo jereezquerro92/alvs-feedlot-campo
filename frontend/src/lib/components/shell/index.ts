@@ -16,14 +16,7 @@ export {
   parseNavLockCookie,
   resolveNavFsm,
   resolvePresentation,
-  resolveViewport,
   NAV_LOCK_COOKIE,
   RAIL_MIN_WIDTH,
-  DESK_MIN_WIDTH,
 } from "./nav-fsm";
-export type {
-  NavLockPreference,
-  NavViewport,
-  NavPresentation,
-  NavFsmState,
-} from "./nav-fsm";
+export type { NavLockPreference, NavPresentation, NavFsmState } from "./nav-fsm";

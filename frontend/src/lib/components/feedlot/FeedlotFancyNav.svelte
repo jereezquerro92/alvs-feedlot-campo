@@ -4,10 +4,11 @@
      LIVE-DOC:END -->
 
 <!--
-  Feedlot site menu driven by shell/nav-fsm: preference (cookie, SSR), viewport
-  band (matchMedia), presentation (rail|drawer), active (from Base). Locked
-  preference mounts rail + drawer together; CSS at RAIL_MIN_WIDTH picks which
-  is visible so navigation never flashes unlocked. Unlocked = FancyDrawer only.
+  Feedlot site menu driven by shell/nav-fsm: preference (cookie, SSR),
+  presentation (rail|drawer), active (from Base). There is always a menu —
+  locked mounts rail + drawer together and CSS at RAIL_MIN_WIDTH picks the
+  visible one; unlocked is the FancyDrawer. No viewport measurement decides
+  what renders, so the first server-rendered paint is already correct.
 -->
 <script lang="ts">
   import { onMount } from "svelte";
@@ -17,15 +18,10 @@
   import NavGlyph from "$lib/components/shell/NavGlyph.svelte";
   import type { NavIconName } from "$lib/components/shell/nav";
   import {
-    DESK_MIN_WIDTH,
-    RAIL_MIN_WIDTH,
     migrateLegacyNavLock,
     resolveNavFsm,
-    resolvePresentation,
-    resolveViewport,
     writeNavLockCookie,
     type NavLockPreference,
-    type NavViewport,
   } from "$lib/components/shell/nav-fsm";
   import { cn } from "$lib/utils";
   import { t } from "../../../i18n";
@@ -57,7 +53,6 @@
   } = $props();
 
   let localPreference = $state<NavLockPreference | null>(null);
-  let viewport = $state<NavViewport>("desk");
   let mode = $state<ThemeMode>(DEFAULTS.mode);
 
   // SSR cookie wins until the user toggles; a new preferenceProp (navigation) clears the override.
@@ -68,40 +63,19 @@
 
   const preference = $derived(localPreference ?? preferenceProp);
 
-  const fsm = $derived(
-    resolveNavFsm({ preference, viewport, active }),
-  );
+  const fsm = $derived(resolveNavFsm({ preference, active }));
 
   onMount(() => {
     mode = readThemeCookie().mode ?? DEFAULTS.mode;
     const migrated = migrateLegacyNavLock();
     if (migrated) localPreference = migrated;
-
-    const railMq = window.matchMedia(`(min-width: ${RAIL_MIN_WIDTH})`);
-    const deskMq = window.matchMedia(`(min-width: ${DESK_MIN_WIDTH})`);
-    const syncViewport = () => {
-      viewport = resolveViewport(railMq.matches, deskMq.matches);
-    };
-    syncViewport();
-    railMq.addEventListener("change", syncViewport);
-    deskMq.addEventListener("change", syncViewport);
-    return () => {
-      railMq.removeEventListener("change", syncViewport);
-      deskMq.removeEventListener("change", syncViewport);
-    };
   });
 
-  function persistPreference(next: NavLockPreference) {
+  function togglePin() {
+    const next: NavLockPreference = preference === "locked" ? "unlocked" : "locked";
     localPreference = next;
     writeNavLockCookie(next);
-    if (next === "locked" && resolvePresentation(next, viewport) === "rail") {
-      open = true;
-    }
-  }
-
-  function togglePin() {
-    if (preference === "unlocked" && viewport === "mobile") return;
-    persistPreference(preference === "locked" ? "unlocked" : "locked");
+    if (next === "locked") open = true;
   }
 
   function toggleTheme() {
@@ -257,7 +231,7 @@
   </FancyDrawer>
 {/snippet}
 
-{#if preference === "locked"}
+{#if fsm.presentation === "rail"}
   <!-- CSS picks rail vs drawer so SSR + navigation never flash unlocked. -->
   <div class="hidden min-[43.75rem]:contents">
     {@render rail()}
