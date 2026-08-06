@@ -10,10 +10,11 @@ export function hasRole(me: Me | null): me is Me {
 }
 
 /**
- * The six field roles as Django Group names (adr-44). Mirrored here for UI
- * gating ONLY — `roles.py` in the backend is the security boundary; these
- * strings drive navigation and portal routing, never an authorization decision
- * ("el gateo es conveniencia, no la barrera", adr-44 decision 3 / consequence).
+ * The six field role names (adr-44), as returned in the `groups` field of
+ * `/api/me/` ([[API]]) — contract data, not a server internal
+ * ([[adr-53-api-membrane]] rule 2). Held here for UI gating ONLY: these strings
+ * drive navigation and portal routing and never an authorization decision. The
+ * gate is convenience, never the barrier (adr-44 rule 8).
  */
 export const GROUP = {
   ADMINS: "admins",
