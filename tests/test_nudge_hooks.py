@@ -116,9 +116,23 @@ def context_of(proc: subprocess.CompletedProcess) -> str:
     return json.loads(proc.stdout)["hookSpecificOutput"]["additionalContext"]
 
 
+def seed_guardian_defs(project: Path) -> None:
+    """Copy the real guardian definitions into a temp project.
+
+    The hook reads each watchlist from the `watch:` frontmatter of these files
+    (adr-03 rule 8 — one machine copy), so a project without them has no
+    watchlists at all. Seeding them is what makes the fixture a real project.
+    """
+    agents = project / "docs" / "agents"
+    agents.mkdir(parents=True, exist_ok=True)
+    for src in sorted((ROOT / "docs" / "agents").glob("*.md")):
+        (agents / src.name).write_text(src.read_text(encoding="utf-8"), encoding="utf-8")
+
+
 def test_guardian_named_once_across_eight_file_batch() -> None:
     with tempfile.TemporaryDirectory() as tmp:
         project = Path(tmp)
+        seed_guardian_defs(project)
         session = "S-batch"
         first = run_dispatch(project, "docs/adrs/adr-01.md", session)
         if "astro-drf-aws-adr" not in context_of(first):
