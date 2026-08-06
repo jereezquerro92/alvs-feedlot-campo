@@ -64,6 +64,20 @@ Three distinct gates catch different failures; a change runs each where it appli
 - SSR code calls the backend via the internal service-discovery DNS name, never through the public ALB. Naming and networking conventions are owned by [[INFRASTRUCTURE]]. Why: looping traffic through the public edge adds latency, cost, and a dependency on public DNS for internal calls.
 - The backend contract those calls consume is owned by [[API]].
 
+## Health probe
+
+`GET /healthz` is an unauthenticated Astro APIRoute that returns HTTP 200 with body `{"status":"ok"}` and `Cache-Control: no-store` ([[adr-06-cache]] rule 3) whenever the Astro SSR process is up and routing requests.
+
+**What it proves:** the frontend container is alive and Astro's request pipeline is routing. That is all it proves — the response is unconditional and carries no dependency on the backend service, the database, or any environment variable. Checking `BACKEND_API_URL` or any downstream would turn a liveness probe into a readiness/aggregate-health probe, breaking the contract.
+
+**What it does not prove:** backend reachability, database connectivity, session validity, or any application-level invariant. The backend's own surface for that is `GET /api/health/` ([[API]]).
+
+**Division of labour:** `/healthz` answers "is this container routing?" — it is the frontend liveness signal. `/api/health/` answers "is the backend subsystem healthy?" — it is the backend readiness signal. Both are required; neither substitutes for the other.
+
+**Uses:** the ALB target group health check (see `docs/INVENTORY.md` for provisioned resources), and the first assertion in the smoke suite that runs before any authenticated flow. The `no-store` header ensures load-balancers and intermediate proxies never cache a stale 200.
+
+Wiring (Compose port mapping, ALB listener rules, service discovery) is owned by [[DOCKER]]; required by [[adr-09-docker-compose]] rule 8. Changing the semantics of this route — including adding any conditional or backend dependency — is an architectural decision governed by [[adr-09-docker-compose]] rule 8 and requires owner sign-off, not a routine code change.
+
 ## Browser-side data access
 
 - Auth is the Django **session cookie** ([[AUTH]]), so every browser `fetch()` to the API MUST pass `credentials: 'include'` — without it the cookie is never sent and the API answers 401/403. The backend replies `Access-Control-Allow-Credentials: true` structurally (`CORS_ALLOW_CREDENTIALS = True` is a constant in settings, never an env toggle), because session auth makes credentialed CORS a consequence, not a choice.

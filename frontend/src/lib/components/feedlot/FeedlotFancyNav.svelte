@@ -16,7 +16,7 @@
   import NavItem from "$lib/components/shell/NavItem.svelte";
   import NavLockToggle from "$lib/components/shell/NavLockToggle.svelte";
   import NavGlyph from "$lib/components/shell/NavGlyph.svelte";
-  import type { NavIconName } from "$lib/components/shell/nav";
+  import { canSeeNavItem, type NavIconName } from "$lib/components/shell/nav";
   import {
     migrateLegacyNavLock,
     resolveNavFsm,
@@ -44,12 +44,16 @@
     open = $bindable(false),
     /** Dock edge from theme_config.sidebarSide ([[DESIGN-SYSTEM]]). */
     side = "left" as SidebarSide,
+    /** Session groups from `/api/me/`; null = no session supplied, show every
+     * item ([[adr-44-field-operational-roles]] rule 8 — trimming, not the barrier). */
+    groups = null,
   }: {
     clientId?: number | string | null;
     active?: string;
     preference?: NavLockPreference;
     open?: boolean;
     side?: SidebarSide;
+    groups?: readonly string[] | null;
   } = $props();
 
   let localPreference = $state<NavLockPreference | null>(null);
@@ -145,6 +149,20 @@
     },
   ]);
 
+  /**
+   * Role trimming: an item the session cannot see is not rendered, and a
+   * section left with no items renders no heading. The menu itself is never
+   * hidden by this ([[adr-54-site-menu-lock-modes]] rule 3).
+   */
+  const visibleSections = $derived(
+    sections
+      .map((section) => ({
+        ...section,
+        items: section.items.filter((item) => canSeeNavItem(item.key, groups)),
+      }))
+      .filter((section) => section.items.length > 0),
+  );
+
   const iconDisc =
     "inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-background transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring";
 </script>
@@ -179,7 +197,7 @@
 {#snippet navBody()}
   <div class="flex h-full min-h-0 flex-col">
     <nav aria-label={t("shell_nav_label")} class="flex min-h-0 flex-1 flex-col gap-7 overflow-y-auto text-foreground">
-      {#each sections as section (section.title)}
+      {#each visibleSections as section (section.title)}
         <div class="flex flex-col gap-2.5">
           <div
             class="px-2 pb-1.5 text-[0.65rem] font-semibold uppercase tracking-[0.12em] text-muted-foreground"

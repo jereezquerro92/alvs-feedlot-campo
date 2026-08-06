@@ -27,6 +27,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 ## [[adr-09-docker-compose]]
 
 - `compose.yaml`
+- `frontend/src/pages/healthz.ts`
 
 ## [[adr-10-auth]]
 
@@ -1448,6 +1449,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 ## [[DOCKER]]
 
 - `compose.yaml`
+- `frontend/src/pages/healthz.ts`
 
 ## [[FEEDLOT]]
 
