@@ -86,6 +86,7 @@ const showChatDrawer = SHOW_CHAT_DRAWER && chatDrawer && hasRole(me);
             clientId={navClientId}
             preference={navPreference}
             side={sidebarSide}
+            groups={me?.groups ?? []}
           />
         )
       }

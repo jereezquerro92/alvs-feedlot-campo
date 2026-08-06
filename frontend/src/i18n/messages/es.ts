@@ -911,7 +911,7 @@ export const es = {
   feedlot_asesor_q_recent_moves: "¿Cuáles son los últimos movimientos de la cuenta?",
   feedlot_asesor_q_summary: "Dame un resumen general de la situación del cliente.",
 
-  // --- Prices module (adr-30 reference cattle prices; MarketAccess-gated) ---
+  // --- Prices module (adr-30 reference cattle prices) ---
   feedlot_module_precios_title: "Precios de hacienda",
   feedlot_module_precios_subtitle:
     "Precios de referencia de mercado por fuente y categoría. Son valores externos para métricas y análisis; nunca la moneda de la cuenta, que sigue en ARS con precio histórico.",
