@@ -125,7 +125,7 @@ This is the spine of [[adr-15-chatbot-two-tier]] and the reason the enum-constra
 | Tier | Emits | Rights |
 |---|---|---|
 | **Choosing** (the router) | Exactly one member of a closed, permission-filtered enum. Never text. | **Actuator rights** — its output can flip a switch, navigate, trigger an action. |
-| **Generating** (stage 2, TBD) | Free-form natural language. | **Read-only, forever.** Never flips a switch. |
+| **Generating** (the advisors, the conversational asesor, the page-context assistant) | Free-form natural language. | **Read-only, forever.** Never flips a switch. |
 
 If the generating tier wants an action, it does not take one. It **re-enters through the router** with a closed menu and is subject to the same filtering, the same enum, the same hard reject, and the same audit row as a human utterance. There is no privileged back door for the model that talks.
 
@@ -149,6 +149,35 @@ Every routed utterance resolves to exactly one of four outcome kinds — **`NO_M
 
 Shipping the seam dead, from day one, is what keeps stage 2 from becoming a rewrite.
 
+## The page-context channel — the one direct user → generating tier surface
+
+`POST /api/assistant/ask/` ([[API]], [[adr-55-page-context-assistant]]) is the **only** sanctioned channel where a user's utterance reaches the generating tier directly, rather than through the router's `ESCALATE` seam above. It is a second surface inside the `assistant` app, beside the conversational asesor ([[adr-35-conversational-assistant]]) — not a new app, and not a widening of the router.
+
+It changes nothing about the invariant. The surface generates prose and holds **no actuator right**, forever. A user asking it to *do* something gets prose about how to do it, plus links; taking the action still means re-entering through the router with its closed, permission-filtered menu.
+
+### What the model is given — page identity, never page content
+
+The context is assembled server-side from the **current path and what the server derives from it**, and nothing else:
+
+- **Accepted:** the path identity of the page the user is on.
+- **Never accepted, never forwarded:** page text, DOM content, rendered table values, or any context the caller assembled. A caller-supplied context is refused outright, exactly as a caller-built advisor snapshot is ([[adr-31-advisors-implementation]] rule 2).
+
+Why the line sits there: page text is user- and data-derived prose of unbounded shape. Forwarding it would make every request a free-text channel into the generating tier with no closed set anywhere in it — the residual channel the honest-limit section above bounds, widened to the width of the page.
+
+### The links are filtered before inference, never after
+
+An answer may offer navigation links, and they come from a **closed registry filtered by the requesting user's Django Groups before the model is invoked**. The model narrows within an already-authorized set; it can never widen privilege. A link that comes back outside that filtered set is a **hard reject** — logged as a fault, never repaired into a nearest match, never defaulted ([[adr-15-chatbot-two-tier]] rules 2–3).
+
+Filtering after the answer would be cheaper and reads as equivalent. It is not: it makes the model's output the input to an authorization decision, which is the defect adr-15 rule 3 names outright.
+
+### The opt-in is a preference, not a grant
+
+Reaching the surface takes three things: an authenticated session, the Django Group that `CanUseAssistant` checks per request, and the per-user `chat_drawer_enabled` preference ([[API]]). The preference only decides whether the drawer mounts. A user who enables it without the Group reaches nothing; the Group without the preference simply shows no drawer. Treating the preference as authority would be a self-service role grant, which [[adr-20-authorization-lobby]] rule 3 closed.
+
+### The honest limit applies here too, and harder
+
+Everything in *The honest limit* above holds for this channel, with one difference worth stating plainly: the router's worst case is a user getting an action they were already authorized to perform. This surface has no actions at all, so its worst case is **wrong or misleading prose**, bounded by the fact that the model saw only a path — not a client's records, not another user's data. That is a narrower blast radius than the router's, and it is still not a closed channel. No document, comment, or commit message may describe it as closed or proven ([[adr-15-chatbot-two-tier]] rule 6).
+
 ## Retention — the audit row is bounded, not forever (closes #65)
 
 The raw utterance persists in `IntentQuery`, but under a bounded retention policy, not indefinitely:
@@ -157,6 +186,8 @@ The raw utterance persists in `IntentQuery`, but under a bounded retention polic
 - **Purge** — the `purge_router_audit` management command deletes rows past the window; idempotent, `--dry-run` reports without deleting.
 - **On-delete** — `IntentQuery.chosen_intent` is `SET_NULL`, not `PROTECT`: deleting an `Intent` registry row never cascade-deletes, and is never blocked by, its audit history (resolves the #105 collision).
 - **Admin visibility** — `utterance` / `raw_model_output` are visible in Django admin only to the "Router Auditors" group; every other admin user's views exclude both fields.
+
+The page-context assistant keeps its own audit table under the same discipline, never sharing the router's: `AssistantQuery` rows are bounded by `ASSISTANT_AUDIT_RETENTION_DAYS` ([[VARIABLES]], default `30`) and purged by `purge_assistant_audit` ([[adr-55-page-context-assistant]] rule 6). Two tiers, two tables, two commands — a single shared audit row would conflate a choice with a generation, which is the one distinction this document exists to hold.
 
 ## The action descriptor — the backend chooses, the frontend acts
 
