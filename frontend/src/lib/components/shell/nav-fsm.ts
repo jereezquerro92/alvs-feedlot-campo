@@ -4,23 +4,24 @@
  * LIVE-DOC:END */
 
 /**
- * Site-menu FSM — preference, viewport band, presentation, and active item.
- * DOM-free resolvers so Base.astro SSR and bun:test share one contract with
- * the island. Lock preference is a cookie (SSR-readable, no-flash), not
- * localStorage ([[adr-54-site-menu-lock-modes]]).
+ * Site-menu FSM — preference, presentation, and active item. Two presentations
+ * and no third state: there is always a menu ([[adr-54-site-menu-lock-modes]]
+ * rule 3). DOM-free resolvers so Base.astro SSR and bun:test share one
+ * contract with the island. Lock preference is a cookie (SSR-readable,
+ * no-flash), not localStorage.
+ *
+ * The viewport band is NOT an FSM field: locked mode mounts rail and drawer
+ * together and CSS at RAIL_MIN_WIDTH picks the visible one, so no measurement
+ * is needed to decide what renders (rule 8).
  */
 
 export type NavLockPreference = "locked" | "unlocked";
 
-/** Viewport bands in rem ([[DESIGN-SYSTEM]] rail floor + Tailwind `lg`). */
-export type NavViewport = "mobile" | "tablet" | "desk";
-
-/** What the shell actually mounts / shows. */
+/** What the shell actually mounts / shows. Never absent — those are the two. */
 export type NavPresentation = "rail" | "drawer";
 
 export interface NavFsmState {
   preference: NavLockPreference;
-  viewport: NavViewport;
   presentation: NavPresentation;
   active: string;
 }
@@ -28,11 +29,8 @@ export interface NavFsmState {
 /** Cookie name — client-set chrome hint, same hygiene class as `theme`. */
 export const NAV_LOCK_COOKIE = "nav_lock";
 
-/** Locked rail minimum — tablet floor (~700px). Below → force drawer. */
+/** Locked rail minimum — tablet floor (~700px). Below it, CSS shows the drawer. */
 export const RAIL_MIN_WIDTH = "43.75rem";
-
-/** Desk floor — Tailwind `lg`. */
-export const DESK_MIN_WIDTH = "64rem";
 
 /** Legacy localStorage key — read once to migrate into the cookie. */
 export const NAV_LOCK_LEGACY_KEY = "feedlot-nav-pinned";
@@ -48,36 +46,18 @@ export function encodeNavLockCookie(preference: NavLockPreference): string {
   return preference === "locked" ? "1" : "0";
 }
 
-/**
- * Viewport from matchMedia results (root rem), not a hard-coded px/16 split.
- * `railFits` = min-width RAIL_MIN_WIDTH; `deskFits` = min-width DESK_MIN_WIDTH.
- */
-export function resolveViewport(railFits: boolean, deskFits: boolean): NavViewport {
-  if (!railFits) return "mobile";
-  if (!deskFits) return "tablet";
-  return "desk";
-}
-
-export function resolvePresentation(
-  preference: NavLockPreference,
-  viewport: NavViewport,
-): NavPresentation {
-  if (preference === "unlocked") return "drawer";
-  if (viewport === "mobile") return "drawer";
-  return "rail";
+/** Locked wants the rail, unlocked wants the drawer. There is no third answer. */
+export function resolvePresentation(preference: NavLockPreference): NavPresentation {
+  return preference === "locked" ? "rail" : "drawer";
 }
 
 export function resolveNavFsm(input: {
   preference: NavLockPreference;
-  viewport: NavViewport;
   active: string;
 }): NavFsmState {
-  const preference = input.preference;
-  const viewport = input.viewport;
   return {
-    preference,
-    viewport,
-    presentation: resolvePresentation(preference, viewport),
+    preference: input.preference,
+    presentation: resolvePresentation(input.preference),
     active: input.active,
   };
 }

@@ -4,8 +4,10 @@ import {
   parseNavLockCookie,
   resolveNavFsm,
   resolvePresentation,
-  resolveViewport,
+  type NavLockPreference,
 } from "../src/lib/components/shell/nav-fsm";
+
+const PREFERENCES: NavLockPreference[] = ["locked", "unlocked"];
 
 describe("parseNavLockCookie", () => {
   test("treats 1/locked/true as locked", () => {
@@ -30,44 +32,35 @@ describe("encodeNavLockCookie", () => {
   });
 });
 
-describe("resolveViewport", () => {
-  test("mobile below rail floor", () => {
-    expect(resolveViewport(false, false)).toBe("mobile");
-    expect(resolveViewport(false, true)).toBe("mobile");
-  });
-
-  test("tablet at or above rail and below desk", () => {
-    expect(resolveViewport(true, false)).toBe("tablet");
-  });
-
-  test("desk at or above desk floor", () => {
-    expect(resolveViewport(true, true)).toBe("desk");
-  });
-});
-
 describe("resolvePresentation", () => {
-  test("unlocked always drawer", () => {
-    expect(resolvePresentation("unlocked", "mobile")).toBe("drawer");
-    expect(resolvePresentation("unlocked", "tablet")).toBe("drawer");
-    expect(resolvePresentation("unlocked", "desk")).toBe("drawer");
+  test("locked is the rail, unlocked is the drawer", () => {
+    expect(resolvePresentation("locked")).toBe("rail");
+    expect(resolvePresentation("unlocked")).toBe("drawer");
   });
 
-  test("locked forces drawer on mobile only", () => {
-    expect(resolvePresentation("locked", "mobile")).toBe("drawer");
-    expect(resolvePresentation("locked", "tablet")).toBe("rail");
-    expect(resolvePresentation("locked", "desk")).toBe("rail");
+  // adr-54 rule 3: the menu is NEVER invisible. There is no third presentation
+  // and no input that yields one, so no viewport measurement can hide the menu.
+  test("every preference resolves to a real presentation", () => {
+    for (const preference of PREFERENCES) {
+      expect(["rail", "drawer"]).toContain(resolvePresentation(preference));
+    }
   });
 });
 
 describe("resolveNavFsm", () => {
-  test("packages preference, viewport, presentation, and active", () => {
-    expect(
-      resolveNavFsm({ preference: "locked", viewport: "tablet", active: "feeding" }),
-    ).toEqual({
+  test("packages preference, presentation, and active", () => {
+    expect(resolveNavFsm({ preference: "locked", active: "feeding" })).toEqual({
       preference: "locked",
-      viewport: "tablet",
       presentation: "rail",
       active: "feeding",
     });
+  });
+
+  test("never yields a state without a menu", () => {
+    for (const preference of PREFERENCES) {
+      const fsm = resolveNavFsm({ preference, active: "" });
+      expect(fsm.presentation).toBeTruthy();
+      expect(["rail", "drawer"]).toContain(fsm.presentation);
+    }
   });
 });

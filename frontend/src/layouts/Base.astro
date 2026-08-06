@@ -27,8 +27,8 @@ interface Props {
   me?: Me | null;
   /** Set false on /chatui/ (canvas already IS the router). Ignored while SHOW_CHAT_DRAWER is false. */
   chatDrawer?: boolean;
-  /** Set false to suppress the left site menu (e.g. lobby). Default: on when
-   * the session has a role AND a client is already selected in the URL. */
+  /** Set false to suppress the left site menu. Default: on for any session
+   * that has a role ([[adr-54-site-menu-lock-modes]] rule 3). */
   shellNav?: boolean;
 }
 
@@ -58,10 +58,11 @@ const { active: navActive, clientId: navClientId } = resolveShellNav(
 // ([[adr-54-site-menu-lock-modes]]). Viewport band is CSS on first paint.
 const navPreference = parseNavLockCookie(Astro.cookies.get("nav_lock")?.value);
 
-// Client pick is mandatory for the site menu: path `/feedlot/{id}/…` or
-// `?client=` must already identify one. The `/feedlot/` ChoiceList landing
-// and any page without that context stay without FancyNav.
-const showShellNav = shellNav && hasRole(me) && navClientId != null;
+// A session with a role always gets the site menu ([[adr-54-site-menu-lock-modes]]
+// rule 3 — the menu is never invisible). The client is per-link data, never a
+// precondition for the chrome: without one, client-scoped hrefs simply carry no
+// `?client=`.
+const showShellNav = shellNav && hasRole(me);
 const showChatDrawer = SHOW_CHAT_DRAWER && chatDrawer && hasRole(me);
 ---
 
