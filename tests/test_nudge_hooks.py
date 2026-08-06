@@ -13,10 +13,11 @@ DISPATCH_HOOK = ROOT / ".claude" / "hooks" / "dispatch_guardians.py"
 API_HOOK = ROOT / ".claude" / "hooks" / "require_api_read.py"
 PR_FLOW_HOOK = ROOT / ".claude" / "hooks" / "require_pr_flow.py"
 
-# Coverage parity: reproduces today's dispatch_guardians.py WATCHLISTS
-# glob-by-glob. adr-03 rule 8 keeps the watchlist in exactly two places
-# (each guardian's Watchlist section + the hook WATCHLISTS); this test
-# guards the hook half against silent drift when the two hooks were merged.
+# Coverage parity, glob-by-glob, against the today-agreed watchlists.
+# adr-03 rule 8 keeps ONE machine copy of each watchlist: the `watch:` key in
+# the frontmatter of the guardian's own definition. Both hooks only read it.
+# This constant is a test fixture asserting that copy's CONTENT — never a
+# second runtime copy, and never a reason to reintroduce one in a hook.
 EXPECTED_WATCHLISTS = {
     "astro-drf-aws-prd": (
         "docs/constitution/PRD.md",

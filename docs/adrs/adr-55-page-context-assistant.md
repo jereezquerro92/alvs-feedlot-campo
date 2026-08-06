@@ -2,7 +2,7 @@
 title: adr-55-page-context-assistant
 type: adr
 category: backend
-use_case: adding or changing the page-context ask surface, editing apps/assistant/context.py or links.py, wiring the assistant ChatDrawer, touching AssistantQuery retention
+use_case: adding or changing the page-context ask surface, editing apps/assistant/context.py or links.py, wiring AssistantDrawer, touching AssistantQuery retention
 created: 2026-08-06
 modified: 2026-08-06
 tags: [adr, backend, assistant, chatbot, generative]
