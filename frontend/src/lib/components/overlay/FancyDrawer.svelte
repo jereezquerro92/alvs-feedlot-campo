@@ -9,17 +9,15 @@
   2s leave cooldown, outside dismiss. Title strip is optional: empty `title`
   hides shell/NavPanelTitle (feedlot FancyNav); showcase still passes titles.
   Geometry: default width ⅔ of Drawer's 18rem (12rem), height hugs content
-  (vertically centered), exposed-side rounding only. The peek tab stays inside
-  the aside's box (in-flow) so closed-state hit-testing works — closed offset is
-  calc(-100% + tab) so only the caret peeks. Zero-prop safe (adr-22 r1).
+  (vertically centered via flex, not translateY), exposed-side rounding only.
+  The peek tab stays inside the sliding box (in-flow) so closed-state
+  hit-testing works — closed offset is calc(-100% + tab) so only the caret
+  peeks. Zero-prop safe (adr-22 r1).
 
-  Shell stacking: ClientRouter view transitions hoist named snapshots into a
-  layer above the live DOM. A fixed drawer that only has document z-40 is
-  covered by `page-main`'s snapshot during navigation. Pass `viewTransitionName`
-  (site menu: `shell-nav`) so the <aside> itself joins that layer; app.css
-  stacks `::view-transition-group(shell-nav)` above `page-main`. The name must
-  live on this fixed root — not on an Astro island wrapper — or the captured
-  box misses the overlay.
+  Shell stacking: ClientRouter view transitions hoist named snapshots above
+  the live DOM. `viewTransitionName` (site menu: `shell-nav`) lives on the
+  outer fixed <aside> which must NOT carry a CSS transform — transform on the
+  named node breaks VT capture. Open/close translateX is on the inner track.
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
@@ -69,7 +67,7 @@
   const isLeft = $derived(side === "left");
   const glyph = $derived(isLeft ? (open ? "‹" : "›") : open ? "›" : "‹");
 
-  /** X offset: open = flush; closed = leave only the in-flow tab on-screen. */
+  /** X offset on the INNER track only — never on the VT-named outer. */
   const offsetX = $derived(
     open
       ? "0"
@@ -78,13 +76,13 @@
         : `calc(100% - ${TAB_WIDTH})`,
   );
 
-  const rootStyle = $derived(
+  const shellName = $derived(viewTransitionName.trim());
+
+  /** Outer shell: size + optional VT name. No transform. */
+  const outerStyle = $derived(
     [
       `width: calc(${width} + ${TAB_WIDTH})`,
-      `transform: translate(${offsetX}, -50%)`,
-      viewTransitionName.trim()
-        ? `view-transition-name: ${viewTransitionName.trim()}`
-        : "",
+      shellName ? `view-transition-name: ${shellName}` : "",
     ]
       .filter(Boolean)
       .join("; "),
@@ -161,58 +159,63 @@
   onpointerenter={onDrawerPointerEnter}
   onpointerleave={onDrawerPointerLeave}
   class={cn(
-    "fixed top-1/2 z-40 flex h-fit max-h-[calc(100vh-3rem)] transition-transform duration-300 ease-out motion-reduce:transition-none",
+    "fixed inset-y-0 z-40 flex items-center",
     isLeft ? "left-0" : "right-0",
     className,
   )}
-  style={rootStyle}
+  style={outerStyle}
 >
-  {#if !isLeft}
-    <button
-      type="button"
-      onclick={onTabClick}
-      aria-label={open ? closeLabel : openLabel}
-      aria-expanded={open}
-      class="flex h-12 w-7 shrink-0 items-center justify-center self-center rounded-l-2xl border border-r-0 border-border bg-background text-muted-foreground shadow-md transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-    >
-      <span aria-hidden="true">{glyph}</span>
-    </button>
-  {/if}
-
   <div
-    inert={!open}
-    aria-hidden={!open}
-    class={cn(
-      "flex min-w-0 flex-1 flex-col overflow-y-auto bg-background shadow-xl",
-      isLeft
-        ? "rounded-r-2xl border border-l-0 border-border"
-        : "rounded-l-2xl border border-r-0 border-border",
-    )}
-    style={`width: ${width}`}
+    class="flex h-fit max-h-[calc(100vh-3rem)] w-full transition-transform duration-300 ease-out motion-reduce:transition-none"
+    style={`transform: translateX(${offsetX})`}
   >
-    <div class="flex flex-col gap-0 px-3 py-4">
-      {#if showTitle}
-        <NavPanelTitle {title} />
-      {/if}
-      <div class={cn("text-sm text-muted-foreground", showTitle && "pt-4")}>
-        {#if children}
-          {@render children()}
-        {:else}
-          <p>{t("fancy_drawer_empty")}</p>
+    {#if !isLeft}
+      <button
+        type="button"
+        onclick={onTabClick}
+        aria-label={open ? closeLabel : openLabel}
+        aria-expanded={open}
+        class="flex h-12 w-7 shrink-0 items-center justify-center self-center rounded-l-2xl border border-r-0 border-border bg-background text-muted-foreground shadow-md transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      >
+        <span aria-hidden="true">{glyph}</span>
+      </button>
+    {/if}
+
+    <div
+      inert={!open}
+      aria-hidden={!open}
+      class={cn(
+        "flex min-w-0 flex-1 flex-col overflow-y-auto bg-background shadow-xl",
+        isLeft
+          ? "rounded-r-2xl border border-l-0 border-border"
+          : "rounded-l-2xl border border-r-0 border-border",
+      )}
+      style={`width: ${width}`}
+    >
+      <div class="flex flex-col gap-0 px-3 py-4">
+        {#if showTitle}
+          <NavPanelTitle {title} />
         {/if}
+        <div class={cn("text-sm text-muted-foreground", showTitle && "pt-4")}>
+          {#if children}
+            {@render children()}
+          {:else}
+            <p>{t("fancy_drawer_empty")}</p>
+          {/if}
+        </div>
       </div>
     </div>
-  </div>
 
-  {#if isLeft}
-    <button
-      type="button"
-      onclick={onTabClick}
-      aria-label={open ? closeLabel : openLabel}
-      aria-expanded={open}
-      class="flex h-12 w-7 shrink-0 items-center justify-center self-center rounded-r-2xl border border-l-0 border-border bg-background text-muted-foreground shadow-md transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-    >
-      <span aria-hidden="true">{glyph}</span>
-    </button>
-  {/if}
+    {#if isLeft}
+      <button
+        type="button"
+        onclick={onTabClick}
+        aria-label={open ? closeLabel : openLabel}
+        aria-expanded={open}
+        class="flex h-12 w-7 shrink-0 items-center justify-center self-center rounded-r-2xl border border-l-0 border-border bg-background text-muted-foreground shadow-md transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      >
+        <span aria-hidden="true">{glyph}</span>
+      </button>
+    {/if}
+  </div>
 </aside>

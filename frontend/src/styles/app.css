@@ -306,25 +306,29 @@ body {
   --melt-fade-color: oklch(0.98 0 0 / 0.06);
 }
 
-/* Opacity-only main pane: kill UA morph (transform/size) on this named
-   group so fade-out → fade-in never slides across the site menu. Keep
-   page-main BELOW shell chrome groups — during a view transition the
-   browser paints ::view-transition-* above the live DOM, so a fixed
-   FancyDrawer/Drawer with only document z-40 is covered unless it has
-   its own named group stacked higher (see overlay drawers'
-   viewTransitionName). */
-::view-transition-group(page-main) {
-  animation: none;
-  z-index: 1;
-}
+/*
+  Shell edge chrome during ClientRouter view transitions.
 
-/* Shell edge chrome — names set on the fixed <aside> roots, not island
-   wrappers. Must paint above page-main's VT snapshot. Island persist ids
-   (`shell-*-island`) stay separate so they do not collide with these. */
+  The VT layer sits above the live DOM. Fixed drawers only stay visible if
+  they have their own named group AND that group's old/new images stay
+  opaque (Astro's transition:animate="none" on the island forces
+  opacity:0 on old — override it here). Names live on the OUTER fixed
+  aside with no CSS transform (inner track slides). Island persist ids
+  (`shell-*-island`) stay separate so they do not collide with these.
+*/
 ::view-transition-group(shell-nav),
 ::view-transition-group(shell-chat) {
   animation: none;
-  z-index: 40;
+  z-index: 50;
+}
+
+::view-transition-old(shell-nav),
+::view-transition-new(shell-nav),
+::view-transition-old(shell-chat),
+::view-transition-new(shell-chat) {
+  animation: none !important;
+  opacity: 1 !important;
+  mix-blend-mode: normal;
 }
 
 ::view-transition-group(shell-nav-island),

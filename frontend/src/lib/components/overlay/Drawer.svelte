@@ -17,9 +17,9 @@
   local layout state only — no mutating action on the default invocation
   (adr-22 r2).
 
-  Shell stacking: same ClientRouter VT contract as FancyDrawer — pass
-  `viewTransitionName` (ChatDrawer: `shell-chat`) on this fixed <aside> so the
-  page-main fade cannot cover the peek tab during navigation.
+  Shell stacking: same ClientRouter VT contract as FancyDrawer — `viewTransitionName`
+  (ChatDrawer: `shell-chat`) on the outer fixed <aside> with NO transform;
+  open/close translate lives on the inner track so VT capture stays solid.
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
@@ -63,24 +63,19 @@
     class?: string;
   } = $props();
 
-  const rootStyle = $derived(
-    [
-      `width: ${width}`,
-      viewTransitionName.trim()
-        ? `view-transition-name: ${viewTransitionName.trim()}`
-        : "",
-    ]
+  const shellName = $derived(viewTransitionName.trim());
+
+  /** Outer shell: width + optional VT name. No transform. */
+  const outerStyle = $derived(
+    [`width: ${width}`, shellName ? `view-transition-name: ${shellName}` : ""]
       .filter(Boolean)
       .join("; "),
   );
 
   const isLeft = $derived(side === "left");
-  // Collapsed → translate the whole panel off its own edge; the tab, anchored
-  // just outside the body, lands flush at the viewport edge (matches the
-  // reference peek-tab behavior).
+  // Collapsed → translate the INNER track off its own edge; the tab, anchored
+  // just outside the body, lands flush at the viewport edge.
   const offClass = $derived(isLeft ? "-translate-x-full" : "translate-x-full");
-  // Chevron points the direction the tab will move the drawer; a caller-supplied
-  // tabGlyph (help "?") replaces it for both states.
   const glyph = $derived(
     tabGlyph || (isLeft ? (open ? "‹" : "›") : open ? "›" : "‹"),
   );
@@ -158,46 +153,48 @@
   bind:this={rootEl}
   onpointerenter={onDrawerPointerEnter}
   onpointerleave={onDrawerPointerLeave}
-  class={cn(
-    "fixed inset-y-0 z-40 flex transition-transform duration-300 ease-out motion-reduce:transition-none",
-    isLeft ? "left-0" : "right-0",
-    !open && offClass,
-    className,
-  )}
-  style={rootStyle}
+  class={cn("fixed inset-y-0 z-40", isLeft ? "left-0" : "right-0", className)}
+  style={outerStyle}
 >
   <div
-    inert={!open}
-    aria-hidden={!open}
     class={cn(
-      "flex min-w-0 flex-1 flex-col overflow-y-auto bg-background shadow-xl",
-      isLeft ? "border-r border-border" : "border-l border-border",
+      "relative flex h-full w-full transition-transform duration-300 ease-out motion-reduce:transition-none",
+      !open && offClass,
     )}
   >
-    <div class="flex items-center border-b border-border px-4 py-3">
-      <h2 class="truncate text-sm font-semibold text-foreground">{title}</h2>
+    <div
+      inert={!open}
+      aria-hidden={!open}
+      class={cn(
+        "flex min-w-0 flex-1 flex-col overflow-y-auto bg-background shadow-xl",
+        isLeft ? "border-r border-border" : "border-l border-border",
+      )}
+    >
+      <div class="flex items-center border-b border-border px-4 py-3">
+        <h2 class="truncate text-sm font-semibold text-foreground">{title}</h2>
+      </div>
+      <div class="flex-1 p-4 text-sm text-muted-foreground">
+        {#if children}
+          {@render children()}
+        {:else}
+          <p>{t("drawer_empty")}</p>
+        {/if}
+      </div>
     </div>
-    <div class="flex-1 p-4 text-sm text-muted-foreground">
-      {#if children}
-        {@render children()}
-      {:else}
-        <p>{t("drawer_empty")}</p>
-      {/if}
-    </div>
-  </div>
 
-  <button
-    type="button"
-    onclick={onTabClick}
-    aria-label={open ? closeLabel : openLabel}
-    aria-expanded={open}
-    class={cn(
-      "absolute top-1/2 flex h-12 w-7 -translate-y-1/2 items-center justify-center bg-background text-muted-foreground shadow-md transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
-      isLeft
-        ? "left-full rounded-r-2xl border border-l-0 border-border"
-        : "right-full rounded-l-2xl border border-r-0 border-border",
-    )}
-  >
-    <span aria-hidden="true">{glyph}</span>
-  </button>
+    <button
+      type="button"
+      onclick={onTabClick}
+      aria-label={open ? closeLabel : openLabel}
+      aria-expanded={open}
+      class={cn(
+        "absolute top-1/2 flex h-12 w-7 -translate-y-1/2 items-center justify-center bg-background text-muted-foreground shadow-md transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+        isLeft
+          ? "left-full rounded-r-2xl border border-l-0 border-border"
+          : "right-full rounded-l-2xl border border-r-0 border-border",
+      )}
+    >
+      <span aria-hidden="true">{glyph}</span>
+    </button>
+  </div>
 </aside>
