@@ -30,7 +30,7 @@ Every required skill is **vendored as a real copy** under `.claude/skills/<name>
 | `kdx-aws-secrets-create` | Create Secrets Manager secrets `alvs/<env>/<project>/<component>` ([[VARIABLES]]). | secrets provisioning |
 | `kdx-aws-secrets-manager` | Wire/rotate/audit task-definition secret injection ([[VARIABLES]]). | infra, debugging env |
 | `kdx-aws-s3` | Private media buckets, presigned URLs, no CDN ([[INFRASTRUCTURE]]). | media storage |
-| `kdx-aws-cost` | Cost discipline — Fargate sizing, no NAT, no Redis, single-AZ RDS ([[adr-06-cache]], [[BD]]). | spend review, blocking expensive additions |
+| `kdx-aws-cost` | Cost discipline — Fargate sizing, no NAT, Valkey `cache.t4g.micro` single-node (not Multi-AZ Redis sprawl), single-AZ RDS ([[adr-06-cache]], [[BD]]). | spend review, blocking expensive additions |
 | `kdx-aws-observability` | CloudWatch log groups, awslogs driver, ALB health ([[INFRASTRUCTURE]]). | logging, monitoring |
 | `kdx-aws-cloudwatch-alarms` | Minimal alarm set — target health, 5xx, RDS storage. | alarms/SNS |
 | `kdx-aws-cloudwatch-query` | Logs Insights queries over `/alvs/<project>/*`. | log search, deploy debugging |

@@ -4,7 +4,7 @@ type: reference
 category: backend
 use_case: declaring an endpoint before writing it, or checking whether a route is valid
 created: 2026-07-10
-modified: 2026-08-02
+modified: 2026-08-07
 tags: [doc, harness, api, ssot]
 ---
 
@@ -514,7 +514,7 @@ Success response — one of the four outcomes ([[CHATBOT]] — the four outcomes
 
 No prose beyond the registry-authored `label` ever ships (rule 5). Error shape: a model output outside the closed menu is a **hard reject** — `422 { "detail": "router_hard_reject" }`, logged as a fault, never repaired, never defaulted, never retried into a nearest match (rule 2). The kill switch short-circuits to the reserved `disabled` outcome, never an error: `ROUTER_ENABLED=false` returns `200 { "outcome": "disabled", "query_id": <int> }` before any inference call, zero inference calls made, still persists its audit row. A throttled burst (`CooldownThrottle`, `THROTTLE_COOLDOWN_SECONDS`, default `2`) returns `429` (audited, `choice="throttled"`). An inference-transport failure (Bedrock unreachable: network, IAM, or model access) degrades the router surface only — `503 { "detail": "router_unavailable", "query_id": <int> }`, audited (`choice="unavailable"`), never a backend crash and never a defaulted or retried choice ([[tdd-03-router-bedrock-inference]] decision 4, #253). `no-store` ([[CACHE]], authenticated → `no-store`).
 
-**Silent rate-abuse block (#371):** at the end of a successful handler pass, an async evaluation ([[adr-16-async-mandatory]]) checks the requesting user's recent message rate against `ROUTER_RATE_THRESHOLD_PER_MINUTE` (default `20`/min) — but only when there has been router activity from that user within the last `ROUTER_RATE_IDLE_SKIP_SECONDS` (default `20`s); the common idle case evaluates nothing. Crossing the threshold marks the user blocked for `ROUTER_RATE_BLOCK_SECONDS` (default `300`s); every request from a blocked user returns a bare `429` with an empty body — no `detail`, no reason, deliberately indistinguishable from the `CooldownThrottle` reject above (audited, `choice="rate_blocked"`). This is enforcement only: it reads and writes no Group membership and narrows no permission ([[adr-15-chatbot-two-tier]] rule 3). State lives in the shared `DatabaseCache` ([[CACHE]]) — no Redis ([[adr-06-cache]]).
+**Silent rate-abuse block (#371):** at the end of a successful handler pass, an async evaluation ([[adr-16-async-mandatory]]) checks the requesting user's recent message rate against `ROUTER_RATE_THRESHOLD_PER_MINUTE` (default `20`/min) — but only when there has been router activity from that user within the last `ROUTER_RATE_IDLE_SKIP_SECONDS` (default `20`s); the common idle case evaluates nothing. Crossing the threshold marks the user blocked for `ROUTER_RATE_BLOCK_SECONDS` (default `300`s); every request from a blocked user returns a bare `429` with an empty body — no `detail`, no reason, deliberately indistinguishable from the `CooldownThrottle` reject above (audited, `choice="rate_blocked"`). This is enforcement only: it reads and writes no Group membership and narrows no permission ([[adr-15-chatbot-two-tier]] rule 3). State lives in the shared Django cache ([[CACHE]] layer 2 — Valkey in cloud, `DatabaseCache` locally; [[adr-06-cache]]).
 
 This supersedes the prior `{ "action": "<enum member>", "slots": {...} }` shape recorded when the row was first added — no code ever shipped that contract.
 

@@ -35,7 +35,7 @@ metadata:
 | DB | **PostgreSQL 17.9** via **psycopg 3** — never SQLite for app data |
 | Toolchain | **`uv` only** — never `pip` / poetry / pipenv |
 | Server | **ASGI** on port **8000** (gunicorn+uvicorn workers or uvicorn; pin in REQUIREMENTS) |
-| Cache | **`DatabaseCache`** (+ optional `LocMemCache` alias). **Redis / ElastiCache forbidden** |
+| Cache | **Cloud:** ElastiCache **Valkey** (`cache.t4g.micro`, single-node). **Local:** `DatabaseCache` (+ optional `LocMemCache` alias). Unmanaged Redis / Multi-AZ Valkey without traffic proof forbidden (`docs/CACHE.md`, `adr-06`) |
 | Tasks | **`django.tasks`** first. Celery only if the user explicitly demands it |
 | Hypermedia | **HTMX fragments** — Django templates/`TemplateResponse` are the HTML producer; Astro only loads the client (`docs/HTMX.md`) |
 | Frontend pair | Astro 7 SSR → skill `kdx-astro-7` (attributes + shell; not fragment HTML) |
@@ -60,7 +60,7 @@ Template infra SSOT: `~/Templates/astro-drf-aws/docs/` (`BACKEND`, `HTMX`, `BD`,
 - `DEFAULT_FILE_STORAGE` / `STATICFILES_STORAGE` → use **`STORAGES`**
 - `django-csp` as primary CSP → use **`ContentSecurityPolicyMiddleware` + `SECURE_CSP`**
 - `SECURE_BROWSER_XSS_FILTER` cargo-cult (browsers ignore it)
-- Redis / ElastiCache / celery-as-default
+- Unmanaged Redis / Multi-AZ Valkey / celery-as-default (Valkey single-node is the sanctioned cloud cache)
 - `pip install`, requirements.txt-only workflows when `uv` is available
 - JSON:API / Prowler-style multi-tenant RLS scaffolding (not our default)
 - `trailing_slash=False` (we keep **trailing slashes**)

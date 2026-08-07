@@ -4,7 +4,7 @@ type: reference
 category: devops
 use_case: running or changing the local Compose stack
 created: 2026-07-10
-modified: 2026-08-04
+modified: 2026-08-07
 tags: [doc, harness, docker, local]
 ---
 
@@ -71,7 +71,7 @@ docker compose --profile full up --build
 | `seed_demo_operator` | one user in `ai_operators`, so the RBAC gate is exercisable ([[CHATBOT]]) |
 | `seed_router_menu` | the router's `Intent` registry — the chatui menu itself ([[CHATBOT]]). Product content, not demo data, so it carries **no** `--if-debug` and the cloud migrate task runs the same command; the upsert is idempotent and touches only its own rows |
 | `seed_demo_feedlot --if-debug` | the demo domain data: clients, cattle, feed, health events, prices, ledger |
-| `createcachetable` | the database-backed cache table ([[CACHE]] — no cache server, [[adr-06-cache]]) |
+| `createcachetable` | the local `DatabaseCache` table ([[CACHE]] layer 2; cloud uses Valkey — [[adr-06-cache]]) |
 
 Then `uvicorn`. The steps are joined by `&&`, so a failure aborts the boot rather than serving from a half-built database; there is no `|| true` and adding one would hide exactly the failures this chain exists to surface.
 
@@ -133,7 +133,7 @@ Local dev is **split-origin**: frontend `http://localhost:4321`, backend `http:/
 ## What compose is not
 
 - Not production deploy (Fargate + ECR — [[INFRASTRUCTURE]]).
-- Not Redis ([[CACHE]]).
+- Not ElastiCache / Valkey — cloud-only ([[CACHE]], [[INFRASTRUCTURE]]); local layer 2 stays `DatabaseCache`.
 
 ## Verification
 

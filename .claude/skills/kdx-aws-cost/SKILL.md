@@ -1,9 +1,10 @@
 ---
 name: kdx-aws-cost
 description: >
-  Cost discipline for ALVS astro-drf-aws: Fargate 256/512, no NAT, no Redis,
-  shared ALB, single-AZ micro RDS. Use when reviewing spend, rightsizing, or
-  blocking expensive “best practice” additions. Account 789650504128 us-east-1.
+  Cost discipline for ALVS astro-drf-aws: Fargate 256/512, no NAT, Valkey
+  cache.t4g.micro single-node (not Multi-AZ), shared ALB, single-AZ micro RDS.
+  Use when reviewing spend, rightsizing, or blocking expensive “best practice”
+  additions. Account 789650504128 us-east-1.
 ---
 
 # kdx-aws-cost
@@ -13,7 +14,7 @@ description: >
 | Decision | Why |
 |----------|-----|
 | **No NAT Gateway** | Tasks use public IPs — deliberate (`docs/constitution/INFRASTRUCTURE.md`) |
-| **No Redis / ElastiCache** | `DatabaseCache` only (`docs/CACHE.md`) |
+| **Valkey `cache.t4g.micro` single-node** | Shared Django cache; no Multi-AZ / larger class until traffic proves it (`docs/CACHE.md`, `adr-06`) |
 | **Shared ALB** per env | Not one ALB per project |
 | **Fargate 256 CPU / 512 MB** baseline | Scale only when measured |
 | **desiredCount: 1** | Until load proves otherwise |
@@ -21,12 +22,12 @@ description: >
 | **dev + prod only** | No staging tier |
 | **Log retention short** | 14–30 days default |
 
-Any proposal that adds NAT, Redis, Multi-AZ RDS “because production”, or second ALB must be **rejected** unless the user overrides in-turn with explicit justification.
+Any proposal that adds NAT, Multi-AZ Valkey/Redis “because production”, Multi-AZ RDS, or a second ALB must be **rejected** unless the user overrides in-turn with explicit justification (traffic evidence for cache resize).
 
 ## When the agent must refuse
 
 - “Move tasks to private subnets + NAT for security”  
-- “Add ElastiCache for Django cache”  
+- “Multi-AZ ElastiCache / Redis cluster for the template default”  
 - “Multi-AZ RDS for the template default”  
 - “Fargate 2 vCPU because why not”  
 - “Always-on NAT for ECR pulls” (use public IP + ECR endpoints optional later)
@@ -38,6 +39,7 @@ Any proposal that adds NAT, Redis, Multi-AZ RDS “because production”, or sec
 - Budgets/alerts for unexpected spend  
 - ECR lifecycle policies to expire untagged images  
 - Spot **not** for this SSR pair (stick to Fargate standard)
+- Provisioning / rightsizing the sanctioned Valkey node per `docs/CACHE.md`
 
 ## Math rule
 

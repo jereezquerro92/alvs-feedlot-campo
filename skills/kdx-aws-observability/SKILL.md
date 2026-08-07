@@ -4,7 +4,8 @@ description: >
   Observability for ALVS Fargate Django+Astro: CloudWatch Logs groups, awslogs
   driver, ALB health, minimal metrics/alarms. Use when configuring logging,
   health checks, or baseline monitoring for astro-drf-aws. No ADOT/App Signals
-  by default, no X-Ray required, no ElastiCache metrics.
+  by default, no X-Ray required. Minimal Valkey CPU/eviction metrics only when
+  the node is provisioned — not a Redis dashboard sprawl.
 ---
 
 # kdx-aws-observability
@@ -66,8 +67,9 @@ Create the log group if missing (retention: prefer 14–30 days for cost).
 | `HTTPCode_Target_5XX_Count` | ALB/TG | yes if burst |
 | `CPUUtilization` / `MemoryUtilization` | ECS service | warn only; right-size later |
 | RDS `CPUUtilization` / `FreeStorageSpace` | `alvs-<env>-pg` | yes for storage |
+| Valkey `CPUUtilization` / `DatabaseMemoryUsagePercentage` | sanctioned single-node only | warn; right-size per `docs/CACHE.md` |
 
-No Redis metrics (Redis forbidden). No custom EMF unless needed.
+No unmanaged-Redis metrics. No custom EMF unless needed.
 
 ## CLI (profile `kodex`, region `us-east-1`)
 
@@ -82,7 +84,7 @@ aws ecs describe-services --cluster alvs-<env> --services <project>-backend --pr
 - Requiring X-Ray / ADOT for every service  
 - Shipping logs to third-party SaaS without user request  
 - Per-request DEBUG logs in prod  
-- ElastiCache dashboards  
+- Full ElastiCache dashboards / Multi-AZ replica alarm sprawl  
 
 ## Related
 

@@ -4,7 +4,7 @@ type: reference
 category: backend
 use_case: connecting to a database or changing one
 created: 2026-07-10
-modified: 2026-08-02
+modified: 2026-08-07
 tags: [doc, harness, database]
 ---
 
@@ -58,7 +58,7 @@ This project's production database is **dedicated**, by explicit owner directive
 > **Django migrations are the ONLY schema mechanism.** No manual DDL, no external migration tools.
 
 - One database per project per env.
-- The cache table from [[CACHE]] lives in this same database — no separate cache store, Redis is prohibited.
+- Locally, the [[CACHE]] layer-2 table (`DatabaseCache` / `createcachetable`) lives in this same database. In cloud, shared application cache is ElastiCache Valkey ([[adr-06-cache]], [[INFRASTRUCTURE]]); Django sessions remain DB-backed ([[AUTH]]).
 - Engine version is pinned in [[REQUIREMENTS]]; re-pin follows that doc's policy.
 
 ## Migration execution points

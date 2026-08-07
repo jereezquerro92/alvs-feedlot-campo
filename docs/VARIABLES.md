@@ -4,7 +4,7 @@ type: reference
 category: harness
 use_case: reading or adding an environment variable
 created: 2026-07-10
-modified: 2026-08-02
+modified: 2026-08-07
 tags: [doc, harness, variables, ssot]
 ---
 
@@ -59,6 +59,7 @@ The reference value `astro-drf-aws` is a literal exactly once per surface — ev
 | `DB_NAME` | backend | dev/prod/local | yes | `alvs/<env>/<project>/db` (`dbname`); `.env` local | Database name |
 | `DB_USER` | backend | dev/prod/local | yes | `alvs/<env>/<project>/db` (`username`); `.env` local | Database user |
 | `DB_PASSWORD` | backend | dev/prod/local | yes | `alvs/<env>/<project>/db` (`password`); `.env` local | Database password |
+| `CACHE_URL` | backend | dev/prod | yes | `alvs/<env>/<project>/valkey` (`url`); omitted locally | Redis-protocol URL for ElastiCache Valkey (Django shared cache, [[CACHE]] layer 2, [[adr-06-cache]]). Absent locally — settings keep `DatabaseCache`. Declared ahead of the Valkey wiring implementation |
 | `SECRET_KEY` | backend | dev/prod/local | yes | `alvs/<env>/<project>/django`; `.env` local | Django secret key |
 | `ALLOWED_HOSTS` | backend | dev/prod/local | yes | `alvs/<env>/<project>/django`; `.env` local | Django allowed hosts list. **Prod value must also include this project's own Cloud Map hostname — `backend.<PROJECT_SLUG>-<env>.local`, here `backend.feedlot-campo-prod.local`** — alongside the public domain, because the frontend's SSR fetch reaches the backend by that internal host, never by the public domain (2026-07-13 fix). Omitting it does not break the site: Django answers the SSR call with `400` (`DisallowedHost`), so every page renders as if the visitor were anonymous — a logged-in user with a role is bounced back to the lobby and the failure looks like broken login (issue #75). This row previously named the **template's** Cloud Map host literally, which is how the omission survived provisioning |
 | `DEBUG` | backend | dev/prod/local | yes | `alvs/<env>/<project>/django`; `.env` local | Django debug flag (never true in prod) |

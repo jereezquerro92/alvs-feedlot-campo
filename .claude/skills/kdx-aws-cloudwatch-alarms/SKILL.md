@@ -40,7 +40,7 @@ Link alarms with `AlarmActions` = topic ARN. Encrypt topic if account policy req
 
 ## Do not create
 
-- Alarms for Redis/ElastiCache  
+- Alarms for unmanaged Redis or Multi-AZ Valkey sprawl (minimal CPU/memory on the sanctioned single-node only — `docs/CACHE.md`)  
 - Dozens of per-URL synthetic canaries by default  
 - Billing alarms here → `kdx-aws-cost`  
 - Alarms that fire on every deploy blip (use longer evaluation periods)

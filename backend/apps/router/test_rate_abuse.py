@@ -5,8 +5,8 @@ LIVE-DOC:END"""
 
 """Tests for the router's silent rate-abuse guard (#371, tdd-04-router-abuse-guard).
 
-State lives entirely in the shared DatabaseCache ([[CACHE]] layer 2) — no
-Redis ([[adr-06-cache]]). These tests exercise the pure cache-backed module
+State lives entirely in the shared Django cache ([[CACHE]] layer 2 —
+[[adr-06-cache]]). These tests exercise the pure cache-backed module
 directly; RouteView wiring is covered in test_route_view.py.
 """
 

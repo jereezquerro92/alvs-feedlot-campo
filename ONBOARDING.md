@@ -52,7 +52,7 @@ gate; they never waive it or a guardian verdict.
 
 ## Doctrine that will surprise you
 
-- **No cache server, ever** — Redis/ElastiCache prohibited ([adr-06](docs/adrs/adr-06-cache.md)).
+- **ElastiCache Valkey** (`cache.t4g.micro`, single-node, no Multi-AZ until traffic justifies more) is the cloud shared Django cache ([adr-06](docs/adrs/adr-06-cache.md), [CACHE](docs/CACHE.md)). Local layer 2 stays `DatabaseCache`.
 - **Cognito authenticates only; all RBAC lives in Django** (Groups + DRF permissions),
   never in Cognito claims ([adr-10](docs/adrs/adr-10-auth.md)).
 - **Toolchains are fixed**: `uv` for Python, `bun` for JS (runtime + package manager).

@@ -40,7 +40,7 @@ description: >
 - EKS, ECS on EC2, App Runner, ECS Express Mode, Lambda containers  
 - **NAT gateways** (tasks use public IPs on purpose)  
 - Private-only task subnets for app containers  
-- Redis/ElastiCache sidecars  
+- Unmanaged Redis sidecars; Multi-AZ Valkey without traffic proof (sanctioned: ElastiCache Valkey `cache.t4g.micro` single-node per `docs/CACHE.md`)  
 - Mutable tags, dual-region active-active  
 - Profile/region other than ALVS us-east-1 for this template  
 

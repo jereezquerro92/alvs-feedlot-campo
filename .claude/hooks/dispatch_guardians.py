@@ -101,7 +101,7 @@ RULES = (
         ("compose.yaml",),
         None,
         "Compose file touched: review [[adr-09-docker-compose]] (reserved app "
-        "paths, single root compose.yaml, profiles, no Redis).",
+        "paths, single root compose.yaml, profiles, local DatabaseCache / cloud Valkey).",
     ),
     (
         ("*/models.py",),

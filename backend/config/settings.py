@@ -235,7 +235,7 @@ LOGOUT_REDIRECT_URL = _env("LOGOUT_REDIRECT_URL", "/")
 THROTTLE_COOLDOWN_SECONDS = int(_env("THROTTLE_COOLDOWN_SECONDS", "2"))
 
 # Router silent rate-abuse guard (#371, [[VARIABLES]], [[adr-16-async-mandatory]],
-# [[adr-06-cache]] — state lives in the shared DatabaseCache, no Redis).
+# [[adr-06-cache]] — state lives in shared Django cache ([[CACHE]] layer 2)).
 ROUTER_RATE_IDLE_SKIP_SECONDS = int(_env("ROUTER_RATE_IDLE_SKIP_SECONDS", "20"))
 ROUTER_RATE_THRESHOLD_PER_MINUTE = float(_env("ROUTER_RATE_THRESHOLD_PER_MINUTE", "20"))
 ROUTER_RATE_BLOCK_SECONDS = int(_env("ROUTER_RATE_BLOCK_SECONDS", "300"))

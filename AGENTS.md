@@ -61,7 +61,7 @@ Inside the backend zone: confirm the existing [[API]] endpoints cannot serve the
 - [[MELT-UI]] — the headless builder layer (Melt→Bits→shadcn); how to build a Melt component and when to choose it.
 - [[HTMX]] — in the stack; Django generates fragments; Astro loads the client; sits before Svelte in the interactivity ladder.
 - [[CHATBOT]] — the chat-like surface that is a **router**, not a chatbot: a closed enum, zero generation, and the permanent two-tier split that keeps choosing and generating disjoint ([[adr-15-chatbot-two-tier]]).
-- [[CACHE]] — the Redis-free cache strategy; Redis is prohibited.
+- [[CACHE]] — four layers; cloud shared store is ElastiCache Valkey (`cache.t4g.micro`, single-node); local layer 2 is `DatabaseCache`.
 - [[BD]] — databases: prod, dev (cloud), local.
 - [[INFRASTRUCTURE]] — the two-Fargate AWS layout, mirrored from the ALVS precedent.
 - [[DOCKER]] — local Compose: root `compose.yaml`, paths `backend/` + `frontend/`, profiles. Local dev bind-mounts source and runs hot-reload dev servers — rebuild only on dependency/`Dockerfile` changes.
