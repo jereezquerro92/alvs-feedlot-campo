@@ -39,7 +39,7 @@
 <nav
   aria-label={t("breadcrumb_nav")}
   class={cn(
-    "flex min-w-0 max-w-full items-center gap-2 rounded-full border border-border bg-card py-1 pl-1 pr-2 text-card-foreground shadow-sm",
+    "flex min-w-0 max-w-full items-center gap-2 rounded-full border border-border bg-card py-1 pl-1 pr-3 text-card-foreground shadow-sm",
     className,
   )}
 >

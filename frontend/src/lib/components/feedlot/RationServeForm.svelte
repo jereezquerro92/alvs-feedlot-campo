@@ -24,6 +24,7 @@
   import { Input } from "$lib/components/ui/input";
   import { Button } from "$lib/components/ui/button";
   import { Label } from "$lib/components/ui/label";
+  import { DatePicker } from "$lib/components/form";
   import { readCsrfTokenFromCookie } from "$lib/csrf";
   import { t } from "../../../i18n";
 
@@ -320,19 +321,40 @@
   </div>
 
   {#if dayMode === "single"}
-    <div class="flex flex-col gap-1.5 sm:max-w-xs">
+    <div class="flex w-full max-w-[11rem] flex-col gap-1.5">
       <Label for="sf-date">{t("feedlot_form_date")}</Label>
-      <Input id="sf-date" type="date" bind:value={date} disabled={saving} />
+      <DatePicker
+        id="sf-date"
+        class="gap-0"
+        bind:value={date}
+        label={t("feedlot_form_date")}
+        placeholder={t("feedlot_form_date_placeholder")}
+        disabled={saving}
+      />
     </div>
   {:else}
-    <div class="grid gap-3 sm:grid-cols-2 sm:max-w-md">
-      <div class="flex flex-col gap-1.5">
+    <div class="grid max-w-sm gap-3 sm:grid-cols-2">
+      <div class="flex max-w-[11rem] flex-col gap-1.5">
         <Label for="sf-from">{t("feedlot_racion_date_from")}</Label>
-        <Input id="sf-from" type="date" bind:value={dateFrom} disabled={saving} />
+        <DatePicker
+          id="sf-from"
+          class="gap-0"
+          bind:value={dateFrom}
+          label={t("feedlot_racion_date_from")}
+          placeholder={t("feedlot_form_date_placeholder")}
+          disabled={saving}
+        />
       </div>
-      <div class="flex flex-col gap-1.5">
+      <div class="flex max-w-[11rem] flex-col gap-1.5">
         <Label for="sf-to">{t("feedlot_racion_date_to")}</Label>
-        <Input id="sf-to" type="date" bind:value={dateTo} disabled={saving} />
+        <DatePicker
+          id="sf-to"
+          class="gap-0"
+          bind:value={dateTo}
+          label={t("feedlot_racion_date_to")}
+          placeholder={t("feedlot_form_date_placeholder")}
+          disabled={saving}
+        />
       </div>
     </div>
   {/if}

@@ -543,6 +543,7 @@ export const es = {
     "El alimento lo trajo el cliente: descuenta su stock, sin cargo.",
   feedlot_form_weight: "Peso (kg)",
   feedlot_form_date: "Fecha",
+  feedlot_form_date_placeholder: "Elegir fecha",
   feedlot_form_head_count: "Cabezas pesadas",
   feedlot_form_head_count_hint:
     "Opcional. Para lotes: cuántas cabezas cubre este peso total.",

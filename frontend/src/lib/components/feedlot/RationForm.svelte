@@ -121,7 +121,7 @@
   <div class="flex flex-col gap-2">
     <Label>{t("feedlot_form_ration_lines")}</Label>
     {#each lines as line, i (i)}
-      <div class="grid grid-cols-[2fr_1fr_1fr_auto] items-end gap-2 rounded-md border border-border/40 p-2">
+      <div class="flex flex-col gap-2 rounded-md border border-border/40 p-3">
         <div class="flex flex-col gap-1.5">
           <Label for={`rl-feed-${i}`}>{t("feedlot_form_ration_line_feed")}</Label>
           <select id={`rl-feed-${i}`} class={inputClass} bind:value={line.feed_type} disabled={saving}>
@@ -131,23 +131,27 @@
             {/each}
           </select>
         </div>
-        <div class="flex flex-col gap-1.5">
-          <Label for={`rl-prop-${i}`}>{t("feedlot_form_ration_line_proportion")}</Label>
-          <Input id={`rl-prop-${i}`} type="number" min="0" step="0.01" bind:value={line.proportion} disabled={saving} />
+        <div class="grid grid-cols-2 gap-2">
+          <div class="flex flex-col gap-1.5">
+            <Label for={`rl-prop-${i}`}>{t("feedlot_form_ration_line_proportion")}</Label>
+            <Input id={`rl-prop-${i}`} type="number" min="0" step="0.01" bind:value={line.proportion} disabled={saving} />
+          </div>
+          <div class="flex flex-col gap-1.5">
+            <Label for={`rl-dm-${i}`}>{t("feedlot_form_ration_line_dm")}</Label>
+            <Input id={`rl-dm-${i}`} type="number" min="0" step="0.01" bind:value={line.dry_matter_pct} disabled={saving} />
+          </div>
         </div>
-        <div class="flex flex-col gap-1.5">
-          <Label for={`rl-dm-${i}`}>{t("feedlot_form_ration_line_dm")}</Label>
-          <Input id={`rl-dm-${i}`} type="number" min="0" step="0.01" bind:value={line.dry_matter_pct} disabled={saving} />
+        <div class="flex justify-end">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            disabled={saving || lines.length === 1}
+            onclick={() => removeLine(i)}
+          >
+            {t("feedlot_form_remove")}
+          </Button>
         </div>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          disabled={saving || lines.length === 1}
-          onclick={() => removeLine(i)}
-        >
-          {t("feedlot_form_remove")}
-        </Button>
       </div>
     {/each}
     <div>

@@ -33,6 +33,22 @@ button:disabled,
   cursor: not-allowed;
 }
 
+/* Native date picker: calendar affordance on the start (left) edge — rem
+   spacing; Chromium/WebKit via ::-webkit-calendar-picker-indicator. */
+input[type="date"] {
+  position: relative;
+  padding-inline-start: 2.25rem;
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  position: absolute;
+  inset-inline-start: 0.5rem;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  cursor: pointer;
+  margin: 0;
+}
+
 /* Native <dialog>, form controls, and scrollbars follow the theme
    (issue #174) — without this the UA paints them light in dark mode. */
 :root {
