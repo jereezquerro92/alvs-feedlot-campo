@@ -64,6 +64,7 @@ Pulled ephemerally by a `compose.yaml` dev command through `uv run --with` — n
 | bun | latest | stable | Package manager AND runtime; npm prohibited; Node dropped (Node 24 LTS = documented fallback only) |
 | htmx.org | 2.0.10 | stable | HTMX 2 client library via bun ([[HTMX]]). Package name on the registry is `htmx.org`. |
 | melt | ^0.44.0 | active | headless builder layer under Bits UI/shadcn-svelte ([[MELT-UI]], [[adr-52-frontend-and-design-system]]). Added 2026-07-14. |
+| tailwind-merge | ^3.4.0 | stable | Tailwind class conflict resolver for `cn()` in `src/lib/utils.ts` ([[DESIGN-SYSTEM]]). Added 2026-08-07. |
 | @happy-dom/global-registrator | 20.10.6 | stable | dev-only. Registers a DOM into the `bun test` global scope so a component can be mounted client-side — the harness enforcing [[adr-22-showcase-ready-components]] rule 1. Never shipped in the frontend image ([[FRONTEND]]). Added 2026-07-16. |
 | @astrojs/check | 0.9.9 | stable | dev-only. Backs the `bun run check` (`astro check`) typecheck gate; pinned so a fresh clone runs it non-interactively instead of hitting astro's auto-install prompt. Never shipped in the frontend image ([[FRONTEND]]). Latest confirmed 2026-07-17 (checked 2026-07-17). Added 2026-07-17. |
 | @types/bun | latest | **unpinned** | dev-only. Present in `frontend/package.json` as `"latest"` — the one dependency in the project without an exact version. Bun's own type surface, versioned with the runtime, which is itself pinned `latest` above. |
