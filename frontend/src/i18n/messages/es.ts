@@ -28,11 +28,15 @@ export const es = {
   m365_status: "Estado M365",
 
   // login landing (/) — the landing IS the login (redesign)
+  // Subtitle voice from ALVS Group public identity (linktr.ee/alvsgroup):
+  // holding empresarial with ganadería among its verticals.
   login_title: "Feedlot ALVS",
-  login_subtitle: "Gestión de hacienda, alimentación y cuenta corriente",
+  login_subtitle: "ALVS Group · Ganadería",
   login_hint: "Iniciá sesión para acceder al panel del feedlot.",
   login_pending_hint:
     "Tu sesión está iniciada. Podés cerrarla desde el menú de arriba a la derecha.",
+  login_support_prefix: "¿Algún problema?",
+  login_support_email: "support@alvsgroup.com",
 
   // auth components
   auth_login: "Ingresar",
