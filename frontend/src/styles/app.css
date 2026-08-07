@@ -289,3 +289,10 @@ body {
   --melt-dots-color: oklch(0.48 0.13 45 / 0.25);
   --melt-fade-color: oklch(0.98 0 0 / 0.06);
 }
+
+/* Page changes: opacity only. Kill the UA morph (transform/size) so the
+   fading main pane never slides across the persisted site menu. Astro's
+   fade() still drives ::view-transition-old/new on `page-main`. */
+::view-transition-group(*) {
+  animation: none;
+}
