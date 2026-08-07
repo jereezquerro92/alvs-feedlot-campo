@@ -86,9 +86,12 @@ test("/ with no theme cookie renders the flipped defaults on <html> — light mo
   const res = await fetch(`${BASE}/`);
   expect(res.status).toBe(200);
   const body = await res.text();
-  // Light is the standing default ([[DESIGN-SYSTEM]]); Astro emits bare `class` when empty.
-  expect(body).toContain('<html lang="en" class data-bg-preset="melt"');
-  expect(body).not.toContain('class="dark"');
+  // Light is the standing default ([[DESIGN-SYSTEM]]); Astro emits bare `class`
+  // when empty. Attribute order on <html> is not stable (view-transitions may
+  // inject data-astro-transition-scope), so assert pieces — not one substring.
+  expect(body).toMatch(/<html\b[^>]*\blang="en"/);
+  expect(body).toMatch(/<html\b[^>]*\bdata-bg-preset="melt"/);
+  expect(body).not.toMatch(/<html\b[^>]*\bclass="dark"/);
 });
 
 test("/ with no session cookie renders the anonymous Log in affordance", async () => {
