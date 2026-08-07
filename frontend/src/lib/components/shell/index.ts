@@ -10,6 +10,7 @@ export { default as NavBadge } from "./NavBadge.svelte";
 export { default as NavBrand } from "./NavBrand.svelte";
 export { default as NavPanelTitle } from "./NavPanelTitle.svelte";
 export { default as NavLockToggle } from "./NavLockToggle.svelte";
+export { default as NavPendingBar } from "./NavPendingBar.svelte";
 export { resolveShellNav } from "./nav";
 export type { NavIconName } from "./nav";
 export {

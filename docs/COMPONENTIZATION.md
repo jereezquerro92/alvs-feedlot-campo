@@ -48,11 +48,11 @@ src/lib/components/
   auth/              # AuthPanel, SessionBadge, SessionMenuRow, ProfileForm
   form/              # Select, Combobox, Checkbox, Switch, DatePicker, DateRangePicker, PinInput, TagsInput — Melt builders (adr-52 r8 default)
   nav/               # Tabs, DropdownMenu, ContextMenu, Menubar, TableOfContents — Melt builder(s) + hand-rolled fallbacks
-  feedback/          # Toast — Melt builder, module-level `toaster` singleton
+  feedback/          # Toast, Progress — Melt builders; Toast's module-level `toaster` singleton
   overlay/           # Dialog, Drawer, Accordion, ConfirmDialog, Tooltip, Popover, HoverCard, ScrollArea, SidePanel — Melt builders (adr-52 r8 default), SOLID open/close primitives
   theme/             # ThemeModeToggle, QuickThemeToggle, AppearanceCard, PaletteFields — Melt-builder theme controls
-  showcase/          # AlertDialogDemo, TabsDemo, DropdownMenuDemo, ContextMenuDemo, MenubarDemo, TableOfContentsDemo, TooltipDemo, PopoverDemo, HoverCardDemo, CollapsibleDemo, TreeDemo, ScrollAreaDemo, SidePanelDemo, ToastTriggerDemo, ChoiceListDemo — gallery-only demo compositions, not app surface
-  shell/             # ChatDrawer, NavItem/NavBrand/NavPanelTitle — layout-mounted compositions; one ChatDrawer instance per page
+  showcase/          # AlertDialogDemo, DialogDemo, AccordionDemo, ConfirmDialogDemo, TabsDemo, DropdownMenuDemo, ContextMenuDemo, MenubarDemo, TableOfContentsDemo, TooltipDemo, PopoverDemo, HoverCardDemo, CollapsibleDemo, TreeDemo, ScrollAreaDemo, SidePanelDemo, ToastTriggerDemo, ChoiceListDemo, ButtonsBadgesDemo, ProgressDemo — gallery-only demo compositions, not app surface
+  shell/             # ChatDrawer, NavItem/NavBrand/NavPanelTitle, NavPendingBar — layout-mounted compositions; one ChatDrawer instance per page
   views/             # LobbyView, ProfileView, ShowcaseView, ShowcaseGalleryView, ChatView — one zero-hydration page body per route
 ```
 
@@ -94,6 +94,7 @@ Names here are reference copies of what [[GLOSSARY]] already decided, not the po
 | `NavLockToggle` | `shell/` | Open/closed padlock + Menú label; pins FancyNav to a permanent primary rail | `FeedlotFancyNav` |
 | `NavGlyph` | `shell/` | Inline SVG icons for `NavItem` | `NavItem` |
 | `NavBadge` | `shell/` | Count/pending pill for `NavItem` | `NavItem` |
+| `NavPendingBar` | `shell/` | ClientRouter preparation indicator (CSS-driven via `html[data-nav-pending]`) | Mounted once in `Base.astro` |
 | `AuthPanel` | `auth/` | Session-aware auth actions | Any authenticated page |
 | `SessionBadge` | `auth/` | Compact current-session indicator | Any authenticated page |
 | `SessionMenuRow` | `auth/` | Fixed menu row: icon left, label right | `SessionBadge` popover rows (theme / profile / showcase) |
@@ -132,6 +133,11 @@ Names here are reference copies of what [[GLOSSARY]] already decided, not the po
 | `AppearanceCard` | `theme/` | Full appearance editor (packs, mode, bgPreset, sidebarSide, dual palettes, radius) via `PATCH /api/me/` | `/profile/` |
 | `PaletteFields` | `theme/` | Seven color controls for one mode palette | Mounted twice by `AppearanceCard` |
 | `AlertDialogDemo` | `showcase/` | Standalone composition of the raw `ui/alert-dialog` primitives | `/showcase/components/` gallery only |
+| `DialogDemo` | `showcase/` | Composition of `overlay/Dialog` supplying title/body sample copy | `/showcase/components/` gallery only |
+| `AccordionDemo` | `showcase/` | Composition of `overlay/Accordion` with realistic settlement/audit sample items | `/showcase/components/` gallery only |
+| `ConfirmDialogDemo` | `showcase/` | Composition of `overlay/ConfirmDialog` with a no-op `onconfirm` | `/showcase/components/` gallery only |
+| `ButtonsBadgesDemo` | `showcase/` | Composition of vendored `ui/button` + `ui/badge` + `data/StatusBadge` variants | `/showcase/components/` gallery only |
+| `ProgressDemo` | `showcase/` | Composition of `feedback/Progress` with a mid-range sample value | `/showcase/components/` gallery only |
 | `TabsDemo` | `showcase/` | Composition of `nav/Tabs` supplying its parameterized `content` snippet | `/showcase/components/` gallery only |
 | `DropdownMenuDemo` | `showcase/` | Composition of `nav/DropdownMenu` supplying realistic row-action sample data | `/showcase/components/` gallery only |
 | `ContextMenuDemo` | `showcase/` | Composition of `nav/ContextMenu` supplying a labeled right-click region and realistic sample data | `/showcase/components/` gallery only |
@@ -143,7 +149,7 @@ Names here are reference copies of what [[GLOSSARY]] already decided, not the po
 | `CollapsibleDemo` | `showcase/` | Composition of `data/Collapsible` supplying its parameterized `content` snippet | `/showcase/components/` gallery only |
 | `TreeDemo` | `showcase/` | Composition of `data/Tree` with no props — its default sample hierarchy is already realistic | `/showcase/components/` gallery only |
 | `ScrollAreaDemo` | `showcase/` | Composition of `overlay/ScrollArea` supplying its parameterized `content` snippet | `/showcase/components/` gallery only |
-| `SidePanelDemo` | `showcase/` | Composition of `overlay/SidePanel` mounting one left and one right instance (both collapsed by default) with an inline note | `/showcase/components/` gallery only |
+| `SidePanelDemo` | `showcase/` | Composition of `overlay/SidePanel` mounting one left and one right instance (both collapsed by default) inside a clipped gallery box so FancyDrawer keeps the live viewport edges | `/showcase/components/` gallery only |
 | `ToastTriggerDemo` | `showcase/` | Button that pushes a sample toast onto the shared `toaster` singleton | `/showcase/components/` gallery only |
 | `CornerNavTriangleDemo` | `showcase/` | Composition of `primitives/CornerNavTriangle`, docked inside a clipped gallery box (zero props, safe default per adr-22) | `/showcase/components/` gallery only |
 | `LobbyView` | `views/` | The `/` page body — header, lobby cards, denied/pending states; islands via named slots | `index.astro` only |

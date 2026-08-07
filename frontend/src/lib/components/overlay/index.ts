@@ -16,3 +16,4 @@ export type { HoverCardBuilder } from "./HoverCard.svelte";
 export { default as ScrollArea } from "./ScrollArea.svelte";
 export { default as Drawer } from "./Drawer.svelte";
 export { default as FancyDrawer } from "./FancyDrawer.svelte";
+export { default as SidePanel } from "./SidePanel.svelte";

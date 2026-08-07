@@ -9,16 +9,16 @@
 
   let {
     open = $bindable(false),
-    title,
+    title = "Confirm",
     description = undefined,
     confirmLabel = "Confirm",
     cancelLabel = "Cancel",
     triggerLabel = undefined,
     triggerIcon = undefined,
-    onconfirm,
+    onconfirm = () => {},
   }: {
     open?: boolean;
-    title: string;
+    title?: string;
     description?: string;
     confirmLabel?: string;
     cancelLabel?: string;
@@ -26,7 +26,8 @@
     triggerLabel?: string;
     /** Snippet rendered inside the trigger, for an icon-only affordance. */
     triggerIcon?: import("svelte").Snippet;
-    onconfirm: () => void;
+    /** Defaults to a no-op so zero-prop mounts stay mutation-free (adr-22 r2). */
+    onconfirm?: () => void;
   } = $props();
 </script>
 

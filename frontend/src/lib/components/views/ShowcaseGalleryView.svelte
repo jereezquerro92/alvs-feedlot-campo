@@ -4,12 +4,10 @@
      LIVE-DOC:END -->
 
 <script lang="ts">
-  import { Button } from "$lib/components/ui/button";
-  import { Badge } from "$lib/components/ui/badge";
   import * as Alert from "$lib/components/ui/alert";
   import { Separator } from "$lib/components/ui/separator";
   import { SectionTitle } from "$lib/components/primitives/titles";
-  import { NumericValue, StatusBadge } from "$lib/components/data";
+  import { NumericValue } from "$lib/components/data";
   import { EntityGrid, EntityCard, SummaryCard, type EntityStat, type SummaryItem } from "$lib/components/dashboard";
 
   type GalleryCopy = {
@@ -68,6 +66,10 @@
     scrollArea: string;
     drawer: string;
     fancyDrawer: string;
+    sidePanel: string;
+    alertDialog: string;
+    confirmDialog: string;
+    dialog: string;
     homeTriangle: string;
     cornerNavTriangle: string;
     feedback: string;
@@ -115,25 +117,7 @@
 
   <section class="flex flex-col gap-4">
     <SectionTitle as="h2">{copy.buttonsBadges}</SectionTitle>
-    <div class="flex flex-wrap gap-3">
-      <Button>Default</Button>
-      <Button variant="secondary">Secondary</Button>
-      <Button variant="destructive">Destructive</Button>
-      <Button variant="outline">Outline</Button>
-      <Button variant="ghost">Ghost</Button>
-      <Button variant="link" href="/showcase/">Link</Button>
-    </div>
-    <div class="flex flex-wrap gap-3">
-      <Badge>Default</Badge>
-      <Badge variant="secondary">Secondary</Badge>
-      <Badge variant="destructive">Destructive</Badge>
-      <Badge variant="outline">Outline</Badge>
-    </div>
-    <div class="flex flex-wrap gap-3">
-      <StatusBadge status="approved" />
-      <StatusBadge status="pending" />
-      <StatusBadge status="rejected" />
-    </div>
+    <slot name="buttons-badges" />
   </section>
 
   <Separator />
@@ -315,8 +299,23 @@
 
   <section class="flex flex-col gap-4">
     <SectionTitle as="h2">{copy.overlay}</SectionTitle>
-    <div class="flex flex-wrap gap-3">
-      <slot name="overlay-triggers" />
+    <div class="flex flex-col gap-2">
+      <SectionTitle as="h3">{copy.dialog}</SectionTitle>
+      <div class="flex flex-wrap gap-3">
+        <slot name="dialog" />
+      </div>
+    </div>
+    <div class="flex flex-col gap-2">
+      <SectionTitle as="h3">{copy.alertDialog}</SectionTitle>
+      <div class="flex flex-wrap gap-3">
+        <slot name="alert-dialog" />
+      </div>
+    </div>
+    <div class="flex flex-col gap-2">
+      <SectionTitle as="h3">{copy.confirmDialog}</SectionTitle>
+      <div class="flex flex-wrap gap-3">
+        <slot name="confirm-dialog" />
+      </div>
     </div>
     <div class="flex flex-col gap-2 max-w-xl">
       <SectionTitle as="h3">{copy.accordion}</SectionTitle>
@@ -345,6 +344,10 @@
     <div class="flex flex-col gap-2">
       <SectionTitle as="h3">{copy.fancyDrawer}</SectionTitle>
       <slot name="fancy-drawer" />
+    </div>
+    <div class="flex flex-col gap-2">
+      <SectionTitle as="h3">{copy.sidePanel}</SectionTitle>
+      <slot name="side-panel" />
     </div>
     <div class="flex flex-col gap-2">
       <SectionTitle as="h3">{copy.homeTriangle}</SectionTitle>

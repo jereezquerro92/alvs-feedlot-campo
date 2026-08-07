@@ -9,6 +9,7 @@ import { parseThemeConfig, computeThemeSSRAttrs, DEFAULTS } from "$lib/theme";
 import PageTitle from "$lib/components/primitives/titles/PageTitle.svelte";
 import FeedlotFancyNav from "$lib/components/feedlot/FeedlotFancyNav.svelte";
 import ChatDrawer from "$lib/components/shell/ChatDrawer.svelte";
+import NavPendingBar from "$lib/components/shell/NavPendingBar.svelte";
 import { resolveShellNav } from "$lib/components/shell/nav";
 import { parseNavLockCookie } from "$lib/components/shell/nav-fsm";
 import { hasRole } from "$lib/auth";
@@ -119,7 +120,7 @@ const showChatDrawer = SHOW_CHAT_DRAWER && chatDrawer && hasRole(me);
 
     {/* Visible during ClientRouter preparation (SSR fetch) — dim + top bar
         while HTML arrives; no named page-main view-transition snapshot. */}
-    <div class="nav-pending-bar" aria-hidden="true"></div>
+    <NavPendingBar />
 
     <script>
       import "htmx.org";

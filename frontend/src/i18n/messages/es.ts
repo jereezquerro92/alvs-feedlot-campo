@@ -165,8 +165,12 @@ export const es = {
   gallery_scroll_area: "Scroll Area",
   gallery_drawer: "Drawer",
   gallery_fancy_drawer: "Fancy Drawer",
+  gallery_side_panel: "Side Panel",
   gallery_home_triangle: "Home Triangle",
   gallery_corner_nav_triangle: "Corner Nav Triangle",
+  gallery_alert_dialog: "Alert Dialog",
+  gallery_confirm_dialog: "Confirm Dialog",
+  gallery_dialog: "Dialog",
   gallery_form: "Formulario",
   gallery_select: "Select",
   gallery_combobox: "Combobox",
@@ -268,6 +272,28 @@ export const es = {
   demo_fancy_drawer_right_title: "Fancy · derecho",
   demo_fancy_drawer_right_body:
     "Contenido centrado en vertical. Bordes izquierdos redondeados; el borde derecho queda al ras del viewport.",
+  // SidePanel — persistent docked rail / context panel + gallery demo
+  side_panel_default_title: "Panel",
+  side_panel_open: "Abrir panel lateral",
+  side_panel_close: "Cerrar panel lateral",
+  side_panel_empty: "Sin contenido",
+  demo_side_panel_note:
+    "Side Panel montado dentro de un recuadro recortado (no en los bordes vivos del viewport — esos los ocupa Fancy Drawer). Uno a la izquierda y otro a la derecha, ambos colapsados por defecto.",
+  demo_side_panel_left_title: "Side · izquierdo",
+  demo_side_panel_left_body: "Rail / contexto de detalle a altura completa, anclado al borde.",
+  demo_side_panel_right_title: "Side · derecho",
+  demo_side_panel_right_body: "El mismo patrón del otro lado: peek tab + deslizamiento off-screen.",
+  // Alert / confirm dialog gallery copy
+  demo_alert_dialog_trigger: "Abrir alert dialog",
+  demo_alert_dialog_title: "¿Confirmar acción?",
+  demo_alert_dialog_desc: "Composición bare de los primitivos ui/alert-dialog — la Action no muta nada.",
+  demo_alert_dialog_cancel: "Cancelar",
+  demo_alert_dialog_confirm: "Confirmar",
+  demo_confirm_dialog_trigger: "Abrir confirmación",
+  demo_confirm_dialog_title: "¿Eliminar el registro?",
+  demo_confirm_dialog_desc: "ConfirmDialog envuelve alert-dialog con onconfirm en no-op por defecto.",
+  demo_confirm_dialog_cancel: "Cancelar",
+  demo_confirm_dialog_confirm: "Eliminar",
   // HomeTriangle — component default (adr-22 zero-prop state) + gallery demo
   home_triangle_aria_label: "Inicio",
   demo_home_triangle_note:

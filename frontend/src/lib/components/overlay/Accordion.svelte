@@ -24,13 +24,13 @@
   import type { Snippet } from "svelte";
 
   let {
-    items,
+    items = [],
     multiple = false,
     value = $bindable(undefined),
     content = undefined,
     class: className = undefined,
   }: {
-    items: AccordionItemData[];
+    items?: AccordionItemData[];
     multiple?: boolean;
     value?: string | string[] | undefined;
     /** Rich body per item; falls back to the item's `content` string. */
