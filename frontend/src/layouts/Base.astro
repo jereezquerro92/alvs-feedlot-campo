@@ -67,7 +67,13 @@ const showChatDrawer = SHOW_CHAT_DRAWER && chatDrawer && hasRole(me);
 ---
 
 <!doctype html>
-<html lang="en" class={htmlClass} data-bg-preset={dataBgPreset} style={style}>
+<html
+  lang="en"
+  class={htmlClass}
+  data-bg-preset={dataBgPreset}
+  style={style}
+  transition:animate="none"
+>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -81,6 +87,7 @@ const showChatDrawer = SHOW_CHAT_DRAWER && chatDrawer && hasRole(me);
         showShellNav && (
           <FeedlotFancyNav
             transition:persist="shell-nav"
+            transition:animate="none"
             client:load
             active={navActive}
             clientId={navClientId}
@@ -90,7 +97,13 @@ const showChatDrawer = SHOW_CHAT_DRAWER && chatDrawer && hasRole(me);
           />
         )
       }
-      <div class="min-w-0 flex-1" transition:animate={PAGE_FADE}>
+      {/* Opacity-only page change — root/nav stay still so the fade never
+          paints a morphing layer over the site menu. */}
+      <div
+        class="min-w-0 flex-1"
+        transition:name="page-main"
+        transition:animate={PAGE_FADE}
+      >
         <slot />
       </div>
     </div>
