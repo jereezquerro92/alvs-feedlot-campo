@@ -5,13 +5,11 @@ import { fileURLToPath } from "node:url";
 import { t } from "../src/i18n";
 import { DENIED_REDIRECT } from "../src/lib/authGate";
 
-// Smoke tests for the SSR routes ([[FRONTEND]] T5): / renders a Showcase
-// button and a Card carrying the two backend words; /showcase/components/
-// and /healthz respond 200; each carries an explicit Cache-Control. Runs
-// against the built standalone server (`bun run build` first). No backend is
-// required — no cookie is sent, so /showcase/components/ renders the
-// anonymous auth section without a live /api/me/ call; / tolerates either a
-// live backend or its per-word error-code fallback.
+// Smoke tests for the SSR routes ([[FRONTEND]] T5): / is the feedlot
+// splash/login (Cognito affordance, no showcase link); /showcase/components/
+// redirects anonymous visitors; /healthz responds 200; each carries an
+// explicit Cache-Control. Runs against the built standalone server
+// (`bun run build` first). No backend is required for the anonymous paths.
 //
 // The / session badge (avatar + display name / "Log in") is covered
 // by a second describe block below, each with its own SSR server instance
@@ -67,12 +65,16 @@ afterAll(() => {
   server?.kill();
 });
 
-test("/ renders a Showcase button, with an explicit Cache-Control, and hides the M365 status card from an anonymous visitor (issue #246)", async () => {
+test("/ is a feedlot splash/login — Cache-Control, Cognito affordance, support mailto, no showcase link, no M365 strip for anonymous visitors", async () => {
   const res = await fetch(`${BASE}/`, { redirect: "manual" });
   expect(res.status).toBe(200);
   expect(res.headers.get("cache-control")).toBeTruthy();
   const body = await res.text();
-  expect(body).toContain('href="/showcase/components/"');
+  expect(body).toContain(t("login_title"));
+  expect(body).toContain("/accounts/login/");
+  expect(body).toContain(`mailto:${t("login_support_email")}`);
+  expect(body).not.toContain("astro-drf-aws");
+  expect(body).not.toContain('href="/showcase/components/"');
   // The M365 status card is gated behind a role-holding session on the
   // frontend, even though adr-13-m365-graph rule 3 leaves its backend routes
   // AllowAny — the login landing never carries it. Probed by the card's own

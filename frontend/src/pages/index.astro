@@ -15,7 +15,6 @@ import { ssrFetch } from "$lib/ssrFetch";
 
 const backendApiUrl = process.env.BACKEND_API_URL ?? "http://localhost:8000";
 const publicBackendUrl = process.env.PUBLIC_BACKEND_URL ?? "http://localhost:8000";
-const publicProjectSlug = process.env.PUBLIC_PROJECT_SLUG ?? "astro-drf-aws";
 
 let me: Me | null = null;
 const cookie = Astro.request.headers.get("cookie");
@@ -28,10 +27,9 @@ if (cookie) {
   }
 }
 
-// The landing IS the login (redesign): a session that already holds a role skips
-// the landing entirely and goes straight to the feedlot — no intermediate
-// feedlot/showcase/chat menu. Only an anonymous or role-less (pending) session
-// stays here to sign in / wait for a grant ([[adr-20-authorization-lobby]]).
+// Splash / login: a session that already holds a role skips the landing and
+// goes straight to the feedlot. Only an anonymous or role-less (pending)
+// session stays here to sign in / wait for a grant ([[adr-20-authorization-lobby]]).
 if (hasRole(me)) return Astro.redirect("/feedlot/");
 
 const pending = me !== null;
@@ -42,7 +40,6 @@ Astro.response.headers.set("Cache-Control", "no-store");
 
 <Base title={t("login_title")} me={me}>
   <LoginLandingView
-    projectSlug={publicProjectSlug}
     publicBackendUrl={publicBackendUrl}
     pending={pending}
     denied={denied}
