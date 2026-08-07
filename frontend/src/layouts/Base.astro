@@ -4,7 +4,7 @@
  * Docs: [[FRONTEND]]
  * LIVE-DOC:END */
 import "../styles/app.css";
-import { ClientRouter, fade } from "astro:transitions";
+import { ClientRouter } from "astro:transitions";
 import { parseThemeConfig, computeThemeSSRAttrs, DEFAULTS } from "$lib/theme";
 import PageTitle from "$lib/components/primitives/titles/PageTitle.svelte";
 import FeedlotFancyNav from "$lib/components/feedlot/FeedlotFancyNav.svelte";
@@ -15,8 +15,41 @@ import { hasRole } from "$lib/auth";
 import { routerChatCopy } from "$lib/chatui-copy";
 import type { Me } from "$lib/types/user";
 
-/** Soft page crossfade — short enough to feel calm, not sluggish. */
-const PAGE_FADE = fade({ duration: "150ms" });
+/** Sequential opacity fade (out, then in) — no slide/morph. */
+const PAGE_FADE_MS = 50;
+const PAGE_FADE_EASE = "cubic-bezier(0.76, 0, 0.24, 1)";
+const PAGE_FADE = {
+  forwards: {
+    old: {
+      name: "astroFadeOut",
+      duration: `${PAGE_FADE_MS}ms`,
+      easing: PAGE_FADE_EASE,
+      fillMode: "both",
+    },
+    new: {
+      name: "astroFadeIn",
+      duration: `${PAGE_FADE_MS}ms`,
+      delay: `${PAGE_FADE_MS}ms`,
+      easing: PAGE_FADE_EASE,
+      fillMode: "both",
+    },
+  },
+  backwards: {
+    old: {
+      name: "astroFadeOut",
+      duration: `${PAGE_FADE_MS}ms`,
+      easing: PAGE_FADE_EASE,
+      fillMode: "both",
+    },
+    new: {
+      name: "astroFadeIn",
+      duration: `${PAGE_FADE_MS}ms`,
+      delay: `${PAGE_FADE_MS}ms`,
+      easing: PAGE_FADE_EASE,
+      fillMode: "both",
+    },
+  },
+};
 
 /** Temporary: hide the right-edge router ChatDrawer while left-menu work lands. */
 const SHOW_CHAT_DRAWER = false;
