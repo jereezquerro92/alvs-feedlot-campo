@@ -185,6 +185,8 @@ def test_setup_script_is_pasteable_and_versioned() -> None:
         fail("the setup script must fail loudly; a half-built environment gets snapshotted")
     if "mvmcp.py bootstrap" not in source:
         fail("the setup script must pre-warm the vault MCP")
+    if "astral.sh/uv/install.sh" not in source:
+        fail("the setup script must install uv when a fresh cloud VM lacks it")
     if "bun install --frozen-lockfile" not in source:
         fail("the setup script must pre-warm the frontend deps for cloud sessions (#319)")
     if "#319" not in source:

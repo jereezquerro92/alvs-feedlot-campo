@@ -1,0 +1,3 @@
+{
+  "install": "export PATH=\"$HOME/.local/bin:$PATH\"; export MARKDOWN_VAULT_MCP_PROFILE=keyword; bash scripts/cloud_setup.sh && uv sync --directory backend"
+}
