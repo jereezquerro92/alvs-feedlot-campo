@@ -50,8 +50,12 @@ async function getJson(path: string): Promise<any> {
 const asArray = (d: unknown): any[] =>
   Array.isArray(d) ? d : ((d as any)?.results ?? []);
 
-const sources = asArray(await getJson(`/api/market-sources/`));
-const prices = asArray(await getJson(`/api/market-prices/`));
+const [sourcesData, pricesData] = await Promise.all([
+  getJson(`/api/market-sources/`),
+  getJson(`/api/market-prices/`),
+]);
+const sources = asArray(sourcesData);
+const prices = asArray(pricesData);
 
 const pending = me !== null && !hasRole(me);
 

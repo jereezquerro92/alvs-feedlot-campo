@@ -311,3 +311,49 @@ body {
 ::view-transition-group(page-main) {
   animation: none;
 }
+
+/* ClientRouter holds the old page until SSR HTML is ready. Without a cue,
+   that wait reads as a dead click. Dim the main pane and grow a top bar
+   from the moment preparation starts (astro:before-preparation). */
+.nav-pending-bar {
+  position: fixed;
+  inset-block-start: 0;
+  inset-inline: 0;
+  z-index: 100;
+  height: 0.125rem;
+  pointer-events: none;
+  transform: scaleX(0);
+  transform-origin: left center;
+  opacity: 0;
+  background: var(--primary);
+}
+
+html[data-nav-pending] .nav-pending-bar {
+  opacity: 1;
+  animation: nav-pending-grow 0.85s cubic-bezier(0.76, 0, 0.24, 1) forwards;
+}
+
+html[data-nav-pending] [data-page-main] {
+  opacity: 0.55;
+  transition: opacity 0.1s cubic-bezier(0.76, 0, 0.24, 1);
+}
+
+@keyframes nav-pending-grow {
+  0% {
+    transform: scaleX(0);
+  }
+  100% {
+    transform: scaleX(0.72);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html[data-nav-pending] .nav-pending-bar {
+    animation: none;
+    transform: scaleX(0.72);
+  }
+
+  html[data-nav-pending] [data-page-main] {
+    transition: none;
+  }
+}

@@ -55,22 +55,15 @@ if (clientParam) {
   if (scoped) return Astro.redirect(scoped);
 }
 
-const clients = asArray(await getJson(`/api/clients/`));
-
-let currentClient: any = null;
-let account: any = null;
-let entries: any[] = [];
-if (clientParam) {
-  currentClient = await getJson(`/api/clients/${clientParam}/`);
-  if (currentClient) {
-    const [accountData, ledgerData] = await Promise.all([
-      getJson(`/api/clients/${clientParam}/account/`),
-      getJson(`/api/clients/${clientParam}/ledger/`),
-    ]);
-    account = accountData;
-    entries = asArray(ledgerData);
-  }
-}
+const [clientsData, currentClient, accountData, ledgerData] = await Promise.all([
+  getJson(`/api/clients/`),
+  clientParam ? getJson(`/api/clients/${clientParam}/`) : Promise.resolve(null),
+  clientParam ? getJson(`/api/clients/${clientParam}/account/`) : Promise.resolve(null),
+  clientParam ? getJson(`/api/clients/${clientParam}/ledger/`) : Promise.resolve(null),
+]);
+const clients = asArray(clientsData);
+const account = currentClient ? accountData : null;
+const entries = currentClient ? asArray(ledgerData) : [];
 
 const pending = me !== null && !hasRole(me);
 

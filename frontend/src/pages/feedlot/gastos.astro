@@ -55,24 +55,17 @@ if (clientParam) {
   if (scoped) return Astro.redirect(scoped);
 }
 
-const clients = asArray(await getJson(`/api/clients/`));
-
 const today = new Date().toISOString().slice(0, 10);
 
-let currentClient: any = null;
-let lots: any[] = [];
-let expenses: any[] = [];
-if (clientParam) {
-  currentClient = await getJson(`/api/clients/${clientParam}/`);
-  if (currentClient) {
-    const [lotsData, expensesData] = await Promise.all([
-      getJson(`/api/lots/?client=${clientParam}`),
-      getJson(`/api/expenses/?client=${clientParam}`),
-    ]);
-    lots = asArray(lotsData);
-    expenses = asArray(expensesData);
-  }
-}
+const [clientsData, currentClient, lotsData, expensesData] = await Promise.all([
+  getJson(`/api/clients/`),
+  clientParam ? getJson(`/api/clients/${clientParam}/`) : Promise.resolve(null),
+  clientParam ? getJson(`/api/lots/?client=${clientParam}`) : Promise.resolve(null),
+  clientParam ? getJson(`/api/expenses/?client=${clientParam}`) : Promise.resolve(null),
+]);
+const clients = asArray(clientsData);
+const lots = currentClient ? asArray(lotsData) : [];
+const expenses = currentClient ? asArray(expensesData) : [];
 
 const pending = me !== null && !hasRole(me);
 

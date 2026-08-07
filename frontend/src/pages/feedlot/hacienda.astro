@@ -54,22 +54,18 @@ const asArray = (d: unknown): any[] =>
 
 // Module-first: the client is chosen with the topbar dropdown, carried as ?client=.
 const clientParam = Astro.url.searchParams.get("client");
-const clients = asArray(await getJson(`/api/clients/`));
-
-let currentClient: any = null;
-let animals: any[] = [];
-let lots: any[] = [];
-if (clientParam) {
-  currentClient = await getJson(`/api/clients/${clientParam}/`);
-  if (currentClient) {
-    const [animalsData, lotsData] = await Promise.all([
-      getJson(`/api/animals/?client=${clientParam}`),
-      getJson(`/api/lots/?client=${clientParam}`),
-    ]);
-    animals = asArray(animalsData);
-    lots = asArray(lotsData);
-  }
-}
+// One round-trip after /api/me/: parallel clients + optional client scope.
+// Sequential clients → client → animals/lots was the dead half-second before
+// ClientRouter could start PAGE_FADE.
+const [clientsData, currentClient, animalsData, lotsData] = await Promise.all([
+  getJson(`/api/clients/`),
+  clientParam ? getJson(`/api/clients/${clientParam}/`) : Promise.resolve(null),
+  clientParam ? getJson(`/api/animals/?client=${clientParam}`) : Promise.resolve(null),
+  clientParam ? getJson(`/api/lots/?client=${clientParam}`) : Promise.resolve(null),
+]);
+const clients = asArray(clientsData);
+const animals = currentClient ? asArray(animalsData) : [];
+const lots = currentClient ? asArray(lotsData) : [];
 
 const today = new Date().toISOString().slice(0, 10);
 const pending = me !== null && !hasRole(me);

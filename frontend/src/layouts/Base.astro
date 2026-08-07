@@ -134,6 +134,7 @@ const showChatDrawer = SHOW_CHAT_DRAWER && chatDrawer && hasRole(me);
           paints a morphing layer over the site menu. */}
       <div
         class="min-w-0 flex-1"
+        data-page-main
         transition:name="page-main"
         transition:animate={PAGE_FADE}
       >
@@ -149,8 +150,22 @@ const showChatDrawer = SHOW_CHAT_DRAWER && chatDrawer && hasRole(me);
       )
     }
 
+    {/* Visible during ClientRouter preparation (SSR fetch) — the view
+        transition only starts after HTML arrives, which felt like a dead
+        pause (~500ms) before the 50ms PAGE_FADE. */}
+    <div class="nav-pending-bar" aria-hidden="true"></div>
+
     <script>
       import "htmx.org";
+    </script>
+    <script>
+      function setNavPending(pending: boolean) {
+        if (pending) document.documentElement.dataset.navPending = "";
+        else delete document.documentElement.dataset.navPending;
+      }
+      document.addEventListener("astro:before-preparation", () => setNavPending(true));
+      document.addEventListener("astro:after-swap", () => setNavPending(false));
+      document.addEventListener("astro:page-load", () => setNavPending(false));
     </script>
   </body>
 </html>

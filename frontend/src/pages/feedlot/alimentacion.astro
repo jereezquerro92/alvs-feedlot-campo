@@ -49,25 +49,19 @@ const asArray = (d: unknown): any[] =>
   Array.isArray(d) ? d : ((d as any)?.results ?? []);
 
 const clientParam = Astro.url.searchParams.get("client");
-const clients = asArray(await getJson(`/api/clients/`));
-
-let currentClient: any = null;
-let animals: any[] = [];
-let lots: any[] = [];
-let feedTypes: any[] = [];
-if (clientParam) {
-  currentClient = await getJson(`/api/clients/${clientParam}/`);
-  if (currentClient) {
-    const [animalsData, lotsData, feedTypesData] = await Promise.all([
-      getJson(`/api/animals/?client=${clientParam}`),
-      getJson(`/api/lots/?client=${clientParam}`),
-      getJson(`/api/feed-types/`),
-    ]);
-    animals = asArray(animalsData);
-    lots = asArray(lotsData);
-    feedTypes = asArray(feedTypesData);
-  }
-}
+// One round-trip after /api/me/: parallel clients + optional client scope.
+const [clientsData, currentClient, animalsData, lotsData, feedTypesData] =
+  await Promise.all([
+    getJson(`/api/clients/`),
+    clientParam ? getJson(`/api/clients/${clientParam}/`) : Promise.resolve(null),
+    clientParam ? getJson(`/api/animals/?client=${clientParam}`) : Promise.resolve(null),
+    clientParam ? getJson(`/api/lots/?client=${clientParam}`) : Promise.resolve(null),
+    getJson(`/api/feed-types/`),
+  ]);
+const clients = asArray(clientsData);
+const animals = currentClient ? asArray(animalsData) : [];
+const lots = currentClient ? asArray(lotsData) : [];
+const feedTypes = asArray(feedTypesData);
 
 const today = new Date().toISOString().slice(0, 10);
 const pending = me !== null && !hasRole(me);

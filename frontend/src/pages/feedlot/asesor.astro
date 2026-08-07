@@ -70,10 +70,12 @@ if (isPortalSession(me)) {
   }
 } else {
   // Staff: the full roster feeds the switcher; the requested client is fetched.
-  clients = asArray(await getJson(`/api/clients/`));
-  if (clientParam) {
-    currentClient = await getJson(`/api/clients/${clientParam}/`);
-  }
+  const [clientsData, clientData] = await Promise.all([
+    getJson(`/api/clients/`),
+    clientParam ? getJson(`/api/clients/${clientParam}/`) : Promise.resolve(null),
+  ]);
+  clients = asArray(clientsData);
+  currentClient = clientData;
 }
 
 const pending = me !== null && !hasRole(me);

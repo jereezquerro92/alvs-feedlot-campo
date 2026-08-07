@@ -49,14 +49,14 @@ const asArray = (d: unknown): any[] =>
   Array.isArray(d) ? d : ((d as any)?.results ?? []);
 
 const clientParam = Astro.url.searchParams.get("client");
-const clients = asArray(await getJson(`/api/clients/`));
-
 // Own stock is cross-feedlot — no client needed; querying with `?client=` adds that
-// client's brought-in balance to each row. One call covers both cases.
-let currentClient: any = null;
-if (clientParam) {
-  currentClient = await getJson(`/api/clients/${clientParam}/`);
-}
+// client's brought-in balance to each row. Fetch clients + optional client in
+// parallel; stock path still needs to know whether the client resolved.
+const [clientsData, currentClient] = await Promise.all([
+  getJson(`/api/clients/`),
+  clientParam ? getJson(`/api/clients/${clientParam}/`) : Promise.resolve(null),
+]);
+const clients = asArray(clientsData);
 const stockPath = currentClient
   ? `/api/feed-stock/?client=${clientParam}`
   : `/api/feed-stock/`;

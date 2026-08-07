@@ -49,21 +49,20 @@ const asArray = (d: unknown): any[] =>
   Array.isArray(d) ? d : ((d as any)?.results ?? []);
 
 const clientParam = Astro.url.searchParams.get("client");
-const [clientsData, pensData, rationsData, feedTypesData, ordersData] = await Promise.all([
-  getJson(`/api/clients/`),
-  getJson(`/api/pens/`),
-  getJson(`/api/rations/`),
-  getJson(`/api/feed-types/`),
-  getJson(`/api/loading-orders/`),
-]);
+const [clientsData, pensData, rationsData, feedTypesData, ordersData, currentClient] =
+  await Promise.all([
+    getJson(`/api/clients/`),
+    getJson(`/api/pens/`),
+    getJson(`/api/rations/`),
+    getJson(`/api/feed-types/`),
+    getJson(`/api/loading-orders/`),
+    clientParam ? getJson(`/api/clients/${clientParam}/`) : Promise.resolve(null),
+  ]);
 const clients = asArray(clientsData);
 const pens = asArray(pensData);
 const rations = asArray(rationsData);
 const feedTypes = asArray(feedTypesData);
 const loadingOrders = asArray(ordersData);
-
-let currentClient: any = null;
-if (clientParam) currentClient = await getJson(`/api/clients/${clientParam}/`);
 
 const today = new Date().toISOString().slice(0, 10);
 const pending = me !== null && !hasRole(me);

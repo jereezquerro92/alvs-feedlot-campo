@@ -49,32 +49,31 @@ const asArray = (d: unknown): any[] =>
   Array.isArray(d) ? d : ((d as any)?.results ?? []);
 
 const clientParam = Astro.url.searchParams.get("client");
-const clients = asArray(await getJson(`/api/clients/`));
-
-let currentClient: any = null;
-let animals: any[] = [];
-let lots: any[] = [];
-let healthProducts: any[] = [];
-let plans: any[] = [];
-let schedule: any = null;
-if (clientParam) {
-  currentClient = await getJson(`/api/clients/${clientParam}/`);
-  if (currentClient) {
-    const [animalsData, lotsData, healthProductsData, plansData, scheduleData] =
-      await Promise.all([
-        getJson(`/api/animals/?client=${clientParam}`),
-        getJson(`/api/lots/?client=${clientParam}`),
-        getJson(`/api/health-products/`),
-        getJson(`/api/sanitary-plans/`),
-        getJson(`/api/plan-enrollments/schedule/?client=${clientParam}`),
-      ]);
-    animals = asArray(animalsData);
-    lots = asArray(lotsData);
-    healthProducts = asArray(healthProductsData);
-    plans = asArray(plansData);
-    schedule = scheduleData;
-  }
-}
+const [
+  clientsData,
+  currentClient,
+  animalsData,
+  lotsData,
+  healthProductsData,
+  plansData,
+  scheduleData,
+] = await Promise.all([
+  getJson(`/api/clients/`),
+  clientParam ? getJson(`/api/clients/${clientParam}/`) : Promise.resolve(null),
+  clientParam ? getJson(`/api/animals/?client=${clientParam}`) : Promise.resolve(null),
+  clientParam ? getJson(`/api/lots/?client=${clientParam}`) : Promise.resolve(null),
+  getJson(`/api/health-products/`),
+  getJson(`/api/sanitary-plans/`),
+  clientParam
+    ? getJson(`/api/plan-enrollments/schedule/?client=${clientParam}`)
+    : Promise.resolve(null),
+]);
+const clients = asArray(clientsData);
+const animals = currentClient ? asArray(animalsData) : [];
+const lots = currentClient ? asArray(lotsData) : [];
+const healthProducts = asArray(healthProductsData);
+const plans = asArray(plansData);
+const schedule = currentClient ? scheduleData : null;
 
 const today = new Date().toISOString().slice(0, 10);
 const pending = me !== null && !hasRole(me);

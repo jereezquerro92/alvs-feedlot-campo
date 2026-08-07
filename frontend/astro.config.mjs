@@ -9,6 +9,12 @@ export default defineConfig({
   output: "server",
   adapter: node({ mode: "standalone" }),
   integrations: [svelte()],
+  // ClientRouter already enables prefetchAll; tap starts the SSR fetch on
+  // pointer-down so click→navigation overlaps with preparation latency.
+  prefetch: {
+    prefetchAll: true,
+    defaultStrategy: "tap",
+  },
   i18n: {
     defaultLocale,
     locales: [...locales],

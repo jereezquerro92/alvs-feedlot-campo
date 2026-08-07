@@ -51,17 +51,15 @@ const asArray = (d: unknown): any[] =>
 const clientParam = Astro.url.searchParams.get("client");
 // The serve form picks clients/lots inside, so we need lots across ALL clients
 // (not a single client's slice); the /api/lots/ list carries each lot's client id.
-const [clientsData, lotsData, feedTypesData] = await Promise.all([
+const [clientsData, lotsData, feedTypesData, currentClient] = await Promise.all([
   getJson(`/api/clients/`),
   getJson(`/api/lots/`),
   getJson(`/api/feed-types/`),
+  clientParam ? getJson(`/api/clients/${clientParam}/`) : Promise.resolve(null),
 ]);
 const clients = asArray(clientsData);
 const lots = asArray(lotsData);
 const feedTypes = asArray(feedTypesData);
-
-let currentClient: any = null;
-if (clientParam) currentClient = await getJson(`/api/clients/${clientParam}/`);
 
 const today = new Date().toISOString().slice(0, 10);
 const pending = me !== null && !hasRole(me);
