@@ -16,6 +16,10 @@
   a collapsed, self-labeled drawer and never throws (adr-22 r1); toggling is
   local layout state only — no mutating action on the default invocation
   (adr-22 r2).
+
+  Shell stacking: same ClientRouter VT contract as FancyDrawer — pass
+  `viewTransitionName` (ChatDrawer: `shell-chat`) on this fixed <aside> so the
+  page-main fade cannot cover the peek tab during navigation.
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
@@ -36,6 +40,11 @@
     /** Optional fixed peek-tab glyph (e.g. "?" for help). When omitted, a
      * directional chevron follows open/side. */
     tabGlyph = "",
+    /**
+     * CSS `view-transition-name` for shell chrome. Empty keeps showcase /
+     * demos out of the VT layer; ChatDrawer passes `shell-chat`.
+     */
+    viewTransitionName = "",
     children,
     class: className = undefined,
   }: {
@@ -49,9 +58,21 @@
     /** Accessible label for the tab when expanded. */
     closeLabel?: string;
     tabGlyph?: string;
+    viewTransitionName?: string;
     children?: Snippet;
     class?: string;
   } = $props();
+
+  const rootStyle = $derived(
+    [
+      `width: ${width}`,
+      viewTransitionName.trim()
+        ? `view-transition-name: ${viewTransitionName.trim()}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("; "),
+  );
 
   const isLeft = $derived(side === "left");
   // Collapsed → translate the whole panel off its own edge; the tab, anchored
@@ -143,7 +164,7 @@
     !open && offClass,
     className,
   )}
-  style={`width: ${width}`}
+  style={rootStyle}
 >
   <div
     inert={!open}

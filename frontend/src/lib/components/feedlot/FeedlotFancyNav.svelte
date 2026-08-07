@@ -242,6 +242,7 @@
     {side}
     width={NAV_WIDTH}
     title=""
+    viewTransitionName="shell-nav"
     openLabel={t("shell_nav_label")}
     closeLabel={t("fancy_drawer_close")}
   >

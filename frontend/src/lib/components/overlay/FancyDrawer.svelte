@@ -12,6 +12,14 @@
   (vertically centered), exposed-side rounding only. The peek tab stays inside
   the aside's box (in-flow) so closed-state hit-testing works — closed offset is
   calc(-100% + tab) so only the caret peeks. Zero-prop safe (adr-22 r1).
+
+  Shell stacking: ClientRouter view transitions hoist named snapshots into a
+  layer above the live DOM. A fixed drawer that only has document z-40 is
+  covered by `page-main`'s snapshot during navigation. Pass `viewTransitionName`
+  (site menu: `shell-nav`) so the <aside> itself joins that layer; app.css
+  stacks `::view-transition-group(shell-nav)` above `page-main`. The name must
+  live on this fixed root — not on an Astro island wrapper — or the captured
+  box misses the overlay.
 -->
 <script lang="ts">
   import { onDestroy } from "svelte";
@@ -37,6 +45,11 @@
     width = DEFAULT_WIDTH,
     openLabel = t("fancy_drawer_open"),
     closeLabel = t("fancy_drawer_close"),
+    /**
+     * CSS `view-transition-name` for shell chrome. Empty keeps showcase /
+     * demos out of the VT layer; FeedlotFancyNav passes `shell-nav`.
+     */
+    viewTransitionName = "",
     children,
     class: className = undefined,
   }: {
@@ -46,6 +59,7 @@
     width?: string;
     openLabel?: string;
     closeLabel?: string;
+    viewTransitionName?: string;
     children?: Snippet;
     class?: string;
   } = $props();
@@ -62,6 +76,18 @@
       : isLeft
         ? `calc(-100% + ${TAB_WIDTH})`
         : `calc(100% - ${TAB_WIDTH})`,
+  );
+
+  const rootStyle = $derived(
+    [
+      `width: calc(${width} + ${TAB_WIDTH})`,
+      `transform: translate(${offsetX}, -50%)`,
+      viewTransitionName.trim()
+        ? `view-transition-name: ${viewTransitionName.trim()}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("; "),
   );
 
   let rootEl: HTMLElement | undefined = $state();
@@ -139,7 +165,7 @@
     isLeft ? "left-0" : "right-0",
     className,
   )}
-  style={`width: calc(${width} + ${TAB_WIDTH}); transform: translate(${offsetX}, -50%)`}
+  style={rootStyle}
 >
   {#if !isLeft}
     <button

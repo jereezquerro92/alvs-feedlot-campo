@@ -119,7 +119,7 @@ const showChatDrawer = SHOW_CHAT_DRAWER && chatDrawer && hasRole(me);
       {
         showShellNav && (
           <FeedlotFancyNav
-            transition:persist="shell-nav"
+            transition:persist="shell-nav-island"
             transition:animate="none"
             client:load
             active={navActive}
@@ -146,7 +146,13 @@ const showChatDrawer = SHOW_CHAT_DRAWER && chatDrawer && hasRole(me);
       /* Role-gated router surface ([[CHATBOT]], adr-15). Hidden temporarily
          via SHOW_CHAT_DRAWER while left-menu work is in progress. */
       showChatDrawer && (
-        <ChatDrawer client:load publicBackendUrl={publicBackendUrl} copy={routerChatCopy()} />
+        <ChatDrawer
+          transition:persist="shell-chat-island"
+          transition:animate="none"
+          client:load
+          publicBackendUrl={publicBackendUrl}
+          copy={routerChatCopy()}
+        />
       )
     }
 
