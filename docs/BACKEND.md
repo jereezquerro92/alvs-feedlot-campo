@@ -4,7 +4,7 @@ type: reference
 category: backend
 use_case: writing or changing Django 6 + DRF code
 created: 2026-07-10
-modified: 2026-08-02
+modified: 2026-08-07
 tags: [doc, harness, backend]
 ---
 
@@ -23,7 +23,7 @@ Rules for the Django/DRF service — one of the two Fargate services ([[INFRASTR
 
 - **The project stays async-capable at all times** — ASGI server, config and dependencies never block a view from being `async def` ([[adr-16-async-mandatory]] rule 1). A plain sync `def` view remains the default and needs no justification; a feature reaches for `async def` when it streams or does non-blocking I/O. The owner's reason for carrying the capability: results are meant to reach the browser as they arrive, not after the whole response is built.
 - **Server-Sent Events is the default streaming mechanism**: an `async def` view returning `StreamingHttpResponse` over an async generator. No Django Channels, no channel layer, no new infrastructure — it rides the existing ASGI server and crosses the ALB like any other HTTP response.
-- **WebSockets** are the reserved escalation at the `/ws/` prefix ([[adr-16-async-mandatory]] rule 3). The stack fact behind that reservation: Django Channels' production channel layer is Redis-backed ([[CACHE]]), so a design needing fan-out across Fargate tasks is not buildable here at all.
+- **WebSockets** are the reserved escalation at the `/ws/` prefix ([[adr-16-async-mandatory]] rule 3). ElastiCache Valkey is the Django shared cache ([[CACHE]]); adopting Channels / a channel layer for fan-out across Fargate tasks is a separate owner decision — Valkey alone does not authorize it.
 - **Bedrock calls (the router's inference client) use `boto3` wrapped in `asgiref.sync_to_async`, not `aiobotocore`.** boto3 is already the project's one AWS SDK dependency ([[REQUIREMENTS]]); an async view calling it through `sync_to_async` gets the async signature without adding and maintaining a second, less mainstream AWS SDK. Revisit only if measured latency proves the thread-pool wrap is a real bottleneck — never assumed up front.
 
 Once the base template is finished, ALL backend code is produced through the TDD flow ([[TDD]] → `docs/tdds/`), never written directly; a backend diff without a corresponding TDD entry is invalid ([[adr-07-development-flow]]).

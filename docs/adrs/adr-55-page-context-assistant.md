@@ -4,7 +4,7 @@ type: adr
 category: backend
 use_case: adding or changing the page-context ask surface, editing apps/assistant/context.py or links.py, wiring AssistantDrawer, touching AssistantQuery retention
 created: 2026-08-06
-modified: 2026-08-06
+modified: 2026-08-07
 tags: [adr, backend, assistant, chatbot, generative]
 ---
 
@@ -26,7 +26,7 @@ tags: [adr, backend, assistant, chatbot, generative]
 8. Abuse control is the router's, reused unchanged: the per-user `CooldownThrottle` plus the silent async rate-abuse block ([[adr-30-market-prices-connectors]]-style per-source isolation does not apply here — this is the router's `rate_abuse` module). Both return `429`, indistinguishable to the caller.
 9. Inference is async over Bedrock with `boto3` wrapped in `sync_to_async`, never `aiobotocore` ([[adr-16-async-mandatory]] rule 4). The real and mock clients are chosen at one selection point gated by DEBUG, the same discipline as the router and the advisors ([[adr-31-advisors-implementation]] rule 4); a non-DEBUG process can only construct the real client.
 10. The surface has its own kill switch, `ASSISTANT_ENABLED` ([[VARIABLES]]), independent of `ROUTER_ENABLED`: the two tiers are disabled separately because they are permanently disjoint capabilities ([[adr-15-chatbot-two-tier]] rule 1). Disabled, the view short-circuits before any inference call, makes zero inference calls, still persists its `AssistantQuery` row, and returns a defined disabled outcome rather than an error — a switch the operator threw is not a fault. The response shape is [[API]]'s to state.
-11. This is a capability layer, not a doctrine change. Cognito remains the sole authenticator ([[adr-10-auth]]), [[CACHE]] gains no cache server ([[adr-06-cache]]), every response carries an explicit `Cache-Control` and this one is `no-store`, the route enters [[API]] before code ([[adr-51-api-and-backend]] rule 1) and every variable it reads enters [[VARIABLES]] first (rule 7).
+11. This is a capability layer, not a doctrine change. Cognito remains the sole authenticator ([[adr-10-auth]]), shared-cache doctrine stays [[adr-06-cache]] / [[CACHE]] (Valkey in cloud; this layer adds no second cache product), every response carries an explicit `Cache-Control` and this one is `no-store`, the route enters [[API]] before code ([[adr-51-api-and-backend]] rule 1) and every variable it reads enters [[VARIABLES]] first (rule 7).
 
 ## FORBIDDEN
 

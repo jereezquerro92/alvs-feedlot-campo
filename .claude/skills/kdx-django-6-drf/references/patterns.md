@@ -146,12 +146,13 @@ class IsOwnerOrReadOnly(BasePermission):
 
 ```python
 # DATABASE — always Postgres; URL from env
-# CACHE — DatabaseCache default; LocMemCache optional alias
+# CACHE — cloud Valkey via CACHE_URL; local DatabaseCache default; LocMemCache optional alias
 # STORAGES — modern dict only
 # SECURE_* + SECURE_CSP in production when HTTPS terminates at the ALB
 ```
 
 ```python
+# Local / until CACHE_URL is set — DatabaseCache ([[CACHE]] layer 2)
 CACHES = {
     "default": {
         "BACKEND": "django.core.cache.backends.db.DatabaseCache",

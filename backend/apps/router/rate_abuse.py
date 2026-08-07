@@ -6,8 +6,8 @@ LIVE-DOC:END"""
 """The router's silent rate-abuse guard (#371, tdd-04-router-abuse-guard).
 
 Enforcement only — never authorization ([[adr-15-chatbot-two-tier]] rule 3).
-All state lives in the shared `DatabaseCache` ([[CACHE]] layer 2); no Redis
-([[adr-06-cache]]). Two cache keys per user:
+All state lives in the shared Django cache ([[CACHE]] layer 2 — Valkey in
+cloud when wired, `DatabaseCache` locally; [[adr-06-cache]]). Two cache keys per user:
 
 - a "streak" (start/count/last) tracking a contiguous run of router activity,
   reset whenever the gap since the last touch exceeds

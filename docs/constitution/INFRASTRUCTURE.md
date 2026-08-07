@@ -4,7 +4,7 @@ type: reference
 category: devops
 use_case: touching AWS — services, networking, secret paths, deploys
 created: 2026-07-10
-modified: 2026-08-02
+modified: 2026-08-07
 tags: [doc, harness, infrastructure, aws]
 ---
 
@@ -28,7 +28,7 @@ Database specifics → [[BD]]. Variable and secret contents → [[VARIABLES]]. C
 
 - One VPC per env: dev `10.10.0.0/16`, prod `10.20.0.0/16`. Two AZs each.
 - **Public subnets**: ALB + Fargate tasks (tasks get public IPs).
-- **Isolated subnets**: RDS only ([[BD]]).
+- **Isolated subnets**: RDS and ElastiCache Valkey ([[BD]], [[CACHE]]).
 
 > [!warning]
 > **No NAT gateways — deliberate cost trade-off.** Tasks reach the internet through their public IPs. This diverges from the textbook private-subnet layout on purpose. Do not "fix" it by adding NAT.
@@ -137,6 +137,20 @@ The backend **task** role carries an inline policy (`kdx-router-bedrock-nova-mic
 - Direct push to `main`/`prod` is the owning account only ([[adr-08-github-and-git]] rules 1, 4; [[GH]] — `jereezquerro92` for this repo); CI still runs on those refs after their land.
 - Pipeline: build image → push to ECR → update ECS service.
 
+## ElastiCache (Valkey)
+
+Sanctioned shared Django cache for cloud ([[adr-06-cache]], [[CACHE]]):
+
+| Item | Value |
+|---|---|
+| Engine | Valkey |
+| Node | `cache.t4g.micro`, single-node, no Multi-AZ |
+| Subnets | isolated (same class as RDS) |
+| Access | backend task SG only (Valkey port; typically 6379) |
+| Naming | `alvs-<env>-<project>-valkey` (or project-scoped cluster id recorded in [[INVENTORY]] when provisioned) |
+
+Resize (larger node, replicas, Multi-AZ) only when measured traffic justifies it — never by default. Local does not mirror this node ([[DOCKER]]). Provisioning and Django wiring are implementation follow-ons of the 2026-08-07 decision.
+
 ## Security groups
 
 Chain, strictly one-directional:
@@ -144,6 +158,7 @@ Chain, strictly one-directional:
 1. `alvs-<env>-alb-sg` — public 80/443.
 2. `alvs-<env>-task-sg` — ingress from the ALB SG only. When frontend and backend tasks share one task SG (as in the reference run, [[INVENTORY]]), the SSR-to-backend Cloud Map call ([[Service discovery]] above) additionally needs a self-referencing ingress rule (task SG → itself, tcp/8000) — the ALB-only rule alone does not cover task-to-task traffic.
 3. `alvs-<env>-rds-sg` — 5432 from the task SG only.
+4. `alvs-<env>-<project>-valkey-sg` (or shared env Valkey SG when recorded) — Valkey port from the task SG only.
 
 DB admin access goes through an **EC2 Instance Connect Endpoint bastion** — see [[BD]].
 

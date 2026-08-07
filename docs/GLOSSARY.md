@@ -4,7 +4,7 @@ type: reference
 category: harness
 use_case: naming anything, or finding one thing called two ways
 created: 2026-07-10
-modified: 2026-08-02
+modified: 2026-08-07
 tags: [doc, harness, glossary, ssot]
 ---
 
@@ -27,7 +27,7 @@ The names. Rules: [[adr-12-glossary-and-localization]]. Feedlot domain terms: [[
 | infrastructure | `INFRASTRUCTURE` (doc name), `infrastructure` (prose) | doc names, wikilinks, prose | `INFRAESTRUCTURE`, `infraestructure` — misspelling, corrected repo-wide |
 | package manager (frontend) | `bun` | everything JavaScript ([[FRONTEND]]) | `npm` (prohibited), `pnpm`, `yarn` |
 | package manager (backend) | `uv` | everything Python ([[BACKEND]]) | `pip`, `poetry` |
-| cache | the layers of [[CACHE]] | settings, infra | `redis` (prohibited) |
+| cache | the layers of [[CACHE]] — cloud shared store is ElastiCache **Valkey** (`cache.t4g.micro`, single-node); local layer 2 is `DatabaseCache` | settings, infra | unmanaged Redis; a second cache product beside the Valkey pick; Multi-AZ Valkey without traffic proof ([[adr-06-cache]]) |
 | fragment | `fragment` | HTMX HTML-over-the-wire responses ([[HTMX]]) | `partial`, `snippet` |
 | island | `island` | Svelte interactive components ([[FRONTEND]]) | `widget`, `component` (for this meaning) |
 | live-doc block | `live-doc block`, delimited `LIVE-DOC:START … LIVE-DOC:END` | the wikilinks-only region stamped at the top of every matched code file, linking it to the ADRs and docs that govern it ([[adr-17-live-doc-backlinks]], [[SKILL-INVENTORY]]); stamped only by the linker `kdx-live-doc`, never by hand | `docstring header`, `backlink header`, `doclink`, `frontmatter` (for this meaning); any block carrying prose instead of links |

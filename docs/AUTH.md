@@ -4,7 +4,7 @@ type: reference
 category: backend
 use_case: wiring login, a session, or a permission class
 created: 2026-07-10
-modified: 2026-08-03
+modified: 2026-08-07
 tags: [doc, harness, auth, cognito, backend]
 ---
 
@@ -42,7 +42,7 @@ The browser talks to Cognito; Django brokers the exchange and then owns the sess
 7. **`POST /accounts/logout/`** (CSRF-protected; logout is a state change, so never GET) flushes the Django session and redirects through the Cognito logout endpoint so the hosted-UI session is cleared too.
 
 > [!note] Why a Django session, not bearer tokens
-> HTMX submits from the browser and relies on Django session auth + CSRF ([[HTMX]] rule 4). A token-only SPA pattern would break the hypermedia path. So the token is consumed once, at callback, and thereafter the session is the source of truth ([[adr-10-auth]] rule 3). Sessions use Django's DB-backed machinery — **no Redis** ([[CACHE]]).
+> HTMX submits from the browser and relies on Django session auth + CSRF ([[HTMX]] rule 4). A token-only SPA pattern would break the hypermedia path. So the token is consumed once, at callback, and thereafter the session is the source of truth ([[adr-10-auth]] rule 3). Sessions use Django's DB-backed machinery — Valkey is the shared **application** cache ([[CACHE]]), not the session store.
 
 ### Endpoints (declared in [[API]] at stage 3)
 
