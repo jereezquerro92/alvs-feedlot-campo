@@ -4,15 +4,14 @@
      LIVE-DOC:END -->
 
 <!--
-  Single-date filter on the melt/builders Popover ([[MELT-UI]]) — Melt 0.44
-  ships no Date Picker builder, so the calendar itself is the platform's
-  native <input type="date">; Popover supplies the anchored, focus-trapped
-  surface around it. Value is a plain ISO "YYYY-MM-DD" string — no
-  @internationalized/date dependency.
+  Single-date control: Melt Popover trigger + form/Calendar grid ([[MELT-UI]]).
+  Value is a plain ISO "YYYY-MM-DD" string — no @internationalized/date.
+  Mounts with zero props-safe defaults via Calendar (adr-22 r1/r2).
 -->
 <script lang="ts">
   import { Popover } from "melt/builders";
   import { Button } from "$lib/components/ui/button";
+  import Calendar from "./Calendar.svelte";
   import { cn } from "$lib/utils";
 
   let {
@@ -22,6 +21,8 @@
     clearLabel = "",
     min = undefined,
     max = undefined,
+    disabled = false,
+    id = undefined,
     class: className = undefined,
   }: {
     value?: string | undefined;
@@ -32,6 +33,8 @@
     clearLabel?: string;
     min?: string;
     max?: string;
+    disabled?: boolean;
+    id?: string;
     class?: string;
   } = $props();
 
@@ -42,39 +45,60 @@
       ? new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { dateStyle: "medium" })
       : undefined,
   );
+
+  function onPick(next: string): void {
+    value = next;
+    popover.open = false;
+  }
 </script>
 
 <div class={cn("flex flex-col gap-1.5", className)}>
   <Button
     type="button"
     variant="outline"
+    {id}
+    {disabled}
     {...popover.trigger}
     aria-label={label}
-    class="w-full justify-between font-normal"
+    class="w-full justify-start gap-2 font-normal"
   >
-    <span class={cn("truncate", !formatted && "text-muted-foreground")}>
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.75"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      class="size-4 shrink-0 text-muted-foreground"
+      aria-hidden="true"
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <path d="M16 2v4M8 2v4M3 10h18" />
+    </svg>
+    <span class={cn("min-w-0 flex-1 truncate text-left", !formatted && "text-muted-foreground")}>
       {formatted ?? placeholder}
     </span>
-    <span aria-hidden="true" class={cn("shrink-0 transition-transform", popover.open && "rotate-180")}>⌄</span>
+    <span aria-hidden="true" class={cn("shrink-0 text-muted-foreground transition-transform", popover.open && "rotate-180")}>⌄</span>
   </Button>
   <div
     {...popover.content}
     class="z-50 rounded-md border bg-popover p-2 text-popover-foreground shadow-md"
   >
-    <div class="flex items-center gap-2">
-      <input
-        type="date"
-        bind:value
-        {min}
-        {max}
-        aria-label={label}
-        class="h-9 rounded-md border border-input bg-background px-2 text-sm text-foreground shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-      />
-      {#if value && clearLabel}
-        <Button type="button" variant="ghost" size="sm" onclick={() => (value = undefined)}>
+    <Calendar bind:value {min} {max} onValueChange={onPick} />
+    {#if value && clearLabel}
+      <div class="mt-2 flex justify-end">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          {disabled}
+          onclick={() => {
+            value = undefined;
+          }}
+        >
           {clearLabel}
         </Button>
-      {/if}
-    </div>
+      </div>
+    {/if}
   </div>
 </div>

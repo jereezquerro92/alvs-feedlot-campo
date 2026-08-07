@@ -17,6 +17,7 @@
   import { Input } from "$lib/components/ui/input";
   import { Button } from "$lib/components/ui/button";
   import { Label } from "$lib/components/ui/label";
+  import { DatePicker } from "$lib/components/form";
   import { readCsrfTokenFromCookie } from "$lib/csrf";
   import { t } from "../../../i18n";
 
@@ -168,7 +169,14 @@
     </div>
     <div class="flex flex-col gap-1.5">
       <Label for="f-date">{t("feedlot_form_date")}</Label>
-      <Input id="f-date" type="date" bind:value={date} disabled={saving} />
+      <DatePicker
+        id="f-date"
+        class="gap-0"
+        bind:value={date}
+        label={t("feedlot_form_date")}
+        placeholder={t("feedlot_form_date_placeholder")}
+        disabled={saving}
+      />
     </div>
   </div>
 

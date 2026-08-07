@@ -20,6 +20,7 @@
   import { Input } from "$lib/components/ui/input";
   import { Button } from "$lib/components/ui/button";
   import { Label } from "$lib/components/ui/label";
+  import { DatePicker } from "$lib/components/form";
   import { readCsrfTokenFromCookie } from "$lib/csrf";
   import { t } from "../../../i18n";
 
@@ -192,8 +193,15 @@
 
   <div class="flex flex-col gap-1.5">
     <Label for="ex-date">{t("feedlot_form_date")}</Label>
-    <Input id="ex-date" type="date" bind:value={date} disabled={saving} />
-  </div>
+      <DatePicker
+        id="ex-date"
+        class="gap-0"
+        bind:value={date}
+        label={t("feedlot_form_date")}
+        placeholder={t("feedlot_form_date_placeholder")}
+        disabled={saving}
+      />
+    </div>
 
   {#if total !== null}
     <div class="rounded-md px-3 py-2 text-sm" style="background: var(--muted);">
