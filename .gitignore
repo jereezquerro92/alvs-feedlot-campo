@@ -17,7 +17,8 @@ htmlcov/
 .claude/.graph-index-marker
 .claude/.nudge-seen-*
 .mvmcp/
-.vscode/
+.vscode/*
+!.vscode/settings.json
 .obsidian/
 backend/staticfiles/
 docs/ABOUT-KODEX-COMPUTER.md
