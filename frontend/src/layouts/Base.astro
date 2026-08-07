@@ -15,42 +15,6 @@ import { hasRole } from "$lib/auth";
 import { routerChatCopy } from "$lib/chatui-copy";
 import type { Me } from "$lib/types/user";
 
-/** Sequential opacity fade (out, then in) — no slide/morph. */
-const PAGE_FADE_MS = 50;
-const PAGE_FADE_EASE = "cubic-bezier(0.76, 0, 0.24, 1)";
-const PAGE_FADE = {
-  forwards: {
-    old: {
-      name: "astroFadeOut",
-      duration: `${PAGE_FADE_MS}ms`,
-      easing: PAGE_FADE_EASE,
-      fillMode: "both",
-    },
-    new: {
-      name: "astroFadeIn",
-      duration: `${PAGE_FADE_MS}ms`,
-      delay: `${PAGE_FADE_MS}ms`,
-      easing: PAGE_FADE_EASE,
-      fillMode: "both",
-    },
-  },
-  backwards: {
-    old: {
-      name: "astroFadeOut",
-      duration: `${PAGE_FADE_MS}ms`,
-      easing: PAGE_FADE_EASE,
-      fillMode: "both",
-    },
-    new: {
-      name: "astroFadeIn",
-      duration: `${PAGE_FADE_MS}ms`,
-      delay: `${PAGE_FADE_MS}ms`,
-      easing: PAGE_FADE_EASE,
-      fillMode: "both",
-    },
-  },
-};
-
 /** Temporary: hide the right-edge router ChatDrawer while left-menu work lands. */
 const SHOW_CHAT_DRAWER = false;
 
@@ -130,14 +94,11 @@ const showChatDrawer = SHOW_CHAT_DRAWER && chatDrawer && hasRole(me);
           />
         )
       }
-      {/* Opacity-only page change — root/nav stay still so the fade never
-          paints a morphing layer over the site menu. */}
-      <div
-        class="min-w-0 flex-1"
-        data-page-main
-        transition:name="page-main"
-        transition:animate={PAGE_FADE}
-      >
+      {/* No view-transition-name here: a named page-main snapshot is
+          full-bleed over the fixed FancyDrawer strip and covers the menu
+          during ClientRouter navigation. Feedback is CSS-only via
+          html[data-nav-pending] on this pane (app.css). */}
+      <div class="min-w-0 flex-1" data-page-main>
         <slot />
       </div>
     </div>
@@ -156,9 +117,8 @@ const showChatDrawer = SHOW_CHAT_DRAWER && chatDrawer && hasRole(me);
       )
     }
 
-    {/* Visible during ClientRouter preparation (SSR fetch) — the view
-        transition only starts after HTML arrives, which felt like a dead
-        pause (~500ms) before the 50ms PAGE_FADE. */}
+    {/* Visible during ClientRouter preparation (SSR fetch) — dim + top bar
+        while HTML arrives; no named page-main view-transition snapshot. */}
     <div class="nav-pending-bar" aria-hidden="true"></div>
 
     <script>
