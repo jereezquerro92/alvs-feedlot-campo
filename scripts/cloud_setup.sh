@@ -13,6 +13,19 @@
 # Configuration and the profile table: docs/markdown-vault-mcp.md. Force: adr-18.
 set -euo pipefail
 
+# Fresh Cursor/Claude cloud VMs often lack uv on PATH. The launcher and
+# backend sync both need it; install once into ~/.local/bin when missing.
+export PATH="${HOME}/.local/bin:${PATH}"
+if ! command -v uv >/dev/null 2>&1; then
+    echo "[cloud_setup] uv missing — installing into ~/.local/bin"
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+    export PATH="${HOME}/.local/bin:${PATH}"
+fi
+if ! command -v uv >/dev/null 2>&1; then
+    echo "[cloud_setup] ERROR: uv still not on PATH after install" >&2
+    exit 1
+fi
+
 echo "[cloud_setup] pre-warming the markdown-vault MCP"
 
 # The launcher reads CLAUDE_CODE_REMOTE to pick its profile. The setup script
