@@ -4,7 +4,7 @@ type: reference
 category: harness
 use_case: adding, removing or locating a vendored skill or agent
 created: 2026-07-13
-modified: 2026-08-02
+modified: 2026-08-07
 tags: [doc, harness, skills, agents, ssot]
 ---
 
