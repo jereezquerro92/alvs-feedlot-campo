@@ -1,5 +1,5 @@
 """LIVE-DOC:START — alvs-feedlot-campo live-doc; see [[adr-17-live-doc-backlinks]]
-Governed by: [[adr-44-field-operational-roles]] · [[adr-53-api-membrane]] · [[adr-54-site-menu-lock-modes]]
+Governed by: [[adr-10-auth]]
 Docs: [[BACKEND]] · [[AUTH]]
 LIVE-DOC:END"""
 

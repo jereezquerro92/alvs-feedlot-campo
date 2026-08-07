@@ -13,8 +13,12 @@
   trigger is the `contextmenu` (right-click) event on the wrapped region, so
   `popover.open` is flipped by hand and the content is positioned at the
   pointer coordinates captured off that event, rather than anchored to a
-  Button via `popover.trigger`. `focus.onOpen` still lands focus on the first
-  enabled `role="menuitem"` the same way DropdownMenu does.
+  Button via `popover.trigger`. We deliberately do **not** spread
+  `popover.trigger` on the region: Melt's invoker toggles on left-click and
+  would enable Floating UI against the region (fighting pointer coords).
+  Outside dismiss is therefore our own document `pointerdown` (Melt's click
+  listener no-ops without `triggerEl`). `focus.onOpen` still lands focus on
+  the first enabled `role="menuitem"` the same way DropdownMenu does.
 -->
 <script lang="ts" module>
   export type ContextMenuItem = {
@@ -25,6 +29,8 @@
 </script>
 
 <script lang="ts">
+  import { onMount } from "svelte";
+  import { on } from "svelte/events";
   import { Popover } from "melt/builders";
   import { cn } from "$lib/utils";
   import { t } from "../../../i18n";
@@ -139,6 +145,19 @@
     point = { x: e.clientX, y: e.clientY };
     popover.open = true;
   }
+
+  // Melt's document click dismiss requires `triggerEl` (see Popover.svelte.js);
+  // we never register a trigger (left-click toggle + Floating UI would break
+  // pointer positioning), so close on any pointerdown outside the content.
+  onMount(() => {
+    return on(document, "pointerdown", (e) => {
+      if (!popover.open) return;
+      const contentEl = document.getElementById(popover.ids.content);
+      const target = e.target;
+      if (!contentEl || !(target instanceof Node) || contentEl.contains(target)) return;
+      popover.open = false;
+    });
+  });
 </script>
 
 <div

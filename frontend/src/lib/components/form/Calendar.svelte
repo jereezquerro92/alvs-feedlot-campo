@@ -35,7 +35,7 @@
   } = $props();
 
   const todayIso = new Date().toISOString().slice(0, 10);
-  const initialMonth = value ?? todayIso;
+  const initialMonth = value || todayIso;
   let viewYear = $state(Number(initialMonth.slice(0, 4)));
   let viewMonth = $state(Number(initialMonth.slice(5, 7)) - 1);
 

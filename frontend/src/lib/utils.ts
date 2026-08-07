@@ -3,9 +3,10 @@
  * Docs: [[FRONTEND]]
  * LIVE-DOC:END */
 
+import { twMerge } from "tailwind-merge";
+
 export type ClassValue = string | false | null | undefined;
 
-
 export function cn(...classes: ClassValue[]): string {
-  return classes.filter(Boolean).join(" ");
+  return twMerge(classes.filter(Boolean).join(" "));
 }
