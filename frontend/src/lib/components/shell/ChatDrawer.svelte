@@ -52,6 +52,7 @@
   openLabel={t("shell_chat_drawer_open")}
   closeLabel={t("shell_chat_drawer_close")}
   tabGlyph="?"
+  viewTransitionName="shell-chat"
 >
   <div class="flex h-full min-h-0 flex-col">
     <ChatUI

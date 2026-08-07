@@ -307,8 +307,28 @@ body {
 }
 
 /* Opacity-only main pane: kill UA morph (transform/size) on this named
-   group so fade-out → fade-in never slides across the site menu. */
+   group so fade-out → fade-in never slides across the site menu. Keep
+   page-main BELOW shell chrome groups — during a view transition the
+   browser paints ::view-transition-* above the live DOM, so a fixed
+   FancyDrawer/Drawer with only document z-40 is covered unless it has
+   its own named group stacked higher (see overlay drawers'
+   viewTransitionName). */
 ::view-transition-group(page-main) {
+  animation: none;
+  z-index: 1;
+}
+
+/* Shell edge chrome — names set on the fixed <aside> roots, not island
+   wrappers. Must paint above page-main's VT snapshot. Island persist ids
+   (`shell-*-island`) stay separate so they do not collide with these. */
+::view-transition-group(shell-nav),
+::view-transition-group(shell-chat) {
+  animation: none;
+  z-index: 40;
+}
+
+::view-transition-group(shell-nav-island),
+::view-transition-group(shell-chat-island) {
   animation: none;
 }
 
