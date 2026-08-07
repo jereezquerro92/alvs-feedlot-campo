@@ -88,7 +88,7 @@ export const es = {
 
   // /chatui/ — router chat surface ([[CHATBOT]], adr-15)
   chatui_router_title: "Router",
-  chatui_router_empty: "",
+  chatui_router_empty: "Escribí un pedido para empezar.",
   chatui_composer_placeholder: "Página o acción…",
   chatui_composer_aria_label: "Mensaje de chat",
   chatui_composer_send: "Enviar",
@@ -409,13 +409,13 @@ export const es = {
   feedlot_col_current_weight: "Peso actual (kg)",
   feedlot_empty_lots: "Sin lotes.",
   feedlot_empty_animals: "Sin animales individuales.",
-  feedlot_back_clients: "← Clientes",
+  feedlot_back_clients: "Clientes",
 
   // Current account / ledger (adr-25)
   feedlot_ledger_cta: "Cuenta corriente",
   feedlot_ledger_title: "Cuenta corriente",
   feedlot_ledger_intro:
-    "El extracto de la cuenta: cada movimiento es un asiento inmutable. Un error se corrige con un asiento nuevo, nunca editando el anterior. El saldo es Σ débitos − Σ créditos; positivo significa que el cliente debe.",
+    "El extracto de la cuenta: cada movimiento es un asiento inmutable. Un error se corrige con un asiento nuevo, nunca editando el anterior. El saldo es la suma de débitos menos la suma de créditos; positivo significa que el cliente debe.",
   feedlot_ledger_balance: "Saldo",
   feedlot_ledger_balance_hint: "positivo = el cliente debe",
   feedlot_ledger_total_debit: "Total débitos",
@@ -519,7 +519,7 @@ export const es = {
   feedlot_load_title: "Cargar datos",
   feedlot_load_intro:
     "Registrá una ración o un pesaje. Cada carga es un hecho inmutable: se corrige con un hecho nuevo, nunca editando el anterior.",
-  feedlot_load_view_panel: "Ver panel actualizado →",
+  feedlot_load_view_panel: "Ver panel actualizado",
   feedlot_load_section_herd: "Hacienda",
   feedlot_load_section_feed: "Alimento y sanidad",
   feedlot_form_feeding_title: "Ración",
@@ -549,7 +549,7 @@ export const es = {
     "Opcional. Para lotes: cuántas cabezas cubre este peso total.",
   feedlot_form_save_feeding: "Registrar ración",
   feedlot_form_save_weighing: "Registrar pesaje",
-  feedlot_form_saved: "Guardado ✓",
+  feedlot_form_saved: "Guardado",
   feedlot_form_error: "No se pudo guardar. Revisá los datos.",
 
   // --- Intake (alta de hacienda) ---
@@ -675,7 +675,7 @@ export const es = {
   feedlot_racion_preview: "Se van a registrar {n} raciones ({lots} lote/s × {feeds} alimento/s × {days} día/s).",
   feedlot_racion_save: "Servir ración",
   feedlot_racion_saving: "Registrando…",
-  feedlot_racion_done: "Listo ✓ {n} raciones registradas.",
+  feedlot_racion_done: "Listo: {n} raciones registradas.",
   feedlot_racion_partial: "Parcial: {ok} registradas, {fail} con error.",
 
   // --- Client creation (alta de cliente) ---
@@ -800,9 +800,9 @@ export const es = {
 
   // --- Dashboard: page header + actions ---
   feedlot_dash_title: "Dashboard del cliente",
-  feedlot_action_export: "↓ Exportar",
+  feedlot_action_export: "Exportar",
   feedlot_action_export_soon: "Exportación disponible próximamente",
-  feedlot_action_analyze: "✦ Pedir análisis",
+  feedlot_action_analyze: "Pedir análisis",
   feedlot_dash_derivation_note:
     "Los valores se derivan de los eventos cargados. Una métrica sin datos suficientes se muestra como «—» con su motivo, nunca como un número inventado.",
 

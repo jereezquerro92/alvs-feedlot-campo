@@ -18,6 +18,7 @@
     "htmx.org": "2.0.10",
     "melt": "^0.44.0",
     "svelte": "5.56.4",
+    "tailwind-merge": "^3.4.0",
     "tailwindcss": "4.3.2"
   },
   "devDependencies": {
