@@ -52,6 +52,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/test_bootstrap_admin.py`
 - `backend/apps/users/test_bootstrap_allowlist.py`
 - `backend/apps/users/test_cognito_live.py`
+- `backend/apps/users/test_nav_item_groups.py`
 - `backend/apps/users/test_oidc.py`
 - `backend/apps/users/test_rbac.py`
 - `backend/apps/users/test_roles.py`
@@ -525,6 +526,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/showcase/ToggleGroupDemo.svelte`
 - `frontend/src/lib/components/showcase/TooltipDemo.svelte`
 - `frontend/src/lib/components/showcase/TreeDemo.svelte`
+- `frontend/src/lib/components/showcase/galleryRegistry.ts`
 - `frontend/src/lib/components/showcase/index.ts`
 - `frontend/src/lib/components/theme/AppearanceCard.svelte`
 - `frontend/src/lib/components/theme/PaletteFields.svelte`
@@ -935,6 +937,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/test_bootstrap_admin.py`
 - `backend/apps/users/test_bootstrap_allowlist.py`
 - `backend/apps/users/test_cognito_live.py`
+- `backend/apps/users/test_nav_item_groups.py`
 - `backend/apps/users/test_oidc.py`
 - `backend/apps/users/test_rbac.py`
 - `backend/apps/users/test_roles.py`
@@ -1179,6 +1182,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `backend/apps/users/test_bootstrap_admin.py`
 - `backend/apps/users/test_bootstrap_allowlist.py`
 - `backend/apps/users/test_cognito_live.py`
+- `backend/apps/users/test_nav_item_groups.py`
 - `backend/apps/users/test_oidc.py`
 - `backend/apps/users/test_rbac.py`
 - `backend/apps/users/test_roles.py`
@@ -1615,6 +1619,7 @@ Each heading is a live-doc SSOT; the list is every code file that declares itsel
 - `frontend/src/lib/components/showcase/ToggleGroupDemo.svelte`
 - `frontend/src/lib/components/showcase/TooltipDemo.svelte`
 - `frontend/src/lib/components/showcase/TreeDemo.svelte`
+- `frontend/src/lib/components/showcase/galleryRegistry.ts`
 - `frontend/src/lib/components/showcase/index.ts`
 - `frontend/src/lib/components/theme/AppearanceCard.svelte`
 - `frontend/src/lib/components/theme/PaletteFields.svelte`

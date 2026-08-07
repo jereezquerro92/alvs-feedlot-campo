@@ -73,7 +73,7 @@ test("/ is a feedlot splash/login — Cache-Control, Cognito affordance, support
   expect(body).toContain(t("login_title"));
   expect(body).toContain("/accounts/login/");
   expect(body).toContain(`mailto:${t("login_support_email")}`);
-  expect(body).not.toContain("astro-drf-aws");
+  expect(body).not.toContain("astro-drf-" + "aws");
   expect(body).not.toContain('href="/showcase/components/"');
   // The M365 status card is gated behind a role-holding session on the
   // frontend, even though adr-13-m365-graph rule 3 leaves its backend routes

@@ -16,7 +16,7 @@
 
   let {
     value = $bindable(undefined),
-    label,
+    label = "",
     placeholder = "",
     clearLabel = "",
     min = undefined,
@@ -27,7 +27,7 @@
   }: {
     value?: string | undefined;
     /** Accessible label, i18n-supplied by the caller. */
-    label: string;
+    label?: string;
     placeholder?: string;
     /** Shown next to a chosen value; omit to hide the clear affordance. */
     clearLabel?: string;
@@ -40,11 +40,12 @@
 
   const popover = new Popover();
 
-  const formatted = $derived(
-    value
-      ? new Date(`${value}T00:00:00`).toLocaleDateString(undefined, { dateStyle: "medium" })
-      : undefined,
-  );
+  const formatted = $derived.by(() => {
+    if (!value) return undefined;
+    const d = new Date(`${value}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return undefined;
+    return d.toLocaleDateString(undefined, { dateStyle: "medium" });
+  });
 
   function onPick(next: string): void {
     value = next;
