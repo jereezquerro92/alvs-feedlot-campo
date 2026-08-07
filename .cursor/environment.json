@@ -1,0 +1,3 @@
+{
+  "install": "export MARKDOWN_VAULT_MCP_PROFILE=keyword; bash scripts/cloud_setup.sh && \"$HOME/.local/bin/uv\" sync --directory backend"
+}

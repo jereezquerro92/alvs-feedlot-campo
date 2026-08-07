@@ -4,7 +4,7 @@ type: reference
 category: harness
 use_case: searching, reading or reindexing the docs vault
 created: 2026-07-14
-modified: 2026-08-02
+modified: 2026-08-07
 tags: [doc, harness, mcp, docs, ssot]
 ---
 
@@ -24,6 +24,8 @@ The harness at the heart of this product is its documentation graph ([[PRD]]): a
 | Piece | Path | Committed? | Role |
 |---|---|---|---|
 | Project MCP config | `.mcp.json` | yes | Declares the `markdown-vault-docs` server; Claude auto-detects and prompts to approve it on clone. |
+| Cursor IDE MCP config | `.cursor/mcp.json` | yes | Same server for the Cursor IDE; keyword profile; path-portable (`${workspaceFolder}`). |
+| Cursor Cloud env | `.cursor/environment.json` | yes | `install` pre-warms `.mvmcp/` via `scripts/cloud_setup.sh` (keyword) for Cloud Agents VMs. |
 | Launcher / bootstrap | `scripts/mvmcp.py` | yes | Self-bootstraps the venv, assembles env, `exec`s the server on stdio. No absolute paths — path-independent. Picks the profile (see below). |
 | Cloud setup script | `scripts/cloud_setup.sh` | yes | Pre-warms the MCP in a cloud environment, and best-effort bakes the frontend's bun dependencies (`node_modules`) into the snapshot; pasted as one line into the environment's Setup script field. |
 | Freshness hook | `.claude/hooks/mvmcp_freshness.py` | yes | SessionStart: warns when the index is stale or missing. Safety net, not the trigger. |
@@ -74,13 +76,37 @@ The keyword profile's `bootstrap` prints an `Embeddings require both 'embedding_
 
 ## Cloud sessions
 
-A cloud session clones the repo and gets `.mcp.json`, `scripts/mvmcp.py` and the hooks — but never `.mvmcp/`, which is git-ignored and machine-specific. It rebuilds. Paste one line into the environment's **Setup script** field:
+A cloud session clones the repo and gets `.mcp.json` / `.cursor/mcp.json`, `scripts/mvmcp.py` and the hooks — but never `.mvmcp/`, which is git-ignored and machine-specific. It rebuilds. The keyword profile is the default in cloud (no `huggingface.co` required).
+
+### Claude Code cloud
+
+Paste one line into the environment's **Setup script** field:
 
 ```
 bash scripts/cloud_setup.sh
 ```
 
 Everything that script does stays versioned in the repo. It runs once per environment, before Claude Code launches, and Anthropic snapshots the filesystem afterwards — so later sessions start with the venv and index already on disk instead of paying for them. A `SessionStart` hook would run on *every* session including resumes, which is why the install lives in the setup script and not there.
+
+### Cursor Cloud Agents
+
+Two surfaces, both required — the VM prep alone does not attach tools to the agent:
+
+1. **Warm the index on the VM** — `.cursor/environment.json` `install` runs `scripts/cloud_setup.sh` (keyword profile) so `.mvmcp/` exists before the agent starts.
+2. **Register the server in the Cloud Agents MCP UI** — Cursor Cloud does **not** auto-load repo `.cursor/mcp.json`. Add a custom stdio MCP named `markdown-vault-docs` in the personal [agents](https://cursor.com/agents) MCP dropdown or team **Dashboard → Integrations & MCP**, with:
+
+```json
+{
+  "command": "python3",
+  "args": ["scripts/mvmcp.py", "serve"],
+  "env": {
+    "MARKDOWN_VAULT_MCP_EXCLUDE": "agents/**,hooks/**,skills/**",
+    "MARKDOWN_VAULT_MCP_PROFILE": "keyword"
+  }
+}
+```
+
+After adding or enabling it, start a **new** agent run — MCP tools attach at run start, not mid-session. Keep `.cursor/mcp.json` for the local Cursor IDE (same server, keyword profile as the cloud-safe default). Do not hardcode `/home/kodex` — stay path-portable (`${workspaceFolder}`).
 
 Note that `codebase-memory` takes the opposite route: it stays local-only and is absent from cloud sessions entirely ([[SKILL-INVENTORY]]). The two MCPs are disjoint and so are their answers to the cloud ([[adr-18-markdown-vault-mcp]] rule 4).
 

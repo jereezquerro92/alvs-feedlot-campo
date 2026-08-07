@@ -2,16 +2,14 @@
   "mcpServers": {
     "markdown-vault-docs": {
       "type": "stdio",
-      "command": "/usr/bin/python3",
+      "command": "python3",
       "args": [
         "${workspaceFolder}/scripts/mvmcp.py",
         "serve"
       ],
       "env": {
         "MARKDOWN_VAULT_MCP_EXCLUDE": "agents/**,hooks/**,skills/**",
-        "MARKDOWN_VAULT_MCP_PROFILE": "keyword",
-        "HOME": "/home/kodex",
-        "FASTEMBED_CACHE_PATH": "/home/kodex/.cache/fastembed"
+        "MARKDOWN_VAULT_MCP_PROFILE": "keyword"
       }
     }
   }
